@@ -1,0 +1,34 @@
+{
+  "name": "unveil-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Unveil wedding app monorepo - main app and marketing website",
+  "scripts": {
+    "dev": "concurrently \"pnpm --filter unveil-app run dev\" \"pnpm --filter unveil-website run dev\" --names \"app,web\" --prefix-colors \"cyan,magenta\"",
+    "dev:app": "pnpm --filter unveil-app run dev",
+    "dev:website": "pnpm --filter unveil-website run dev",
+    "build": "pnpm --recursive run build",
+    "build:app": "pnpm --filter unveil-app run build",
+    "build:website": "pnpm --filter unveil-website run build",
+    "start": "concurrently \"pnpm --filter unveil-app run start\" \"pnpm --filter unveil-website run start\" --names \"app,web\" --prefix-colors \"cyan,magenta\"",
+    "start:app": "pnpm --filter unveil-app run start",
+    "start:website": "pnpm --filter unveil-website run start",
+    "lint": "pnpm --recursive run lint",
+    "lint:fix": "pnpm --filter unveil-app run lint:fix",
+    "type-check": "pnpm --recursive run type-check",
+    "test": "pnpm --filter unveil-app run test",
+    "test:e2e": "pnpm --filter unveil-app run test:e2e",
+    "test:all": "pnpm --filter unveil-app run test:all",
+    "clean": "pnpm --recursive exec rm -rf .next node_modules/.cache",
+    "clean:all": "pnpm --recursive exec rm -rf .next node_modules && pnpm install",
+    "install:all": "pnpm install --recursive"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.0"
+} 

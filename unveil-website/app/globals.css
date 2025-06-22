@@ -1,0 +1,270 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap&preconnect');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    border-color: rgb(229 231 235);
+  }
+  body {
+    @apply bg-white text-gray-900;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400;
+}
+
+/* Smooth scrolling for anchor links */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Focus styles */
+:focus-visible {
+  @apply outline-none ring-2 ring-purple-500 ring-offset-2;
+}
+
+/* ========================================
+   PHASE 3: SUBTLE INTERACTIONS & BRAND DELIGHT
+   ======================================== */
+
+/* Page transition animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInFromTop {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Heart pulse animation for logo */
+@keyframes heartPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes gentleGlow {
+  0% {
+    box-shadow: 0 0 5px rgba(251, 113, 133, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(251, 113, 133, 0.4), 0 0 30px rgba(168, 85, 247, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 5px rgba(251, 113, 133, 0.3);
+  }
+}
+
+/* Button shimmer effect */
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+/* Floating animation for cards */
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+/* Stagger animation delays */
+.stagger-1 { animation-delay: 0.1s; }
+.stagger-2 { animation-delay: 0.2s; }
+.stagger-3 { animation-delay: 0.3s; }
+.stagger-4 { animation-delay: 0.4s; }
+.stagger-5 { animation-delay: 0.5s; }
+.stagger-6 { animation-delay: 0.6s; }
+
+/* Page entrance animations */
+.page-enter {
+  animation: fadeIn 0.6s ease-out forwards;
+}
+
+.slide-in-top {
+  animation: slideInFromTop 0.8s ease-out forwards;
+}
+
+.slide-in-bottom {
+  animation: slideInFromBottom 0.8s ease-out forwards;
+}
+
+/* Logo heart pulse effect */
+.heart-pulse:hover {
+  animation: heartPulse 1s ease-in-out infinite;
+}
+
+.logo-glow:hover {
+  animation: gentleGlow 2s ease-in-out infinite;
+}
+
+/* Enhanced button interactions */
+.btn-shimmer {
+  background: linear-gradient(
+    90deg,
+    #fb7185 0%,
+    #f472b6 25%,
+    #a855f7 50%,
+    #f472b6 75%,
+    #fb7185 100%
+  );
+  background-size: 200% 100%;
+  transition: all 0.3s ease;
+}
+
+.btn-shimmer:hover {
+  animation: shimmer 2s ease-in-out infinite;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 25px rgba(251, 113, 133, 0.4);
+}
+
+/* Card hover delights */
+.card-float:hover {
+  animation: float 3s ease-in-out infinite;
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* Fade in on scroll animations */
+.fade-in-scroll {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.6s ease-out;
+}
+
+.fade-in-scroll.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Mobile menu animations */
+.mobile-menu-enter {
+  animation: slideInFromTop 0.3s ease-out forwards;
+}
+
+.mobile-menu-exit {
+  animation: slideInFromTop 0.3s ease-out reverse forwards;
+}
+
+/* Soft dividers */
+.soft-divider {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(251, 113, 133, 0.1) 20%,
+    rgba(168, 85, 247, 0.1) 50%,
+    rgba(251, 113, 133, 0.1) 80%,
+    transparent 100%
+  );
+  height: 1px;
+  width: 100%;
+}
+
+/* Accessibility: Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  .heart-pulse:hover,
+  .logo-glow:hover,
+  .btn-shimmer:hover,
+  .card-float:hover {
+    animation: none !important;
+  }
+}
+
+/* Enhanced focus states for accessibility */
+.focus-ring:focus-visible {
+  outline: 2px solid #a855f7;
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* Smooth state transitions */
+.smooth-transition {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Wedding-themed background texture (very subtle) */
+.wedding-texture {
+  background-image: 
+    radial-gradient(circle at 25% 25%, rgba(251, 113, 133, 0.02) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(168, 85, 247, 0.02) 0%, transparent 50%);
+}
+
+/* Icon hover delights */
+.icon-delight:hover {
+  transform: scale(1.1);
+  transition: transform 0.2s ease-out;
+}
+
+/* Gradient text effect for special elements */
+.gradient-text {
+  background: linear-gradient(135deg, #fb7185 0%, #a855f7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+} 

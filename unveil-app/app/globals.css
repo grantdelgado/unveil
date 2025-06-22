@@ -1,0 +1,300 @@
+@import 'tailwindcss';
+
+:root {
+  /* Brand Colors - Unveil Palette */
+  --color-bg: #fdfffc; /* Soft off-white background */
+  --color-text: #333333;
+  --color-muted: #888888;
+
+  /* Brand Accents */
+  --color-primary: #f7e8e0; /* muted rose */
+  --color-accent: #d4c2fb; /* dusk lavender */
+  --color-brand-pink: #ff89a6; /* Primary brand pink for Unveil header */
+  --color-success: #cce8d4;
+  --color-error: #fddcdc;
+
+  /* Design Tokens */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --elevation-1: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+  /* Typography */
+  --font-sans: var(--font-inter);
+}
+
+@theme inline {
+  --color-background: var(--color-bg);
+  --color-foreground: var(--color-text);
+  --font-sans: var(--font-sans);
+  --color-brand-pink: var(--color-brand-pink);
+}
+
+/* Dark mode support with brand consistency */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #1a1a1a; /* Dark background */
+    --color-text: #f5f5f5; /* Light text */
+    --color-muted: #a0a0a0; /* Muted text */
+    --color-primary: #2c1810; /* Dark muted rose */
+    --color-accent: #2a2442; /* Dark dusk lavender */
+    --color-success: #1a2e20;
+    --color-error: #2e1a1a;
+  }
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family:
+    var(--font-sans),
+    system-ui,
+    -apple-system,
+    sans-serif;
+  line-height: 1.6;
+  /* iOS Safari viewport stability */
+  -webkit-text-size-adjust: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* iOS Safari keyboard bug fixes */
+@supports (-webkit-touch-callout: none) {
+  /* iOS Safari specific styles */
+  input[type="text"],
+  input[type="tel"],
+  input[type="email"],
+  input[type="number"],
+  input[type="password"],
+  textarea {
+    /* Prevent zoom on focus */
+    font-size: 16px !important;
+    /* Stable viewport behavior */
+    -webkit-appearance: none;
+    border-radius: 0;
+  }
+  
+  /* Fix for iOS keyboard pushing content */
+  .ios-keyboard-fix {
+    padding-bottom: env(keyboard-inset-height, 0);
+  }
+}
+
+/* Brand pink utility class */
+.text-brand-pink {
+  color: var(--color-brand-pink);
+}
+
+/* Custom background utility class */
+.bg-app {
+  background-color: var(--color-bg);
+}
+
+/* Safe area support for devices with home indicators */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .h-safe-area-inset-bottom {
+    height: env(safe-area-inset-bottom);
+  }
+
+  .pb-safe-area {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .pt-safe-area {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .px-safe-area {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* Custom login animation */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s ease-out;
+}
+
+/* Enhanced loading animations */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+/* Success toast animation */
+@keyframes success-bounce {
+  0%, 20%, 53%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40%, 43% {
+    transform: translateY(-10px);
+  }
+  70% {
+    transform: translateY(-5px);
+  }
+}
+
+.animate-success-bounce {
+  animation: success-bounce 0.6s ease-out;
+}
+
+/* Gentle slide animations for mobile */
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-down {
+  animation: slide-down 0.3s ease-out;
+}
+
+/* Pulse animation for loading states */
+@keyframes gentle-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.animate-gentle-pulse {
+  animation: gentle-pulse 2s ease-in-out infinite;
+}
+
+/* Respect user motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  .animate-shimmer,
+  .animate-success-bounce,
+  .animate-slide-up,
+  .animate-slide-down,
+  .animate-fade-in-up,
+  .animate-gentle-pulse {
+    animation: none !important;
+  }
+}
+
+/* Enhanced focus styles for accessibility */
+.focus-ring {
+  outline: 2px solid #FF6B6B;
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[role="button"]:focus-visible,
+[role="tab"]:focus-visible {
+  outline: 2px solid #FF6B6B;
+  outline-offset: 2px;
+  /* Enhanced for dark mode */
+  filter: drop-shadow(0 0 4px rgba(255, 107, 107, 0.3));
+}
+
+/* Touch feedback for mobile */
+button, [role="button"] {
+  -webkit-tap-highlight-color: rgba(255, 107, 107, 0.2);
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  /* Native haptic feedback on supported devices */
+  touch-action: manipulation;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .text-gray-500 {
+    color: #000000;
+  }
+  
+  .text-gray-400 {
+    color: #333333;
+  }
+  
+  .bg-gray-50 {
+    background-color: #ffffff;
+    border: 1px solid #000000;
+  }
+  
+  /* Enhanced button contrast */
+  button {
+    border: 2px solid currentColor;
+  }
+}
+
+/* PWA viewport optimization */
+@viewport {
+  width: device-width;
+  initial-scale: 1;
+  maximum-scale: 1;
+  user-scalable: no;
+}
+
+/* Smooth scrolling for better UX */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Dark mode utility classes */
+.dark {
+  color-scheme: dark;
+}
+
+.dark .bg-app {
+  background-color: var(--color-bg);
+}
+
+.dark .text-primary {
+  color: var(--color-text);
+}

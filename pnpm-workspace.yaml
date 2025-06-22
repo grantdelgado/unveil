@@ -1,0 +1,8 @@
+packages:
+  - 'unveil-app'
+  - 'unveil-website'
+
+ignoredBuiltDependencies:
+  - esbuild
+  - msw
+  - supabase 
