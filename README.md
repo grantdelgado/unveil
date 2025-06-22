@@ -109,4 +109,4 @@ Each project maintains its own environment variables:
 - **App**: Deploy from `unveil-app/` directory
 - **Website**: Deploy from `unveil-website/` directory
 
-Both projects can be deployed independently. 
+Both projects can be deployed independently. # Test deployment Sun Jun 22 12:35:21 HST 2025
