@@ -92,14 +92,12 @@ interface TestEvent {
 }
 
 // Event guest with role
-interface EventGuestWithRole {
+interface EventParticipantWithRole {
   id: string;
   event_id: string;
   user_id: string;
   role: 'host' | 'guest' | 'admin';
   rsvp_status: string;
-  guest_name?: string;
-  phone?: string;
 }
 
 // Test scenarios for comprehensive testing
@@ -477,7 +475,7 @@ class TestUserManager {
 
           // Skip if this is the primary host (already assigned via host_user_id)
           if (userConfig.phone === eventConfig.hostPhone) {
-            // Still create event_guests entry for primary host for consistency
+            // Still create event_participants entry for primary host for consistency
             await this.assignUserToEvent(
               createdUser.user.id,
               event.id,
@@ -556,7 +554,7 @@ class TestUserManager {
         .select(
           `
           *,
-          event_guests(user_id, role, guest_name)
+          event_participants(user_id, role, rsvp_status)
         `,
         )
         .in(
@@ -572,7 +570,7 @@ class TestUserManager {
           console.log(`🎉 ${event.title}`);
           console.log(`   📅 Date: ${event.event_date}`);
           console.log(`   📍 Location: ${event.location || 'Not set'}`);
-          console.log(`   👥 Participants: ${event.event_guests?.length || 0}`);
+          console.log(`   👥 Participants: ${event.event_participants?.length || 0}`);
           console.log('');
         }
       }
@@ -615,16 +613,16 @@ class TestUserManager {
 
       const userIds = testUsers.map((u) => u.id);
 
-      // Delete event_guests entries
-      const { error: guestsError } = await supabaseAdmin
-        .from('event_guests')
+      // Delete event_participants entries
+      const { error: participantsError } = await supabaseAdmin
+        .from('event_participants')
         .delete()
         .in('user_id', userIds);
 
-      if (guestsError) {
+      if (participantsError) {
         console.warn(
-          '⚠️  Failed to delete some event guests:',
-          guestsError.message,
+          '⚠️  Failed to delete some event participants:',
+          participantsError.message,
         );
       }
 

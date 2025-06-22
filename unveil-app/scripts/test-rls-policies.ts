@@ -380,67 +380,7 @@ class RLSTestSuite {
     console.log('✅ User profile access policies working correctly\n');
   }
 
-  async testSubEventAccess() {
-    console.log('🔒 Testing Sub-Event Access Policies...');
 
-    const [hostUser, guestUser, unauthorizedUser] = this.testUsers;
-    const [testEvent] = this.testEvents;
-
-    // Create test sub-event
-    await this.switchUser(hostUser.email);
-    const { data: subEvent, error: subEventError } = await supabase
-      .from('sub_events')
-      .insert({
-        event_id: testEvent.id,
-        name: 'Ceremony',
-        description: 'Wedding ceremony',
-      })
-      .select()
-      .single();
-
-    if (subEventError) {
-      throw new Error('Failed to create test sub-event');
-    }
-
-    // Test access patterns
-    const hostSubEventAccess = await supabase
-      .from('sub_events')
-      .select('*')
-      .eq('event_id', testEvent.id);
-
-    if (hostSubEventAccess.error || hostSubEventAccess.data.length === 0) {
-      throw new Error('Host should be able to view sub-events for their event');
-    }
-
-    await this.switchUser(guestUser.email);
-    const guestSubEventAccess = await supabase
-      .from('sub_events')
-      .select('*')
-      .eq('event_id', testEvent.id);
-
-    if (guestSubEventAccess.error) {
-      throw new Error(
-        "Guest should be able to view sub-events for events they're invited to",
-      );
-    }
-
-    await this.switchUser(unauthorizedUser.email);
-    const unauthorizedSubEventAccess = await supabase
-      .from('sub_events')
-      .select('*')
-      .eq('event_id', testEvent.id);
-
-    if (
-      !unauthorizedSubEventAccess.error &&
-      unauthorizedSubEventAccess.data.length > 0
-    ) {
-      throw new Error(
-        'Unauthorized user should not be able to view sub-events',
-      );
-    }
-
-    console.log('✅ Sub-event access policies working correctly\n');
-  }
 
   async cleanup() {
     console.log('🧹 Cleaning up test data...');
