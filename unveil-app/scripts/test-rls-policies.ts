@@ -30,8 +30,8 @@ interface TestGuest {
   id: string;
   event_id: string;
   user_id: string;
-  phone: string;
-  guest_name: string;
+  role: string;
+  rsvp_status: string | null;
 }
 
 class RLSTestSuite {
@@ -69,8 +69,6 @@ class RLSTestSuite {
     const testGuest = await this.createTestGuest(
       testEvent.id,
       guestUser.id,
-      guestUser.phone,
-      guestUser.full_name,
     );
     this.testGuests = [testGuest];
 
@@ -87,7 +85,7 @@ class RLSTestSuite {
       this.testMessageAccess.bind(this),
       this.testMediaAccess.bind(this),
       this.testUserProfileAccess.bind(this),
-      this.testSubEventAccess.bind(this),
+      // this.testSubEventAccess.bind(this), // Sub-events table not in current schema
     ];
 
     let passed = 0;
@@ -169,7 +167,7 @@ class RLSTestSuite {
     // Test 1: Host can view all guests for their event
     await this.switchUser(hostUser.email);
     const hostGuestAccess = await supabase
-      .from('event_guests')
+      .from('event_participants')
       .select('*')
       .eq('event_id', testEvent.id);
 
@@ -180,7 +178,7 @@ class RLSTestSuite {
     // Test 2: Guest can view other guests in the same event
     await this.switchUser(guestUser.email);
     const guestGuestAccess = await supabase
-      .from('event_guests')
+      .from('event_participants')
       .select('*')
       .eq('event_id', testEvent.id);
 
@@ -193,7 +191,7 @@ class RLSTestSuite {
     // Test 3: Unauthorized user cannot view guest list
     await this.switchUser(unauthorizedUser.email);
     const unauthorizedGuestAccess = await supabase
-      .from('event_guests')
+      .from('event_participants')
       .select('*')
       .eq('event_id', testEvent.id);
 
@@ -449,7 +447,7 @@ class RLSTestSuite {
 
     // Clean up in reverse order due to foreign key constraints
     for (const testGuest of this.testGuests) {
-      await supabase.from('event_guests').delete().eq('id', testGuest.id);
+      await supabase.from('event_participants').delete().eq('id', testGuest.id);
     }
 
     for (const testEvent of this.testEvents) {
@@ -514,16 +512,13 @@ class RLSTestSuite {
   private async createTestGuest(
     eventId: string,
     userId: string,
-    phone: string,
-    guestName: string,
   ): Promise<TestGuest> {
     const { data, error } = await supabase
-      .from('event_guests')
+      .from('event_participants')
       .insert({
         event_id: eventId,
         user_id: userId,
-        phone,
-        guest_name: guestName,
+        role: 'guest',
         rsvp_status: 'pending',
       })
       .select()
