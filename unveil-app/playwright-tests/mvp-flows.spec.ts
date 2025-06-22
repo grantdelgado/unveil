@@ -9,8 +9,8 @@ import { addTestUser, cleanupTestUsers } from '../src/test/test-helpers';
 
 // Test data
 const TEST_EVENT = {
-  name: 'E2E Test Wedding',
-  date: '2024-12-25',
+  title: 'E2E Test Wedding',
+  event_date: '2024-12-25',
   description: 'End-to-end test event for MVP validation',
   venue: {
     name: 'Test Venue',
@@ -63,8 +63,8 @@ test.describe('MVP Critical User Flows', () => {
       await page.click('[data-testid="create-event-button"]');
       
       // Fill event details
-      await page.fill('[data-testid="event-name"]', TEST_EVENT.name);
-      await page.fill('[data-testid="event-date"]', TEST_EVENT.date);
+      await page.fill('[data-testid="event-name"]', TEST_EVENT.title);
+      await page.fill('[data-testid="event-date"]', TEST_EVENT.event_date);
       await page.fill('[data-testid="event-description"]', TEST_EVENT.description);
       await page.fill('[data-testid="venue-name"]', TEST_EVENT.venue.name);
       await page.fill('[data-testid="venue-address"]', TEST_EVENT.venue.address);
@@ -73,7 +73,7 @@ test.describe('MVP Critical User Flows', () => {
       
       // Verify event creation
       await expect(page.locator('[data-testid="event-created-success"]')).toBeVisible();
-      await expect(page.locator('h1')).toContainText(TEST_EVENT.name);
+      await expect(page.locator('h1')).toContainText(TEST_EVENT.title);
       
       // Extract event ID from URL
       const url = page.url();
@@ -136,7 +136,7 @@ test.describe('MVP Critical User Flows', () => {
       await page.goto(`/guest/events/${eventId}`);
       
       // Verify event details are visible
-      await expect(page.locator('h1')).toContainText(TEST_EVENT.name);
+      await expect(page.locator('h1')).toContainText(TEST_EVENT.title);
       await expect(page.locator('[data-testid="event-date"]')).toContainText('December 25, 2024');
     });
 

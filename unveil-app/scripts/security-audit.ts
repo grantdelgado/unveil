@@ -189,10 +189,10 @@ async function testDatabaseSecurity() {
     const { error } = await supabase
       .from('events')
       .insert({
-        name: 'Security Test Event',
-        date: '2024-12-25',
+        title: 'Security Test Event',
+        event_date: '2024-12-25',
         description: 'Test event',
-        created_by: '00000000-0000-0000-0000-000000000000' // Invalid UUID
+        host_user_id: '00000000-0000-0000-0000-000000000000' // Invalid UUID
       });
     
     if (error && (error.message.includes('policy') || error.message.includes('permission'))) {
@@ -234,7 +234,7 @@ async function testDatabaseSecurity() {
     const { error } = await supabase
       .from('events')
       .select('*')
-      .eq('name', maliciousInput);
+      .eq('title', maliciousInput);
     
     // If this doesn't throw an error, Supabase's parameterized queries are working
     addResult({
@@ -266,7 +266,7 @@ async function testDatabaseSecurity() {
   try {
     const { data, error } = await supabase
       .from('users')
-      .select('phone_number, email')
+      .select('phone, email')
       .limit(1);
     
     if (error && error.message.includes('permission')) {

@@ -114,7 +114,7 @@ interface TestScenario {
   }>;
   events: Array<{
     title: string;
-    date: string;
+    event_date: string;
     location?: string;
     hostPhone: string; // Phone of the primary host
   }>;
@@ -147,7 +147,7 @@ const SCENARIOS: Record<string, TestScenario> = {
     events: [
       {
         title: "Sarah & Tom's Wedding",
-        date: '2024-06-15',
+        event_date: '2024-06-15',
         location: 'Rose Garden Venue',
         hostPhone: '+15550001001',
       },
@@ -191,7 +191,7 @@ const SCENARIOS: Record<string, TestScenario> = {
     events: [
       {
         title: 'Joint Celebration Event',
-        date: '2024-07-20',
+        event_date: '2024-07-20',
         location: 'Community Center',
         hostPhone: '+15550001001', // Primary host
       },
@@ -218,13 +218,13 @@ const SCENARIOS: Record<string, TestScenario> = {
     events: [
       {
         title: 'First Wedding Event',
-        date: '2024-05-10',
+        event_date: '2024-05-10',
         location: 'Beach Resort',
         hostPhone: '+15550001001',
       },
       {
         title: 'Second Wedding Event',
-        date: '2024-08-25',
+        event_date: '2024-08-25',
         location: 'Mountain Lodge',
         hostPhone: '+15550001002',
       },
@@ -357,7 +357,7 @@ class TestUserManager {
 
   async createTestEvent(config: {
     title: string;
-    date: string;
+    event_date: string;
     location?: string;
     hostUserId: string;
   }): Promise<TestEvent> {
@@ -368,7 +368,7 @@ class TestUserManager {
         .from('events')
         .insert({
           title: config.title,
-          event_date: config.date,
+          event_date: config.event_date,
           location: config.location,
           host_user_id: config.hostUserId,
           is_public: false,
@@ -398,12 +398,10 @@ class TestUserManager {
     console.log(`👥 Assigning user to event with role: ${role}`);
 
     try {
-      const { error } = await supabaseAdmin.from('event_guests').insert({
+      const { error } = await supabaseAdmin.from('event_participants').insert({
         event_id: eventId,
         user_id: userId,
         role: role,
-        guest_name: userName,
-        phone: userPhone,
         rsvp_status: role === 'host' ? 'attending' : 'pending',
       });
 
@@ -463,7 +461,7 @@ class TestUserManager {
         // Create the event
         const event = await this.createTestEvent({
           title: eventConfig.title,
-          date: eventConfig.date,
+          event_date: eventConfig.event_date,
           location: eventConfig.location,
           hostUserId: hostUser.user.id,
         });
