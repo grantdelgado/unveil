@@ -129,7 +129,10 @@ async function runLighthouseAudit(url: string, chrome: any): Promise<LighthouseR
     const htmlReportPath = join(reportDir, `${urlSlug}-${Date.now()}.html`);
     
     if (runnerResult.report) {
-      writeFileSync(htmlReportPath, runnerResult.report);
+      const reportContent = Array.isArray(runnerResult.report) 
+        ? runnerResult.report.join('\n') 
+        : runnerResult.report;
+      writeFileSync(htmlReportPath, reportContent);
       console.log(`   📄 Detailed report saved: ${htmlReportPath}`);
     }
 
