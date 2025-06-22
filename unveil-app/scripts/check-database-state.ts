@@ -36,7 +36,7 @@ async function checkDatabaseState() {
     // Check users
     const { data: users, error: usersError } = await supabase
       .from('users')
-      .select('id, email, full_name, phone, role, created_at')
+      .select('id, email, full_name, phone, created_at')
       .order('created_at', { ascending: false });
 
     if (usersError) {
@@ -50,7 +50,7 @@ async function checkDatabaseState() {
         console.log(`   Total: ${users.length} users`);
         users.forEach((user, i) => {
           console.log(
-            `   ${i + 1}. ${user.full_name || 'No name'} (${user.email || 'No email'}) - ${user.role || 'No role'}`,
+            `   ${i + 1}. ${user.full_name || 'No name'} (${user.email || 'No email'}) - ${user.phone || 'No phone'}`,
           );
         });
       } else {
@@ -91,21 +91,21 @@ async function checkDatabaseState() {
 
     console.log('');
 
-    // Check event guests
+    // Check event participants
     const { data: guests, error: guestsError } = await supabase
-      .from('event_guests')
+      .from('event_participants')
       .select(
-        'id, event_id, guest_name, guest_email, phone, rsvp_status, user_id, created_at',
+        'id, event_id, user_id, role, rsvp_status, created_at',
       )
       .order('created_at', { ascending: false });
 
     if (guestsError) {
-      console.log('❌ Could not fetch event guests');
+      console.log('❌ Could not fetch event participants');
       console.log('Error:', guestsError.message);
     } else {
-      console.log('👤 EVENT GUESTS:');
+      console.log('👤 EVENT PARTICIPANTS:');
       if (guests && guests.length > 0) {
-        console.log(`   Total: ${guests.length} guests`);
+        console.log(`   Total: ${guests.length} participants`);
 
         // Group by event
         const guestsByEvent: { [eventId: string]: typeof guests } = {};
@@ -121,12 +121,12 @@ async function checkDatabaseState() {
           console.log(`   Event: ${event?.title || 'Unknown Event'}`);
           eventGuests.forEach((guest) => {
             const status = guest.rsvp_status || 'No RSVP';
-            const hasAccount = guest.user_id ? '✅ Has account' : '📧 SMS only';
-            console.log(`     • ${guest.guest_name} (${status}) ${hasAccount}`);
+            const role = guest.role || 'guest';
+            console.log(`     • User ${guest.user_id} (${role}, ${status})`);
           });
         });
       } else {
-        console.log('   No event guests found');
+        console.log('   No event participants found');
       }
     }
 
