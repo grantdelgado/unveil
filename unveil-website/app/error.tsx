@@ -128,4 +128,7 @@ export default function Error({
       </footer>
     </div>
   )
-} 
+}
+
+// Add displayName for better React 19 compatibility
+Error.displayName = 'ErrorPage' 

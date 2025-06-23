@@ -12,7 +12,7 @@ const nextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256],
   },
   poweredByHeader: false,
-   // Prevent cross-imports from other workspace packages
+  // Prevent cross-imports from other workspace packages
   webpack: (config) => {
     config.resolve.alias = {
       ...config.resolve.alias,

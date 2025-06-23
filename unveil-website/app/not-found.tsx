@@ -87,4 +87,7 @@ export default function NotFound() {
       </footer>
     </div>
   )
-} 
+}
+
+// Add displayName for better React 19 compatibility
+NotFound.displayName = 'NotFoundPage' 
