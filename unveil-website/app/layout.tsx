@@ -1,8 +1,6 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
+import Link from 'next/link'
 import './globals.css'
-
-const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Unveil - Wedding Communication Made Simple',
@@ -43,16 +41,16 @@ function SimpleHeader() {
     <header className="sticky top-0 z-50 w-full border-b border-gray-200/50 bg-white/80 backdrop-blur-md">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <a href="/" className="flex items-center space-x-2">
+          <Link href="/" className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-rose-500 rounded-lg flex items-center justify-center">
               <span className="text-white text-sm">♥</span>
             </div>
             <span className="text-xl font-bold bg-gradient-to-r from-rose-500 to-purple-600 bg-clip-text text-transparent">Unveil</span>
-          </a>
+          </Link>
           <nav className="hidden md:flex items-center space-x-8">
-            <a href="/" className="text-gray-700 hover:text-gray-900 font-medium">Home</a>
-            <a href="/how-it-works" className="text-gray-700 hover:text-gray-900 font-medium">How It Works</a>
-            <a href="/policies" className="text-gray-700 hover:text-gray-900 font-medium">Policies</a>
+            <Link href="/" className="text-gray-700 hover:text-gray-900 font-medium">Home</Link>
+            <Link href="/how-it-works" className="text-gray-700 hover:text-gray-900 font-medium">How It Works</Link>
+            <Link href="/policies" className="text-gray-700 hover:text-gray-900 font-medium">Policies</Link>
           </nav>
         </div>
       </div>
@@ -84,9 +82,9 @@ function SimpleFooter() {
               </a>
             </p>
             <div className="flex items-center justify-center gap-6">
-              <a href="/policies" className="hover:text-gray-700">Privacy Policy</a>
+              <Link href="/policies" className="hover:text-gray-700">Privacy Policy</Link>
               <span className="text-gray-300">•</span>
-              <a href="/how-it-works" className="hover:text-gray-700">How It Works</a>
+              <Link href="/how-it-works" className="hover:text-gray-700">How It Works</Link>
             </div>
             <p className="text-xs text-gray-400 pt-4">
               © 2024 Unveil. Made with ♥ for couples everywhere.
@@ -105,7 +103,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="scroll-smooth">
-      <body className={`${inter.className} antialiased`}>
+      <body className="antialiased">
         <div className="min-h-screen flex flex-col">
           <SimpleHeader />
           <main className="flex-1">
