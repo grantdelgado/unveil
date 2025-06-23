@@ -41,6 +41,50 @@ const config: Config = {
         'unveil-gradient': 'linear-gradient(135deg, #fb7185 0%, #a855f7 100%)',
         'unveil-gradient-subtle': 'linear-gradient(135deg, #fecaca 0%, #ddd6fe 100%)',
       },
+      animation: {
+        'fade-in': 'fadeIn 0.6s ease-out forwards',
+        'slide-in-top': 'slideInFromTop 0.8s ease-out forwards',
+        'slide-in-bottom': 'slideInFromBottom 0.8s ease-out forwards',
+        'heart-pulse': 'heartPulse 1s ease-in-out infinite',
+        'gentle-glow': 'gentleGlow 2s ease-in-out infinite',
+        'shimmer': 'shimmer 2s ease-in-out infinite',
+        'float': 'float 3s ease-in-out infinite',
+      },
+      keyframes: {
+        fadeIn: {
+          from: { opacity: '0', transform: 'translateY(10px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        slideInFromTop: {
+          from: { opacity: '0', transform: 'translateY(-20px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        slideInFromBottom: {
+          from: { opacity: '0', transform: 'translateY(20px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        heartPulse: {
+          '0%': { transform: 'scale(1)' },
+          '50%': { transform: 'scale(1.1)' },
+          '100%': { transform: 'scale(1)' },
+        },
+        gentleGlow: {
+          '0%': { boxShadow: '0 0 5px rgba(251, 113, 133, 0.3)' },
+          '50%': { 
+            boxShadow: '0 0 20px rgba(251, 113, 133, 0.4), 0 0 30px rgba(168, 85, 247, 0.3)' 
+          },
+          '100%': { boxShadow: '0 0 5px rgba(251, 113, 133, 0.3)' },
+        },
+        shimmer: {
+          '0%': { backgroundPosition: '-200% center' },
+          '100%': { backgroundPosition: '200% center' },
+        },
+        float: {
+          '0%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(-2px)' },
+          '100%': { transform: 'translateY(0px)' },
+        },
+      },
     },
   },
   plugins: [],
