@@ -1,3 +1,5 @@
+import Image from 'next/image'
+
 export default function PoliciesPage() {
   return (
     <div className="min-h-screen">
@@ -44,6 +46,23 @@ export default function PoliciesPage() {
                 Every guest using Unveil provides <strong>explicit consent</strong> for photo sharing and communication 
                 within the wedding event. Here&apos;s how we ensure clear, documented consent:
               </p>
+              
+              {/* Guest Consent Screenshot */}
+              <div className="mb-12 flex justify-center">
+                <div className="max-w-sm mx-auto bg-gray-50 rounded-2xl p-4 shadow-lg">
+                  <Image
+                    src="/screenshots/guest-consent-mockup.png"
+                    alt="Guest consent process showing the Add Guest form with clear SMS consent checkbox and explanation"
+                    width={300}
+                    height={600}
+                    className="rounded-xl shadow-sm"
+                    priority
+                  />
+                  <p className="text-sm text-gray-600 mt-3 text-center">
+                    Example of clear consent process in Unveil
+                  </p>
+                </div>
+              </div>
               
               <div className="grid md:grid-cols-2 gap-8 text-left mt-12">
                 <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-100">

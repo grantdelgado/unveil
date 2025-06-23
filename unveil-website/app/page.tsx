@@ -8,10 +8,6 @@ export default function HomePage() {
         {/* Enhanced background */}
         <div className="absolute inset-0 bg-gradient-to-br from-white via-rose-50/30 to-purple-50/30"></div>
         
-        {/* Floating decorative elements */}
-        <div className="absolute top-20 left-10 w-20 h-20 bg-rose-100 rounded-full opacity-20"></div>
-        <div className="absolute bottom-20 right-10 w-16 h-16 bg-purple-100 rounded-full opacity-20"></div>
-        
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           {/* Logo section */}
           <div className="mb-8">
