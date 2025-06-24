@@ -7,7 +7,7 @@ Sentry.init({
   tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.05 : 1.0,
   
   // Enhanced debugging in development
-  debug: process.env.NODE_ENV === 'development',
+  debug: false,
   
   // Environment identification
   environment: process.env.NODE_ENV || 'development',

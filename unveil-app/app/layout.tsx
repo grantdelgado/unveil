@@ -15,6 +15,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NODE_ENV === 'production' ? 'https://unveil.app' : 'http://localhost:3000'),
   title: APP_CONFIG.name,
   description: APP_CONFIG.description,
   applicationName: 'Unveil Wedding App',
@@ -114,22 +115,8 @@ export default function RootLayout({
         <meta name="theme-color" content="#ff89a6" />
         
         {/* Preload critical resources */}
-        <link rel="preload" href="/fonts/inter-var.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="//fonts.googleapis.com" />
         <link rel="dns-prefetch" href="//wvhtbqvnamerdkkjknuv.supabase.co" />
-        
-        {/* Service Worker */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              if ('serviceWorker' in navigator) {
-                window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/sw.js');
-                });
-              }
-            `,
-          }}
-        />
       </head>
       <body className={`${inter.variable} antialiased font-sans touch-manipulation`}>
         <ReactQueryProvider>

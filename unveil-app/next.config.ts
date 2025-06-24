@@ -121,20 +121,6 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        // Service worker
-        source: '/sw.js',
-        headers: [
-          {
-            key: 'Content-Type',
-            value: 'application/javascript',
-          },
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=0', // No cache for SW
-          },
-        ],
-      },
-      {
         // Static assets optimization
         source: '/icons/(.*)',
         headers: [
@@ -178,7 +164,7 @@ export default withSentryConfig(nextConfig, {
   project: process.env.SENTRY_PROJECT,
   
   // Upload source maps in production for better error tracking
-  silent: process.env.NODE_ENV === 'production',
+  silent: true, // Always silent to reduce console noise
   widenClientFileUpload: true,
   reactComponentAnnotation: {
     enabled: true,
@@ -187,5 +173,5 @@ export default withSentryConfig(nextConfig, {
   sourcemaps: {
     disable: true,
   },
-  disableLogger: process.env.NODE_ENV === 'production',
+  disableLogger: true, // Always disable logger
 });
