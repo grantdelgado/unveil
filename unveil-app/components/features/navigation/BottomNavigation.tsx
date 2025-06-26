@@ -126,46 +126,60 @@ export function BottomNavigation({
     };
   }, []);
 
-  const basePath =
-    role === 'host' ? `/host/events/${eventId}` : `/guest/events/${eventId}`;
-
-  const navItems = [
+  // Define role-specific navigation items
+  const navItems = role === 'host' ? [
+    // Host navigation - centered around single event dashboard
     {
-      href: `${basePath}`,
+      href: `/host/events/${eventId}/dashboard`,
       icon: '🏠',
-      label: 'Home',
-      isActive: pathname === basePath,
+      label: 'Dashboard',
+      isActive: pathname.includes('/dashboard'),
     },
     {
-      href: `${basePath}/photos`,
+      href: `/host/events/${eventId}/edit`,
+      icon: '⚙️',
+      label: 'Edit Event',
+      isActive: pathname.includes('/edit'),
+    },
+    {
+      href: '/select-event',
+      icon: '📋',
+      label: 'Events',
+      isActive: pathname === '/select-event',
+    },
+    {
+      href: '/profile',
+      icon: '👤',
+      label: 'Profile',
+      isActive: pathname === '/profile',
+    },
+  ] : [
+    // Guest navigation - existing structure
+    {
+      href: `/guest/events/${eventId}/home`,
+      icon: '🏠',
+      label: 'Home',
+      isActive: pathname.includes('/home'),
+    },
+    {
+      href: `/guest/events/${eventId}/photos`,
       icon: '📸',
       label: 'Photos',
       isActive: pathname.includes('/photos'),
     },
     {
-      href: `${basePath}/messages`,
+      href: `/guest/events/${eventId}/messages`,
       icon: '💬',
       label: 'Messages',
       isActive: pathname.includes('/messages'),
       badge: unreadCount > 0 ? unreadCount : undefined,
     },
-    ...(role === 'host'
-      ? [
-          {
-            href: `${basePath}/dashboard`,
-            icon: '⚙️',
-            label: 'Manage',
-            isActive: pathname.includes('/dashboard'),
-          },
-        ]
-      : [
-          {
-            href: `${basePath}/rsvp`,
-            icon: '✅',
-            label: 'RSVP',
-            isActive: pathname.includes('/rsvp'),
-          },
-        ]),
+    {
+      href: '/profile',
+      icon: '👤',
+      label: 'Profile',
+      isActive: pathname === '/profile',
+    },
   ];
 
   // Don't render navigation on certain pages

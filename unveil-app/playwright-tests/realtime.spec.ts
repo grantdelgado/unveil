@@ -390,7 +390,7 @@ test.describe('Real-Time Features E2E Tests', () => {
     await hostPage.waitForSelector(`text=${testMessage}`)
     
     // Navigate away from the event
-    await hostPage.goto('/host/dashboard')
+    await hostPage.goto('/select-event')
     await hostPage.waitForLoadState('networkidle')
     
     // Navigate back to the event

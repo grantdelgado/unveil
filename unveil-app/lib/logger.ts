@@ -34,6 +34,7 @@ interface LoggerConfig {
   enableStructuredLogging: boolean;
   logLevel: LogLevel;
   enabledCategories: LogCategory[];
+  enableDebug: boolean;
 }
 
 // Default configuration
@@ -58,6 +59,7 @@ const defaultConfig: LoggerConfig = {
           'system',
         ]
       : ['error', 'api', 'database', 'system'], // Production: only critical categories
+  enableDebug: process.env.NODE_ENV === 'development',
 };
 
 // Emoji mapping for visual categorization
@@ -130,6 +132,19 @@ class Logger {
 
   private writeLog(entry: LogEntry): void {
     const formattedMessage = this.formatMessage(entry.category, entry.message);
+
+    // Filter out expected development mode WebSocket errors to reduce noise
+    if (process.env.NODE_ENV === 'development') {
+      const messageStr = typeof entry.message === 'string' ? entry.message : '';
+      const isExpectedDevError = messageStr.includes('WebSocket connection') && 
+                                messageStr.includes('WebSocket is closed before the connection is established');
+      
+      if (isExpectedDevError) {
+        // Only log these as debug level in development
+        console.debug('🔧 Development mode WebSocket warning (expected in React Strict Mode):', entry);
+        return;
+      }
+    }
 
     // Store in history for debugging
     if (this.config.isDevelopment) {

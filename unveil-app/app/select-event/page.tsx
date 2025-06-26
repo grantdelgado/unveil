@@ -9,16 +9,6 @@ import { usePullToRefresh } from '@/hooks/common/usePullToRefresh';
 import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import { 
   PageWrapper,
-  CardContainer,
-  LogoContainer,
-  PageTitle,
-  SubTitle,
-  SectionTitle,
-  PrimaryButton,
-  IconButton,
-  MicroCopy,
-  DevModeBox,
-  EmptyState,
   SkeletonLoader
 } from '@/components/ui';
 
@@ -64,7 +54,6 @@ export default function SelectEventPage() {
         <div className="max-w-md mx-auto space-y-6 pt-8">
           <div className="flex justify-between items-start mb-6">
             <div className="flex-1">
-              <LogoContainer className="justify-start mb-4" />
               <div className="h-8 w-32 bg-gray-200 rounded animate-pulse mb-2"></div>
               <div className="h-4 w-48 bg-gray-200 rounded animate-pulse"></div>
             </div>
@@ -80,17 +69,20 @@ export default function SelectEventPage() {
   if (error) {
     return (
       <PageWrapper>
-        <CardContainer>
+        <div className="max-w-md mx-auto px-4 py-6">
           <div className="text-center space-y-4">
-            <PageTitle>Error Loading Events</PageTitle>
-            <SubTitle>
+            <h1 className="text-2xl font-bold text-gray-900">Error Loading Events</h1>
+            <p className="text-gray-600">
               {error}
-            </SubTitle>
-            <PrimaryButton onClick={refetch}>
+            </p>
+            <button 
+              onClick={refetch}
+              className="px-6 py-3 bg-rose-500 text-white rounded-xl font-semibold hover:bg-rose-600 transition-colors"
+            >
               Try Again
-            </PrimaryButton>
+            </button>
           </div>
-        </CardContainer>
+        </div>
       </PageWrapper>
     );
   }
@@ -106,13 +98,13 @@ export default function SelectEventPage() {
     window.location.href = path;
   };
 
-  const handleCreateEvent = () => {
-    window.location.href = '/host/events/create';
-  };
-
   const handleProfile = () => {
     window.location.href = '/profile';
   };
+
+  // Group events by user role for better organization
+  const hostEvents = events?.filter(event => event.user_role === 'host') || [];
+  const guestEvents = events?.filter(event => event.user_role === 'guest') || [];
 
   return (
     <PageWrapper>
@@ -134,32 +126,40 @@ export default function SelectEventPage() {
           refreshProgress={pullToRefresh.refreshProgress}
         />
 
-        <CardContainer maxWidth="md">
+        <div className="max-w-md mx-auto px-4 py-6 space-y-8">
           {/* Header */}
-          <div className="flex justify-between items-start mb-6">
+          <div className="flex justify-between items-start">
             <div className="flex-1">
-              <LogoContainer className="justify-start mb-4" />
-              <PageTitle className="text-left mb-2">
+              <h1 className="text-4xl font-bold text-rose-500 mb-2">
                 Welcome!
-              </PageTitle>
-              <SubTitle>Choose an event to continue</SubTitle>
+              </h1>
+              <p className="text-lg text-gray-600">
+                Choose an event to continue.
+              </p>
             </div>
-            <IconButton 
+            <button 
               onClick={handleProfile}
-              size="lg"
+              className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors"
               aria-label="Profile settings"
             >
-              <span className="text-gray-600">👤</span>
-            </IconButton>
+              <svg className="w-6 h-6 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+              </svg>
+            </button>
           </div>
 
           {/* Events List */}
-          <div className="space-y-6">
-            {events && events.length > 0 ? (
-              <>
-                <SectionTitle>Your Events</SectionTitle>
-                <div className="space-y-4">
-                  {events.map((event) => {
+          <div className="space-y-8">
+            {/* Host Events */}
+            {hostEvents.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">💍</span>
+                  <h2 className="text-xl font-bold text-gray-800">Your Wedding</h2>
+                </div>
+                
+                <div className="space-y-3">
+                  {hostEvents.map((event) => {
                     const formattedDate = formatEventDate(event.event_date);
                     const eventInsights = insights[event.event_id];
                     
@@ -168,173 +168,145 @@ export default function SelectEventPage() {
                         key={event.event_id}
                         onClick={() => handleEventSelect(event)}
                         className={cn(
-                          'w-full p-5 border border-gray-200 rounded-lg bg-white text-left',
-                          'transition-all duration-200 hover:border-pink-300 hover:shadow-md hover:bg-pink-50',
-                          'focus:outline-none focus:ring-2 focus:ring-pink-300 focus:ring-offset-2',
-                          'active:scale-[0.98] active:shadow-sm',
-                          'min-h-[44px]' // Touch-friendly minimum height
+                          'w-full p-5 bg-white border border-gray-200 rounded-xl shadow-sm',
+                          'transition-all duration-200 hover:shadow-md hover:border-rose-300',
+                          'focus:outline-none focus:ring-2 focus:ring-rose-300 focus:ring-offset-2',
+                          'active:scale-[0.98]',
+                          'group'
                         )}
-                        aria-label={`Enter ${event.title} as ${event.user_role === 'host' ? 'Event Host' : 'Guest'}`}
-                        title={`Click to enter ${event.title} as ${event.user_role === 'host' ? 'Host' : 'Guest'}`}
                       >
-                        <div className="space-y-4">
-                          {/* Header with title and role */}
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-3 mb-2">
-                                <h3 className="text-lg font-semibold text-gray-900 group-hover:text-pink-700">
-                                  {event.title}
-                                </h3>
-                                <span className={cn(
-                                  'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-                                  event.user_role === 'host' 
-                                    ? 'bg-purple-100 text-purple-700 border border-purple-200' 
-                                    : 'bg-rose-100 text-rose-700 border border-rose-200'
-                                )}>
-                                  {event.user_role === 'host' ? '👑 Host' : '🎊 Guest'}
-                                </span>
-                              </div>
-                              
-                              <div className="space-y-1 text-sm text-gray-600">
-                                <p className="flex items-center gap-2">
-                                  <span>📅</span>
-                                  <span>{formattedDate}</span>
-                                </p>
-                                {event.location && (
-                                  <p className="flex items-center gap-2">
-                                    <span>📍</span>
-                                    <span>{event.location}</span>
-                                  </p>
-                                )}
-                              </div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1 text-left">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                              {event.title}
+                            </h3>
+                            {event.location && (
+                              <p className="text-gray-600 italic mb-2">
+                                {event.location}
+                              </p>
+                            )}
+                            <div className="flex items-center gap-2 text-gray-600">
+                              <span>📅</span>
+                              <span className="font-medium">{formattedDate}</span>
                             </div>
-                           
-                           <div className="text-gray-400 group-hover:text-pink-500 transition-colors duration-200 ml-4">
-                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                             </svg>
-                           </div>
-                         </div>
-
-                         {/* Event insights for hosts */}
-                         {event.user_role === 'host' && eventInsights && (
-                           <div className="pt-3 border-t border-gray-100">
-                             <div className="grid grid-cols-2 gap-4">
-                               {/* Guest count and RSVP status */}
-                               <div>
-                                 <div className="flex items-center gap-2 text-sm">
-                                   <span className="text-gray-500">👥</span>
-                                   <span className="font-medium text-gray-700">
-                                     {eventInsights.totalGuests} guest{eventInsights.totalGuests !== 1 ? 's' : ''}
-                                   </span>
-                                 </div>
-                                 {eventInsights.totalGuests > 0 && (
-                                   <div className="mt-1 flex items-center gap-3 text-xs text-gray-600">
-                                     <span className="flex items-center gap-1">
-                                       <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                                       {eventInsights.attendingCount}
-                                     </span>
-                                     <span className="flex items-center gap-1">
-                                       <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
-                                       {eventInsights.maybeCount}
-                                     </span>
-                                     <span className="flex items-center gap-1">
-                                       <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                                       {eventInsights.declinedCount}
-                                     </span>
-                                     <span className="flex items-center gap-1">
-                                       <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                                       {eventInsights.pendingCount}
-                                     </span>
-                                   </div>
-                                 )}
-                               </div>
-
-                               {/* Response rate */}
-                               <div>
-                                 <div className="flex items-center gap-2 text-sm">
-                                   <span className="text-gray-500">📊</span>
-                                   <span className="font-medium text-gray-700">
-                                     {Math.round(eventInsights.responseRate)}% responded
-                                   </span>
-                                 </div>
-                                 {eventInsights.lastActivity && (
-                                   <div className="mt-1 text-xs text-gray-600">
-                                     Last activity: {new Date(eventInsights.lastActivity).toLocaleDateString()}
-                                   </div>
-                                 )}
-                               </div>
-                             </div>
-
-                             {/* Recent RSVP changes */}
-                             {eventInsights.recentChanges.length > 0 && (
-                               <div className="mt-3 text-xs text-gray-600">
-                                 <span className="font-medium">Recent: </span>
-                                 {eventInsights.recentChanges.slice(0, 2).map((change, idx) => (
-                                   <span key={idx} className="inline-block">
-                                     {change.userName} {change.status === 'attending' ? '✅' : change.status === 'declined' ? '❌' : '🤔'}
-                                     {idx < Math.min(eventInsights.recentChanges.length - 1, 1) && ', '}
-                                   </span>
-                                 ))}
-                               </div>
-                             )}
-                           </div>
-                         )}
-
-                         {/* Guest view - simpler info */}
-                         {event.user_role === 'guest' && eventInsights && eventInsights.totalGuests > 0 && (
-                           <div className="pt-3 border-t border-gray-100">
-                             <div className="flex items-center gap-4 text-sm text-gray-600">
-                               <span className="flex items-center gap-2">
-                                 <span>👥</span>
-                                 <span>{eventInsights.totalGuests} invited</span>
-                               </span>
-                               <span className="flex items-center gap-2">
-                                 <span>✅</span>
-                                 <span>{eventInsights.attendingCount} attending</span>
-                               </span>
-                             </div>
-                           </div>
-                         )}
-                       </div>
-                     </button>
+                            
+                            {/* Host insights preview */}
+                            {eventInsights && eventInsights.totalGuests > 0 && (
+                              <div className="mt-3 pt-3 border-t border-gray-100">
+                                <div className="flex items-center gap-4 text-sm text-gray-600">
+                                  <span>👥 {eventInsights.totalGuests} guests</span>
+                                  <span>✅ {eventInsights.attendingCount} attending</span>
+                                  <span>📊 {Math.round(eventInsights.responseRate)}% responded</span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="text-gray-400 group-hover:text-rose-500 transition-colors ml-4">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </div>
+                        </div>
+                      </button>
                     );
                   })}
                 </div>
-              </>
-            ) : (
-              <EmptyState
-                variant="events"
-                onAction={handleCreateEvent}
-              />
+              </div>
             )}
 
-            {/* Create Event Button */}
-            <div className="space-y-4">
-              <PrimaryButton onClick={handleCreateEvent}>
-                + Create New Event
-              </PrimaryButton>
+            {/* Guest Events */}
+            {guestEvents.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">🍾</span>
+                  <h2 className="text-xl font-bold text-gray-800">Weddings You&apos;re Invited To</h2>
+                </div>
+                
+                <div className="space-y-3">
+                  {guestEvents.map((event) => {
+                    const formattedDate = formatEventDate(event.event_date);
+                    
+                    return (
+                      <button
+                        key={event.event_id}
+                        onClick={() => handleEventSelect(event)}
+                        className={cn(
+                          'w-full p-5 bg-white border border-gray-200 rounded-xl shadow-sm',
+                          'transition-all duration-200 hover:shadow-md hover:border-rose-300',
+                          'focus:outline-none focus:ring-2 focus:ring-rose-300 focus:ring-offset-2',
+                          'active:scale-[0.98]',
+                          'group'
+                        )}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1 text-left">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                              {event.title}
+                            </h3>
+                            {event.location && (
+                              <p className="text-gray-600 italic mb-2">
+                                {event.location}
+                              </p>
+                            )}
+                            <div className="flex items-center gap-2 text-gray-600">
+                              <span>📅</span>
+                              <span className="font-medium">{formattedDate}</span>
+                            </div>
+                          </div>
+                          
+                          <div className="text-gray-400 group-hover:text-rose-500 transition-colors ml-4">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Empty State */}
+            {(!events || events.length === 0) && (
+              <div className="text-center py-12 space-y-6">
+                <div className="text-6xl">💒</div>
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    No events yet
+                  </h3>
+                  <p className="text-gray-600">
+                    You don&apos;t have any events to view at this time.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Development Mode Box */}
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <h4 className="font-semibold text-blue-900 mb-2">Development Mode</h4>
+            <div className="space-y-1 text-sm text-blue-800">
+              <p><strong>User ID:</strong> {user?.id || 'XXXXXXXXXX'}</p>
+              <p><strong>Event Count:</strong> {events?.length || 0}</p>
+              <p><strong>User Role:</strong> Authenticated</p>
             </div>
           </div>
 
-          {/* Microcopy */}
-          <div className="mt-6">
-            <MicroCopy>
-              {events && events.length > 0 
-                ? "Pull down to refresh your events • Need help? Contact support at help@unveil.app"
-                : "Need help? Contact support at help@unveil.app"
-              }
-            </MicroCopy>
+          {/* Footer */}
+          <div className="text-center">
+            <p className="text-sm text-gray-600">
+              Need help? Contact us at{' '}
+              <a 
+                href="mailto:support@unveil.app" 
+                className="text-rose-500 hover:text-rose-600 transition-colors"
+              >
+                support@unveil.app
+              </a>
+            </p>
           </div>
-
-          {/* Development Mode */}
-          <DevModeBox>
-            <p><strong>User ID:</strong> {user?.id}</p>
-            <p><strong>Events Found:</strong> {events?.length || 0}</p>
-            <p><strong>User Role:</strong> {user?.role || 'unknown'}</p>
-            <p><strong>Pull-to-refresh:</strong> {pullToRefresh.isPulling ? 'Active' : 'Ready'}</p>
-          </DevModeBox>
-        </CardContainer>
+        </div>
       </div>
     </PageWrapper>
   );

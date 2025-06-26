@@ -14,7 +14,6 @@ export const ROUTES = {
   SELECT_EVENT: '/select-event',
   RESET_PASSWORD: '/reset-password',
   HOST: {
-    DASHBOARD: '/host/dashboard',
     EVENTS: '/host/events',
     CREATE_EVENT: '/host/events/create',
     EVENT_DASHBOARD: (eventId: string) => `/host/events/${eventId}/dashboard`,

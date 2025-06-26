@@ -23,6 +23,7 @@ import {
   SubTitle,
   PrimaryButton,
   SecondaryButton,
+  BackButton,
   DevModeBox,
   SkeletonLoader
 } from '@/components/ui';
@@ -268,6 +269,16 @@ export default function EventDashboardPage() {
       )}
 
       <div className="max-w-4xl mx-auto space-y-6">
+        {/* Back Navigation */}
+        <div className="mb-2">
+          <BackButton 
+            href="/select-event"
+            fallback="/select-event"
+          >
+            Back to Events
+          </BackButton>
+        </div>
+
         {/* Event Header with QuickActions */}
         <EventHeader event={event} participantCount={participantCount}>
           <QuickActions eventId={eventId} />

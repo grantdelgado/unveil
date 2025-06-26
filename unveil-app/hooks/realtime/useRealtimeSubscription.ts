@@ -147,7 +147,7 @@ export function useRealtimeSubscription({
 
     // Prevent React StrictMode subscription race conditions in development
     const isDev = process.env.NODE_ENV === 'development';
-    const delay = isDev ? 50 : 0;
+    const delay = isDev ? 100 : 0;
 
     logger.realtime(`🔗 Setting up subscription: ${subscriptionId}`);
 
@@ -173,7 +173,7 @@ export function useRealtimeSubscription({
         if (onStatusChange) {
           onStatusChange('connecting');
           // Simulate connection success after a brief delay
-          setTimeout(() => onStatusChange('connected'), 100);
+          setTimeout(() => onStatusChange('connected'), 200);
         }
 
         logger.realtime(`✅ Subscription setup complete: ${subscriptionId}`);
@@ -201,16 +201,21 @@ export function useRealtimeSubscription({
       // Clear the setup timeout to prevent memory leaks
       clearTimeout(setupTimeoutId);
 
-      if (unsubscribeRef.current) {
-        unsubscribeRef.current();
-        unsubscribeRef.current = null;
-      }
+      // Add a small delay before cleanup to prevent race conditions with React Strict Mode
+      const cleanupDelay = isDev ? 50 : 0;
+      
+      setTimeout(() => {
+        if (unsubscribeRef.current) {
+          unsubscribeRef.current();
+          unsubscribeRef.current = null;
+        }
 
-      isConnectedRef.current = false;
+        isConnectedRef.current = false;
 
-      if (onStatusChange) {
-        onStatusChange('disconnected');
-      }
+        if (onStatusChange) {
+          onStatusChange('disconnected');
+        }
+      }, cleanupDelay);
     };
   }, [
     subscriptionId,

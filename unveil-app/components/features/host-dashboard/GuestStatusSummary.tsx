@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
-import { RealtimeChannel } from '@supabase/supabase-js';
+import { useRealtimeSubscription } from '@/hooks/realtime';
 
 interface GuestStatusSummaryProps {
   eventId: string;
@@ -34,45 +34,45 @@ const statusConfig = [
     label: 'All',
     icon: '👥',
     bgColor: 'bg-gray-100',
-    activeColor: 'bg-gray-200',
+    activeColor: 'bg-[#FF6B6B]',
     textColor: 'text-gray-700',
-    activeTextColor: 'text-gray-900',
+    activeTextColor: 'text-white',
   },
   {
     key: 'attending',
     label: 'Attending',
     icon: '✅',
     bgColor: 'bg-green-50',
-    activeColor: 'bg-green-100',
+    activeColor: 'bg-green-500',
     textColor: 'text-green-700',
-    activeTextColor: 'text-green-800',
+    activeTextColor: 'text-white',
   },
   {
     key: 'pending',
     label: 'Pending',
     icon: '⏳',
     bgColor: 'bg-orange-50',
-    activeColor: 'bg-orange-100',
+    activeColor: 'bg-orange-500',
     textColor: 'text-orange-700',
-    activeTextColor: 'text-orange-800',
+    activeTextColor: 'text-white',
   },
   {
     key: 'maybe',
     label: 'Maybe',
     icon: '🤷‍♂️',
     bgColor: 'bg-yellow-50',
-    activeColor: 'bg-yellow-100',
+    activeColor: 'bg-yellow-500',
     textColor: 'text-yellow-700',
-    activeTextColor: 'text-yellow-800',
+    activeTextColor: 'text-white',
   },
   {
     key: 'declined',
     label: 'Declined',
     icon: '❌',
     bgColor: 'bg-red-50',
-    activeColor: 'bg-red-100',
+    activeColor: 'bg-red-500',
     textColor: 'text-red-700',
-    activeTextColor: 'text-red-800',
+    activeTextColor: 'text-white',
   },
 ] as const;
 
@@ -240,7 +240,6 @@ export function GuestStatusSummary({
   const [loading, setLoading] = useState(true);
   const [recentActivity, setRecentActivity] = useState<RSVPActivity[]>([]);
   const [showActivity, setShowActivity] = useState(false);
-  const channelRef = useRef<RealtimeChannel | null>(null);
 
   const fetchStatusCounts = useCallback(async () => {
     try {
@@ -280,62 +279,52 @@ export function GuestStatusSummary({
     }
   }, [eventId]);
 
-  // Set up real-time subscription
+  // Set up real-time subscription using centralized hook
+  const { } = useRealtimeSubscription({
+    subscriptionId: `guest-status-summary-${eventId}`,
+    table: 'event_participants',
+    event: '*',
+    filter: `event_id=eq.${eventId}`,
+    enabled: Boolean(eventId),
+    onDataChange: useCallback(async (payload) => {
+      console.log('🔄 Real-time RSVP update:', payload);
+      
+      // Update activity feed for RSVP changes
+      if (payload.eventType === 'UPDATE' && payload.old && payload.new) {
+        const oldStatus = payload.old.rsvp_status;
+        const newStatus = payload.new.rsvp_status;
+        
+        if (oldStatus !== newStatus) {
+          // Fetch user name for activity
+          const { data: userData } = await supabase
+            .from('public_user_profiles')
+            .select('full_name')
+            .eq('id', payload.new.user_id)
+            .single();
+
+          const activity: RSVPActivity = {
+            id: payload.new.id,
+            user_name: userData?.full_name || 'Unknown User',
+            old_status: oldStatus,
+            new_status: newStatus,
+            timestamp: new Date().toISOString(),
+          };
+
+          setRecentActivity(prev => [activity, ...prev.slice(0, 9)]);
+        }
+      }
+      
+      // Refresh counts
+      await fetchStatusCounts();
+    }, [fetchStatusCounts]),
+    onError: useCallback((error: Error) => {
+      console.error('❌ Guest status summary subscription error:', error);
+    }, [])
+  });
+
   useEffect(() => {
     fetchStatusCounts();
-
-    // Create real-time subscription
-    channelRef.current = supabase
-      .channel(`event_participants_${eventId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'event_participants',
-          filter: `event_id=eq.${eventId}`,
-        },
-        async (payload) => {
-          console.log('🔄 Real-time RSVP update:', payload);
-          
-          // Update activity feed for RSVP changes
-          if (payload.eventType === 'UPDATE' && payload.old && payload.new) {
-            const oldStatus = payload.old.rsvp_status;
-            const newStatus = payload.new.rsvp_status;
-            
-            if (oldStatus !== newStatus) {
-              // Fetch user name for activity
-              const { data: userData } = await supabase
-                .from('public_user_profiles')
-                .select('full_name')
-                .eq('id', payload.new.user_id)
-                .single();
-
-              const activity: RSVPActivity = {
-                id: payload.new.id,
-                user_name: userData?.full_name || 'Unknown User',
-                old_status: oldStatus,
-                new_status: newStatus,
-                timestamp: new Date().toISOString(),
-              };
-
-              setRecentActivity(prev => [activity, ...prev.slice(0, 9)]);
-            }
-          }
-          
-          // Refresh counts
-          await fetchStatusCounts();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
-      }
-    };
-  }, [eventId, fetchStatusCounts]);
+  }, [fetchStatusCounts]);
 
   const getCountForStatus = (key: string): number => {
     if (key === 'all') return statusCounts.total;

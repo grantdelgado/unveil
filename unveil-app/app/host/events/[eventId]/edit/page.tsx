@@ -88,7 +88,7 @@ export default function EditEventPage() {
 
         if (eventError) {
           console.error('Error fetching event:', eventError);
-          router.push('/host/dashboard');
+          router.push('/select-event');
           return;
         }
 
@@ -115,7 +115,7 @@ export default function EditEventPage() {
         setPageLoading(false);
       } catch (error) {
         console.error('Unexpected error:', error);
-        router.push('/host/dashboard');
+        router.push('/select-event');
       }
     };
 
@@ -375,10 +375,10 @@ export default function EditEventPage() {
               </SubTitle>
             </div>
             <PrimaryButton 
-              onClick={() => router.push('/host/dashboard')}
+              onClick={() => router.push('/select-event')}
               fullWidth={false}
             >
-              Back to Dashboard
+              Back to Events
             </PrimaryButton>
           </div>
         </CardContainer>
@@ -393,7 +393,7 @@ export default function EditEventPage() {
         <div className="mb-6">
           <BackButton 
             href={`/host/events/${eventId}/dashboard`}
-            fallback="/host/dashboard"
+            fallback="/select-event"
           >
             Back to Dashboard
           </BackButton>

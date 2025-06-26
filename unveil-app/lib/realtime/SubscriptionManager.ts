@@ -194,19 +194,34 @@ export class SubscriptionManager {
     try {
       logger.realtime(`🔌 Unsubscribing: ${subscriptionId}`);
 
-      // Mark as inactive
+      // Mark as inactive first
       subscription.isActive = false;
 
-      // Remove the channel
-      supabase.removeChannel(subscription.channel);
+      // Add a small delay before removing channel to prevent rapid connect/disconnect cycles
+      // This helps with React Strict Mode in development
+      setTimeout(() => {
+        try {
+          // Double-check it's still in our map and wasn't re-created
+          const currentSub = this.subscriptions.get(subscriptionId);
+          if (currentSub === subscription && !subscription.isActive) {
+            // Remove the channel
+            supabase.removeChannel(subscription.channel);
+            
+            // Remove from our tracking
+            this.subscriptions.delete(subscriptionId);
+            
+            logger.realtime(`✅ Unsubscribed: ${subscriptionId}`);
+          }
+        } catch (cleanupError) {
+          logger.error(`❌ Error during delayed cleanup: ${subscriptionId}`, cleanupError);
+        }
+      }, 50); // 50ms delay to prevent rapid connect/disconnect cycles
 
-      // Remove from our tracking
-      this.subscriptions.delete(subscriptionId);
-
-      logger.realtime(`✅ Unsubscribed: ${subscriptionId}`);
     } catch (error) {
       logger.error(`❌ Error unsubscribing: ${subscriptionId}`, error);
-      this.handleSubscriptionError(subscriptionId, error);
+      
+      // Still try to remove from our tracking even if channel removal failed
+      this.subscriptions.delete(subscriptionId);
     }
   }
 
