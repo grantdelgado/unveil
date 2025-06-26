@@ -1,22 +1,21 @@
 // Phase 1 Components - New Extractions
 export { EventHeader } from './EventHeader';
 export { GuestStatusCard } from './GuestStatusCard';
-export { QuickMessageActions } from './QuickMessageActions';
 export { TabNavigation, type TabItem } from './TabNavigation';
 
 // Phase 3 Components - Enhanced Guest Management
 export { GuestStatusSummary } from './GuestStatusSummary';
 export { BulkActionShortcuts } from './BulkActionShortcuts';
 
-// Phase 4 Components - Enhanced Messaging Center
-export { EnhancedMessageCenter } from './EnhancedMessageCenter';
-export { MessageTemplates, type MessageTemplate } from './MessageTemplates';
-export { RecipientPresets, type RecipientFilter } from './RecipientPresets';
-export { RecentMessages } from './RecentMessages';
-
 // Existing Components
 export { GuestManagement } from './GuestManagement';
-export { MessageComposer } from './MessageComposer';
+
+// Re-export messaging components from new location for backwards compatibility
+export { 
+  EnhancedMessageCenter,
+  MessageComposer,
+  QuickMessageActions
+} from '../messaging/host';
 export { EventAnalytics } from './EventAnalytics';
 export { QuickActions } from './QuickActions';
 export { NotificationCenter } from './NotificationCenter';

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { CardContainer } from '@/components/ui';
 
 interface QuickMessageActionsProps {
@@ -10,9 +11,11 @@ interface QuickMessageActionsProps {
 }
 
 export function QuickMessageActions({ 
+  eventId,
   onSendMessage, 
   onComposeClick 
 }: QuickMessageActionsProps) {
+  const router = useRouter();
   const quickActions = [
     {
       id: 'announcement',
@@ -61,12 +64,20 @@ export function QuickMessageActions({
               <p className="text-sm text-gray-500">Send updates to participants</p>
             </div>
           </div>
-          <button 
-            onClick={onComposeClick}
-            className="text-purple-600 hover:text-purple-700 font-medium text-sm transition-colors duration-200 min-h-[44px] px-3 rounded-lg hover:bg-purple-50"
-          >
-            Compose →
-          </button>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={onComposeClick}
+              className="text-purple-600 hover:text-purple-700 font-medium text-sm transition-colors duration-200 min-h-[44px] px-3 rounded-lg hover:bg-purple-50"
+            >
+              Quick Send
+            </button>
+            <button 
+              onClick={() => router.push(`/host/events/${eventId}/messages`)}
+              className="bg-purple-600 hover:bg-purple-700 text-white font-medium text-sm transition-colors duration-200 min-h-[44px] px-4 rounded-lg shadow-sm"
+            >
+              Advanced →
+            </button>
+          </div>
         </div>
 
         {/* Quick Action Buttons */}

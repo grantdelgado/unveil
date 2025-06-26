@@ -19,7 +19,7 @@ export const GuestManagement = lazy(() =>
   import('./host-dashboard/GuestManagement').then(module => ({ default: module.GuestManagement }))
 )
 export const MessageComposer = lazy(() => 
-  import('./host-dashboard/MessageComposer').then(module => ({ default: module.MessageComposer }))
+  import('./messaging/host/MessageComposer').then(module => ({ default: module.MessageComposer }))
 )
 export const NotificationCenter = lazy(() => 
   import('./host-dashboard/NotificationCenter').then(module => ({ default: module.NotificationCenter }))
@@ -38,7 +38,7 @@ export const GuestPhotoGallery = lazy(() =>
 
 // Messaging Components
 export const GuestMessaging = lazy(() => 
-  import('./messaging/GuestMessaging')
+  import('./messaging/guest/GuestMessaging')
 )
 
 // Development Components (only load in development)
