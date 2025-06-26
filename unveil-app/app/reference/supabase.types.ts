@@ -9,6 +9,85 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      event_guests: {
+        Row: {
+          created_at: string | null;
+          event_id: string;
+          guest_email: string | null;
+          guest_name: string | null;
+          guest_tags: string[] | null;
+          id: string;
+          invited_at: string | null;
+          notes: string | null;
+          phone: string;
+          phone_number_verified: boolean | null;
+          preferred_communication: string | null;
+          role: string;
+          rsvp_status: string | null;
+          sms_opt_out: boolean | null;
+          updated_at: string | null;
+          user_id: string | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          event_id: string;
+          guest_email?: string | null;
+          guest_name?: string | null;
+          guest_tags?: string[] | null;
+          id?: string;
+          invited_at?: string | null;
+          notes?: string | null;
+          phone: string;
+          phone_number_verified?: boolean | null;
+          preferred_communication?: string | null;
+          role?: string;
+          rsvp_status?: string | null;
+          sms_opt_out?: boolean | null;
+          updated_at?: string | null;
+          user_id?: string | null;
+        };
+        Update: {
+          created_at?: string | null;
+          event_id?: string;
+          guest_email?: string | null;
+          guest_name?: string | null;
+          guest_tags?: string[] | null;
+          id?: string;
+          invited_at?: string | null;
+          notes?: string | null;
+          phone?: string;
+          phone_number_verified?: boolean | null;
+          preferred_communication?: string | null;
+          role?: string;
+          rsvp_status?: string | null;
+          sms_opt_out?: boolean | null;
+          updated_at?: string | null;
+          user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'event_guests_event_id_fkey';
+            columns: ['event_id'];
+            isOneToOne: false;
+            referencedRelation: 'events';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'event_guests_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'public_user_profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'event_guests_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       event_participants: {
         Row: {
           created_at: string | null;
@@ -170,13 +249,116 @@ export type Database = {
           },
         ];
       };
+      message_deliveries: {
+        Row: {
+          created_at: string | null;
+          email: string | null;
+          email_provider_id: string | null;
+          email_status: string | null;
+          guest_id: string | null;
+          has_responded: boolean | null;
+          id: string;
+          message_id: string | null;
+          phone_number: string | null;
+          push_provider_id: string | null;
+          push_status: string | null;
+          response_message_id: string | null;
+          scheduled_message_id: string | null;
+          sms_provider_id: string | null;
+          sms_status: string | null;
+          updated_at: string | null;
+          user_id: string | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          email?: string | null;
+          email_provider_id?: string | null;
+          email_status?: string | null;
+          guest_id?: string | null;
+          has_responded?: boolean | null;
+          id?: string;
+          message_id?: string | null;
+          phone_number?: string | null;
+          push_provider_id?: string | null;
+          push_status?: string | null;
+          response_message_id?: string | null;
+          scheduled_message_id?: string | null;
+          sms_provider_id?: string | null;
+          sms_status?: string | null;
+          updated_at?: string | null;
+          user_id?: string | null;
+        };
+        Update: {
+          created_at?: string | null;
+          email?: string | null;
+          email_provider_id?: string | null;
+          email_status?: string | null;
+          guest_id?: string | null;
+          has_responded?: boolean | null;
+          id?: string;
+          message_id?: string | null;
+          phone_number?: string | null;
+          push_provider_id?: string | null;
+          push_status?: string | null;
+          response_message_id?: string | null;
+          scheduled_message_id?: string | null;
+          sms_provider_id?: string | null;
+          sms_status?: string | null;
+          updated_at?: string | null;
+          user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'message_deliveries_guest_id_fkey';
+            columns: ['guest_id'];
+            isOneToOne: false;
+            referencedRelation: 'event_guests';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'message_deliveries_message_id_fkey';
+            columns: ['message_id'];
+            isOneToOne: false;
+            referencedRelation: 'messages';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'message_deliveries_response_message_id_fkey';
+            columns: ['response_message_id'];
+            isOneToOne: false;
+            referencedRelation: 'messages';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'message_deliveries_scheduled_message_id_fkey';
+            columns: ['scheduled_message_id'];
+            isOneToOne: false;
+            referencedRelation: 'scheduled_messages';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'message_deliveries_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'public_user_profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'message_deliveries_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       messages: {
         Row: {
           content: string;
           created_at: string | null;
           event_id: string;
           id: string;
-          message_type: string | null;
+          message_type: Database["public"]["Enums"]["message_type_enum"] | null;
           sender_user_id: string | null;
         };
         Insert: {
@@ -184,7 +366,7 @@ export type Database = {
           created_at?: string | null;
           event_id: string;
           id?: string;
-          message_type?: string | null;
+          message_type?: Database["public"]["Enums"]["message_type_enum"] | null;
           sender_user_id?: string | null;
         };
         Update: {
@@ -192,7 +374,7 @@ export type Database = {
           created_at?: string | null;
           event_id?: string;
           id?: string;
-          message_type?: string | null;
+          message_type?: Database["public"]["Enums"]["message_type_enum"] | null;
           sender_user_id?: string | null;
         };
         Relationships: [
@@ -212,6 +394,100 @@ export type Database = {
           },
           {
             foreignKeyName: 'messages_sender_user_id_fkey';
+            columns: ['sender_user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      scheduled_messages: {
+        Row: {
+          content: string;
+          created_at: string | null;
+          event_id: string;
+          failure_count: number | null;
+          id: string;
+          message_type: Database["public"]["Enums"]["message_type_enum"] | null;
+          recipient_count: number | null;
+          send_at: string;
+          send_via_email: boolean | null;
+          send_via_push: boolean | null;
+          send_via_sms: boolean | null;
+          sender_user_id: string;
+          sent_at: string | null;
+          status: string | null;
+          subject: string | null;
+          success_count: number | null;
+          target_all_guests: boolean | null;
+          target_guest_ids: string[] | null;
+          target_guest_tags: string[] | null;
+          target_sub_event_ids: string[] | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          content: string;
+          created_at?: string | null;
+          event_id: string;
+          failure_count?: number | null;
+          id?: string;
+          message_type?: Database["public"]["Enums"]["message_type_enum"] | null;
+          recipient_count?: number | null;
+          send_at: string;
+          send_via_email?: boolean | null;
+          send_via_push?: boolean | null;
+          send_via_sms?: boolean | null;
+          sender_user_id: string;
+          sent_at?: string | null;
+          status?: string | null;
+          subject?: string | null;
+          success_count?: number | null;
+          target_all_guests?: boolean | null;
+          target_guest_ids?: string[] | null;
+          target_guest_tags?: string[] | null;
+          target_sub_event_ids?: string[] | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          content?: string;
+          created_at?: string | null;
+          event_id?: string;
+          failure_count?: number | null;
+          id?: string;
+          message_type?: Database["public"]["Enums"]["message_type_enum"] | null;
+          recipient_count?: number | null;
+          send_at?: string;
+          send_via_email?: boolean | null;
+          send_via_push?: boolean | null;
+          send_via_sms?: boolean | null;
+          sender_user_id?: string;
+          sent_at?: string | null;
+          status?: string | null;
+          subject?: string | null;
+          success_count?: number | null;
+          target_all_guests?: boolean | null;
+          target_guest_ids?: string[] | null;
+          target_guest_tags?: string[] | null;
+          target_sub_event_ids?: string[] | null;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'scheduled_messages_event_id_fkey';
+            columns: ['event_id'];
+            isOneToOne: false;
+            referencedRelation: 'events';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'scheduled_messages_sender_user_id_fkey';
+            columns: ['sender_user_id'];
+            isOneToOne: false;
+            referencedRelation: 'public_user_profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'scheduled_messages_sender_user_id_fkey';
             columns: ['sender_user_id'];
             isOneToOne: false;
             referencedRelation: 'users';
@@ -293,10 +569,10 @@ export type Database = {
       };
     };
     Enums: {
-      media_type_enum: 'image' | 'video';
-      message_type_enum: 'direct' | 'announcement' | 'channel';
-      user_role_enum: 'guest' | 'host' | 'admin';
-    };
+      media_type_enum: "image" | "video"
+      message_type_enum: "direct" | "announcement" | "channel"
+      user_role_enum: "guest" | "host" | "admin"
+    }
     CompositeTypes: {
       [_ in never]: never;
     };

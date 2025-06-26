@@ -7,3 +7,9 @@ export {
   useSendMessage,
   useMessageRealtime,
 } from './useMessagesCached';
+
+export { 
+  useScheduledMessages, 
+  useScheduledMessageCounts, 
+  useNextScheduledMessage 
+} from './useScheduledMessages';

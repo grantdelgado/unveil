@@ -5,4 +5,4 @@ export * from './common';
 export * from './host';
 
 // Guest messaging components  
-export * from './guest';
+export * from './guest'; 

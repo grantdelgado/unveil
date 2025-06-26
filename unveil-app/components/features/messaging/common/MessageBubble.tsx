@@ -58,8 +58,31 @@ export function MessageBubble({
     return 'bg-white border border-gray-200 text-gray-900 shadow-sm';
   };
 
+  const getMessageTypeIcon = () => {
+    switch (message.message_type) {
+      case 'announcement':
+        return '📢';
+      case 'direct':
+        return '💬';
+      default:
+        return '💬';
+    }
+  };
+
   return (
     <div className={cn('flex flex-col gap-1', className)}>
+      {/* Sender info */}
+      {showSender && message.sender && (
+        <div className={cn(
+          'flex items-center gap-2 text-xs',
+          isOwnMessage ? 'justify-end' : 'justify-start'
+        )}>
+          <span className="text-gray-500">
+            {getMessageTypeIcon()} {message.sender.full_name || 'Unknown User'}
+          </span>
+        </div>
+      )}
+
       {/* Message bubble */}
       <div className={cn(
         'flex',
@@ -70,12 +93,28 @@ export function MessageBubble({
           getMessageTypeStyle(),
           isOwnMessage ? 'rounded-br-md' : 'rounded-bl-md'
         )}>
+          {/* Message type indicator for announcements */}
+          {message.message_type === 'announcement' && (
+            <div className="flex items-center gap-2 mb-2 text-xs font-medium text-purple-700">
+              <span>📢</span>
+              <span>Host Announcement</span>
+            </div>
+          )}
+
           {/* Message content */}
           <div className="text-sm leading-relaxed whitespace-pre-wrap">
             {message.content}
+          </div>
+
+          {/* Timestamp */}
+          <div className={cn(
+            'text-xs mt-2 opacity-70',
+            isOwnMessage ? 'text-right' : 'text-left'
+          )}>
+            {formatTime(message.created_at || '')}
           </div>
         </div>
       </div>
     </div>
   );
-}
+} 
