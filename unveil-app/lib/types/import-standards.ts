@@ -54,7 +54,7 @@ export const STANDARD_IMPORT_PATTERNS = {
 
   // Internal types
   APP_TYPES:
-    "import type { Event, EventParticipant, Message, Media } from '@/lib/types'",
+    "import type { Event, EventGuest, Message, Media } from '@/lib/types'",
   ERROR_TYPES:
     "import type { AuthError, DatabaseError, MediaError } from '@/lib/types'",
   HOOK_TYPES:
@@ -167,7 +167,7 @@ export const IMPORT_RECOMMENDATIONS = {
   EVENT_PAGE: [
     "import { useEffect, useState, useCallback } from 'react'",
     "import { useRouter, useParams } from 'next/navigation'",
-    "import type { Event, EventParticipant, EventDetailsHookResult } from '@/lib/types'",
+    "import type { Event, EventGuest, EventDetailsHookResult } from '@/lib/types'",
     "import { useEventDetails } from '@/hooks/events'",
     "import { useAuth } from '@/hooks/auth'",
     "import { createEvent, updateEvent } from '@/services/events'",

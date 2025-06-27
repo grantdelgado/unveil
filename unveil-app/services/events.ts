@@ -2,9 +2,16 @@ import { supabase } from '@/lib/supabase/client';
 import type {
   EventInsert,
   EventUpdate,
-  EventParticipantInsert,
+  EventGuestInsert,
 } from '@/lib/supabase/types';
 import { logDatabaseError } from '@/lib/logger';
+import {
+  getEventGuests,
+  addGuestToEvent,
+  updateGuestRSVP,
+  removeGuest,
+  updateGuest,
+} from './guests';
 
 // Error handling for database constraints
 const handleDatabaseError = (error: unknown, context: string) => {
@@ -69,7 +76,7 @@ export const createEvent = async (eventData: EventInsert) => {
       .select(
         `
         *,
-        host:public_user_profiles!events_host_user_id_fkey(*)
+        host:users!events_host_user_id_fkey(*)
       `,
       )
       .single();
@@ -111,7 +118,7 @@ export const updateEvent = async (id: string, updates: EventUpdate) => {
       .select(
         `
         *,
-        host:public_user_profiles!events_host_user_id_fkey(*)
+        host:users!events_host_user_id_fkey(*)
       `,
       )
       .single();
@@ -124,7 +131,7 @@ export const updateEvent = async (id: string, updates: EventUpdate) => {
  * Deletes an event and all associated data
  * 
  * Permanently removes the event and cascades to delete:
- * - Event participants
+ * - Event guests
  * - Media uploads
  * - Messages
  * - Other related data
@@ -176,7 +183,7 @@ export const deleteEvent = async (id: string) => {
  * ```
  * 
  * @see {@link getHostEvents} for host's events
- * @see {@link getParticipantEvents} for participant's events
+ * @see {@link getGuestEvents} for guest events
  */
 export const getEventById = async (id: string) => {
   try {
@@ -185,7 +192,7 @@ export const getEventById = async (id: string) => {
       .select(
         `
         *,
-        host:public_user_profiles!events_host_user_id_fkey(*)
+        host:users!events_host_user_id_fkey(*)
       `,
       )
       .eq('id', id)
@@ -210,7 +217,7 @@ export const getHostEvents = async (hostId: string) => {
       .select(
         `
         *,
-        host:public_user_profiles!events_host_user_id_fkey(*)
+        host:users!events_host_user_id_fkey(*)
       `,
       )
       .eq('host_user_id', hostId)
@@ -220,129 +227,44 @@ export const getHostEvents = async (hostId: string) => {
   }
 };
 
-export const getParticipantEvents = async (userId: string) => {
+export const getGuestEvents = async (userId: string) => {
   try {
     return await supabase
-      .from('event_participants')
+      .from('event_guests')
       .select(
         `
         *,
         event:events(
           *,
-          host:public_user_profiles!events_host_user_id_fkey(*)
+          host:users!events_host_user_id_fkey(*)
         )
       `,
       )
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
   } catch (error) {
-    handleDatabaseError(error, 'getParticipantEvents');
+    handleDatabaseError(error, 'getGuestEvents');
   }
 };
 
-export const getEventParticipants = async (eventId: string) => {
-  try {
-    return await supabase
-      .from('event_participants')
-      .select(
-        `
-        *,
-        user:public_user_profiles(*)
-      `,
-      )
-      .eq('event_id', eventId)
-      .order('created_at', { ascending: false });
-  } catch (error) {
-    handleDatabaseError(error, 'getEventParticipants');
-  }
-};
 
-export const addParticipantToEvent = async (
-  participantData: EventParticipantInsert,
-) => {
-  try {
-    return await supabase
-      .from('event_participants')
-      .insert(participantData)
-      .select(
-        `
-        *,
-        user:public_user_profiles(*)
-      `,
-      )
-      .single();
-  } catch (error) {
-    handleDatabaseError(error, 'addParticipantToEvent');
-  }
-};
 
-export const updateParticipantRSVP = async (
-  eventId: string,
-  userId: string,
-  status: 'attending' | 'declined' | 'maybe' | 'pending',
-) => {
-  try {
-    return await supabase
-      .from('event_participants')
-      .update({ rsvp_status: status })
-      .eq('event_id', eventId)
-      .eq('user_id', userId)
-      .select(
-        `
-        *,
-        user:public_user_profiles(*)
-      `,
-      )
-      .single();
-  } catch (error) {
-    handleDatabaseError(error, 'updateParticipantRSVP');
-  }
-};
 
-export const removeParticipantFromEvent = async (
-  eventId: string,
-  userId: string,
-) => {
-  try {
-    return await supabase
-      .from('event_participants')
-      .delete()
-      .eq('event_id', eventId)
-      .eq('user_id', userId);
-  } catch (error) {
-    handleDatabaseError(error, 'removeParticipantFromEvent');
-  }
-};
 
-export const updateParticipantRole = async (
-  eventId: string,
-  userId: string,
-  role: 'host' | 'guest',
-) => {
-  try {
-    return await supabase
-      .from('event_participants')
-      .update({ role })
-      .eq('event_id', eventId)
-      .eq('user_id', userId)
-      .select(
-        `
-        *,
-        user:public_user_profiles(*)
-      `,
-      )
-      .single();
-  } catch (error) {
-    handleDatabaseError(error, 'updateParticipantRole');
-  }
-};
+
+
+
+
+
+
+
 
 export const getEventStats = async (eventId: string) => {
   try {
-    const [participantsResult, mediaResult, messagesResult] = await Promise.all(
+    const [guestsResult, mediaResult, messagesResult] = await Promise.all(
       [
         supabase
-          .from('event_participants')
+          .from('event_guests')
           .select('rsvp_status')
           .eq('event_id', eventId),
         supabase.from('media').select('id').eq('event_id', eventId),
@@ -350,19 +272,19 @@ export const getEventStats = async (eventId: string) => {
       ],
     );
 
-    const participants = participantsResult.data || [];
+    const guests = guestsResult.data || [];
     const rsvpCounts = {
-      attending: participants.filter((p) => p.rsvp_status === 'attending')
+      attending: guests.filter((g) => g.rsvp_status === 'attending')
         .length,
-      declined: participants.filter((p) => p.rsvp_status === 'declined').length,
-      maybe: participants.filter((p) => p.rsvp_status === 'maybe').length,
-      pending: participants.filter((p) => p.rsvp_status === 'pending').length,
-      total: participants.length,
+      declined: guests.filter((g) => g.rsvp_status === 'declined').length,
+      maybe: guests.filter((g) => g.rsvp_status === 'maybe').length,
+      pending: guests.filter((g) => g.rsvp_status === 'pending').length,
+      total: guests.length,
     };
 
     return {
       data: {
-        participants: rsvpCounts,
+        guests: rsvpCounts,
         media_count: mediaResult.data?.length || 0,
         message_count: messagesResult.data?.length || 0,
       },
@@ -373,24 +295,24 @@ export const getEventStats = async (eventId: string) => {
   }
 };
 
-// Legacy function name removed - use getParticipantEvents instead
+// Event utility functions
 
 // Additional utility functions for backward compatibility
 export const getEventsByUser = async (userId: string) => {
   try {
-    // Get both hosted events and participated events
-    const [hostedResult, participatedResult] = await Promise.all([
+    // Get both hosted events and guest events
+    const [hostedResult, guestResult] = await Promise.all([
       getHostEvents(userId),
-      getParticipantEvents(userId),
+      getGuestEvents(userId),
     ]);
 
     const hostedEvents = hostedResult?.data || [];
-    const participatedEvents = (participatedResult?.data || [])
-      .map((p) => p.event)
+    const guestEvents = (guestResult?.data || [])
+      .map((g) => g.event)
       .filter(Boolean);
 
     // Combine and deduplicate events
-    const allEvents = [...hostedEvents, ...participatedEvents];
+    const allEvents = [...hostedEvents, ...guestEvents];
     const uniqueEvents = allEvents.filter(
       (event, index, self) =>
         index === self.findIndex((e) => e.id === event.id),
@@ -421,16 +343,16 @@ export const getUserEventRole = async (eventId: string, userId: string) => {
       return { data: 'host', error: null };
     }
 
-    // Check if user is a participant
-    const { data: participant } = await supabase
-      .from('event_participants')
+    // Check if user is a guest
+    const { data: guest } = await supabase
+      .from('event_guests')
       .select('role')
       .eq('event_id', eventId)
       .eq('user_id', userId)
       .single();
 
-    if (participant) {
-      return { data: participant.role, error: null };
+    if (guest) {
+      return { data: guest.role, error: null };
     }
 
     return { data: null, error: null };
@@ -461,8 +383,8 @@ export const isEventHost = async (eventId: string, userId: string) => {
 
 export const isEventGuest = async (eventId: string, userId: string) => {
   try {
-    const { data: participant } = await supabase
-      .from('event_participants')
+    const { data: guest } = await supabase
+      .from('event_guests')
       .select('id')
       .eq('event_id', eventId)
       .eq('user_id', userId)
@@ -470,7 +392,7 @@ export const isEventGuest = async (eventId: string, userId: string) => {
       .single();
 
     return {
-      data: !!participant,
+      data: !!guest,
       error: null,
     };
   } catch (error) {

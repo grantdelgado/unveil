@@ -7,11 +7,11 @@
 
 import type {
   Event,
-  EventParticipant,
+  EventGuest,
   Message,
   Media,
   EventWithHost,
-  EventParticipantWithUser,
+  EventGuestWithUser,
   MessageWithSender,
   MediaWithUploader,
 } from '@/lib/supabase/types';
@@ -62,42 +62,44 @@ export interface AuthHookResult
 export interface EventDetailsHookResult
   extends BaseHookResult<{
     event: EventWithHost | null;
-    participantInfo: EventParticipantWithUser | null;
+    guestInfo: EventGuestWithUser | null;
   }> {
   event: EventWithHost | null;
-  participantInfo: EventParticipantWithUser | null;
+  guestInfo: EventGuestWithUser | null;
   updateRSVP: (status: string) => Promise<MutationResult>;
   isHost: boolean;
-  isParticipant: boolean;
+  isGuest: boolean;
   canEdit: boolean;
 }
 
 export interface EventListHookResult extends BaseHookResult<Event[]> {
   events: Event[];
   hostedEvents: Event[];
-  participantEvents: Event[];
+  guestEvents: Event[];
   createEvent: (eventData: Partial<Event>) => Promise<MutationResult<Event>>;
   deleteEvent: (eventId: string) => Promise<MutationResult>;
 }
 
-// Participant/Guest Hook Types
-export interface ParticipantHookResult
-  extends BaseHookResult<EventParticipantWithUser[]> {
-  participants: EventParticipantWithUser[];
-  hosts: EventParticipantWithUser[];
-  guests: EventParticipantWithUser[];
+// Guest Hook Types
+export interface GuestHookResult
+  extends BaseHookResult<EventGuestWithUser[]> {
+  guests: EventGuestWithUser[];
+  hosts: EventGuestWithUser[];
+  regularGuests: EventGuestWithUser[];
   totalCount: number;
-  inviteParticipant: (
+  inviteGuest: (
     eventId: string,
     phone: string,
     role?: string,
-  ) => Promise<MutationResult<EventParticipant>>;
-  updateParticipant: (
-    participantId: string,
-    updates: Partial<EventParticipant>,
+  ) => Promise<MutationResult<EventGuest>>;
+  updateGuest: (
+    guestId: string,
+    updates: Partial<EventGuest>,
   ) => Promise<MutationResult>;
-  removeParticipant: (participantId: string) => Promise<MutationResult>;
+  removeGuest: (guestId: string) => Promise<MutationResult>;
 }
+
+// Guest hook types complete
 
 // Media Hook Types
 export interface MediaHookResult extends BaseHookResult<MediaWithUploader[]> {

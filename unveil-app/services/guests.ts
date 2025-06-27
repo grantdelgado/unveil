@@ -1,9 +1,9 @@
 import { supabase } from '@/lib/supabase/client';
 import type {
-  EventParticipant,
-  EventParticipantInsert,
-  EventParticipantUpdate,
-  EventParticipantWithUser,
+  EventGuest,
+  EventGuestInsert,
+  EventGuestUpdate,
+  EventGuestWithUser,
   UserInsert,
   User,
   ServiceResponse,
@@ -21,8 +21,9 @@ const handleDatabaseError = (error: unknown, context: string) => {
     if (dbError.message?.includes('phone')) {
       throw new Error('A user with this phone number already exists');
     }
-    if (dbError.message?.includes('event_participants_event_id_user_id_key')) {
-      throw new Error('This user is already a participant in this event');
+    if (dbError.message?.includes('event_participants_event_id_user_id_key') || 
+        dbError.message?.includes('event_guests_event_id_user_id_key')) {
+      throw new Error('This user is already a guest in this event');
     }
   }
 
@@ -33,17 +34,17 @@ const handleDatabaseError = (error: unknown, context: string) => {
   throw new Error(dbError.message || 'Database operation failed');
 };
 
-// Participant service functions (replaces legacy guest functions)
-export const getEventParticipants = async (
+// Guest service functions (unified guest management)
+export const getEventGuests = async (
   eventId: string,
-): Promise<ServiceResponseArray<EventParticipantWithUser>> => {
+): Promise<ServiceResponseArray<EventGuestWithUser>> => {
   try {
     const result = await supabase
-      .from('event_participants')
+      .from('event_guests')
       .select(
         `
         *,
-        user:public_user_profiles(*)
+        users:user_id(*)
       `,
       )
       .eq('event_id', eventId)
@@ -59,10 +60,12 @@ export const getEventParticipants = async (
       error:
         error instanceof Error
           ? error
-          : new Error('Failed to get event participants'),
+          : new Error('Failed to get event guests'),
     };
   }
 };
+
+  // Guest functions have replaced legacy functions
 
 export const getUserByPhone = async (
   phone: string,
@@ -120,42 +123,60 @@ export const createUser = async (
   }
 };
 
-export const updateParticipant = async (
+export const updateGuest = async (
   id: string,
-  updates: EventParticipantUpdate,
+  updates: EventGuestUpdate,
 ) => {
   try {
     return await supabase
-      .from('event_participants')
+      .from('event_guests')
       .update(updates)
       .eq('id', id)
       .select(
         `
         *,
-        user:public_user_profiles(*)
+        users:user_id(*)
       `,
       )
       .single();
   } catch (error) {
-    handleDatabaseError(error, 'updateParticipant');
+    handleDatabaseError(error, 'updateGuest');
   }
 };
 
-export const removeParticipant = async (eventId: string, userId: string) => {
+// Legacy participant function replaced with updateGuest
+
+export const removeGuest = async (eventId: string, userId: string) => {
   try {
     return await supabase
-      .from('event_participants')
+      .from('event_guests')
       .delete()
       .eq('event_id', eventId)
       .eq('user_id', userId);
   } catch (error) {
-    handleDatabaseError(error, 'removeParticipant');
+    handleDatabaseError(error, 'removeGuest');
   }
 };
 
-export const importParticipants = async (
+// Support removing by phone for phone-only guests
+export const removeGuestByPhone = async (eventId: string, phone: string) => {
+  try {
+    return await supabase
+      .from('event_guests')
+      .delete()
+      .eq('event_id', eventId)
+      .eq('phone', phone)
+      .is('user_id', null);
+  } catch (error) {
+    handleDatabaseError(error, 'removeGuestByPhone');
+  }
+};
+
+// Legacy participant function replaced with removeGuest
+
+export const importGuests = async (
   eventId: string,
-  participants: Array<{
+  guests: Array<{
     name: string;
     phone: string;
     email?: string;
@@ -163,114 +184,135 @@ export const importParticipants = async (
   }>,
 ) => {
   try {
-    // First, create or find users
-    const userResults: User[] = [];
+    // Create guest entries in event_guests table
+    // We can create guests with or without user accounts
+    const guestInserts: EventGuestInsert[] = [];
 
-    for (const participant of participants) {
+    for (const guest of guests) {
       // Try to find existing user by phone
-      const { data: existingUser } = await getUserByPhone(participant.phone);
+      const { data: existingUser } = await getUserByPhone(guest.phone);
 
-      if (existingUser) {
-        userResults.push(existingUser);
-      } else {
-        // Create new user
-        const { data: newUser, error } = await createUser({
-          full_name: participant.name,
-          phone: participant.phone,
-          email: participant.email || null,
-        });
-
-        if (error) throw error;
-        if (newUser) userResults.push(newUser);
-      }
+      guestInserts.push({
+        event_id: eventId,
+        user_id: existingUser?.id || null,
+        guest_name: guest.name,
+        guest_email: guest.email || null,
+        phone: guest.phone,
+        role: guest.role || 'guest',
+        rsvp_status: 'pending',
+        sms_opt_out: false,
+        preferred_communication: 'sms',
+      });
     }
 
-    // Then, add them to the event as participants
-    const participantInserts: EventParticipantInsert[] = userResults.map(
-      (user, index) => ({
-        event_id: eventId,
-        user_id: user.id,
-        role: participants[index].role || 'guest',
-        rsvp_status: 'pending',
-      }),
-    );
-
-    return await supabase.from('event_participants').insert(participantInserts)
+    return await supabase.from('event_guests').insert(guestInserts)
       .select(`
         *,
-        user:public_user_profiles(*)
+        users:user_id(*)
       `);
   } catch (error) {
-    handleDatabaseError(error, 'importParticipants');
+    handleDatabaseError(error, 'importGuests');
   }
 };
 
-export const updateParticipantRSVP = async (
+// Legacy participant function replaced with importGuests
+
+export const updateGuestRSVP = async (
   eventId: string,
   userId: string,
   status: 'attending' | 'declined' | 'maybe' | 'pending',
 ) => {
   try {
     return await supabase
-      .from('event_participants')
+      .from('event_guests')
       .update({ rsvp_status: status })
       .eq('event_id', eventId)
       .eq('user_id', userId)
       .select(
         `
         *,
-        user:public_user_profiles(*)
+        users:user_id(*)
       `,
       )
       .single();
   } catch (error) {
-    handleDatabaseError(error, 'updateParticipantRSVP');
+    handleDatabaseError(error, 'updateGuestRSVP');
   }
 };
 
-export const addParticipantToEvent = async (
-  participantData: EventParticipantInsert,
+// Support updating RSVP by phone for phone-only guests
+export const updateGuestRSVPByPhone = async (
+  eventId: string,
+  phone: string,
+  status: 'attending' | 'declined' | 'maybe' | 'pending',
 ) => {
   try {
     return await supabase
-      .from('event_participants')
-      .insert(participantData)
+      .from('event_guests')
+      .update({ rsvp_status: status })
+      .eq('event_id', eventId)
+      .eq('phone', phone)
       .select(
         `
         *,
-        user:public_user_profiles(*)
+        users:user_id(*)
       `,
       )
       .single();
   } catch (error) {
-    handleDatabaseError(error, 'addParticipantToEvent');
+    handleDatabaseError(error, 'updateGuestRSVPByPhone');
   }
 };
 
-export const getParticipantsByRole = async (
+
+
+export const addGuestToEvent = async (
+  guestData: EventGuestInsert,
+) => {
+  try {
+    return await supabase
+      .from('event_guests')
+      .insert(guestData)
+      .select(
+        `
+        *,
+        users:user_id(*)
+      `,
+      )
+      .single();
+  } catch (error) {
+    handleDatabaseError(error, 'addGuestToEvent');
+  }
+};
+
+
+
+export const getGuestsByRole = async (
   eventId: string,
   role: 'host' | 'guest',
 ) => {
   try {
     return await supabase
-      .from('event_participants')
+      .from('event_guests')
       .select(
         `
         *,
-        user:public_user_profiles(*)
+        users:user_id(*)
       `,
       )
       .eq('event_id', eventId)
       .eq('role', role)
       .order('created_at', { ascending: false });
   } catch (error) {
-    handleDatabaseError(error, 'getParticipantsByRole');
+    handleDatabaseError(error, 'getGuestsByRole');
   }
 };
 
-// Legacy function names removed - use participant-based functions instead
 
-// Additional legacy functions for backward compatibility
+
+// Guest management functions above
+
+// Guest invitation (supports both authenticated and phone-only guests)
 export const inviteGuest = async (
   eventId: string,
   guestData: {
@@ -280,45 +322,50 @@ export const inviteGuest = async (
   },
 ) => {
   try {
-    // Create or find user
+    // Check if user exists
     const { data: existingUser } = await getUserByPhone(guestData.phone);
 
-    let userId: string;
-    if (existingUser) {
-      userId = existingUser.id;
-    } else {
-      const { data: newUser, error } = await createUser({
-        full_name: guestData.name,
-        phone: guestData.phone,
-        email: guestData.email || null,
-      });
-
-      if (error) throw error;
-      if (!newUser) throw new Error('Failed to create user');
-      userId = newUser.id;
-    }
-
-    // Add as participant
-    return await addParticipantToEvent({
+    // Add as guest directly to event_guests table
+    return await addGuestToEvent({
       event_id: eventId,
-      user_id: userId,
+      user_id: existingUser?.id || null,
+      guest_name: guestData.name,
+      guest_email: guestData.email || null,
+      phone: guestData.phone,
       role: 'guest',
       rsvp_status: 'pending',
+      sms_opt_out: false,
+      preferred_communication: 'sms',
     });
   } catch (error) {
     handleDatabaseError(error, 'inviteGuest');
   }
 };
 
-export const removeGuest = removeParticipant;
+// Note: removeGuest is already defined above
 
-export const bulkInviteGuests = importParticipants;
+export const bulkInviteGuests = importGuests;
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const getGuestsByTags = async (eventId: string, _tags?: string[]) => {
-  // Since we don't have tags in the simplified schema, just return all guests
+export const getGuestsByTags = async (eventId: string, tags?: string[]) => {
   try {
-    return await getParticipantsByRole(eventId, 'guest');
+    if (!tags || tags.length === 0) {
+      // Return all guests if no tags specified
+      return await getGuestsByRole(eventId, 'guest');
+    }
+
+    // Filter by tags using the guest_tags array field
+    return await supabase
+      .from('event_guests')
+      .select(
+        `
+        *,
+        users:user_id(*)
+      `,
+      )
+      .eq('event_id', eventId)
+      .eq('role', 'guest')
+      .overlaps('guest_tags', tags)
+      .order('created_at', { ascending: false });
   } catch (error) {
     handleDatabaseError(error, 'getGuestsByTags');
   }
@@ -326,9 +373,9 @@ export const getGuestsByTags = async (eventId: string, _tags?: string[]) => {
 
 export const getGuestStats = async (eventId: string) => {
   try {
-    const { data: participants } = await getEventParticipants(eventId);
+    const { data: guests } = await getEventGuests(eventId);
 
-    if (!participants) {
+    if (!guests) {
       return {
         data: {
           total: 0,
@@ -341,21 +388,21 @@ export const getGuestStats = async (eventId: string) => {
       };
     }
 
-    const guests = participants.filter(
-      (p: EventParticipant) => p.role === 'guest',
+    const guestList = guests.filter(
+      (g: EventGuest) => g.role === 'guest',
     );
     const stats = {
-      total: guests.length,
-      attending: guests.filter(
-        (g: EventParticipant) => g.rsvp_status === 'attending',
+      total: guestList.length,
+      attending: guestList.filter(
+        (g: EventGuest) => g.rsvp_status === 'attending',
       ).length,
-      declined: guests.filter(
-        (g: EventParticipant) => g.rsvp_status === 'declined',
+      declined: guestList.filter(
+        (g: EventGuest) => g.rsvp_status === 'declined',
       ).length,
-      maybe: guests.filter((g: EventParticipant) => g.rsvp_status === 'maybe')
+      maybe: guestList.filter((g: EventGuest) => g.rsvp_status === 'maybe')
         .length,
-      pending: guests.filter(
-        (g: EventParticipant) => g.rsvp_status === 'pending',
+      pending: guestList.filter(
+        (g: EventGuest) => g.rsvp_status === 'pending',
       ).length,
     };
 

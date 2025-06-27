@@ -21,7 +21,7 @@ export function QuickMessageActions({
       id: 'announcement',
       icon: '📢',
       title: 'Send Announcement',
-      description: 'To all participants',
+      description: 'To all guests',
       color: 'purple',
       onClick: () => onSendMessage('announcement'),
     },
@@ -61,7 +61,7 @@ export function QuickMessageActions({
             <span className="text-2xl">💬</span>
             <div>
               <h3 className="font-semibold text-gray-900">Messages</h3>
-              <p className="text-sm text-gray-500">Send updates to participants</p>
+              <p className="text-sm text-gray-500">Send updates to guests</p>
             </div>
           </div>
           <div className="flex items-center gap-2">

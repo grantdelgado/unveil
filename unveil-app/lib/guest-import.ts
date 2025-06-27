@@ -6,13 +6,13 @@ import {
   isValidPhoneNumber,
   normalizePhoneNumber,
 } from './utils';
-import type { EventParticipantInsert } from './supabase';
+import type { EventGuestInsert } from './supabase';
 
 // Guest import validation schema - phone is now required, name is optional
 export const guestImportRowSchema = z.object({
-  guest_name: z.string().min(1, 'Guest name is required'),
+  guest_name: z.string().optional().or(z.literal('')),
   guest_email: z.string().email().optional().or(z.literal('')),
-  phone: z.string().optional().or(z.literal('')),
+  phone: z.string().min(1, 'Phone number is required'),
   rsvp_status: z.enum(['attending', 'declined', 'maybe', 'pending']).optional(),
   notes: z.string().optional().or(z.literal('')),
   guest_tags: z.array(z.string()).optional(),
@@ -360,10 +360,14 @@ export const validateImportedGuests = (
 export const convertToEventGuests = (
   guests: GuestImportData[],
   eventId: string,
-): EventParticipantInsert[] => {
+): EventGuestInsert[] => {
   return guests.map((guest) => ({
     event_id: eventId,
-    user_id: '', // Placeholder - will be updated when user is created
+    phone: guest.phone,
+    guest_name: guest.guest_name || guest.phone,
+    guest_email: guest.guest_email || null,
+    guest_tags: guest.guest_tags || null,
+    user_id: null, // Phone-only guests don't have user accounts initially
     role: 'guest' as const,
     rsvp_status: (guest.rsvp_status?.toLowerCase() || 'pending') as
       | 'attending'
@@ -371,6 +375,8 @@ export const convertToEventGuests = (
       | 'maybe'
       | 'pending',
     notes: guest.notes || null,
+    sms_opt_out: false, // Default to SMS enabled
+    preferred_communication: 'sms' as const,
   }));
 };
 

@@ -36,46 +36,47 @@ export function useEventInsights(): UseEventInsightsResult {
     setError(null);
 
     try {
-      // Fetch participant data for all events
-      const { data: participantsData, error: participantsError } = await supabase
-        .from('event_participants')
+      // Fetch guest data for all events
+      const { data: guestsData, error: guestsError } = await supabase
+        .from('event_guests')
         .select(`
           event_id,
           rsvp_status,
           created_at,
-          user:public_user_profiles(full_name)
+          guest_name,
+          users:user_id(full_name)
         `)
         .in('event_id', eventIds)
         .order('created_at', { ascending: false });
 
-      if (participantsError) {
-        throw participantsError;
+      if (guestsError) {
+        throw guestsError;
       }
 
       // Process insights for each event
       const newInsights: Record<string, EventInsights> = {};
 
       for (const eventId of eventIds) {
-        const eventParticipants = participantsData?.filter(p => p.event_id === eventId) || [];
+        const eventGuests = guestsData?.filter(g => g.event_id === eventId) || [];
         
         // Count RSVPs
-        const totalGuests = eventParticipants.length;
-        const attendingCount = eventParticipants.filter(p => p.rsvp_status === 'attending').length;
-        const declinedCount = eventParticipants.filter(p => p.rsvp_status === 'declined').length;
-        const maybeCount = eventParticipants.filter(p => p.rsvp_status === 'maybe').length;
+        const totalGuests = eventGuests.length;
+        const attendingCount = eventGuests.filter(g => g.rsvp_status === 'attending').length;
+        const declinedCount = eventGuests.filter(g => g.rsvp_status === 'declined').length;
+        const maybeCount = eventGuests.filter(g => g.rsvp_status === 'maybe').length;
         const pendingCount = totalGuests - attendingCount - declinedCount - maybeCount;
 
         // Calculate response rate
         const responseRate = totalGuests > 0 ? ((totalGuests - pendingCount) / totalGuests) * 100 : 0;
 
         // Get recent activity
-        const recentActivity = eventParticipants
-          .filter(p => p.rsvp_status && p.rsvp_status !== 'pending')
+        const recentActivity = eventGuests
+          .filter(g => g.rsvp_status && g.rsvp_status !== 'pending')
           .slice(0, 3)
-          .map(p => ({
-            userName: p.user?.full_name || 'Someone',
-            status: p.rsvp_status || 'pending',
-            timestamp: p.created_at || '',
+          .map(g => ({
+            userName: g.users?.full_name || g.guest_name || 'Someone',
+            status: g.rsvp_status || 'pending',
+            timestamp: g.created_at || '',
           }));
 
         const lastActivity = recentActivity.length > 0 ? recentActivity[0].timestamp : null;

@@ -10,7 +10,7 @@ import { Send, MessageCircle } from 'lucide-react';
 
 type Message = Database['public']['Tables']['messages']['Row'];
 type PublicUserProfile =
-  Database['public']['Views']['public_user_profiles']['Row'];
+  Database['public']['Tables']['users']['Row'];
 
 interface MessageWithSender extends Message {
   sender: PublicUserProfile | null;
@@ -65,7 +65,7 @@ function GuestMessaging({ eventId, currentUserId }: GuestMessagingProps) {
       for (const senderId of uniqueSenderIds) {
         try {
           const { data: senderData, error: senderError } = await supabase
-            .from('public_user_profiles')
+            .from('users')
             .select('*')
             .eq('id', senderId)
             .single();
@@ -112,7 +112,7 @@ function GuestMessaging({ eventId, currentUserId }: GuestMessagingProps) {
         // Fetch sender info for the new message
         if (newMessage.sender_user_id) {
           supabase
-            .from('public_user_profiles')
+            .from('users')
             .select('*')
             .eq('id', newMessage.sender_user_id)
             .single()

@@ -88,61 +88,6 @@ export type Database = {
           },
         ];
       };
-      event_participants: {
-        Row: {
-          created_at: string | null;
-          event_id: string;
-          id: string;
-          invited_at: string | null;
-          notes: string | null;
-          role: string;
-          rsvp_status: string | null;
-          user_id: string;
-        };
-        Insert: {
-          created_at?: string | null;
-          event_id: string;
-          id?: string;
-          invited_at?: string | null;
-          notes?: string | null;
-          role?: string;
-          rsvp_status?: string | null;
-          user_id: string;
-        };
-        Update: {
-          created_at?: string | null;
-          event_id?: string;
-          id?: string;
-          invited_at?: string | null;
-          notes?: string | null;
-          role?: string;
-          rsvp_status?: string | null;
-          user_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'event_participants_event_id_fkey';
-            columns: ['event_id'];
-            isOneToOne: false;
-            referencedRelation: 'events';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'event_participants_user_id_fkey';
-            columns: ['user_id'];
-            isOneToOne: false;
-            referencedRelation: 'public_user_profiles';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'event_participants_user_id_fkey';
-            columns: ['user_id'];
-            isOneToOne: false;
-            referencedRelation: 'users';
-            referencedColumns: ['id'];
-          },
-        ];
-      };
       events: {
         Row: {
           created_at: string | null;
@@ -554,13 +499,13 @@ export type Database = {
       get_user_events: {
         Args: Record<PropertyKey, never>;
         Returns: {
-          event_id: string;
+          id: string;
           title: string;
           event_date: string;
           location: string;
-          user_role: string;
+          role: string;
           rsvp_status: string;
-          is_primary_host: boolean;
+          is_host: boolean;
         }[];
       };
       guest_has_all_tags: {

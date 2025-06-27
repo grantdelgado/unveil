@@ -64,7 +64,7 @@ export default function GuestEventHomePage() {
   }, []);
 
   // Use the custom hook to fetch event and guest data
-  const { event, participantInfo, loading, error, updateRSVP } =
+  const { event, guestInfo, loading, error, updateRSVP } =
     useEventDetails(eventId, currentUserId);
 
   const handleRSVPUpdate = async (status: string) => {
@@ -256,9 +256,9 @@ export default function GuestEventHomePage() {
               <div
                 className={`px-4 py-2 rounded-full border font-medium transition-all duration-300 ${
                   isScrolled ? 'text-xs px-3 py-1' : 'text-sm'
-                } ${getRSVPStatusColor(participantInfo?.rsvp_status || null)}`}
+                } ${getRSVPStatusColor(guestInfo?.rsvp_status || null)}`}
               >
-                {getRSVPStatusText(participantInfo?.rsvp_status || null)}
+                                  {getRSVPStatusText(guestInfo?.rsvp_status || null)}
               </div>
             </div>
           </div>
@@ -388,15 +388,15 @@ export default function GuestEventHomePage() {
                 </div>
 
                 <div className="space-y-3">
-                  <RSVPButton status="Attending" currentStatus={participantInfo?.rsvp_status || null}>
+                  <RSVPButton status="Attending" currentStatus={guestInfo?.rsvp_status || null}>
                     Yes, I&apos;ll be there
                   </RSVPButton>
 
-                  <RSVPButton status="Maybe" currentStatus={participantInfo?.rsvp_status || null}>
+                  <RSVPButton status="Maybe" currentStatus={guestInfo?.rsvp_status || null}>
                     I&apos;m not sure yet
                   </RSVPButton>
 
-                  <RSVPButton status="Declined" currentStatus={participantInfo?.rsvp_status || null}>
+                  <RSVPButton status="Declined" currentStatus={guestInfo?.rsvp_status || null}>
                     I can&apos;t make it
                   </RSVPButton>
                 </div>
@@ -460,7 +460,7 @@ export default function GuestEventHomePage() {
            <p>Event ID: {eventId}</p>
            <p>Current User: {currentUserId || 'N/A'}</p>
            <p>Event Title: {event?.title || 'N/A'}</p>
-           <p>RSVP Status: {participantInfo?.rsvp_status || 'none'}</p>
+           <p>RSVP Status: {guestInfo?.rsvp_status || 'none'}</p>
            <p>Is Scrolled: {isScrolled ? 'true' : 'false'}</p>
            <p>Show Message Modal: {showMessageModal ? 'true' : 'false'}</p>
            <p>Show Schedule Modal: {showScheduleModal ? 'true' : 'false'}</p>

@@ -41,15 +41,15 @@ export default function EventDashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('guests'); // Default to guests for MVP
   const [showGuestImport, setShowGuestImport] = useState(false);
-  const [participantCount, setParticipantCount] = useState(0);
+  const [guestCount, setGuestCount] = useState(0);
 
   // Tab configuration for MVP - only Guests and Messages
   const tabs: TabItem[] = [
     {
       key: 'guests',
-      label: 'Participants',
+      label: 'Guests',
       icon: '👥',
-      badge: participantCount > 0 ? undefined : 1, // Show badge if no participants yet
+      badge: guestCount > 0 ? undefined : 1, // Show badge if no guests yet
     },
     {
       key: 'messages',
@@ -58,7 +58,7 @@ export default function EventDashboardPage() {
     },
   ];
 
-  // Fetch event data and participant count
+  // Fetch event data and guest count
   useEffect(() => {
     if (!eventId) return;
 
@@ -98,17 +98,17 @@ export default function EventDashboardPage() {
 
         setEvent(eventData);
 
-        // Get participant count
-        const { data: participantData, error: participantError } =
+        // Get guest count
+        const { data: guestData, error: guestError } =
           await supabase
-            .from('event_participants')
+            .from('event_guests')
             .select('id')
             .eq('event_id', eventId);
 
-        if (participantError) {
-          console.error('Participant count error:', participantError);
+        if (guestError) {
+          console.error('Guest count error:', guestError);
         } else {
-          setParticipantCount(participantData?.length || 0);
+          setGuestCount(guestData?.length || 0);
         }
       } catch (err) {
         console.error('Unexpected error:', err);
@@ -152,12 +152,12 @@ export default function EventDashboardPage() {
 
   // Handle data refresh after guest management actions
   const handleDataRefresh = async () => {
-    const { data: participantData } = await supabase
-      .from('event_participants')
+    const { data: guestData } = await supabase
+      .from('event_guests')
       .select('id')
       .eq('event_id', eventId);
 
-    setParticipantCount(participantData?.length || 0);
+    setGuestCount(guestData?.length || 0);
   };
 
   // Handle quick message actions
@@ -280,7 +280,7 @@ export default function EventDashboardPage() {
         </div>
 
         {/* Event Header with QuickActions */}
-        <EventHeader event={event} participantCount={participantCount}>
+        <EventHeader event={event} guestCount={guestCount}>
           <QuickActions eventId={eventId} />
         </EventHeader>
 
@@ -330,7 +330,7 @@ export default function EventDashboardPage() {
 
         {/* Development Mode Info */}
         <DevModeBox>
-          <p><strong>Host Dashboard:</strong> {event?.title} | Tab: {activeTab} | Guests: {participantCount}</p>
+          <p><strong>Host Dashboard:</strong> {event?.title} | Tab: {activeTab} | Guests: {guestCount}</p>
         </DevModeBox>
       </div>
     </PageWrapper>

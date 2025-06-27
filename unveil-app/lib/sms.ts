@@ -176,7 +176,7 @@ export async function sendRSVPReminder(
     const { data: event, error: eventError } = await supabase
       .from('events')
       .select(
-        'title, event_date, host:public_user_profiles!events_host_user_id_fkey(full_name)',
+        'title, event_date, host:users!events_host_user_id_fkey(full_name)',
       )
       .eq('id', eventId)
       .single();
@@ -185,15 +185,15 @@ export async function sendRSVPReminder(
       throw new Error('Event not found');
     }
 
-    // Fetch participants who need reminders
+    // Fetch guests who need reminders
     let query = supabase
-      .from('event_participants')
+      .from('event_guests')
       .select(
         `
         id, 
         role, 
         rsvp_status,
-        user:public_user_profiles(id, full_name)
+        users:user_id(id, full_name)
       `,
       )
       .eq('event_id', eventId);
@@ -205,13 +205,13 @@ export async function sendRSVPReminder(
       query = query.or('rsvp_status.is.null,rsvp_status.eq.pending');
     }
 
-    const { data: participants, error: participantsError } = await query;
+    const { data: guests, error: guestsError } = await query;
 
-    if (participantsError) {
-      throw new Error('Failed to fetch participants');
+    if (guestsError) {
+      throw new Error('Failed to fetch guests');
     }
 
-    if (!participants || participants.length === 0) {
+    if (!guests || guests.length === 0) {
       return { sent: 0, failed: 0 };
     }
 
@@ -229,8 +229,8 @@ export async function sendRSVPReminder(
 
     console.log(
       '📱 SMS Reminder would be sent to',
-      participants.length,
-      'participants',
+      guests.length,
+      'guests',
     );
     console.log(
       '⚠️ SMS functionality requires phone access - not available in simplified schema',
@@ -260,7 +260,7 @@ export async function sendEventAnnouncement(
     const { data: event, error: eventError } = await supabase
       .from('events')
       .select(
-        'title, host:public_user_profiles!events_host_user_id_fkey(full_name)',
+        'title, host:users!events_host_user_id_fkey(full_name)',
       )
       .eq('id', eventId)
       .single();
@@ -269,13 +269,13 @@ export async function sendEventAnnouncement(
       throw new Error('Event not found');
     }
 
-    // Fetch participants - Note: phone not available in public_user_profiles for privacy
+    // Fetch guests - Note: phone not available in public_user_profiles for privacy
     let query = supabase
-      .from('event_participants')
+      .from('event_guests')
       .select(
         `
         id,
-        user:public_user_profiles(id, full_name)
+        users:user_id(id, full_name)
       `,
       )
       .eq('event_id', eventId);
@@ -284,13 +284,13 @@ export async function sendEventAnnouncement(
       query = query.in('id', targetGuestIds);
     }
 
-    const { data: participants, error: participantsError } = await query;
+    const { data: guests, error: guestsError } = await query;
 
-    if (participantsError) {
-      throw new Error('Failed to fetch participants');
+    if (guestsError) {
+      throw new Error('Failed to fetch guests');
     }
 
-    if (!participants || participants.length === 0) {
+    if (!guests || guests.length === 0) {
       return { sent: 0, failed: 0 };
     }
 
@@ -302,8 +302,8 @@ export async function sendEventAnnouncement(
 
     console.log(
       '📱 SMS Announcement would be sent to',
-      participants.length,
-      'participants',
+      guests.length,
+      'guests',
     );
     console.log(
       '⚠️ SMS functionality requires phone access - not available in simplified schema',

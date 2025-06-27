@@ -7,7 +7,7 @@ import { EmptyState, LoadingSpinner } from '@/components/ui';
 // MessageCircle import removed - not used in this component
 import type { Database } from '@/app/reference/supabase.types';
 
-type PublicUserProfile = Database['public']['Views']['public_user_profiles']['Row'];
+type PublicUserProfile = Database['public']['Tables']['users']['Row'];
 type Message = Database['public']['Tables']['messages']['Row'];
 
 interface MessageWithSender extends Message {

@@ -79,10 +79,10 @@ export const queryKeys = {
   messages: ['messages'] as const,
   eventMessages: (eventId: string) => ['messages', 'event', eventId] as const,
   
-  // Guests/Participants
-  participants: ['participants'] as const,
-  eventParticipants: (eventId: string) => ['participants', 'event', eventId] as const,
-  userParticipation: (userId: string) => ['participants', 'user', userId] as const,
+  // Guests
+  guests: ['guests'] as const,
+  eventGuests: (eventId: string) => ['guests', 'event', eventId] as const,
+  userGuests: (userId: string) => ['guests', 'user', userId] as const,
   
   // User profiles
   users: ['users'] as const,

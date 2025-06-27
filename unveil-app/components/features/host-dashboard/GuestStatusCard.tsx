@@ -31,14 +31,14 @@ export function GuestStatusCard({ eventId, onManageClick }: GuestStatusCardProps
     const fetchGuestStatus = async () => {
       try {
         const { data, error } = await supabase
-          .from('event_participants')
+          .from('event_guests')
           .select('rsvp_status')
           .eq('event_id', eventId);
 
         if (error) throw error;
 
-        const counts = data?.reduce((acc, participant) => {
-          const status = participant.rsvp_status || 'pending';
+        const counts = data?.reduce((acc, guest) => {
+          const status = guest.rsvp_status || 'pending';
           acc[status as keyof Omit<GuestStatusData, 'total'>] = (acc[status as keyof Omit<GuestStatusData, 'total'>] || 0) + 1;
           acc.total += 1;
           return acc;
@@ -84,7 +84,7 @@ export function GuestStatusCard({ eventId, onManageClick }: GuestStatusCardProps
           <div className="flex items-center gap-3">
             <span className="text-2xl">👥</span>
             <div>
-              <h3 className="font-semibold text-gray-900">Participants</h3>
+              <h3 className="font-semibold text-gray-900">Guests</h3>
               <p className="text-sm text-gray-500">{statusData.total} total invited</p>
             </div>
           </div>
@@ -178,7 +178,7 @@ export function GuestStatusCard({ eventId, onManageClick }: GuestStatusCardProps
         {/* Empty State */}
         {statusData.total === 0 && (
           <div className="text-center py-4 text-gray-500">
-            <p className="text-sm">No participants yet</p>
+            <p className="text-sm">No guests yet</p>
             <p className="text-xs mt-1">Import your guest list to get started</p>
           </div>
         )}

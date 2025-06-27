@@ -1,7 +1,7 @@
 // Export service modules individually to avoid naming conflicts
 export * as AuthService from './auth';
 export * as EventsService from './events';
-export * as ParticipantsService from './guests';
+export * as GuestsService from './guests';
 export * as MediaService from './media';
 export * as MessagingService from './messaging';
 export * as StorageService from './storage';
@@ -28,32 +28,34 @@ export {
   getEventsByUser,
   getEventById,
   getHostEvents,
-  getParticipantEvents,
+  getGuestEvents,
   createEvent,
   updateEvent,
   deleteEvent,
   getUserEventRole,
   isEventHost,
   isEventGuest,
-  getEventParticipants,
-  addParticipantToEvent,
-  updateParticipantRSVP,
-  removeParticipantFromEvent,
-  updateParticipantRole,
   getEventStats,
+
 } from './events';
 
-// Guest/Participant management exports (no duplicates with events)
+// Guest management exports (unified guest system)
 export {
-  updateParticipant,
-  removeParticipant,
-  importParticipants,
-  getParticipantsByRole,
-  inviteGuest,
+  // New guest functions
+  getEventGuests,
+  updateGuest,
   removeGuest,
+  removeGuestByPhone,
+  importGuests,
+  updateGuestRSVP,
+  updateGuestRSVPByPhone,
+  addGuestToEvent,
+  getGuestsByRole,
+  inviteGuest,
   bulkInviteGuests,
   getGuestsByTags,
   getGuestStats,
+  // Guest management functions above
 } from './guests';
 
 // Media exports
@@ -98,8 +100,8 @@ export {
 export type {
   EventInsert,
   EventUpdate,
-  EventParticipantInsert,
-  EventParticipantUpdate,
+  EventGuestInsert,
+  EventGuestUpdate,
   MediaInsert,
   MediaUpdate,
   MessageInsert,
@@ -110,7 +112,8 @@ export type {
   MessageType,
   User,
   Event,
-  EventParticipant,
+  EventGuest,
   Media,
   Message,
+  // Event guest type system
 } from '@/lib/supabase/types';

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button';
 import type { Database } from '@/app/reference/supabase.types';
 
 type Message = Database['public']['Tables']['messages']['Row'] & {
-  sender: Database['public']['Views']['public_user_profiles']['Row'] | null;
+  sender: Database['public']['Tables']['users']['Row'] | null;
 };
 
 interface RecentMessagesProps {

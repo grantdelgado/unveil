@@ -10,9 +10,12 @@ import { cn } from '@/lib/utils';
 import { useHapticFeedback, usePullToRefresh, useDebounce } from '@/hooks/common';
 import type { Database } from '@/app/reference/supabase.types';
 
-type Participant = Database['public']['Tables']['event_participants']['Row'] & {
-  user: Database['public']['Views']['public_user_profiles']['Row'];
+type Guest = Database['public']['Tables']['event_guests']['Row'] & {
+  users: Database['public']['Tables']['users']['Row'] | null;
 };
+
+// Backward compatibility
+
 
 interface GuestManagementProps {
   eventId: string;
@@ -27,9 +30,9 @@ export function GuestManagement({
   onImportGuests,
   onSendMessage,
 }: GuestManagementProps) {
-  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [guests, setGuests] = useState<Guest[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedParticipants, setSelectedParticipants] = useState<Set<string>>(new Set());
+  const [selectedGuests, setSelectedGuests] = useState<Set<string>>(new Set());
   
   // Enhanced filtering and search with debouncing
   const [searchTerm, setSearchTerm] = useState('');
@@ -53,18 +56,18 @@ export function GuestManagement({
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const { data: participantData, error: participantError } = await supabase
-        .from('event_participants')
+      const { data: guestData, error: guestError } = await supabase
+        .from('event_guests')
         .select(`
           *,
-          user:public_user_profiles(*)
+          users:user_id(*)
         `)
         .eq('event_id', eventId);
 
-      if (participantError) throw participantError;
-      setParticipants(participantData || []);
+      if (guestError) throw guestError;
+      setGuests(guestData || []);
     } catch (error) {
-      console.error('Error fetching participants:', error);
+      console.error('Error fetching guests:', error);
     } finally {
       setLoading(false);
     }
@@ -73,13 +76,13 @@ export function GuestManagement({
   // Set up real-time subscription using centralized hook
   const { } = useRealtimeSubscription({
     subscriptionId: `guest-management-${eventId}`,
-    table: 'event_participants',
+    table: 'event_guests',
     event: '*',
     filter: `event_id=eq.${eventId}`,
     enabled: Boolean(eventId),
     onDataChange: useCallback(async (payload) => {
-      console.log('🔄 Real-time participant update:', payload);
-      // Refresh data when participants change
+      console.log('🔄 Real-time guest update:', payload);
+      // Refresh data when guests change
       await fetchData();
     }, [fetchData]),
     onError: useCallback((error: Error) => {
@@ -92,23 +95,23 @@ export function GuestManagement({
   }, [fetchData]);
 
   // Enhanced RSVP update with optimistic updates and haptic feedback
-  const handleRSVPUpdate = async (participantId: string, newStatus: string) => {
+  const handleRSVPUpdate = async (guestId: string, newStatus: string) => {
     try {
       triggerHaptic('light'); // Immediate feedback
       
       // Optimistic update
-      setParticipants(prev => 
+      setGuests(prev => 
         prev.map(p => 
-          p.id === participantId 
+          p.id === guestId 
             ? { ...p, rsvp_status: newStatus as 'attending' | 'declined' | 'maybe' | 'pending' }
             : p
         )
       );
 
       const { error } = await supabase
-        .from('event_participants')
+        .from('event_guests')
         .update({ rsvp_status: newStatus })
-        .eq('id', participantId);
+        .eq('id', guestId);
 
       if (error) throw error;
       
@@ -122,36 +125,36 @@ export function GuestManagement({
     }
   };
 
-  const handleRemoveParticipant = async (participantId: string) => {
-    if (!confirm('Are you sure you want to remove this participant?')) return;
+  const handleRemoveGuest = async (guestId: string) => {
+    if (!confirm('Are you sure you want to remove this guest?')) return;
 
     try {
       const { error } = await supabase
-        .from('event_participants')
+        .from('event_guests')
         .delete()
-        .eq('id', participantId);
+        .eq('id', guestId);
 
       if (error) throw error;
       await fetchData();
       onGuestUpdated?.();
     } catch (error) {
-      console.error('Error removing participant:', error);
+      console.error('Error removing guest:', error);
     }
   };
 
   // Bulk actions with haptic feedback
   const handleMarkAllPendingAsAttending = async () => {
-    const pendingParticipants = participants.filter(p => p.rsvp_status === 'pending');
-    if (pendingParticipants.length === 0) return;
+    const pendingGuests = guests.filter(p => p.rsvp_status === 'pending');
+    if (pendingGuests.length === 0) return;
 
-    if (!confirm(`Mark ${pendingParticipants.length} pending participants as attending?`)) return;
+    if (!confirm(`Mark ${pendingGuests.length} pending guests as attending?`)) return;
 
     try {
       triggerHaptic('medium'); // Medium feedback for bulk action
       
-      const operations = pendingParticipants.map(p =>
+      const operations = pendingGuests.map(p =>
         supabase
-          .from('event_participants')
+          .from('event_guests')
           .update({ rsvp_status: 'attending' })
           .eq('id', p.id)
       );
@@ -171,21 +174,21 @@ export function GuestManagement({
   };
 
   const handleBulkRSVPUpdate = async (newStatus: string) => {
-    if (selectedParticipants.size === 0) return;
+    if (selectedGuests.size === 0) return;
 
     try {
       triggerHaptic('medium'); // Medium feedback for bulk action
       
-      const operations = Array.from(selectedParticipants).map(participantId =>
+      const operations = Array.from(selectedGuests).map(guestId =>
         supabase
-          .from('event_participants')
+          .from('event_guests')
           .update({ rsvp_status: newStatus })
-          .eq('id', participantId)
+          .eq('id', guestId)
       );
 
       await Promise.all(operations);
       await fetchData();
-      setSelectedParticipants(new Set());
+      setSelectedGuests(new Set());
       triggerHaptic('success'); // Success feedback
       onGuestUpdated?.();
     } catch (error) {
@@ -200,33 +203,34 @@ export function GuestManagement({
   }, [pullToRefresh]);
 
   // Enhanced filtering with memoization
-  const filteredParticipants = useMemo(() => {
-    return participants.filter(participant => {
+  const filteredGuests = useMemo(() => {
+    return guests.filter(guest => {
       const matchesSearch = !debouncedSearchTerm || 
-        participant.user?.full_name?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-        participant.user?.id?.includes(debouncedSearchTerm);
+        guest.users?.full_name?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        guest.guest_name?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        guest.users?.id?.includes(debouncedSearchTerm);
 
-      const matchesRSVP = filterByRSVP === 'all' || participant.rsvp_status === filterByRSVP;
+      const matchesRSVP = filterByRSVP === 'all' || guest.rsvp_status === filterByRSVP;
       return matchesSearch && matchesRSVP;
     });
-  }, [participants, debouncedSearchTerm, filterByRSVP]);
+  }, [guests, debouncedSearchTerm, filterByRSVP]);
 
   // Status counts with memoization
   const statusCounts = useMemo(() => ({
-    total: participants.length,
-    attending: participants.filter(p => p.rsvp_status === 'attending').length,
-    pending: participants.filter(p => p.rsvp_status === 'pending').length,
-    maybe: participants.filter(p => p.rsvp_status === 'maybe').length,
-    declined: participants.filter(p => p.rsvp_status === 'declined').length,
-  }), [participants]);
+    total: guests.length,
+    attending: guests.filter(p => p.rsvp_status === 'attending').length,
+    pending: guests.filter(p => p.rsvp_status === 'pending').length,
+    maybe: guests.filter(p => p.rsvp_status === 'maybe').length,
+    declined: guests.filter(p => p.rsvp_status === 'declined').length,
+  }), [guests]);
 
   const selectAll = useCallback(() => {
-    if (selectedParticipants.size === filteredParticipants.length) {
-      setSelectedParticipants(new Set());
+    if (selectedGuests.size === filteredGuests.length) {
+      setSelectedGuests(new Set());
     } else {
-      setSelectedParticipants(new Set(filteredParticipants.map(p => p.id)));
+      setSelectedGuests(new Set(filteredGuests.map(p => p.id)));
     }
-  }, [selectedParticipants.size, filteredParticipants]);
+  }, [selectedGuests.size, filteredGuests]);
 
   if (loading) {
     return (
@@ -336,14 +340,14 @@ export function GuestManagement({
       />
 
       {/* Selected Actions Bar */}
-      {selectedParticipants.size > 0 && (
+      {selectedGuests.size > 0 && (
         <div className="bg-[#FF6B6B] text-white rounded-lg p-4">
           <div className="flex items-center justify-between mb-3">
             <p className="font-medium">
-              {selectedParticipants.size} participant{selectedParticipants.size > 1 ? 's' : ''} selected
+              {selectedGuests.size} guest{selectedGuests.size > 1 ? 's' : ''} selected
             </p>
             <button
-              onClick={() => setSelectedParticipants(new Set())}
+              onClick={() => setSelectedGuests(new Set())}
               className="text-white/80 hover:text-white"
             >
               ✕
@@ -382,58 +386,58 @@ export function GuestManagement({
         </div>
       )}
 
-      {/* Participant List - Mobile Optimized */}
+      {/* Guest List - Mobile Optimized */}
       <CardContainer className="overflow-hidden">
         {/* Header with Select All */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <div className="flex items-center gap-3">
             <input
               type="checkbox"
-              checked={selectedParticipants.size === filteredParticipants.length && filteredParticipants.length > 0}
+              checked={selectedGuests.size === filteredGuests.length && filteredGuests.length > 0}
               onChange={selectAll}
               className="h-4 w-4 text-[#FF6B6B] focus:ring-[#FF6B6B] border-gray-300 rounded"
             />
             <span className="text-sm font-medium text-gray-700">
-              {filteredParticipants.length} participant{filteredParticipants.length !== 1 ? 's' : ''}
+              {filteredGuests.length} guest{filteredGuests.length !== 1 ? 's' : ''}
               {searchTerm || filterByRSVP !== 'all' ? ` (filtered)` : ''}
             </span>
           </div>
         </div>
 
-        {/* Participant Cards */}
+        {/* Guest Cards */}
         <div className="divide-y divide-gray-100">
-          {filteredParticipants.length === 0 ? (
+          {filteredGuests.length === 0 ? (
             <div className="p-8 text-center text-gray-500">
               <div className="text-3xl mb-2">
                 {searchTerm || filterByRSVP !== 'all' ? '🔍' : '👥'}
               </div>
               <p className="font-medium">
                 {searchTerm || filterByRSVP !== 'all' 
-                  ? 'No participants match your filters' 
-                  : 'No participants yet'}
+                  ? 'No guests match your filters' 
+                  : 'No guests yet'}
               </p>
               {!searchTerm && filterByRSVP === 'all' && (
                 <p className="text-sm mt-1">Import your guest list to get started</p>
               )}
             </div>
           ) : (
-            filteredParticipants.map((participant) => (
+            filteredGuests.map((guest) => (
               <div
-                key={participant.id}
+                key={guest.id}
                 className="p-4 hover:bg-gray-50 transition-colors"
               >
                 <div className="flex items-start gap-3">
                   <input
                     type="checkbox"
-                    checked={selectedParticipants.has(participant.id)}
+                    checked={selectedGuests.has(guest.id)}
                     onChange={(e) => {
-                      const newSelected = new Set(selectedParticipants);
+                      const newSelected = new Set(selectedGuests);
                       if (e.target.checked) {
-                        newSelected.add(participant.id);
+                        newSelected.add(guest.id);
                       } else {
-                        newSelected.delete(participant.id);
+                        newSelected.delete(guest.id);
                       }
-                      setSelectedParticipants(newSelected);
+                      setSelectedGuests(newSelected);
                     }}
                     className="mt-1 h-4 w-4 text-[#FF6B6B] focus:ring-[#FF6B6B] border-gray-300 rounded"
                   />
@@ -442,18 +446,18 @@ export function GuestManagement({
                     <div className="flex items-start justify-between">
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900 truncate">
-                          {participant.user?.full_name || 'Unnamed Participant'}
+                          {guest.users?.full_name || guest.guest_name || 'Unnamed Guest'}
                         </p>
                         <p className="text-xs text-gray-500 mt-1">
-                          Role: {participant.role}
+                          Role: {guest.role}
                         </p>
                       </div>
                       
                       {/* RSVP Status and Actions */}
                       <div className="flex flex-col items-end gap-2 ml-4">
                         <select
-                          value={participant.rsvp_status || 'pending'}
-                          onChange={(e) => handleRSVPUpdate(participant.id, e.target.value)}
+                          value={guest.rsvp_status || 'pending'}
+                          onChange={(e) => handleRSVPUpdate(guest.id, e.target.value)}
                           className={cn(
                             'text-xs px-2 py-1 border rounded focus:ring-1 focus:ring-[#FF6B6B]',
                             'min-h-[32px] min-w-[80px]' // Touch-friendly
@@ -466,7 +470,7 @@ export function GuestManagement({
                         </select>
                         
                         <button
-                          onClick={() => handleRemoveParticipant(participant.id)}
+                          onClick={() => handleRemoveGuest(guest.id)}
                           className={cn(
                             'text-xs px-2 py-1 text-red-600 hover:text-red-700',
                             'hover:bg-red-50 rounded transition-colors',

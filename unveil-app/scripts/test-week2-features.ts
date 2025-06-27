@@ -185,7 +185,7 @@ async function testRealtimeConnection() {
 async function testUserProfiles() {
   try {
     const { data, error } = await supabase
-      .from('public_user_profiles')
+              .from('users')
       .select('*')
       .limit(3);
     
@@ -205,7 +205,7 @@ async function testUserProfiles() {
   }
 }
 
-async function testEventParticipants() {
+async function testEventGuests() {
   try {
     const { data, error } = await supabase
       .from('event_participants')
@@ -215,13 +215,13 @@ async function testEventParticipants() {
     if (error) throw error;
     
     logTest({
-      name: 'Event Participants Table',
+      name: 'Event Guests Table',
       status: 'PASS',
       details: `Retrieved ${data?.length || 0} participant records`
     });
   } catch (error) {
     logTest({
-      name: 'Event Participants Table',
+      name: 'Event Guests Table',
       status: 'FAIL',
       error: error instanceof Error ? error.message : 'Unknown error'
     });
@@ -315,7 +315,7 @@ async function runAllTests() {
   await testMediaTable();
   await testMessagesTable();
   await testUserProfiles();
-  await testEventParticipants();
+  await testEventGuests();
   await testPerformanceIndexes();
   await testComponentIntegrity();
   

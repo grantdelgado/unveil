@@ -43,11 +43,11 @@ export const searchUsers = async (query: string, limit: number = 10) => {
 
 export const getUsersWithRoles = async (eventId: string) => {
   return await supabase
-    .from('event_participants')
+    .from('event_guests')
     .select(
       `
       *,
-      user:public_user_profiles(*)
+      users:user_id(*)
     `,
     )
     .eq('event_id', eventId);

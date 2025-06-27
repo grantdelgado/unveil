@@ -1,5 +1,5 @@
 export { useHostEvents } from './useHostEvents';
-export { useParticipantEvents } from './useGuestEvents';
+export { useGuestEvents } from './useGuestEvents';
 export { useEventDetails } from './useEventDetails';
 export { useEventInsights } from './useEventInsights';
 export { useUserEventsSorted } from './useUserEventsSorted';
@@ -8,7 +8,7 @@ export { useUserEventsSorted } from './useUserEventsSorted';
 export {
   useEvent,
   useHostEventsCached,
-  useParticipantEventsCached,
+  useGuestEventsCached,
   useEventStats,
   useCreateEvent,
   useUpdateEvent,

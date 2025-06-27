@@ -12,23 +12,23 @@ export type Enums<T extends keyof Database['public']['Enums']> =
 
 // Specific table types for convenience
 export type Event = Tables<'events'>;
-export type EventParticipant = Tables<'event_participants'>;
+export type EventGuest = Tables<'event_guests'>;
 export type Message = Tables<'messages'>;
 export type Media = Tables<'media'>;
 export type User = Tables<'users'>;
 export type PublicUserProfile =
-  Database['public']['Views']['public_user_profiles']['Row'];
+  Database['public']['Tables']['users']['Row'];
 
 // Insert types
 export type EventInsert = TablesInsert<'events'>;
-export type EventParticipantInsert = TablesInsert<'event_participants'>;
+export type EventGuestInsert = TablesInsert<'event_guests'>;
 export type MessageInsert = TablesInsert<'messages'>;
 export type MediaInsert = TablesInsert<'media'>;
 export type UserInsert = TablesInsert<'users'>;
 
 // Update types
 export type EventUpdate = TablesUpdate<'events'>;
-export type EventParticipantUpdate = TablesUpdate<'event_participants'>;
+export type EventGuestUpdate = TablesUpdate<'event_guests'>;
 export type MessageUpdate = TablesUpdate<'messages'>;
 export type MediaUpdate = TablesUpdate<'media'>;
 export type UserUpdate = TablesUpdate<'users'>;
@@ -43,11 +43,11 @@ export interface EventWithHost extends Event {
   host: PublicUserProfile | null;
 }
 
-export interface EventParticipantWithUser extends EventParticipant {
-  user: PublicUserProfile | null;
+export interface EventGuestWithUser extends EventGuest {
+  users: PublicUserProfile | null;
 }
 
-export interface EventParticipantWithEvent extends EventParticipant {
+export interface EventGuestWithEvent extends EventGuest {
   events: Event | null;
 }
 
@@ -71,7 +71,7 @@ export type ServiceResponseArray<T> = {
 };
 
 // Enhanced types for better type safety
-export type EventParticipantWithUserProfile = EventParticipantWithUser & {
+export type EventGuestWithUserProfile = EventGuestWithUser & {
   user: {
     id: string;
     phone: string;
@@ -100,3 +100,6 @@ export type MessageWithSenderProfile = MessageWithSender & {
     avatar_url: string | null;
   } | null;
 };
+
+// Event guest types have replaced participant types. 
+// All references should now use EventGuest* types from the unified guest system.

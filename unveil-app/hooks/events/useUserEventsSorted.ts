@@ -62,7 +62,7 @@ export function useUserEventsSorted(): UseUserEventsSortedReturn {
       const sortedEvents = (userEvents || []).sort(
         (a: GetUserEventsReturn, b: GetUserEventsReturn) => {
           // If both are host events or both are guest events, sort by date
-          if (a.user_role === b.user_role) {
+          if (a.role === b.role) {
             return (
               new Date(a.event_date).getTime() -
               new Date(b.event_date).getTime()
@@ -70,10 +70,10 @@ export function useUserEventsSorted(): UseUserEventsSortedReturn {
           }
 
           // Host events always come first
-          if (a.user_role === 'host' && b.user_role !== 'host') {
+          if (a.role === 'host' && b.role !== 'host') {
             return -1;
           }
-          if (b.user_role === 'host' && a.user_role !== 'host') {
+          if (b.role === 'host' && a.role !== 'host') {
             return 1;
           }
 
@@ -82,7 +82,15 @@ export function useUserEventsSorted(): UseUserEventsSortedReturn {
             new Date(a.event_date).getTime() - new Date(b.event_date).getTime()
           );
         },
-      );
+      ).map((event: GetUserEventsReturn): SortedUserEvent => ({
+        event_id: event.id, // Map database 'id' to frontend 'event_id'
+        title: event.title,
+        event_date: event.event_date,
+        location: event.location,
+        user_role: event.role, // Map database 'role' to frontend 'user_role'
+        rsvp_status: event.rsvp_status,
+        is_primary_host: event.is_host, // Map database 'is_host' to frontend 'is_primary_host'
+      }));
 
       setEvents(sortedEvents);
       setLoading(false);

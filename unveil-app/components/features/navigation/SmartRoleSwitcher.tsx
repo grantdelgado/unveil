@@ -107,13 +107,13 @@ export function SmartRoleSwitcher({
         }
 
         // Get user's roles for this event
-        const { data: participantData } = await supabase
-          .from('event_participants')
+        const { data: guestData } = await supabase
+          .from('event_guests')
           .select('role')
           .eq('event_id', currentEventId)
           .eq('user_id', user.id);
 
-        const roles = participantData?.map((p) => p.role) || [];
+        const roles = guestData?.map((p) => p.role) || [];
         setAvailableRoles(roles);
       } catch (error) {
         console.error('Error fetching user roles:', error);

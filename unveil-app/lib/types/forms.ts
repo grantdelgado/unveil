@@ -64,17 +64,21 @@ export interface EventFormData {
   description: StringFormField;
   event_date: DateFormField;
   location: StringFormField;
-  max_participants?: NumberFormField;
+  max_guests?: NumberFormField;
   is_public: BooleanFormField;
 }
 
-export interface ParticipantFormData {
+export interface GuestFormData {
   phone: StringFormField;
-  full_name?: StringFormField;
-  email?: StringFormField;
+  guest_name?: StringFormField;
+  guest_email?: StringFormField;
   role: StringFormField;
   rsvp_status?: StringFormField;
+  guest_tags?: ArrayFormField<string>;
 }
+
+// Legacy alias
+
 
 export interface MessageFormData {
   content: StringFormField;
@@ -121,19 +125,23 @@ export type EventFormSchema = z.ZodObject<{
   description: z.ZodString;
   event_date: z.ZodDate;
   location: z.ZodString;
-  max_participants: z.ZodOptional<z.ZodNumber>;
+  max_guests: z.ZodOptional<z.ZodNumber>;
   is_public: z.ZodBoolean;
 }>;
 
-export type ParticipantFormSchema = z.ZodObject<{
+export type GuestFormSchema = z.ZodObject<{
   phone: z.ZodString;
-  full_name: z.ZodOptional<z.ZodString>;
-  email: z.ZodOptional<z.ZodString>;
+  guest_name: z.ZodOptional<z.ZodString>;
+  guest_email: z.ZodOptional<z.ZodString>;
   role: z.ZodEnum<['host', 'guest']>;
   rsvp_status: z.ZodOptional<
     z.ZodEnum<['attending', 'declined', 'maybe', 'pending']>
   >;
+  guest_tags: z.ZodOptional<z.ZodArray<z.ZodString>>;
 }>;
+
+// Legacy alias
+
 
 export type MessageFormSchema = z.ZodObject<{
   content: z.ZodString;
@@ -370,17 +378,21 @@ export const createEventFormData = (): EventFormData => ({
   description: createStringField('', true),
   event_date: createDateField(null, true),
   location: createStringField('', true),
-  max_participants: createNumberField(null, false),
+  max_guests: createNumberField(null, false),
   is_public: createBooleanField(false),
 });
 
-export const createParticipantFormData = (): ParticipantFormData => ({
+export const createGuestFormData = (): GuestFormData => ({
   phone: createStringField('', true),
-  full_name: createStringField('', false),
-  email: createStringField('', false),
+  guest_name: createStringField('', false),
+  guest_email: createStringField('', false),
   role: createStringField('guest', true),
   rsvp_status: createStringField('pending', false),
+  guest_tags: createArrayField<string>(),
 });
+
+// Legacy factory
+
 
 export const createMessageFormData = (): MessageFormData => ({
   content: createStringField('', true),

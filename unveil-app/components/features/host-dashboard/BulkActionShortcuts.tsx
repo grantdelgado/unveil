@@ -23,8 +23,8 @@ export function BulkActionShortcuts({
   loading = false,
   className,
 }: BulkActionShortcutsProps) {
-  const hasParticipants = totalCount > 0;
-  const hasPendingParticipants = pendingCount > 0;
+  const hasGuests = totalCount > 0;
+  const hasPendingGuests = pendingCount > 0;
 
   return (
     <div className={cn('space-y-3', className)}>
@@ -42,7 +42,7 @@ export function BulkActionShortcuts({
       </div>
 
       {/* Bulk Actions - Show when guests exist */}
-      {hasParticipants && (
+      {hasGuests && (
         <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
           <h3 className="text-sm font-medium text-gray-900 mb-3 flex items-center gap-2">
             <span className="text-base">⚡</span>
@@ -51,7 +51,7 @@ export function BulkActionShortcuts({
           
           <div className="space-y-2">
             {/* Mark All Pending as Attending */}
-            {hasPendingParticipants && (
+            {hasPendingGuests && (
               <SecondaryButton
                 onClick={onMarkAllPendingAsAttending}
                 disabled={loading}
@@ -64,14 +64,14 @@ export function BulkActionShortcuts({
                 <div className="flex-1">
                   <div className="font-medium">Mark All Pending as Attending</div>
                   <div className="text-xs text-gray-500">
-                    {pendingCount} participant{pendingCount !== 1 ? 's' : ''} pending
+                    {pendingCount} guest{pendingCount !== 1 ? 's' : ''} pending
                   </div>
                 </div>
               </SecondaryButton>
             )}
 
             {/* Send Reminder to Pending */}
-            {hasPendingParticipants && (
+            {hasPendingGuests && (
               <SecondaryButton
                 onClick={onSendReminderToPending}
                 disabled={loading}
@@ -84,17 +84,17 @@ export function BulkActionShortcuts({
                 <div className="flex-1">
                   <div className="font-medium">Send RSVP Reminder</div>
                   <div className="text-xs text-gray-500">
-                    To {pendingCount} pending participant{pendingCount !== 1 ? 's' : ''}
+                    To {pendingCount} pending guest{pendingCount !== 1 ? 's' : ''}
                   </div>
                 </div>
               </SecondaryButton>
             )}
 
-            {/* Encourage importing if no participants */}
-            {!hasParticipants && (
+            {/* Encourage importing if no guests */}
+            {!hasGuests && (
               <div className="text-center py-6 text-gray-500">
                 <div className="text-2xl mb-2">👥</div>
-                <p className="text-sm font-medium">No participants yet</p>
+                <p className="text-sm font-medium">No guests yet</p>
                 <p className="text-xs">Import your guest list to get started</p>
               </div>
             )}

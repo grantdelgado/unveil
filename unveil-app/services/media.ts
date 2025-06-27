@@ -356,7 +356,7 @@ export const getEventMedia = async (eventId: string) => {
       .select(
         `
         *,
-        uploader:public_user_profiles!media_uploader_user_id_fkey(*)
+        uploader:users!media_uploader_user_id_fkey(*)
       `,
       )
       .eq('event_id', eventId)
@@ -388,7 +388,7 @@ export const uploadMedia = async (mediaData: {
       .select(
         `
         *,
-        uploader:public_user_profiles!media_uploader_user_id_fkey(*)
+        uploader:users!media_uploader_user_id_fkey(*)
       `,
       )
       .single();
@@ -406,7 +406,7 @@ export const updateMediaCaption = async (id: string, caption: string) => {
       .select(
         `
         *,
-        uploader:public_user_profiles!media_uploader_user_id_fkey(*)
+        uploader:users!media_uploader_user_id_fkey(*)
       `,
       )
       .single();
@@ -430,7 +430,7 @@ export const getMediaById = async (id: string) => {
       .select(
         `
         *,
-        uploader:public_user_profiles!media_uploader_user_id_fkey(*)
+        uploader:users!media_uploader_user_id_fkey(*)
       `,
       )
       .eq('id', id)
@@ -476,7 +476,7 @@ export const getMediaByType = async (eventId: string, mediaType: MediaType) => {
       .select(
         `
         *,
-        uploader:public_user_profiles!media_uploader_user_id_fkey(*)
+        uploader:users!media_uploader_user_id_fkey(*)
       `,
       )
       .eq('event_id', eventId)
@@ -497,7 +497,7 @@ export const getMediaByUploader = async (
       .select(
         `
         *,
-        uploader:public_user_profiles!media_uploader_user_id_fkey(*)
+        uploader:users!media_uploader_user_id_fkey(*)
       `,
       )
       .eq('event_id', eventId)
@@ -537,7 +537,7 @@ export const getEventMediaPaginated = async (
       .from('media')
       .select(`
         *,
-        uploader:public_user_profiles!media_uploader_user_id_fkey(*)
+        uploader:users!media_uploader_user_id_fkey(*)
       `, { count: 'exact' })
       .eq('event_id', eventId)
 
@@ -581,11 +581,11 @@ export const getRecentMediaPaginated = async (
 
     const offset = (page - 1) * pageSize
 
-    // First get events where user is host or participant
+    // First get events where user is host or guest
     const { data: userEvents, error: eventsError } = await supabase
       .from('events')
       .select('id')
-      .or(`host_user_id.eq.${userId},event_participants.user_id.eq.${userId}`)
+      .or(`host_user_id.eq.${userId},event_guests.user_id.eq.${userId}`)
 
     if (eventsError) throw eventsError
 
@@ -604,7 +604,7 @@ export const getRecentMediaPaginated = async (
       .from('media')
       .select(`
         *,
-        uploader:public_user_profiles!media_uploader_user_id_fkey(*),
+        uploader:users!media_uploader_user_id_fkey(*),
         event:events!media_event_id_fkey(title, event_date)
       `, { count: 'exact' })
       .in('event_id', eventIds)

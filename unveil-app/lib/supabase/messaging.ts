@@ -8,7 +8,7 @@ export const getEventMessages = async (eventId: string) => {
     .select(
       `
       *,
-      sender:public_user_profiles!messages_sender_user_id_fkey(*)
+      sender:users!messages_sender_user_id_fkey(*)
     `,
     )
     .eq('event_id', eventId)

@@ -81,7 +81,7 @@ export function BottomNavigation({
         } else {
           // Check if user is guest of this event
           const { data: guestEvent } = await supabase
-            .from('event_participants')
+            .from('event_guests')
             .select('event:events(title)')
             .eq('event_id', eventId)
             .eq('user_id', user.id)

@@ -244,10 +244,10 @@ export function GuestStatusSummary({
   const fetchStatusCounts = useCallback(async () => {
     try {
       const { data, error } = await supabase
-        .from('event_participants')
+        .from('event_guests')
         .select(`
           rsvp_status,
-          user:public_user_profiles(full_name)
+          users:user_id(full_name)
         `)
         .eq('event_id', eventId);
 
@@ -264,8 +264,8 @@ export function GuestStatusSummary({
         total: data?.length || 0,
       };
 
-      data?.forEach((participant) => {
-        const status = participant.rsvp_status || 'pending';
+      data?.forEach((guest) => {
+        const status = guest.rsvp_status || 'pending';
         if (status in counts) {
           counts[status as keyof Omit<StatusCount, 'total'>]++;
         }
@@ -282,7 +282,7 @@ export function GuestStatusSummary({
   // Set up real-time subscription using centralized hook
   const { } = useRealtimeSubscription({
     subscriptionId: `guest-status-summary-${eventId}`,
-    table: 'event_participants',
+    table: 'event_guests',
     event: '*',
     filter: `event_id=eq.${eventId}`,
     enabled: Boolean(eventId),
@@ -297,7 +297,7 @@ export function GuestStatusSummary({
         if (oldStatus !== newStatus) {
           // Fetch user name for activity
           const { data: userData } = await supabase
-            .from('public_user_profiles')
+            .from('users')
             .select('full_name')
             .eq('id', payload.new.user_id)
             .single();
@@ -437,7 +437,7 @@ export function GuestStatusSummary({
               )}
               type="button"
               aria-pressed={isActive}
-              aria-label={`Filter by ${status.label} participants (${count})`}
+              aria-label={`Filter by ${status.label} guests (${count})`}
             >
               <span className="text-base" role="img" aria-hidden="true">
                 {status.icon}

@@ -11,13 +11,13 @@ import type { Database } from '@/app/reference/supabase.types';
 import type { MessageTemplate } from './MessageTemplates';
 import type { RecipientFilter } from './RecipientPresets';
 
-type Participant = Database['public']['Tables']['event_participants']['Row'] & {
-  user: Database['public']['Views']['public_user_profiles']['Row'];
+type Guest = Database['public']['Tables']['event_guests']['Row'] & {
+  users: Database['public']['Tables']['users']['Row'] | null;
 };
 
 interface MessageComposerProps {
   eventId: string;
-  participants: Participant[];
+  guests: Guest[];
   selectedTemplate?: MessageTemplate | null;
   selectedRecipientFilter?: RecipientFilter;
   onMessageSent?: () => void;
@@ -27,7 +27,7 @@ interface MessageComposerProps {
 
 export function MessageComposer({
   eventId,
-  participants,
+  guests,
   selectedTemplate,
   selectedRecipientFilter = 'all',
   onMessageSent,
@@ -64,20 +64,20 @@ export function MessageComposer({
 
 
 
-  const filteredParticipants = useMemo(() => {
+  const filteredGuests = useMemo(() => {
     switch (selectedRecipientFilter) {
       case 'attending':
-        return participants.filter(p => p.rsvp_status === 'attending');
+        return guests.filter(p => p.rsvp_status === 'attending');
       case 'pending':
-        return participants.filter(p => p.rsvp_status === 'pending');
+        return guests.filter(p => p.rsvp_status === 'pending');
       case 'maybe':
-        return participants.filter(p => p.rsvp_status === 'maybe');
+        return guests.filter(p => p.rsvp_status === 'maybe');
       case 'declined':
-        return participants.filter(p => p.rsvp_status === 'declined');
+        return guests.filter(p => p.rsvp_status === 'declined');
       default:
-        return participants;
+        return guests;
     }
-  }, [participants, selectedRecipientFilter]);
+  }, [guests, selectedRecipientFilter]);
 
   const handleSendMessage = useCallback(async () => {
     if (!message.trim()) {
@@ -92,7 +92,7 @@ export function MessageComposer({
       return;
     }
 
-    if (filteredParticipants.length === 0) {
+    if (filteredGuests.length === 0) {
       setError('No recipients match the selected filter. Please choose a different recipient group.');
       triggerHaptic('warning');
       return;
@@ -137,7 +137,7 @@ export function MessageComposer({
     } finally {
       setLoading(false);
     }
-  }, [message, characterCount, maxCharacters, filteredParticipants, selectedRecipientFilter, eventId, onMessageSent, triggerHaptic]);
+  }, [message, characterCount, maxCharacters, filteredGuests, selectedRecipientFilter, eventId, onMessageSent, triggerHaptic]);
 
   const handleClear = useCallback(() => {
     setMessage('');
@@ -243,7 +243,7 @@ export function MessageComposer({
           <div className="flex items-center gap-2 text-sm">
             <span className="text-base" role="img" aria-hidden="true">🎯</span>
             <span className="font-medium text-gray-900">
-              Sending to {filteredParticipants.length} {filteredParticipants.length === 1 ? 'guest' : 'guests'}
+              Sending to {filteredGuests.length} {filteredGuests.length === 1 ? 'guest' : 'guests'}
             </span>
             {selectedRecipientFilter !== 'all' && (
               <span className="text-gray-600">
@@ -266,7 +266,7 @@ export function MessageComposer({
         </Button>
         <Button 
           onClick={handleSendMessage}
-          disabled={!message.trim() || loading || isCharacterLimitExceeded || filteredParticipants.length === 0}
+          disabled={!message.trim() || loading || isCharacterLimitExceeded || filteredGuests.length === 0}
           className={cn(
             'flex-1 h-12 min-w-[120px] bg-[#FF6B6B] hover:bg-[#ff5252] transition-all duration-150 ease-out',
             'hover:scale-[0.98] active:scale-[0.96] hover:shadow-lg',

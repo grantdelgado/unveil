@@ -1,12 +1,12 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase/client';
-import { type EventParticipantWithUser } from '@/lib/supabase/types';
-import { getEventParticipants } from '@/services/guests';
+import { type EventGuestWithUser } from '@/lib/supabase/types';
+import { getEventGuests } from '@/services/guests';
 import { logError, type AppError } from '@/lib/error-handling';
 import { withErrorHandling } from '@/lib/error-handling';
 
 interface UseGuestsReturn {
-  guests: EventParticipantWithUser[];
+  guests: EventGuestWithUser[];
   loading: boolean;
   error: AppError | null;
   linkGuest: (
@@ -17,7 +17,7 @@ interface UseGuestsReturn {
 }
 
 export function useGuests(eventId: string | null): UseGuestsReturn {
-  const [guests, setGuests] = useState<EventParticipantWithUser[]>([]);
+  const [guests, setGuests] = useState<EventGuestWithUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<AppError | null>(null);
 
@@ -43,7 +43,7 @@ export function useGuests(eventId: string | null): UseGuestsReturn {
         return;
       }
 
-      const result = await getEventParticipants(eventId);
+      const result = await getEventGuests(eventId);
 
       if (result.error) {
         // Handle permission errors gracefully

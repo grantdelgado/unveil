@@ -10,13 +10,13 @@ type Event = Database['public']['Tables']['events']['Row'];
 
 interface EventHeaderProps {
   event: Event;
-  participantCount: number;
+  guestCount: number;
   children?: React.ReactNode; // For QuickActions or other action elements
 }
 
-export function EventHeader({ 
-  event, 
-  participantCount, 
+export function EventHeader({
+  event,
+  guestCount, 
   children 
 }: EventHeaderProps) {
   return (
@@ -72,7 +72,7 @@ export function EventHeader({
                 <div className="flex items-center gap-2">
                   <span className="text-xl">👥</span>
                   <span className="font-medium">
-                    {participantCount} {participantCount === 1 ? 'participant' : 'participants'}
+                    {guestCount} {guestCount === 1 ? 'guest' : 'guests'}
                   </span>
                 </div>
               </div>

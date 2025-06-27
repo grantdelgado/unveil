@@ -3,7 +3,7 @@ import { queryKeys, cacheUtils } from '@/lib/react-query'
 import {
   getEventById,
   getHostEvents,
-  getParticipantEvents,
+  getGuestEvents,
   createEvent,
   updateEvent,
   deleteEvent,
@@ -44,14 +44,14 @@ export function useHostEventsCached(userId: string) {
   })
 }
 
-// Cached hook for getting events where user is a participant
-export function useParticipantEventsCached(userId: string) {
+// Cached hook for getting events where user is a guest
+export function useGuestEventsCached(userId: string) {
   return useQuery({
-    queryKey: queryKeys.participantEvents(userId),
+    queryKey: queryKeys.guestEvents(userId),
     queryFn: async () => {
-      const result = await getParticipantEvents(userId)
+      const result = await getGuestEvents(userId)
       if (result?.error) {
-        throw new Error('Failed to fetch participant events')
+        throw new Error('Failed to fetch guest events')
       }
       return result?.data || []
     },

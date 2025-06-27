@@ -64,11 +64,11 @@ export const queryKeys = {
   // Event queries
   events: () => ['events'] as const,
   event: (eventId: string) => ['events', eventId] as const,
-  eventParticipants: (eventId: string) => ['events', eventId, 'participants'] as const,
+  eventGuests: (eventId: string) => ['events', eventId, 'guests'] as const,
   eventStats: (eventId: string) => ['events', eventId, 'stats'] as const,
   userEvents: (userId: string) => ['events', 'user', userId] as const,
   hostEvents: (userId: string) => ['events', 'host', userId] as const,
-  participantEvents: (userId: string) => ['events', 'participant', userId] as const,
+  guestEvents: (userId: string) => ['events', 'guest', userId] as const,
   
   // Media queries
   eventMedia: (eventId: string) => ['media', 'event', eventId] as const,
@@ -79,9 +79,9 @@ export const queryKeys = {
   eventMessages: (eventId: string) => ['messages', 'event', eventId] as const,
   messageStats: (eventId: string) => ['messages', 'stats', eventId] as const,
   
-  // Participant/Guest queries
-  eventGuests: (eventId: string) => ['participants', 'event', eventId] as const,
-  guestStats: (eventId: string) => ['participants', 'stats', eventId] as const,
+  // Guest queries
+  eventGuestsList: (eventId: string) => ['guests', 'event', eventId] as const,
+  guestStats: (eventId: string) => ['guests', 'stats', eventId] as const,
 } as const
 
 // Cache invalidation utilities
@@ -89,18 +89,18 @@ export const cacheUtils = {
   // Invalidate all event-related data
   invalidateEvent: (queryClient: QueryClient, eventId: string) => {
     queryClient.invalidateQueries({ queryKey: queryKeys.event(eventId) })
-    queryClient.invalidateQueries({ queryKey: queryKeys.eventParticipants(eventId) })
+    queryClient.invalidateQueries({ queryKey: queryKeys.eventGuests(eventId) })
     queryClient.invalidateQueries({ queryKey: queryKeys.eventStats(eventId) })
     queryClient.invalidateQueries({ queryKey: queryKeys.eventMedia(eventId) })
     queryClient.invalidateQueries({ queryKey: queryKeys.eventMessages(eventId) })
-    queryClient.invalidateQueries({ queryKey: queryKeys.eventGuests(eventId) })
+    queryClient.invalidateQueries({ queryKey: queryKeys.eventGuestsList(eventId) })
   },
   
   // Invalidate all user events
   invalidateUserEvents: (queryClient: QueryClient, userId: string) => {
     queryClient.invalidateQueries({ queryKey: queryKeys.userEvents(userId) })
     queryClient.invalidateQueries({ queryKey: queryKeys.hostEvents(userId) })
-    queryClient.invalidateQueries({ queryKey: queryKeys.participantEvents(userId) })
+    queryClient.invalidateQueries({ queryKey: queryKeys.guestEvents(userId) })
   },
   
   // Invalidate media for an event

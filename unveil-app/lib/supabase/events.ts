@@ -21,7 +21,7 @@ export const getEventWithHost = async (eventId: string) => {
     .select(
       `
       *,
-      host:public_user_profiles!events_host_user_id_fkey(*)
+      host:users!events_host_user_id_fkey(*)
     `,
     )
     .eq('id', eventId)
@@ -44,7 +44,7 @@ export const isEventGuest = async (eventId: string) => {
   if (!user) return { isGuest: false, error: null };
 
   const { data, error } = await supabase
-    .from('event_participants')
+    .from('event_guests')
     .select('id')
     .eq('event_id', eventId)
     .eq('user_id', user.id)

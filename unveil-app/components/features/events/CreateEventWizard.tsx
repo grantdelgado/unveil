@@ -241,18 +241,28 @@ export default function CreateEventWizard() {
         return;
       }
       
-      // Create host participant entry
-      const { error: participantError } = await supabase
-        .from('event_participants')
+      // Create host guest entry with profile data
+      const { data: hostProfile } = await supabase
+        .from('users')
+        .select('full_name')
+        .eq('id', userId)
+        .single();
+
+      const { error: guestError } = await supabase
+        .from('event_guests')
         .insert({
           event_id: newEvent.id,
           user_id: userId,
+          phone: 'Host Profile', // Hosts don't need SMS typically
+          guest_name: hostProfile?.full_name || 'Host',
           role: 'host',
           rsvp_status: 'attending',
+          preferred_communication: 'email',
+          sms_opt_out: true, // Hosts opt out of SMS by default
         });
         
-      if (participantError) {
-        console.warn('Failed to create host participant entry:', participantError);
+      if (guestError) {
+        console.warn('Failed to create host guest entry:', guestError);
       }
       
       setFormMessage('Wedding hub created successfully!');

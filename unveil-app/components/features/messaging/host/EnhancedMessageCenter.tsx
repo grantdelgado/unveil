@@ -10,12 +10,12 @@ import { MessageComposer } from './MessageComposer';
 import { RecentMessages } from './RecentMessages';
 import type { Database } from '@/app/reference/supabase.types';
 
-type Participant = Database['public']['Tables']['event_participants']['Row'] & {
-  user: Database['public']['Views']['public_user_profiles']['Row'];
+type Guest = Database['public']['Tables']['event_guests']['Row'] & {
+  users: Database['public']['Tables']['users']['Row'] | null;
 };
 
 type Message = Database['public']['Tables']['messages']['Row'] & {
-  sender: Database['public']['Views']['public_user_profiles']['Row'] | null;
+  sender: Database['public']['Tables']['users']['Row'] | null;
 };
 
 interface EnhancedMessageCenterProps {
@@ -24,7 +24,7 @@ interface EnhancedMessageCenterProps {
 }
 
 export function EnhancedMessageCenter({ eventId, className }: EnhancedMessageCenterProps) {
-  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [guests, setGuests] = useState<Guest[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<MessageTemplate | null>(null);
   const [selectedRecipientFilter, setSelectedRecipientFilter] = useState<RecipientFilter>('all');
@@ -32,30 +32,30 @@ export function EnhancedMessageCenter({ eventId, className }: EnhancedMessageCen
   const [error, setError] = useState<string | null>(null);
   const [activeView, setActiveView] = useState<'compose' | 'history'>('compose');
 
-  // Fetch participants and messages
+  // Fetch guests and messages
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
       setError(null);
 
       try {
-        // Fetch participants
-        const { data: participantsData, error: participantsError } = await supabase
-          .from('event_participants')
+        // Fetch guests
+        const { data: guestsData, error: guestsError } = await supabase
+          .from('event_guests')
           .select(`
             *,
-            user:public_user_profiles(*)
+            users:user_id(*)
           `)
           .eq('event_id', eventId);
 
-        if (participantsError) throw participantsError;
+        if (guestsError) throw guestsError;
 
         // Fetch recent messages
         const { data: messagesData, error: messagesError } = await supabase
           .from('messages')
           .select(`
             *,
-            sender:public_user_profiles(*)
+            sender:users(*)
           `)
           .eq('event_id', eventId)
           .order('created_at', { ascending: false })
@@ -63,7 +63,7 @@ export function EnhancedMessageCenter({ eventId, className }: EnhancedMessageCen
 
         if (messagesError) throw messagesError;
 
-        setParticipants(participantsData || []);
+        setGuests(guestsData || []);
         setMessages(messagesData || []);
       } catch (err) {
         console.error('Error fetching data:', err);
@@ -96,25 +96,25 @@ export function EnhancedMessageCenter({ eventId, className }: EnhancedMessageCen
     console.debug('Advanced filter:', advancedFilter);
   };
 
-  // Convert participants to guests format for compatibility
-  const mockGuests = participants.map(participant => ({
-    id: participant.id,
+  // Convert guests to guests format for compatibility
+  const mockGuests = guests.map(guest => ({
+    id: guest.id,
     event_id: eventId,
-    phone: participant.user?.full_name || '', // Using full_name as phone placeholder
-    guest_name: participant.user?.full_name || '',
+    phone: guest.users?.phone || '', 
+    guest_name: guest.users?.full_name || guest.guest_name || '',
     guest_tags: null as string[] | null,
-    rsvp_status: participant.rsvp_status || 'pending',
+    rsvp_status: guest.rsvp_status || 'pending',
     guest_email: null,
     invited_at: null,
     notes: null,
     phone_number_verified: false,
     communication_preferences: null,
-    user_id: participant.user?.id || null,
-    created_at: participant.created_at,
+    user_id: guest.users?.id || null,
+    created_at: guest.created_at,
     preferred_communication: 'sms' as const,
     role: 'guest' as const,
     sms_opt_out: false,
-    updated_at: participant.created_at
+    updated_at: guest.created_at
   }));
 
   const handleMessageSent = () => {
@@ -125,7 +125,7 @@ export function EnhancedMessageCenter({ eventId, className }: EnhancedMessageCen
           .from('messages')
           .select(`
             *,
-            sender:public_user_profiles(*)
+            sender:users(*)
           `)
           .eq('event_id', eventId)
           .order('created_at', { ascending: false })
@@ -252,7 +252,7 @@ export function EnhancedMessageCenter({ eventId, className }: EnhancedMessageCen
           {/* Message Composer */}
           <MessageComposer
             eventId={eventId}
-            participants={participants}
+            guests={guests}
             selectedTemplate={selectedTemplate}
             selectedRecipientFilter={selectedRecipientFilter}
             onMessageSent={handleMessageSent}
@@ -284,7 +284,7 @@ export function EnhancedMessageCenter({ eventId, className }: EnhancedMessageCen
       <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
-            <div className="text-lg font-semibold text-gray-900">{participants.length}</div>
+            <div className="text-lg font-semibold text-gray-900">{guests.length}</div>
             <div className="text-xs text-gray-600">Total Guests</div>
           </div>
           <div>
@@ -293,7 +293,7 @@ export function EnhancedMessageCenter({ eventId, className }: EnhancedMessageCen
           </div>
           <div>
             <div className="text-lg font-semibold text-gray-900">
-              {participants.filter(p => p.rsvp_status === 'pending').length}
+              {guests.filter(p => p.rsvp_status === 'pending').length}
             </div>
             <div className="text-xs text-gray-600">Pending RSVPs</div>
           </div>

@@ -16,7 +16,7 @@ interface QuickActionsProps {
 
 export function QuickActions({ eventId }: QuickActionsProps) {
   const [stats, setStats] = useState({
-    totalParticipants: 0,
+    totalGuests: 0,
     pendingRSVPs: 0,
     recentMessages: 0,
   });
@@ -25,9 +25,9 @@ export function QuickActions({ eventId }: QuickActionsProps) {
   useEffect(() => {
     async function fetchQuickStats() {
       try {
-        // Get participant stats
-        const { data: participantData } = await supabase
-          .from('event_participants')
+        // Get guest stats
+        const { data: guestData } = await supabase
+          .from('event_guests')
           .select('rsvp_status')
           .eq('event_id', eventId);
 
@@ -41,15 +41,15 @@ export function QuickActions({ eventId }: QuickActionsProps) {
             new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
           );
 
-        const totalParticipants = participantData?.length || 0;
+        const totalGuests = guestData?.length || 0;
         const pendingRSVPs =
-          participantData?.filter(
+          guestData?.filter(
             (p) => !p.rsvp_status || p.rsvp_status === 'pending',
           ).length || 0;
         const recentMessages = messageData?.length || 0;
 
         setStats({
-          totalParticipants,
+          totalGuests,
           pendingRSVPs,
           recentMessages,
         });
@@ -98,9 +98,9 @@ export function QuickActions({ eventId }: QuickActionsProps) {
           <div className="grid grid-cols-3 gap-3">
             <div className="text-center p-3 bg-gray-50 rounded-lg">
               <div className="text-xl font-bold text-gray-700">
-                {stats.totalParticipants}
+                {stats.totalGuests}
               </div>
-              <MicroCopy>Participants</MicroCopy>
+              <MicroCopy>Guests</MicroCopy>
             </div>
             <div className="text-center p-3 bg-amber-50 rounded-lg">
               <div className="text-xl font-bold text-amber-700">
@@ -147,7 +147,7 @@ export function QuickActions({ eventId }: QuickActionsProps) {
             </SecondaryButton>
           </div>
 
-          {stats.totalParticipants === 0 && (
+          {stats.totalGuests === 0 && (
             <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
               <div className="text-sm text-purple-700 font-medium mb-1">
                 🚀 Get Started

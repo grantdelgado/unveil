@@ -9,7 +9,9 @@ import type { Database } from '@/app/reference/supabase.types';
 import { CardContainer } from '@/components/ui/CardContainer';
 import { SectionTitle, MicroCopy } from '@/components/ui/Typography';
 
-type Participant = Database['public']['Tables']['event_participants']['Row'];
+type Guest = Database['public']['Tables']['event_guests']['Row'];
+// Backward compatibility
+
 type Message = Database['public']['Tables']['messages']['Row'];
 type Media = Database['public']['Tables']['media']['Row'];
 
@@ -18,7 +20,7 @@ interface EventAnalyticsProps {
 }
 
 export function EventAnalytics({ eventId }: EventAnalyticsProps) {
-  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [guests, setGuests] = useState<Guest[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [media, setMedia] = useState<Media[]>([]);
 
@@ -32,10 +34,10 @@ export function EventAnalytics({ eventId }: EventAnalyticsProps) {
         setError(null);
 
         // Fetch all analytics data in parallel
-        const [participantsResponse, messagesResponse, mediaResponse] =
+        const [guestsResponse, messagesResponse, mediaResponse] =
           await Promise.all([
             supabase
-              .from('event_participants')
+              .from('event_guests')
               .select('*')
               .eq('event_id', eventId),
 
@@ -52,11 +54,11 @@ export function EventAnalytics({ eventId }: EventAnalyticsProps) {
               .order('created_at', { ascending: false }),
           ]);
 
-        if (participantsResponse.error) throw participantsResponse.error;
+        if (guestsResponse.error) throw guestsResponse.error;
         if (messagesResponse.error) throw messagesResponse.error;
         if (mediaResponse.error) throw mediaResponse.error;
 
-        setParticipants(participantsResponse.data || []);
+        setGuests(guestsResponse.data || []);
         setMessages(messagesResponse.data || []);
         setMedia(mediaResponse.data || []);
       } catch (err) {
@@ -74,12 +76,12 @@ export function EventAnalytics({ eventId }: EventAnalyticsProps) {
 
     // RSVP Statistics
     const rsvpStats = {
-      total: participants.length,
-      attending: participants.filter((p) => p.rsvp_status === 'attending')
+      total: guests.length,
+      attending: guests.filter((p) => p.rsvp_status === 'attending')
         .length,
-      declined: participants.filter((p) => p.rsvp_status === 'declined').length,
-      maybe: participants.filter((p) => p.rsvp_status === 'maybe').length,
-      pending: participants.filter(
+      declined: guests.filter((p) => p.rsvp_status === 'declined').length,
+      maybe: guests.filter((p) => p.rsvp_status === 'maybe').length,
+      pending: guests.filter(
         (p) => !p.rsvp_status || p.rsvp_status === 'pending',
       ).length,
     };
@@ -121,7 +123,7 @@ export function EventAnalytics({ eventId }: EventAnalyticsProps) {
       engagementStats,
       recentActivity,
     };
-  }, [participants, messages, media]);
+  }, [guests, messages, media]);
 
   if (loading) {
     return (

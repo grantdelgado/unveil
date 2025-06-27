@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase/client';
-import { type MessageWithSender } from '@/lib/supabase/types';
+import { type MessageWithSender, type PublicUserProfile } from '@/lib/supabase/types';
 import { sendMessage as sendMessageService } from '@/services/messaging';
 import { useEventSubscription } from '@/hooks/realtime';
 import { logError, type AppError } from '@/lib/error-handling';
@@ -77,19 +77,12 @@ export function useMessages(eventId: string | null): UseMessagesReturn {
         ),
       );
 
-      const sendersMap = new Map<
-        string,
-        {
-          avatar_url: string | null;
-          full_name: string | null;
-          id: string | null;
-        }
-      >();
+      const sendersMap = new Map<string, PublicUserProfile>();
 
       for (const senderId of uniqueSenderIds) {
         try {
           const { data: senderData, error: senderError } = await supabase
-            .from('public_user_profiles')
+            .from('users')
             .select('*')
             .eq('id', senderId)
             .single();

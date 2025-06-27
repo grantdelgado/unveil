@@ -7,7 +7,7 @@
 import { supabase } from '../lib/supabase/client';
 import * as AuthService from '../services/auth';
 import * as EventsService from '../services/events';
-import * as ParticipantsService from '../services/guests';
+import * as GuestsService from '../services/guests';
 import * as MediaService from '../services/media';
 import * as MessagingService from '../services/messaging';
 import * as StorageService from '../services/storage';
@@ -30,7 +30,7 @@ class RefactoringVerifier {
     await this.verifyMCPSchemaAlignment();
     await this.verifyAuthenticationFlow();
     await this.verifyEventManagement();
-    await this.verifyParticipantManagement();
+    await this.verifyGuestManagement();
     await this.verifyMediaServices();
     await this.verifyMessagingServices();
     await this.verifyErrorHandling();
@@ -88,10 +88,10 @@ class RefactoringVerifier {
       );
     }
 
-    // Test 3: Verify public_user_profiles view
+    // Test 3: Verify users table
     try {
       const { data } = await supabase
-        .from('public_user_profiles')
+        .from('users')
         .select('*')
         .limit(1);
       this.addResult(
@@ -274,12 +274,12 @@ class RefactoringVerifier {
     }
   }
 
-  private async verifyParticipantManagement(): Promise<void> {
-    console.log('👥 Verifying Participant Management...');
+  private async verifyGuestManagement(): Promise<void> {
+    console.log('👥 Verifying Guest Management...');
 
     if (!this.testEventId || !this.testUserId) {
       this.addResult(
-        'Participants - All Tests',
+        'Guests - All Tests',
         'SKIP',
         'No test event or user available',
       );
@@ -288,7 +288,7 @@ class RefactoringVerifier {
 
     // Test 1: Add participant to event
     try {
-      const participantData = {
+      const guestData = {
         event_id: this.testEventId,
         user_id: this.testUserId,
         role: 'host' as const,
@@ -296,79 +296,79 @@ class RefactoringVerifier {
       };
 
       const result =
-        await ParticipantsService.addParticipantToEvent(participantData);
+        await GuestsService.addParticipantToEvent(guestData);
       if (result?.data) {
         this.addResult(
-          'Participants - Addition',
+          'Guests - Addition',
           'PASS',
-          'Participant addition successful',
+          'Guest addition successful',
         );
       } else {
         this.addResult(
-          'Participants - Addition',
+          'Guests - Addition',
           'FAIL',
-          'Participant addition returned no data',
+          'Guest addition returned no data',
         );
       }
     } catch (error) {
       this.addResult(
-        'Participants - Addition',
+        'Guests - Addition',
         'FAIL',
-        'Participant addition error',
+        'Guest addition error',
         error,
       );
     }
 
     // Test 2: Get event participants
     try {
-      const result = await ParticipantsService.getEventParticipants(
+      const result = await GuestsService.getEventParticipants(
         this.testEventId,
       );
       if (result?.data && Array.isArray(result.data)) {
         this.addResult(
-          'Participants - Retrieval',
+          'Guests - Retrieval',
           'PASS',
-          'Participant retrieval successful',
+          'Guest retrieval successful',
         );
       } else {
         this.addResult(
-          'Participants - Retrieval',
+          'Guests - Retrieval',
           'FAIL',
-          'Participant retrieval failed',
+          'Guest retrieval failed',
         );
       }
     } catch (error) {
       this.addResult(
-        'Participants - Retrieval',
+        'Guests - Retrieval',
         'FAIL',
-        'Participant retrieval error',
+        'Guest retrieval error',
         error,
       );
     }
 
     // Test 3: Update RSVP status
     try {
-      const result = await ParticipantsService.updateParticipantRSVP(
+      const result = await GuestsService.updateParticipantRSVP(
         this.testEventId,
         this.testUserId,
         'maybe',
       );
       if (result?.data) {
         this.addResult(
-          'Participants - RSVP Update',
+          'Guests - RSVP Update',
           'PASS',
           'RSVP update successful',
         );
       } else {
         this.addResult(
-          'Participants - RSVP Update',
+          'Guests - RSVP Update',
           'FAIL',
           'RSVP update failed',
         );
       }
     } catch (error) {
       this.addResult(
-        'Participants - RSVP Update',
+        'Guests - RSVP Update',
         'FAIL',
         'RSVP update error',
         error,
@@ -553,7 +553,7 @@ class RefactoringVerifier {
     // Test 1: Database constraint error handling
     try {
       // Try to create a user with invalid data
-      await ParticipantsService.createUser({
+      await GuestsService.createUser({
         phone: 'invalid-phone', // Should trigger validation error
         full_name: 'Test User',
       });

@@ -4,7 +4,7 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import type { Database } from '@/app/reference/supabase.types';
 
-type PublicUserProfile = Database['public']['Views']['public_user_profiles']['Row'];
+type PublicUserProfile = Database['public']['Tables']['users']['Row'];
 type Message = Database['public']['Tables']['messages']['Row'];
 
 interface MessageWithSender extends Message {

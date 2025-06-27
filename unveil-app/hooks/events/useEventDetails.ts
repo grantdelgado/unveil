@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 
 import type {
   EventWithHost,
-  EventParticipantWithUser,
+  EventGuestWithUser,
   EventDetailsHookResult,
   DatabaseError,
 } from '@/lib/types';
@@ -16,8 +16,8 @@ export function useEventDetails(
   userId: string | null,
 ): EventDetailsHookResult {
   const [event, setEvent] = useState<EventWithHost | null>(null);
-  const [participantInfo, setParticipantInfo] =
-    useState<EventParticipantWithUser | null>(null);
+  const [guestInfo, setGuestInfo] =
+    useState<EventGuestWithUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<DatabaseError | null>(null);
 
@@ -46,7 +46,7 @@ export function useEventDetails(
       let hostData = null;
       try {
         const { data: hostInfo, error: hostError } = await supabase
-          .from('public_user_profiles')
+          .from('users')
           .select('*')
           .eq('id', eventData.host_user_id)
           .single();
@@ -58,49 +58,49 @@ export function useEventDetails(
         // Silently handle host fetch failures
       }
 
-      // Check if user is a participant of this event (fetch without join first)
-      const { data: participantDataSimple, error: participantSimpleError } =
+      // Check if user is a guest of this event (fetch without join first)
+      const { data: guestDataSimple, error: guestSimpleError } =
         await supabase
-          .from('event_participants')
+          .from('event_guests')
           .select('*')
           .eq('event_id', eventId)
           .eq('user_id', userId)
           .single();
 
-      if (participantSimpleError) {
+      if (guestSimpleError) {
         console.error(
-          '🔍 Simple participant fetch error:',
-          participantSimpleError,
+          '🔍 Simple guest fetch error:',
+          guestSimpleError,
         );
-        console.error('🔍 Simple participant error details:', {
-          code: participantSimpleError.code,
-          message: participantSimpleError.message,
-          details: participantSimpleError.details,
-          hint: participantSimpleError.hint,
+        console.error('🔍 Simple guest error details:', {
+          code: guestSimpleError.code,
+          message: guestSimpleError.message,
+          details: guestSimpleError.details,
+          hint: guestSimpleError.hint,
         });
         throw new Error('You are not invited to this event');
       }
 
-      // Try to fetch the user profile for the participant separately
-      let participantUserProfile = null;
+      // Try to fetch the user profile for the guest separately
+      let guestUserProfile = null;
       try {
         const { data: userProfile, error: userProfileError } = await supabase
-          .from('public_user_profiles')
+          .from('users')
           .select('*')
           .eq('id', userId)
           .single();
 
         if (!userProfileError) {
-          participantUserProfile = userProfile;
+          guestUserProfile = userProfile;
         }
       } catch {
         // Silently handle profile fetch failures
       }
 
-      // Combine participant data with user profile
-      const participantData = {
-        ...participantDataSimple,
-        user: participantUserProfile,
+      // Combine guest data with user profile
+      const guestData = {
+        ...guestDataSimple,
+        users: guestUserProfile,
       };
 
       // Combine event data with host info
@@ -110,7 +110,7 @@ export function useEventDetails(
       };
 
       setEvent(eventWithHost as EventWithHost);
-      setParticipantInfo(participantData as EventParticipantWithUser);
+      setGuestInfo(guestData as EventGuestWithUser);
       setLoading(false);
     }, 'useEventDetails.fetchEventData');
 
@@ -131,10 +131,10 @@ export function useEventDetails(
 
   const updateRSVP = useCallback(
     async (status: string) => {
-      if (!participantInfo) {
+      if (!guestInfo) {
         const validationError = createDatabaseError(
           'NOT_NULL_VIOLATION',
-          'No participant info available',
+          'No guest info available',
           undefined,
           { operation: 'updateRSVP', status },
         );
@@ -143,16 +143,16 @@ export function useEventDetails(
 
       const wrappedUpdate = withErrorHandling(async () => {
         const { error } = await supabase
-          .from('event_participants')
+          .from('event_guests')
           .update({ rsvp_status: status })
-          .eq('id', participantInfo.id);
+          .eq('id', guestInfo.id);
 
         if (error) {
           throw new Error('Failed to update RSVP');
         }
 
         // Update local state
-        setParticipantInfo({ ...participantInfo, rsvp_status: status });
+        setGuestInfo({ ...guestInfo, rsvp_status: status });
         return { success: true, error: null };
       }, 'useEventDetails.updateRSVP');
 
@@ -164,7 +164,7 @@ export function useEventDetails(
           result.error,
           {
             operation: 'updateRSVP',
-            participantId: participantInfo.id,
+            guestId: guestInfo.id,
             status,
           },
         );
@@ -173,7 +173,7 @@ export function useEventDetails(
       }
       return { success: true, error: null };
     },
-    [participantInfo],
+    [guestInfo],
   );
 
   const refetch = useCallback(async () => {
@@ -188,14 +188,14 @@ export function useEventDetails(
 
   return {
     event,
-    participantInfo,
+    guestInfo,
     loading,
     error,
     updateRSVP,
     refetch,
     isHost: !!event && !!userId && event.host_user_id === userId,
-    isParticipant: !!participantInfo,
+    isGuest: !!guestInfo,
     canEdit: !!event && !!userId && event.host_user_id === userId,
-    data: { event, participantInfo },
+    data: { event, guestInfo },
   };
 }

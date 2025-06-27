@@ -93,7 +93,7 @@ export const validateMessage = (
  * Retrieves all messages for a specific event
  * 
  * Fetches messages with sender information, ordered chronologically.
- * Access is controlled by RLS policies - only event participants can view messages.
+ * Access is controlled by RLS policies - only event guests can view messages.
  * 
  * @param eventId - The event ID to get messages for
  * @returns Promise resolving to Supabase response with messages and sender data
@@ -118,7 +118,7 @@ export const getEventMessages = async (eventId: string) => {
       .select(
         `
         *,
-        sender:public_user_profiles!messages_sender_user_id_fkey(*)
+        sender:users!messages_sender_user_id_fkey(*)
       `,
       )
       .eq('event_id', eventId)
@@ -132,7 +132,7 @@ export const getEventMessages = async (eventId: string) => {
  * Sends a new message to an event
  * 
  * Creates a message in the event's message thread. Automatically validates
- * message content and triggers real-time notifications to other participants.
+ * message content and triggers real-time notifications to other guests.
  * 
  * @param messageData - Message data including content, event_id, sender_user_id, and type
  * @returns Promise resolving to Supabase response with created message and sender info
@@ -151,7 +151,7 @@ export const getEventMessages = async (eventId: string) => {
  * ```
  * 
  * @see {@link validateMessage} for content validation rules
- * @see {@link sendBulkMessage} for announcements to all participants
+ * @see {@link sendBulkMessage} for announcements to all guests
  */
 export const sendMessage = async (messageData: MessageInsert) => {
   try {
@@ -169,7 +169,7 @@ export const sendMessage = async (messageData: MessageInsert) => {
       .select(
         `
         *,
-        sender:public_user_profiles!messages_sender_user_id_fkey(*)
+        sender:users!messages_sender_user_id_fkey(*)
       `,
       )
       .single();
@@ -196,7 +196,7 @@ export const getMessagesByType = async (
       .select(
         `
         *,
-        sender:public_user_profiles!messages_sender_user_id_fkey(*)
+        sender:users!messages_sender_user_id_fkey(*)
       `,
       )
       .eq('event_id', eventId)
@@ -224,7 +224,7 @@ export const updateMessage = async (id: string, updates: MessageUpdate) => {
       .select(
         `
         *,
-        sender:public_user_profiles!messages_sender_user_id_fkey(*)
+        sender:users!messages_sender_user_id_fkey(*)
       `,
       )
       .single();
@@ -240,7 +240,7 @@ export const getMessageById = async (id: string) => {
       .select(
         `
         *,
-        sender:public_user_profiles!messages_sender_user_id_fkey(*)
+        sender:users!messages_sender_user_id_fkey(*)
       `,
       )
       .eq('id', id)
@@ -268,7 +268,7 @@ export const getMessagesBySender = async (
       .select(
         `
         *,
-        sender:public_user_profiles!messages_sender_user_id_fkey(*)
+        sender:users!messages_sender_user_id_fkey(*)
       `,
       )
       .eq('event_id', eventId)
@@ -289,7 +289,7 @@ export const getRecentMessages = async (
       .select(
         `
         *,
-        sender:public_user_profiles!messages_sender_user_id_fkey(*)
+        sender:users!messages_sender_user_id_fkey(*)
       `,
       )
       .eq('event_id', eventId)
@@ -402,7 +402,7 @@ export const getEventMessagesPaginated = async (
       .from('messages')
       .select(`
         *,
-        sender:public_user_profiles!messages_sender_user_id_fkey(*)
+        sender:users!messages_sender_user_id_fkey(*)
       `, { count: 'exact' })
       .eq('event_id', eventId)
 
@@ -451,7 +451,7 @@ export const getMessageThread = async (
         .from('messages')
         .select(`
           *,
-          sender:public_user_profiles!messages_sender_user_id_fkey(*)
+          sender:users!messages_sender_user_id_fkey(*)
         `)
         .eq('event_id', targetMessage.event_id)
         .lt('created_at', targetMessage.created_at)
@@ -463,7 +463,7 @@ export const getMessageThread = async (
         .from('messages')
         .select(`
           *,
-          sender:public_user_profiles!messages_sender_user_id_fkey(*)
+          sender:users!messages_sender_user_id_fkey(*)
         `)
         .eq('event_id', targetMessage.event_id)
         .gte('created_at', targetMessage.created_at)
@@ -520,7 +520,7 @@ export const searchMessages = async (
       .from('messages')
       .select(`
         *,
-        sender:public_user_profiles!messages_sender_user_id_fkey(*)
+        sender:users!messages_sender_user_id_fkey(*)
       `, { count: 'exact' })
       .eq('event_id', eventId)
       .textSearch('content', searchQuery)

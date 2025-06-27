@@ -57,9 +57,9 @@ export function useNavigation(): NavigationContext {
           return;
         }
 
-        // Check if user is participant of this event (host or guest)
-        const { data: participantAssignment } = await supabase
-          .from('event_participants')
+        // Check if user is guest of this event (host or guest)
+        const { data: guestAssignment } = await supabase
+          .from('event_guests')
           .select(
             `
             role,
@@ -70,11 +70,11 @@ export function useNavigation(): NavigationContext {
           .eq('user_id', user.id)
           .single();
 
-        if (participantAssignment) {
-          const event = participantAssignment.events as { title: string };
+        if (guestAssignment) {
+          const event = guestAssignment.events as { title: string };
           setNavigationContext({
             eventId,
-            userRole: participantAssignment.role as 'host' | 'guest',
+            userRole: guestAssignment.role as 'host' | 'guest',
             eventTitle: event?.title || '',
             isLoading: false,
           });

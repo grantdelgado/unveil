@@ -1,58 +1,81 @@
 import { supabase } from './client';
-import type { EventParticipantInsert, EventParticipantUpdate } from './types';
+import type { EventGuestInsert, EventGuestUpdate } from './types';
 
-// Event participant database helpers
-export const getEventParticipants = async (eventId: string) => {
+// Event guest database helpers
+export const getEventGuests = async (eventId: string) => {
   return await supabase
-    .from('event_participants')
+    .from('event_guests')
     .select(
       `
       *,
-      user:public_user_profiles(*)
+      users:user_id(*)
     `,
     )
     .eq('event_id', eventId)
     .order('created_at', { ascending: true });
 };
 
-// Participant lookup by user for event access
-export const findParticipantByUser = async (
+// Event guest management functions
+// All guest management now unified under event_guests table.
+
+// Guest lookup by user for event access
+export const findGuestByUser = async (
   eventId: string,
   userId: string,
 ) => {
   return await supabase
-    .from('event_participants')
+    .from('event_guests')
     .select('*')
     .eq('event_id', eventId)
     .eq('user_id', userId)
     .single();
 };
 
-// Create event participant
-export const createEventParticipant = async (
-  participantData: EventParticipantInsert,
+// Guest lookup by phone for event access (supports phone-only guests)
+export const findGuestByPhone = async (
+  eventId: string,
+  phone: string,
 ) => {
   return await supabase
-    .from('event_participants')
-    .insert(participantData)
+    .from('event_guests')
+    .select('*')
+    .eq('event_id', eventId)
+    .eq('phone', phone)
+    .single();
+};
+
+// Backward compatibility (deprecated)
+/** @deprecated Use findGuestByUser instead */
+
+
+// Create event guest
+export const createEventGuest = async (
+  guestData: EventGuestInsert,
+) => {
+  return await supabase
+    .from('event_guests')
+    .insert(guestData)
     .select()
     .single();
 };
 
-export const updateEventParticipant = async (
-  participantId: string,
-  participantData: EventParticipantUpdate,
+export const updateEventGuest = async (
+  guestId: string,
+  guestData: EventGuestUpdate,
 ) => {
   return await supabase
-    .from('event_participants')
-    .update(participantData)
-    .eq('id', participantId)
+    .from('event_guests')
+    .update(guestData)
+    .eq('id', guestId)
     .select()
     .single();
 };
 
-// Real-time subscription for event participants
-export const subscribeToEventParticipants = (
+// Backward compatibility (deprecated)
+// Guest functions above handle all guest management
+
+// Real-time subscription for event guests
+export const subscribeToEventGuests = (
   eventId: string,
   callback: (payload: {
     eventType: 'INSERT' | 'UPDATE' | 'DELETE';
@@ -61,16 +84,19 @@ export const subscribeToEventParticipants = (
   }) => void,
 ) => {
   return supabase
-    .channel(`event-participants-${eventId}`)
+    .channel(`event-guests-${eventId}`)
     .on(
       'postgres_changes',
       {
         event: '*',
         schema: 'public',
-        table: 'event_participants',
+        table: 'event_guests',
         filter: `event_id=eq.${eventId}`,
       },
       callback,
     )
     .subscribe();
 };
+
+// Backward compatibility (deprecated)
+// Legacy subscription functions replaced with guest subscriptions above

@@ -101,19 +101,24 @@ export function GuestImportWizard({
           userId = newUser.id;
         }
 
-        // Add as event participant
-        const { error: participantError } = await supabase
-          .from('event_participants')
+        // Add as event guest
+        const { error: guestError } = await supabase
+          .from('event_guests')
           .insert({
             event_id: eventId,
             user_id: userId,
+            phone: guest.phone,
+            guest_name: guest.fullName,
+            guest_email: guest.email || null,
             role: guest.role || 'guest',
             notes: guest.notes?.trim() || null,
             rsvp_status: 'pending',
+            preferred_communication: 'sms',
+            sms_opt_out: false,
           });
 
-        if (participantError) {
-          console.error('Error adding participant:', participantError);
+        if (guestError) {
+          console.error('Error adding guest:', guestError);
         }
       }
 

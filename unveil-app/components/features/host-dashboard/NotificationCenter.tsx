@@ -105,7 +105,7 @@ function NotificationCenterComponent({ eventId }: NotificationCenterProps) {
           id: `guest-${guest.id}`,
           type: 'rsvp',
           title: getRSVPTitle(guest.rsvp_status),
-          description: `${guest.user?.full_name || 'A guest'} ${getRSVPDescription(guest.rsvp_status)}`,
+          description: `${guest.users?.full_name || guest.guest_name || 'A guest'} ${getRSVPDescription(guest.rsvp_status)}`,
           timestamp: guest.created_at,
           isRead: false,
           icon: getRSVPIcon(guest.rsvp_status),
@@ -179,21 +179,21 @@ function NotificationCenterComponent({ eventId }: NotificationCenterProps) {
     }
   }, [processedNotifications]);
 
-  // Set up real-time subscription for participant changes using centralized manager
+  // Set up real-time subscription for guest changes using centralized manager
   useEventSubscription({
     eventId,
-    table: 'event_participants',
+    table: 'event_guests',
     event: '*',
     onDataChange: useCallback(
       (payload) => {
         if (payload.eventType === 'INSERT') {
-          console.log('New participant:', payload);
+          console.log('New guest:', payload);
           setNotifications((prev) => [
             {
               id: Date.now().toString(),
               type: 'general' as const,
-              title: 'New Participant',
-              description: 'A new participant joined the event',
+              title: 'New Guest',
+              description: 'A new guest joined the event',
               timestamp: new Date().toISOString(),
               isRead: false,
               icon: '👋',
@@ -203,14 +203,14 @@ function NotificationCenterComponent({ eventId }: NotificationCenterProps) {
           ]);
           setUnreadCount((prev) => prev + 1);
         } else if (payload.eventType === 'UPDATE') {
-          console.log('Participant updated:', payload);
+          console.log('Guest updated:', payload);
           if (payload.new.rsvp_status !== payload.old?.rsvp_status) {
             setNotifications((prev) => [
               {
                 id: Date.now().toString(),
                 type: 'rsvp' as const,
                 title: getRSVPTitle(payload.new.rsvp_status),
-                description: `Participant ${getRSVPDescription(payload.new.rsvp_status)}`,
+                description: `Guest ${getRSVPDescription(payload.new.rsvp_status)}`,
                 timestamp: new Date().toISOString(),
                 isRead: false,
                 icon: getRSVPIcon(payload.new.rsvp_status),

@@ -8,7 +8,7 @@ export const getEventMedia = async (eventId: string) => {
     .select(
       `
       *,
-      uploader:public_user_profiles!media_uploader_user_id_fkey(*)
+      uploader:users!media_uploader_user_id_fkey(*)
     `,
     )
     .eq('event_id', eventId)
