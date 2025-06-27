@@ -6,6 +6,13 @@ type ScheduledMessageInsert = TablesInsert<'scheduled_messages'>;
 type ScheduledMessageUpdate = TablesUpdate<'scheduled_messages'>;
 type MessageType = Database['public']['Enums']['message_type_enum'];
 
+export interface AdvancedTargeting {
+  rsvpStatuses?: string[];
+  tags?: string[];
+  requireAllTags?: boolean;
+  explicitGuestIds?: string[];
+}
+
 export interface CreateScheduledMessageData {
   eventId: string;
   content: string;
@@ -16,9 +23,13 @@ export interface CreateScheduledMessageData {
   targetGuestIds?: string[];
   targetGuestTags?: string[];
   targetSubEventIds?: string[];
+  requireAllTags?: boolean;
+  rsvpStatusFilter?: string[];
   sendViaSms?: boolean;
   sendViaPush?: boolean;
   sendViaEmail?: boolean;
+  // Support for advanced targeting
+  advancedTargeting?: AdvancedTargeting;
 }
 
 export interface ScheduledMessageFilters {
@@ -27,6 +38,60 @@ export interface ScheduledMessageFilters {
   messageType?: MessageType[];
   sendAfter?: Date;
   sendBefore?: Date;
+}
+
+/**
+ * Calculate recipient count based on advanced targeting criteria
+ */
+async function calculateRecipientCount(
+  eventId: string,
+  targeting: AdvancedTargeting,
+  targetAllGuests?: boolean
+): Promise<number> {
+  if (targetAllGuests && !targeting.rsvpStatuses?.length && !targeting.tags?.length) {
+    // Simple count of all guests
+    const { count } = await supabase
+      .from('event_guests')
+      .select('*', { count: 'exact', head: true })
+      .eq('event_id', eventId)
+      .not('phone', 'is', null);
+    return count || 0;
+  }
+
+  // Build query with filters
+  let query = supabase
+    .from('event_guests')
+    .select('*', { count: 'exact', head: true })
+    .eq('event_id', eventId)
+    .not('phone', 'is', null);
+
+  // Apply explicit guest ID filter
+  if (targeting.explicitGuestIds?.length) {
+    query = query.in('id', targeting.explicitGuestIds);
+  } else {
+    // Apply tag filters
+    if (targeting.tags?.length) {
+      if (targeting.requireAllTags) {
+        query = query.contains('guest_tags', targeting.tags);
+      } else {
+        query = query.overlaps('guest_tags', targeting.tags);
+      }
+    }
+
+    // Apply RSVP status filters
+    if (targeting.rsvpStatuses?.length) {
+      query = query.in('rsvp_status', targeting.rsvpStatuses);
+    }
+  }
+
+  const { count, error } = await query;
+
+  if (error) {
+    console.error('Error calculating recipient count:', error);
+    return 0;
+  }
+
+  return count || 0;
 }
 
 /**
@@ -40,32 +105,17 @@ export async function createScheduledMessage(data: CreateScheduledMessageData): 
     throw new Error('Authentication required');
   }
 
-  // Calculate recipient count
-  let recipientCount = 0;
-  if (data.targetAllGuests) {
-    const { count } = await supabase
-      .from('event_guests')
-      .select('*', { count: 'exact', head: true })
-      .eq('event_id', data.eventId);
-    recipientCount = count || 0;
-  } else {
-    // Calculate based on filters
-    let query = supabase
-      .from('event_guests')
-      .select('*', { count: 'exact', head: true })
-      .eq('event_id', data.eventId);
-
-    if (data.targetGuestIds?.length) {
-      query = query.in('id', data.targetGuestIds);
-    }
-
-    if (data.targetGuestTags?.length) {
-      query = query.overlaps('guest_tags', data.targetGuestTags);
-    }
-
-    const { count } = await query;
-    recipientCount = count || 0;
-  }
+  // Calculate recipient count using advanced targeting
+  const recipientCount = await calculateRecipientCount(
+    data.eventId,
+    data.advancedTargeting || {
+      rsvpStatuses: data.rsvpStatusFilter,
+      tags: data.targetGuestTags,
+      requireAllTags: data.requireAllTags || false,
+      explicitGuestIds: data.targetGuestIds
+    },
+    data.targetAllGuests
+  );
 
   const scheduledMessageData: ScheduledMessageInsert = {
     event_id: data.eventId,

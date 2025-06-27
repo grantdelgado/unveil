@@ -126,7 +126,7 @@ export interface MessagingHookResult
     event_id: string;
     sender_user_id: string;
     content: string;
-    message_type?: 'text' | 'announcement' | 'system';
+    message_type?: 'direct' | 'announcement' | 'channel';
   }) => Promise<MutationResult<Message>>;
   markAsRead: (messageId: string) => Promise<MutationResult>;
   deleteMessage: (messageId: string) => Promise<MutationResult>;

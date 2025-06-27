@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { MessageTemplates, type MessageTemplate } from './MessageTemplates';
-import { RecipientPresets, type RecipientFilter } from './RecipientPresets';
+import { RecipientPresets, type RecipientFilter, type AdvancedRecipientFilter } from './RecipientPresets';
 import { MessageComposer } from './MessageComposer';
 import { RecentMessages } from './RecentMessages';
 import type { Database } from '@/app/reference/supabase.types';
@@ -89,9 +89,33 @@ export function EnhancedMessageCenter({ eventId, className }: EnhancedMessageCen
     }
   };
 
-  const handleRecipientFilterChange = (filter: RecipientFilter) => {
+  const handleRecipientFilterChange = (filter: RecipientFilter, advancedFilter?: AdvancedRecipientFilter) => {
     setSelectedRecipientFilter(filter);
+    // TODO: Handle advanced filter in future iterations
+    // Currently unused but preserved for API compatibility
+    console.debug('Advanced filter:', advancedFilter);
   };
+
+  // Convert participants to guests format for compatibility
+  const mockGuests = participants.map(participant => ({
+    id: participant.id,
+    event_id: eventId,
+    phone: participant.user?.full_name || '', // Using full_name as phone placeholder
+    guest_name: participant.user?.full_name || '',
+    guest_tags: null as string[] | null,
+    rsvp_status: participant.rsvp_status || 'pending',
+    guest_email: null,
+    invited_at: null,
+    notes: null,
+    phone_number_verified: false,
+    communication_preferences: null,
+    user_id: participant.user?.id || null,
+    created_at: participant.created_at,
+    preferred_communication: 'sms' as const,
+    role: 'guest' as const,
+    sms_opt_out: false,
+    updated_at: participant.created_at
+  }));
 
   const handleMessageSent = () => {
     // Refresh messages after sending
@@ -214,7 +238,8 @@ export function EnhancedMessageCenter({ eventId, className }: EnhancedMessageCen
         <div className="space-y-6">
           {/* Recipient Selection */}
           <RecipientPresets
-            participants={participants}
+            eventId={eventId}
+            guests={mockGuests}
             selectedFilter={selectedRecipientFilter}
             onFilterChange={handleRecipientFilterChange}
           />

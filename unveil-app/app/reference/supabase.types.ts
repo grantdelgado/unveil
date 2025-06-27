@@ -563,9 +563,31 @@ export type Database = {
           is_primary_host: boolean;
         }[];
       };
+      guest_has_all_tags: {
+        Args: { guest_id: string; target_tags: string[] };
+        Returns: boolean;
+      };
+      guest_has_any_tags: {
+        Args: { guest_id: string; target_tags: string[] };
+        Returns: boolean;
+      };
       is_event_host: {
         Args: { p_event_id: string };
         Returns: boolean;
+      };
+      resolve_message_recipients: {
+        Args: {
+          msg_event_id: string;
+          target_guest_ids?: string[];
+          target_tags?: string[];
+          require_all_tags?: boolean;
+          target_rsvp_statuses?: string[];
+        };
+        Returns: {
+          guest_id: string;
+          guest_phone: string;
+          guest_name: string;
+        }[];
       };
     };
     Enums: {

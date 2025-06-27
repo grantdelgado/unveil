@@ -13,3 +13,23 @@ export {
   useScheduledMessageCounts, 
   useNextScheduledMessage 
 } from './useScheduledMessages';
+
+// Phase 3 - Guest Tagging hooks
+export { useGuestTags } from './useGuestTags';
+
+// Phase 4 - Analytics hooks
+export {
+  useDeliveryStats,
+  useEngagementMetrics,
+  useRSVPCorrelation,
+  useEventAnalytics,
+  useResponseRatesByMessageType,
+  useRealtimeAnalytics,
+  useAnalyticsDashboard,
+  useAnalyticsWithDateRange,
+  useAnalyticsComparison,
+  type DeliveryStats,
+  type EngagementMetrics,
+  type RSVPCorrelation,
+  type MessageAnalytics,
+} from './useMessageAnalytics';

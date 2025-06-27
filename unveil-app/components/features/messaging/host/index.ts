@@ -7,7 +7,9 @@ export { MessageScheduler } from './MessageScheduler';
 export { MessageQueue } from './MessageQueue';
 export { ScheduledMessageCard } from './ScheduledMessageCard';
 
+// Phase 3 - Guest Tagging & Filtering Components
+export { GuestTagManager } from './GuestTagManager';
+export { TagSelector } from './TagSelector';
+
 // These will be added in future phases
-// export { GuestTagManager } from './GuestTagManager';
-// export { TagSelector } from './TagSelector';
 // export { MessageAnalytics } from './MessageAnalytics'; 

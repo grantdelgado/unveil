@@ -137,7 +137,7 @@ export type ParticipantFormSchema = z.ZodObject<{
 
 export type MessageFormSchema = z.ZodObject<{
   content: z.ZodString;
-  message_type: z.ZodEnum<['text', 'announcement', 'system']>;
+  message_type: z.ZodEnum<['direct', 'announcement', 'channel']>;
   event_id: z.ZodString;
 }>;
 
