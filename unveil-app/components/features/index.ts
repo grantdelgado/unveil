@@ -38,7 +38,7 @@ export const GuestPhotoGallery = lazy(() =>
 
 // Messaging Components
 export const GuestMessaging = lazy(() => 
-  import('./messaging/guest/GuestMessaging')
+  import('./messaging/guest/GuestMessaging').then(module => ({ default: module.GuestMessaging }))
 )
 
 // Development Components (only load in development)

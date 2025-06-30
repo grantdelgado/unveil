@@ -31,6 +31,92 @@ export interface SMSResult {
   messageId?: string;
   error?: string;
   status?: string;
+  shouldRetry?: boolean;
+}
+
+export interface ScheduledSMSDelivery {
+  guestId: string;
+  guestName?: string;
+  phoneNumber: string;
+  messageContent: string;
+  messageId: string;
+  eventId: string;
+}
+
+/**
+ * Enhanced SMS sending for scheduled messages with retry logic
+ */
+export async function sendScheduledSMS(delivery: ScheduledSMSDelivery): Promise<SMSResult> {
+  const maxRetries = 3;
+  const retryDelays = [1000, 2000, 5000]; // 1s, 2s, 5s
+  
+  let lastError: string = '';
+  
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const result = await sendSMS({
+        to: delivery.phoneNumber,
+        message: delivery.messageContent,
+        eventId: delivery.eventId,
+        guestId: delivery.guestId,
+        messageType: 'custom',
+      });
+      
+      // If successful, return immediately
+      if (result.success) {
+        if (attempt > 0) {
+          console.log(`✅ SMS sent successfully on retry ${attempt + 1} for guest ${delivery.guestId.slice(-4)}`);
+        }
+        return result;
+      }
+      
+      // If this was the last attempt, return the failure
+      if (attempt === maxRetries - 1) {
+        return {
+          ...result,
+          shouldRetry: false,
+        };
+      }
+      
+      // Check if error is retryable (5xx errors, rate limits, temporary failures)
+      const shouldRetry = isRetryableError(result.error);
+      if (!shouldRetry) {
+        console.log(`❌ Non-retryable error for guest ${delivery.guestId.slice(-4)}: ${result.error}`);
+        return {
+          ...result,
+          shouldRetry: false,
+        };
+      }
+      
+      lastError = result.error || 'Unknown error';
+      console.log(`⚠️ Retryable error for guest ${delivery.guestId.slice(-4)}, attempt ${attempt + 1}/${maxRetries}: ${lastError}`);
+      
+      // Wait before retry
+      await new Promise(resolve => setTimeout(resolve, retryDelays[attempt]));
+      
+    } catch (error) {
+      lastError = getErrorMessage(error);
+      console.error(`❌ Exception during SMS send attempt ${attempt + 1} for guest ${delivery.guestId.slice(-4)}:`, lastError);
+      
+      // If this was the last attempt, return failure
+      if (attempt === maxRetries - 1) {
+        return {
+          success: false,
+          error: lastError,
+          shouldRetry: false,
+        };
+      }
+      
+      // Wait before retry
+      await new Promise(resolve => setTimeout(resolve, retryDelays[attempt]));
+    }
+  }
+  
+  return {
+    success: false,
+    error: lastError,
+    shouldRetry: false,
+  };
 }
 
 /**
@@ -378,6 +464,91 @@ Reply STOP to opt out.`;
 }
 
 /**
+ * Send bulk SMS for scheduled message deliveries with Promise.allSettled
+ */
+export async function sendBulkScheduledSMS(
+  deliveries: ScheduledSMSDelivery[]
+): Promise<{
+  successful: number;
+  failed: number;
+  results: Array<{ guestId: string; result: SMSResult }>;
+}> {
+  console.log(`📱 Sending scheduled SMS to ${deliveries.length} recipients`);
+  
+  // Use Promise.allSettled for efficient bulk processing
+  const promises = deliveries.map(async (delivery) => ({
+    guestId: delivery.guestId,
+    result: await sendScheduledSMS(delivery),
+  }));
+  
+  const results = await Promise.allSettled(promises);
+  
+  const processedResults = results.map(result => 
+    result.status === 'fulfilled' 
+      ? result.value 
+      : { 
+          guestId: 'unknown', 
+          result: { 
+            success: false, 
+            error: 'Promise rejection', 
+            shouldRetry: false 
+          } 
+        }
+  );
+  
+  const successful = processedResults.filter(r => r.result.success).length;
+  const failed = processedResults.filter(r => !r.result.success).length;
+  
+  console.log(`✅ Bulk scheduled SMS complete: ${successful} sent, ${failed} failed`);
+  
+  return {
+    successful,
+    failed,
+    results: processedResults,
+  };
+}
+
+/**
+ * Check if an SMS error is retryable
+ */
+function isRetryableError(error?: string): boolean {
+  if (!error) return false;
+  
+  const retryablePatterns = [
+    /rate.?limit/i,
+    /timeout/i,
+    /network/i,
+    /service.?unavailable/i,
+    /internal.?server.?error/i,
+    /502|503|504/,
+    /temporarily.?unavailable/i,
+    /queue.?full/i,
+  ];
+  
+  return retryablePatterns.some(pattern => pattern.test(error));
+}
+
+/**
+ * Validate and normalize phone number for SMS delivery
+ */
+export function validateAndNormalizePhone(phone: string): { isValid: boolean; normalized?: string; error?: string } {
+  if (!phone || typeof phone !== 'string') {
+    return { isValid: false, error: 'Phone number is required' };
+  }
+  
+  const normalized = formatPhoneNumber(phone.trim());
+  
+  if (!normalized) {
+    return { 
+      isValid: false, 
+      error: 'Invalid phone number format. Please use a valid US/international number.' 
+    };
+  }
+  
+  return { isValid: true, normalized };
+}
+
+/**
  * Log SMS to database for tracking (simplified implementation)
  */
 async function logSMSToDatabase(logData: {
@@ -398,6 +569,7 @@ async function logSMSToDatabase(logData: {
       phone: logData.phoneNumber.slice(-4), // Only log last 4 digits for privacy
       status: logData.status,
       type: logData.messageType,
+      sid: logData.twilioSid,
     });
   } catch (error) {
     console.warn('⚠️ Failed to log SMS to database:', error);

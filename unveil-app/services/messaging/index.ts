@@ -446,4 +446,22 @@ export {
   removeTagsFromGuests,
   bulkTagOperation,
   getGuestsByTags,
-} from './tags'; 
+} from './tags';
+
+// Re-export guest messaging functions
+export {
+  sendGuestResponse,
+  markMessagesAsRead,
+  getGuestMessages as getGuestMessagesDetailed,
+  getGuestMessageThread,
+  getLatestHostMessage,
+  canGuestRespond,
+  validateGuestResponse,
+} from './guest';
+
+// NOTE: Message processing functions are intentionally NOT re-exported here
+// to prevent client-side imports of SMS/Twilio functionality.
+// Use them directly from './processor' in server-side code only.
+// Available functions: processScheduledMessages, resolveMessageRecipients,
+// createMessageFromScheduled, createMessageDeliveries, getProcessingStats,
+// cleanupOldProcessedMessages 

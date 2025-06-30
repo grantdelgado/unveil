@@ -1,5 +1,6 @@
-export { default as GuestMessaging } from './GuestMessaging';
+export { GuestMessaging } from './GuestMessaging';
+export { GuestMessageInput } from './GuestMessageInput';
+export { ResponseIndicator } from './ResponseIndicator';
 
-// These will be added in future phases
-// export { GuestMessageInput } from './GuestMessageInput';
+// Future phases
 // export { ResponseIndicator } from './ResponseIndicator'; 

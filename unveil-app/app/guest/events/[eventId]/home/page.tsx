@@ -374,7 +374,11 @@ export default function GuestEventHomePage() {
             />
 
             {/* Messaging */}
-            <GuestMessaging eventId={eventId} currentUserId={currentUserId} />
+            <GuestMessaging 
+              eventId={eventId} 
+              currentUserId={currentUserId} 
+              guestId={guestInfo?.id || currentUserId || ''} 
+            />
           </div>
 
           {/* Sidebar */}

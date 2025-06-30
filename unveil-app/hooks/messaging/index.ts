@@ -33,3 +33,6 @@ export {
   type RSVPCorrelation,
   type MessageAnalytics,
 } from './useMessageAnalytics';
+
+// Phase 5 - Guest messaging hooks
+export { useGuestMessages, useGuestUnreadCount } from './useGuestMessages';

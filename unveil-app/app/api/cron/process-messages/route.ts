@@ -14,16 +14,24 @@ export async function GET(request: NextRequest) {
 
     console.log('🕒 Cron job triggered: processing scheduled messages');
 
-    // Call the message processor
+    // Call the message processor with proper authorization
     const processorUrl = new URL(
       '/api/messages/process-scheduled',
       request.url,
     );
+    
+    const processorHeaders: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    
+    // Pass through authorization for internal calls
+    if (cronSecret) {
+      processorHeaders['authorization'] = `Bearer ${cronSecret}`;
+    }
+    
     const response = await fetch(processorUrl.toString(), {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: processorHeaders,
     });
 
     const result = await response.json();
