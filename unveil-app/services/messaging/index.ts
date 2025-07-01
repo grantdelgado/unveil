@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/app/reference/supabase.types';
+import type { MessageWithDelivery } from '@/lib/supabase/types';
 import { recordDeliveryStatus, recordMessageRead, recordMessageResponse } from './analytics';
 
 type Message = Database['public']['Tables']['messages']['Row'];
@@ -15,52 +16,112 @@ export interface MessageFilter {
   includeDeliveryInfo?: boolean;
 }
 
-export interface MessageWithDelivery extends Message {
-  delivery?: MessageDelivery;
-  scheduled_message?: Pick<ScheduledMessage, 'id' | 'send_at' | 'status'>;
-}
-
 /**
- * Get messages for an event with optional filtering
+ * Get messages for an event with optional filtering and delivery info
  */
 export async function getEventMessages(filter: MessageFilter): Promise<MessageWithDelivery[]> {
   try {
-    // Simplified query for now - get basic messages
-    let query = supabase
-      .from('messages')
-      .select('*')
-      .eq('event_id', filter.eventId)
-      .order('created_at', { ascending: false });
+    const { eventId, guestId, messageType, startDate, endDate, includeDeliveryInfo = true } = filter;
 
-    if (filter.guestId) {
-      query = query.eq('sender_user_id', filter.guestId);
+    // Build the base query with proper select statement
+    let query;
+    
+    if (includeDeliveryInfo) {
+      query = supabase
+        .from('messages')
+        .select(`
+          *,
+          message_deliveries (
+            id,
+            guest_id,
+            status,
+            sms_status,
+            email_status,
+            push_status,
+            delivered_at,
+            has_responded,
+            created_at,
+            updated_at
+          ),
+          scheduled_messages (
+            id,
+            send_at,
+            status
+          )
+        `);
+    } else {
+      query = supabase
+        .from('messages')
+        .select('*');
     }
 
-    if (filter.messageType) {
-      query = query.eq('message_type', filter.messageType);
+    // Apply filters
+    query = query.eq('event_id', eventId);
+
+    if (guestId && includeDeliveryInfo) {
+      // If filtering by guest, we need to filter by delivery records
+      query = query.eq('message_deliveries.guest_id', guestId);
+    } else if (guestId && !includeDeliveryInfo) {
+      // Without delivery info, we can't filter by guest effectively
+      console.warn('Cannot filter by guestId without includeDeliveryInfo=true');
     }
 
-    if (filter.startDate) {
-      query = query.gte('created_at', filter.startDate.toISOString());
+    if (messageType) {
+      query = query.eq('message_type', messageType);
     }
 
-    if (filter.endDate) {
-      query = query.lte('created_at', filter.endDate.toISOString());
+    if (startDate) {
+      query = query.gte('created_at', startDate.toISOString());
     }
 
+    if (endDate) {
+      query = query.lte('created_at', endDate.toISOString());
+    }
+
+    // Apply ordering and execute
+    query = query.order('created_at', { ascending: false });
+    
     const { data, error } = await query;
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error fetching event messages:', error);
+      throw new Error(`Failed to fetch event messages: ${error.message}`);
+    }
 
-    // Return messages with simplified structure
-    return (data || []).map(message => ({
-      ...message,
-      delivery: undefined, // TODO: Add delivery info separately if needed
-      scheduled_message: undefined, // TODO: Add scheduled message info separately if needed
-    }));
+    // Transform data to MessageWithDelivery format
+    return (data || []).map((message: any) => {
+      if (!includeDeliveryInfo) {
+        return {
+          ...message,
+          delivery: undefined,
+          scheduled_message: undefined,
+        };
+      }
+
+      // Handle delivery info - take first delivery record for display
+      const deliveries = message.message_deliveries;
+      const delivery = Array.isArray(deliveries) && deliveries.length > 0 
+        ? deliveries[0] 
+        : deliveries || undefined;
+
+      // Handle scheduled message info
+      const scheduledMessages = message.scheduled_messages;
+      const scheduled_message = Array.isArray(scheduledMessages) && scheduledMessages.length > 0
+        ? scheduledMessages[0]
+        : scheduledMessages || undefined;
+
+      return {
+        ...message,
+        delivery,
+        scheduled_message,
+        message_deliveries: undefined, // Remove nested data
+        scheduled_messages: undefined, // Remove nested data
+      };
+    });
   } catch (error) {
     console.error('Error getting event messages:', error);
-    throw new Error('Failed to fetch event messages');
+    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch event messages';
+    throw new Error(errorMessage);
   }
 }
 

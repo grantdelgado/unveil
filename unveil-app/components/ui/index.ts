@@ -41,7 +41,7 @@ export { Pagination } from './Pagination';
 
 // Additional Legacy Exports (extended functionality)
 export { LoadingCard } from './LoadingSpinner';
-export { DefaultErrorFallback, CardErrorFallback } from './ErrorBoundary';
+export { DefaultErrorFallback, CardErrorFallback, MessagingErrorFallback } from './ErrorBoundary';
 export { 
   withLazyWrapper, 
   DashboardLoading, 

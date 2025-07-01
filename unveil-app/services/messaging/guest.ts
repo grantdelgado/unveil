@@ -1,16 +1,13 @@
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/app/reference/supabase.types';
+import type { MessageWithDelivery } from '@/lib/supabase/types';
 import { recordDeliveryStatus } from './analytics';
 
 // Types
 type Message = Database['public']['Tables']['messages']['Row'];
 type MessageDelivery = Database['public']['Tables']['message_deliveries']['Row'];
 
-// Export the shared interface for consistency with main messaging service
-export interface MessageWithDelivery extends Message {
-  delivery?: MessageDelivery;
-  scheduled_message?: Pick<Database['public']['Tables']['scheduled_messages']['Row'], 'id' | 'send_at' | 'status'>;
-}
+// Using shared MessageWithDelivery interface from types.ts
 
 export interface SendGuestResponseParams {
   guestId: string;
@@ -176,7 +173,8 @@ export async function sendGuestResponse({
 }
 
 /**
- * Mark messages as read for a guest
+ * Mark messages as read for a guest (placeholder until read_at column is added)
+ * TODO: Update to use read_at column once migration is applied
  */
 export async function markMessagesAsRead(
   guestId: string,
@@ -195,21 +193,29 @@ export async function markMessagesAsRead(
     const { data: deliveries, error: selectError } = await query;
 
     if (selectError) {
-      throw selectError;
+      console.error('Error selecting deliveries to mark as read:', selectError);
+      throw new Error(`Failed to select deliveries: ${selectError.message}`);
     }
 
     if (!deliveries || deliveries.length === 0) {
       return { success: true, markedCount: 0 };
     }
 
-    // Update the updated_at timestamp to track read status
+    // TODO: Update to set read_at column once migration is applied
+    // For now, we'll just update the timestamp as a placeholder
+    const deliveryIds = deliveries.map(d => d.id);
+    const timestamp = new Date().toISOString();
+
     const { error: updateError } = await supabase
       .from('message_deliveries')
-      .update({ updated_at: new Date().toISOString() })
-      .in('id', deliveries.map(d => d.id));
+      .update({
+        updated_at: timestamp,
+      })
+      .in('id', deliveryIds);
 
     if (updateError) {
-      throw updateError;
+      console.error('Error updating read status:', updateError);
+      throw new Error(`Failed to mark messages as read: ${updateError.message}`);
     }
 
     return {
@@ -218,7 +224,8 @@ export async function markMessagesAsRead(
     };
   } catch (error) {
     console.error('Error marking messages as read:', error);
-    throw new Error('Failed to mark messages as read');
+    const errorMessage = error instanceof Error ? error.message : 'Failed to mark messages as read';
+    throw new Error(errorMessage);
   }
 }
 
@@ -246,10 +253,14 @@ export async function getGuestMessages(
         message_deliveries!inner (
           id,
           guest_id,
+          status,
           delivered_at,
           sms_status,
           email_status,
-          push_status
+          push_status,
+          has_responded,
+          created_at,
+          updated_at
         )
       `)
       .eq('event_id', eventId)
@@ -258,16 +269,17 @@ export async function getGuestMessages(
       .limit(limit);
 
     if (error) {
-      throw error;
+      console.error('Error fetching delivered messages:', error);
+      throw new Error(`Failed to fetch delivered messages: ${error.message}`);
     }
 
     // Convert to MessageWithDelivery format
-    let allMessages: MessageWithDelivery[] = (deliveredMessages || []).map(message => ({
+    let allMessages: MessageWithDelivery[] = (deliveredMessages || []).map((message: any) => ({
       ...message,
       delivery: Array.isArray(message.message_deliveries) 
         ? message.message_deliveries[0] 
         : message.message_deliveries,
-      message_deliveries: undefined,
+      message_deliveries: undefined, // Remove nested data
     }));
 
     // Include guest's own responses if requested
@@ -280,7 +292,9 @@ export async function getGuestMessages(
         .is('sender_user_id', null) // Guest responses don't have sender_user_id
         .order('created_at', { ascending: true });
 
-      if (!responseError && guestResponses) {
+      if (responseError) {
+        console.warn('Error fetching guest responses, continuing without them:', responseError);
+      } else if (guestResponses) {
         // Convert guest responses to MessageWithDelivery format
         const responseMessages: MessageWithDelivery[] = guestResponses.map(response => ({
           ...response,
@@ -302,14 +316,25 @@ export async function getGuestMessages(
 
     // Optionally mark messages as read
     if (markAsRead && uniqueMessages.length > 0) {
-      const messageIds = uniqueMessages.map(m => m.id);
-      await markMessagesAsRead(guestId, messageIds);
+      try {
+        const messageIds = uniqueMessages
+          .filter(m => m.delivery) // Only mark messages with delivery records
+          .map(m => m.id);
+        
+        if (messageIds.length > 0) {
+          await markMessagesAsRead(guestId, messageIds);
+        }
+      } catch (markError) {
+        console.warn('Error marking messages as read:', markError);
+        // Don't fail the whole operation for this
+      }
     }
 
     return uniqueMessages;
   } catch (error) {
     console.error('Error getting guest messages:', error);
-    throw new Error('Failed to get guest messages');
+    const errorMessage = error instanceof Error ? error.message : 'Failed to get guest messages';
+    throw new Error(errorMessage);
   }
 }
 

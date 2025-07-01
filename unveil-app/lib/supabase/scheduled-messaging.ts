@@ -71,21 +71,68 @@ export async function getScheduledMessageTargets(
  */
 export function subscribeToScheduledMessages(
   eventId: string,
-  _callback: (payload: { 
+  callback: (payload: { 
     eventType: string; 
     new?: ScheduledMessage; 
     old?: ScheduledMessage; 
   }) => void
 ) {
   // Using imported supabase client
-  // TODO: Fix realtime subscription API - temporarily simplified
-  const channel = `scheduled_messages:${eventId}`;
-  console.log(`Setting up subscription for ${channel}`, _callback?.name || 'anonymous callback');
+  const channelName = `scheduled_messages:${eventId}`;
   
-  // Return a mock subscription for now
+  console.log(`Setting up real-time subscription for ${channelName}`);
+  
+  // Create a channel for this event's scheduled messages
+  const channel = supabase.channel(channelName);
+  
+  // Set up postgres changes listener
+  channel.on(
+    'postgres_changes',
+    {
+      event: '*',
+      schema: 'public',
+      table: 'scheduled_messages',
+      filter: `event_id=eq.${eventId}`,
+    },
+    (payload) => {
+      try {
+        console.log(`📨 Scheduled message real-time event:`, {
+          eventType: payload.eventType,
+          table: payload.table,
+        });
+        
+        // Transform payload to match expected format
+        const transformedPayload = {
+          eventType: payload.eventType,
+          new: payload.new as ScheduledMessage | undefined,
+          old: payload.old as ScheduledMessage | undefined,
+        };
+        
+        callback(transformedPayload);
+      } catch (error) {
+        console.error(`❌ Error processing scheduled message real-time event:`, error);
+      }
+    }
+  );
+  
+  // Subscribe to the channel
+  channel.subscribe((status, err) => {
+    if (status === 'SUBSCRIBED') {
+      console.log(`✅ Scheduled messages subscription active: ${channelName}`);
+    } else if (status === 'CHANNEL_ERROR') {
+      console.error(`❌ Scheduled messages subscription error: ${channelName}`, err);
+    } else if (status === 'TIMED_OUT') {
+      console.error(`⏰ Scheduled messages subscription timeout: ${channelName}`);
+    } else if (status === 'CLOSED') {
+      console.log(`🔌 Scheduled messages subscription closed: ${channelName}`);
+    }
+  });
+  
+  // Return proper unsubscribe function
   return {
     unsubscribe: () => {
-      console.log(`Unsubscribing from ${channel}`);
+      console.log(`Unsubscribing from ${channelName}`);
+      supabase.removeChannel(channel);
     }
   };
 }

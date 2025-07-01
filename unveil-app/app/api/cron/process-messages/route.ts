@@ -42,11 +42,44 @@ export async function GET(request: NextRequest) {
 
     console.log('✅ Cron job completed:', result);
 
-    return NextResponse.json({
+    // Extract metrics for response
+    const responseData = {
       success: true,
       timestamp: new Date().toISOString(),
-      result,
-    });
+      result: {
+        totalProcessed: result.totalProcessed,
+        successful: result.successful,
+        failed: result.failed,
+        details: result.details,
+      },
+      metrics: result.metrics ? {
+        sessionId: result.metrics.sessionId,
+        processingDuration: result.metrics.endTime && result.metrics.startTime 
+          ? Math.round((result.metrics.endTime.getTime() - result.metrics.startTime.getTime()) / 1000) 
+          : null,
+        throughputPerMinute: Math.round(result.metrics.throughputPerMinute * 100) / 100,
+        averageProcessingTimeMs: Math.round(result.metrics.averageProcessingTimeMs),
+        channelPerformance: {
+          sms: {
+            attempted: result.metrics.deliveryChannelStats.sms.attempted,
+            successful: result.metrics.deliveryChannelStats.sms.successful,
+            successRate: Math.round(result.metrics.deliveryChannelStats.sms.successRate * 100) / 100,
+          },
+          push: {
+            attempted: result.metrics.deliveryChannelStats.push.attempted,
+            successful: result.metrics.deliveryChannelStats.push.successful,
+            successRate: Math.round(result.metrics.deliveryChannelStats.push.successRate * 100) / 100,
+          },
+          email: {
+            attempted: result.metrics.deliveryChannelStats.email.attempted,
+            successful: result.metrics.deliveryChannelStats.email.successful,
+            successRate: Math.round(result.metrics.deliveryChannelStats.email.successRate * 100) / 100,
+          },
+        },
+      } : null,
+    };
+
+    return NextResponse.json(responseData);
   } catch (error) {
     console.error('❌ Cron job failed:', error);
     return NextResponse.json(

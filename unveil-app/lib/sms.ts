@@ -144,8 +144,13 @@ export async function sendSMS({
       throw new Error('Invalid phone number format');
     }
 
+    // Redact phone number for logging (show first 3 and last 4 characters)
+    const redactedPhone = formattedPhone.length > 7 
+      ? `${formattedPhone.slice(0, 3)}...${formattedPhone.slice(-4)}`
+      : '***redacted***';
+      
     console.log(
-      `📱 Sending SMS to ${formattedPhone}:`,
+      `📱 Sending SMS to ${redactedPhone}:`,
       message.substring(0, 50) + '...',
     );
 

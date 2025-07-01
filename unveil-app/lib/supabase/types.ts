@@ -55,6 +55,12 @@ export interface MessageWithSender extends Message {
   sender: PublicUserProfile | null;
 }
 
+// Message with delivery info - consolidated from messaging services
+export interface MessageWithDelivery extends Message {
+  delivery?: Tables<'message_deliveries'>;
+  scheduled_message?: Pick<Tables<'scheduled_messages'>, 'id' | 'send_at' | 'status'>;
+}
+
 export interface MediaWithUploader extends Media {
   uploader: PublicUserProfile | null;
 }

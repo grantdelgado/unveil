@@ -20,8 +20,11 @@ export function useDeliveryStats(eventId: string) {
   return useQuery({
     queryKey: ['delivery-stats', eventId],
     queryFn: () => getDeliveryStatsForEvent(eventId),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 30000, // 30 seconds - optimized for frequent updates
     gcTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: true, // Refetch when user returns to window
+    refetchInterval: 60000, // Background refresh every 60 seconds
+    refetchIntervalInBackground: false, // Only when tab is active
     enabled: !!eventId,
   });
 }
@@ -33,8 +36,11 @@ export function useEngagementMetrics(messageId: string) {
   return useQuery({
     queryKey: ['engagement-metrics', messageId],
     queryFn: () => getEngagementMetrics(messageId),
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 30000, // 30 seconds - optimized for frequent updates
     gcTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: true, // Refetch when user returns to window
+    refetchInterval: 60000, // Background refresh every 60 seconds
+    refetchIntervalInBackground: false, // Only when tab is active
     enabled: !!messageId,
   });
 }
@@ -46,8 +52,11 @@ export function useRSVPCorrelation(messageId: string) {
   return useQuery({
     queryKey: ['rsvp-correlation', messageId],
     queryFn: () => getRSVPCorrelation(messageId),
-    staleTime: 10 * 60 * 1000, // 10 minutes (RSVP changes slower)
+    staleTime: 30000, // 30 seconds - optimized for consistent behavior
     gcTime: 30 * 60 * 1000, // 30 minutes
+    refetchOnWindowFocus: true, // Refetch when user returns to window
+    refetchInterval: 120000, // Background refresh every 2 minutes (RSVP changes slower)
+    refetchIntervalInBackground: false, // Only when tab is active
     enabled: !!messageId,
     retry: 1, // RSVP correlation might fail for recent messages
     retryDelay: 5000,
@@ -61,8 +70,11 @@ export function useEventAnalytics(eventId: string) {
   return useQuery({
     queryKey: ['event-analytics', eventId],
     queryFn: () => getEventAnalytics(eventId),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 30000, // 30 seconds - optimized for frequent updates
     gcTime: 15 * 60 * 1000, // 15 minutes
+    refetchOnWindowFocus: true, // Refetch when user returns to window
+    refetchInterval: 60000, // Background refresh every 60 seconds
+    refetchIntervalInBackground: false, // Only when tab is active
     enabled: !!eventId,
   });
 }
@@ -74,8 +86,11 @@ export function useResponseRatesByMessageType(eventId: string) {
   return useQuery({
     queryKey: ['response-rates-by-type', eventId],
     queryFn: () => getResponseRatesByMessageType(eventId),
-    staleTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 30000, // 30 seconds - optimized for consistent behavior
     gcTime: 30 * 60 * 1000, // 30 minutes
+    refetchOnWindowFocus: true, // Refetch when user returns to window
+    refetchInterval: 60000, // Background refresh every 60 seconds
+    refetchIntervalInBackground: false, // Only when tab is active
     enabled: !!eventId,
   });
 }

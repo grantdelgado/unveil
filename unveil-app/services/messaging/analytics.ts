@@ -13,6 +13,9 @@ export interface DeliveryStats {
   deliveryRate: number;
   responseRate: number;
   failureRate: number;
+  totalRead: number;
+  readRate: number;
+  readRatio: number;
 }
 
 export interface EngagementMetrics {
@@ -23,6 +26,22 @@ export interface EngagementMetrics {
   respondedCount: number;
   averageResponseTime: number | null; // in minutes
   engagementRate: number;
+  averageTimeToRead: number | null; // average time between delivery and read (minutes)
+  readRate: number; // percentage of delivered messages that were read
+  responseToReadRatio: number; // percentage of read messages that got responses
+}
+
+export interface ResponseRateOverTime {
+  timeRange: string; // '2024-01', '2024-01-15', etc.
+  totalSent: number;
+  totalDelivered: number;
+  totalRead: number;
+  totalResponses: number;
+  deliveryRate: number;
+  readRate: number;
+  responseRate: number;
+  averageTimeToRead: number | null;
+  averageTimeToResponse: number | null;
 }
 
 export interface RSVPCorrelation {
@@ -41,20 +60,27 @@ export interface RSVPCorrelation {
   influenceScore: number; // how much the message influenced RSVPs
 }
 
+export interface TopPerformingMessage {
+  messageId: string;
+  content: string;
+  engagementRate: number;
+  deliveryRate: number;
+  readRate: number;
+  responseRate: number;
+  engagementScore: number;
+  sentAt: string;
+}
+
 export interface MessageAnalytics {
   deliveryStats: DeliveryStats;
   engagementMetrics: EngagementMetrics[];
   rsvpCorrelations: RSVPCorrelation[];
-  topPerformingMessages: Array<{
-    messageId: string;
-    content: string;
-    engagementRate: number;
-    deliveryRate: number;
-  }>;
+  responseRatesOverTime: ResponseRateOverTime[];
+  topPerformingMessages: TopPerformingMessage[];
 }
 
 /**
- * Get comprehensive delivery statistics for an event
+ * Get comprehensive delivery statistics for an event with enhanced read tracking
  */
 export async function getDeliveryStatsForEvent(eventId: string): Promise<DeliveryStats> {
   try {
@@ -73,18 +99,22 @@ export async function getDeliveryStatsForEvent(eventId: string): Promise<Deliver
         totalDelivered: 0,
         totalFailed: 0,
         totalResponses: 0,
+        totalRead: 0,
         deliveryRate: 0,
         responseRate: 0,
         failureRate: 0,
+        readRate: 0,
+        readRatio: 0,
       };
     }
     
     const messageIds = messages.map(m => m.id);
     
-    // Get delivery statistics
+    // Get delivery statistics with read tracking support
+    // TODO: Add 'read_at' to select when migration is applied
     const { data: deliveries, error: deliveriesError } = await supabase
       .from('message_deliveries')
-      .select('sms_status, email_status, push_status, has_responded')
+      .select('sms_status, email_status, push_status, has_responded, created_at, updated_at')
       .in('scheduled_message_id', messageIds);
     
     if (deliveriesError) throw deliveriesError;
@@ -100,14 +130,39 @@ export async function getDeliveryStatsForEvent(eventId: string): Promise<Deliver
     ).length || 0;
     const totalResponses = deliveries?.filter(d => d.has_responded === true).length || 0;
     
+    // Enhanced: Calculate read statistics
+    // TODO: Use read_at column when migration is applied
+    // For now, we'll use a heuristic: messages with responses are considered "read"
+    const totalRead = deliveries?.filter(d => {
+      // TODO: If read_at column exists, use it
+      // if (d.read_at) return true;
+      // Fallback: if they responded, they must have read it
+      if (d.has_responded) return true;
+      // Additional heuristic: if updated_at is significantly after created_at, assume read
+      if (d.created_at && d.updated_at) {
+        const timeDiff = new Date(d.updated_at).getTime() - new Date(d.created_at).getTime();
+        return timeDiff > 60000; // More than 1 minute difference suggests engagement
+      }
+      return false;
+    }).length || 0;
+    
+    const deliveryRate = totalSent > 0 ? (totalDelivered / totalSent) * 100 : 0;
+    const readRate = totalSent > 0 ? (totalRead / totalSent) * 100 : 0;
+    const readRatio = totalDelivered > 0 ? (totalRead / totalDelivered) * 100 : 0;
+    const responseRate = totalDelivered > 0 ? (totalResponses / totalDelivered) * 100 : 0;
+    const failureRate = totalSent > 0 ? (totalFailed / totalSent) * 100 : 0;
+    
     return {
       totalSent,
       totalDelivered,
       totalFailed,
       totalResponses,
-      deliveryRate: totalSent > 0 ? (totalDelivered / totalSent) * 100 : 0,
-      responseRate: totalDelivered > 0 ? (totalResponses / totalDelivered) * 100 : 0,
-      failureRate: totalSent > 0 ? (totalFailed / totalSent) * 100 : 0,
+      totalRead,
+      deliveryRate,
+      responseRate,
+      failureRate,
+      readRate,
+      readRatio,
     };
   } catch (error) {
     console.error('Error getting delivery stats:', error);
@@ -116,38 +171,93 @@ export async function getDeliveryStatsForEvent(eventId: string): Promise<Deliver
 }
 
 /**
- * Get engagement metrics for a specific message
+ * Get enhanced engagement metrics for a specific message with read tracking
  */
 export async function getEngagementMetrics(messageId: string): Promise<EngagementMetrics> {
   try {
-    // Get message deliveries with status data
-    const { data: deliveries, error: deliveriesError } = await supabase
+    const { data: deliveries, error } = await supabase
       .from('message_deliveries')
-      .select('sms_status, email_status, push_status, has_responded, created_at, updated_at')
-      .eq('scheduled_message_id', messageId);
+      .select('*')
+      .eq('message_id', messageId);
     
-    if (deliveriesError) throw deliveriesError;
+    if (error) {
+      console.error('Error fetching delivery data:', error);
+      throw new Error(`Failed to fetch delivery data: ${error.message}`);
+    }
     
-    const recipientCount = deliveries?.length || 0;
-    const deliveredCount = deliveries?.filter(d => 
-      d.sms_status === 'delivered' || d.email_status === 'delivered' || d.push_status === 'delivered'
-    ).length || 0;
-    // For now, we'll assume opened = delivered since we don't have read tracking yet
-    const openedCount = deliveredCount;
-    const respondedCount = deliveries?.filter(d => d.has_responded === true).length || 0;
+    if (!deliveries || deliveries.length === 0) {
+      return {
+        messageId,
+        recipientCount: 0,
+        deliveredCount: 0,
+        openedCount: 0,
+        respondedCount: 0,
+        averageResponseTime: null,
+        averageTimeToRead: null,
+        engagementRate: 0,
+        readRate: 0,
+        responseToReadRatio: 0,
+      };
+    }
     
-    // Calculate average response time (simplified - using updated_at as proxy for response time)
+    const recipientCount = deliveries.length;
+    const deliveredDeliveries = deliveries.filter(d => 
+      d.sms_status === 'delivered' || 
+      d.email_status === 'delivered' || 
+      d.push_status === 'delivered'
+    );
+    const deliveredCount = deliveredDeliveries.length;
+    
+    // Enhanced: Calculate read metrics
+    const readDeliveries = deliveries.filter(d => {
+      // TODO: Use read_at if available (when migration is applied)
+      // if (d.read_at) return true;
+      // Fallback heuristics
+      if (d.has_responded) return true;
+      if (d.created_at && d.updated_at) {
+        const timeDiff = new Date(d.updated_at).getTime() - new Date(d.created_at).getTime();
+        return timeDiff > 60000; // More than 1 minute suggests read
+      }
+      return false;
+    });
+    const openedCount = readDeliveries.length;
+    const respondedCount = deliveries.filter(d => d.has_responded === true).length;
+    
+    // Calculate time-to-read metrics
+    let averageTimeToRead: number | null = null;
+    const readTimes = readDeliveries
+      .filter(d => d.created_at && d.updated_at)
+      .map(d => {
+        const created = new Date(d.created_at!);
+        // TODO: Use d.read_at when available
+        const readTime = new Date(d.updated_at!);
+        return (readTime.getTime() - created.getTime()) / (1000 * 60); // minutes
+      })
+      .filter(time => time >= 0 && time < 24 * 60); // Filter out invalid times
+    
+    if (readTimes.length > 0) {
+      averageTimeToRead = readTimes.reduce((sum, time) => sum + time, 0) / readTimes.length;
+    }
+    
+    // Calculate response times (existing logic)
+    let averageResponseTime: number | null = null;
     const responseTimes = deliveries
-      ?.filter(d => d.has_responded && d.created_at && d.updated_at)
+      .filter(d => d.has_responded && d.created_at && d.updated_at)
       .map(d => {
         const created = new Date(d.created_at!);
         const updated = new Date(d.updated_at!);
         return (updated.getTime() - created.getTime()) / (1000 * 60); // minutes
-      }) || [];
+      })
+      .filter(time => time >= 0 && time < 24 * 60); // Filter out invalid times
     
-    const averageResponseTime = responseTimes.length > 0 
-      ? responseTimes.reduce((sum, time) => sum + time, 0) / responseTimes.length
-      : null;
+    if (responseTimes.length > 0) {
+      averageResponseTime = responseTimes.reduce((sum, time) => sum + time, 0) / responseTimes.length;
+    }
+    
+    // Enhanced rate calculations
+    const readRate = deliveredCount > 0 ? (openedCount / deliveredCount) * 100 : 0;
+    const responseToReadRatio = openedCount > 0 ? (respondedCount / openedCount) * 100 : 0;
+    const engagementRate = recipientCount > 0 ? ((deliveredCount + respondedCount) / recipientCount) * 100 : 0;
     
     return {
       messageId,
@@ -156,11 +266,154 @@ export async function getEngagementMetrics(messageId: string): Promise<Engagemen
       openedCount,
       respondedCount,
       averageResponseTime,
-      engagementRate: deliveredCount > 0 ? ((openedCount + respondedCount) / deliveredCount) * 100 : 0,
+      averageTimeToRead,
+      engagementRate,
+      readRate,
+      responseToReadRatio,
     };
   } catch (error) {
     console.error('Error getting engagement metrics:', error);
-    throw new Error('Failed to fetch engagement metrics');
+    const errorMessage = error instanceof Error ? error.message : 'Failed to get engagement metrics';
+    throw new Error(errorMessage);
+  }
+}
+
+/**
+ * Get response rates over time for trend analysis
+ */
+export async function getResponseRatesOverTime(
+  eventId: string,
+  granularity: 'day' | 'week' | 'month' = 'day',
+  daysBack: number = 30
+): Promise<ResponseRateOverTime[]> {
+  try {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - daysBack);
+    
+    const { data: messages, error: messagesError } = await supabase
+      .from('scheduled_messages')
+      .select(`
+        id,
+        sent_at,
+        message_deliveries (
+          created_at,
+          sms_status,
+          email_status,
+          push_status,
+          has_responded,
+          updated_at
+        )
+      `)
+      .eq('event_id', eventId)
+      .eq('status', 'sent')
+      .gte('sent_at', startDate.toISOString())
+      .order('sent_at', { ascending: true });
+    
+    if (messagesError) throw messagesError;
+    
+    // Group data by time period
+    const timeGroups: Record<string, {
+      deliveries: any[];
+    }> = {};
+    
+    (messages || []).forEach(message => {
+      if (!message.sent_at) return;
+      
+      const sentDate = new Date(message.sent_at);
+      let timeKey: string;
+      
+      switch (granularity) {
+        case 'month':
+          timeKey = `${sentDate.getFullYear()}-${String(sentDate.getMonth() + 1).padStart(2, '0')}`;
+          break;
+        case 'week':
+          const weekStart = new Date(sentDate);
+          weekStart.setDate(sentDate.getDate() - sentDate.getDay());
+          timeKey = weekStart.toISOString().split('T')[0];
+          break;
+        case 'day':
+        default:
+          timeKey = sentDate.toISOString().split('T')[0];
+          break;
+      }
+      
+      if (!timeGroups[timeKey]) {
+        timeGroups[timeKey] = { deliveries: [] };
+      }
+      
+      timeGroups[timeKey].deliveries.push(...(message.message_deliveries || []));
+    });
+    
+    // Calculate metrics for each time period
+    const results: ResponseRateOverTime[] = Object.entries(timeGroups).map(([timeRange, data]) => {
+      const deliveries = data.deliveries;
+      const totalSent = deliveries.length;
+      
+      const deliveredDeliveries = deliveries.filter(d => 
+        d.sms_status === 'delivered' || 
+        d.email_status === 'delivered' || 
+        d.push_status === 'delivered'
+      );
+      const totalDelivered = deliveredDeliveries.length;
+      
+      const readDeliveries = deliveries.filter(d => {
+        if (d.read_at) return true;
+        if (d.has_responded) return true;
+        if (d.created_at && d.updated_at) {
+          const timeDiff = new Date(d.updated_at).getTime() - new Date(d.created_at).getTime();
+          return timeDiff > 60000;
+        }
+        return false;
+      });
+      const totalRead = readDeliveries.length;
+      
+      const totalResponses = deliveries.filter(d => d.has_responded === true).length;
+      
+      // Calculate average times
+      const readTimes = readDeliveries
+        .filter(d => d.created_at && (d.read_at || d.updated_at))
+        .map(d => {
+          const created = new Date(d.created_at);
+          const readTime = d.read_at ? new Date(d.read_at) : new Date(d.updated_at);
+          return (readTime.getTime() - created.getTime()) / (1000 * 60);
+        })
+        .filter(time => time >= 0 && time < 24 * 60);
+      
+      const responseTimes = deliveries
+        .filter(d => d.has_responded && d.created_at && d.updated_at)
+        .map(d => {
+          const created = new Date(d.created_at);
+          const updated = new Date(d.updated_at);
+          return (updated.getTime() - created.getTime()) / (1000 * 60);
+        })
+        .filter(time => time >= 0 && time < 24 * 60);
+      
+      const averageTimeToRead = readTimes.length > 0 
+        ? readTimes.reduce((sum, time) => sum + time, 0) / readTimes.length 
+        : null;
+      
+      const averageTimeToResponse = responseTimes.length > 0 
+        ? responseTimes.reduce((sum, time) => sum + time, 0) / responseTimes.length 
+        : null;
+      
+      return {
+        timeRange,
+        totalSent,
+        totalDelivered,
+        totalRead,
+        totalResponses,
+        deliveryRate: totalSent > 0 ? (totalDelivered / totalSent) * 100 : 0,
+        readRate: totalDelivered > 0 ? (totalRead / totalDelivered) * 100 : 0,
+        responseRate: totalDelivered > 0 ? (totalResponses / totalDelivered) * 100 : 0,
+        averageTimeToRead,
+        averageTimeToResponse,
+      };
+    });
+    
+    return results.sort((a, b) => a.timeRange.localeCompare(b.timeRange));
+  } catch (error) {
+    console.error('Error getting response rates over time:', error);
+    throw new Error('Failed to calculate response rates over time');
   }
 }
 
@@ -247,7 +500,7 @@ export async function getEventAnalytics(eventId: string): Promise<MessageAnalyti
     // Get all sent messages for the event
     const { data: messages, error: messagesError } = await supabase
       .from('scheduled_messages')
-      .select('id, content')
+      .select('id, content, sent_at, created_at')
       .eq('event_id', eventId)
       .eq('status', 'sent')
       .order('sent_at', { ascending: false })
@@ -273,24 +526,40 @@ export async function getEventAnalytics(eventId: string): Promise<MessageAnalyti
       )
     ).then(results => results.filter(Boolean) as RSVPCorrelation[]);
     
+    // Get response rates over time
+    const responseRatesOverTime = await getResponseRatesOverTime(eventId);
+    
     // Calculate top performing messages
     const topPerformingMessages = (messages || [])
       .map(message => {
         const metrics = engagementMetrics.find(m => m.messageId === message.id);
+        const engagementRate = metrics?.engagementRate || 0;
+        const deliveryRate = metrics ? (metrics.deliveredCount / metrics.recipientCount) * 100 : 0;
+        const readRate = metrics ? (metrics.openedCount / metrics.deliveredCount) * 100 : 0;
+        const responseRate = metrics ? (metrics.respondedCount / metrics.openedCount) * 100 : 0;
+        
+        // Calculate engagement score as weighted average of key metrics
+        const engagementScore = (engagementRate * 0.4) + (readRate * 0.3) + (responseRate * 0.3);
+        
         return {
           messageId: message.id,
           content: message.content.substring(0, 100) + (message.content.length > 100 ? '...' : ''),
-          engagementRate: metrics?.engagementRate || 0,
-          deliveryRate: metrics ? (metrics.deliveredCount / metrics.recipientCount) * 100 : 0,
+          engagementRate,
+          deliveryRate,
+          readRate,
+          responseRate,
+          engagementScore,
+          sentAt: message.sent_at || message.created_at || new Date().toISOString(),
         };
       })
-      .sort((a, b) => b.engagementRate - a.engagementRate)
+      .sort((a, b) => b.engagementScore - a.engagementScore)
       .slice(0, 5);
     
     return {
       deliveryStats,
       engagementMetrics,
       rsvpCorrelations,
+      responseRatesOverTime,
       topPerformingMessages,
     };
   } catch (error) {
@@ -343,28 +612,30 @@ export async function recordDeliveryStatus(
 
 /**
  * Record that a message was read (opened) by a guest
- * Note: Current schema doesn't have read tracking, this is a placeholder for future implementation
+ * TODO: Update to use read_at column once migration is applied
  */
 export async function recordMessageRead(
   messageDeliveryId: string,
   readAt: Date = new Date()
 ): Promise<void> {
   try {
-    // For now, we'll just update the timestamp since we don't have read_at column
+    // TODO: Update to set read_at column once migration is applied
+    // For now, we'll just update the timestamp as a placeholder
     const { error } = await supabase
       .from('message_deliveries')
       .update({
-        updated_at: new Date().toISOString(),
+        updated_at: readAt.toISOString(),
       })
       .eq('id', messageDeliveryId);
     
-    if (error) throw error;
-    
-    // TODO: Add read_at column to message_deliveries table for proper read tracking
-    console.log(`Message read recorded for delivery ${messageDeliveryId} at ${readAt.toISOString()}`);
+    if (error) {
+      console.error('Error updating read status:', error);
+      throw new Error(`Failed to record message read: ${error.message}`);
+    }
   } catch (error) {
     console.error('Error recording message read:', error);
-    throw new Error('Failed to record message read');
+    const errorMessage = error instanceof Error ? error.message : 'Failed to record message read';
+    throw new Error(errorMessage);
   }
 }
 

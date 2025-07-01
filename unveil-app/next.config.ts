@@ -1,6 +1,11 @@
 import type { NextConfig } from 'next';
 import { withSentryConfig } from '@sentry/nextjs';
 
+// Bundle analyzer for performance optimization
+const withBundleAnalyzer = require('@next/bundle-analyzer')({
+  enabled: process.env.ANALYZE === 'true',
+});
+
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
@@ -157,21 +162,23 @@ const nextConfig: NextConfig = {
   },
 };
 
-// Wrap with Sentry config for error tracking and performance monitoring
-export default withSentryConfig(nextConfig, {
-  // Sentry build-time configuration
-  org: process.env.SENTRY_ORG,
-  project: process.env.SENTRY_PROJECT,
-  
-  // Upload source maps in production for better error tracking
-  silent: true, // Always silent to reduce console noise
-  widenClientFileUpload: true,
-  reactComponentAnnotation: {
-    enabled: true,
-  },
-  tunnelRoute: '/monitoring',
-  sourcemaps: {
-    disable: true,
-  },
-  disableLogger: true, // Always disable logger
-});
+// Wrap with bundle analyzer and Sentry config for performance optimization and error tracking
+export default withBundleAnalyzer(
+  withSentryConfig(nextConfig, {
+    // Sentry build-time configuration
+    org: process.env.SENTRY_ORG,
+    project: process.env.SENTRY_PROJECT,
+    
+    // Upload source maps in production for better error tracking
+    silent: true, // Always silent to reduce console noise
+    widenClientFileUpload: true,
+    reactComponentAnnotation: {
+      enabled: true,
+    },
+    tunnelRoute: '/monitoring',
+    sourcemaps: {
+      disable: true,
+    },
+    disableLogger: true, // Always disable logger
+  })
+);

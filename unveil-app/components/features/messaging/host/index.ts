@@ -11,5 +11,8 @@ export { ScheduledMessageCard } from './ScheduledMessageCard';
 export { GuestTagManager } from './GuestTagManager';
 export { TagSelector } from './TagSelector';
 
-// These will be added in future phases
-// export { MessageAnalytics } from './MessageAnalytics'; 
+// Analytics Components
+export { MessageAnalytics } from './MessageAnalytics';
+export { AnalyticsChart } from './AnalyticsChart';
+export { DeliveryMetrics } from './DeliveryMetrics';
+export { ExportButton } from './ExportButton'; 

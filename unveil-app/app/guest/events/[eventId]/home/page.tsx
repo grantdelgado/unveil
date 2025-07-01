@@ -21,6 +21,7 @@ import {
   DevModeBox,
   SkeletonLoader
 } from '@/components/ui';
+import { ErrorBoundary, MessagingErrorFallback } from '@/components/ui/ErrorBoundary';
 
 export default function GuestEventHomePage() {
   const params = useParams();
@@ -216,7 +217,8 @@ export default function GuestEventHomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA]">
+    <ErrorBoundary fallback={MessagingErrorFallback}>
+      <div className="min-h-screen bg-[#FAFAFA]">
       {/* Sticky Header */}
       <div
         className={`sticky top-0 z-40 bg-[#FAFAFA]/95 backdrop-blur-sm border-b border-gray-200/50 transition-all duration-300 ${
@@ -576,6 +578,7 @@ export default function GuestEventHomePage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </ErrorBoundary>
   );
 }
