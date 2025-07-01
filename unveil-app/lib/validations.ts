@@ -92,8 +92,8 @@ export const messageCreateSchema = z.object({
       DB_ENUMS.MESSAGE_TYPE.CHANNEL,
     ] as const)
     .default(DB_ENUMS.MESSAGE_TYPE.CHANNEL),
-  recipient_user_id: z.string().uuid().optional(),
-  recipient_tags: z.array(z.string()).optional(),
+  // Note: recipient targeting is handled via scheduled_messages table, not messages
+  // recipient_user_id and recipient_tags removed - these fields don't exist in live database
 });
 
 // Media schemas

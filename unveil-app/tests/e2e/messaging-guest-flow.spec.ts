@@ -247,11 +247,12 @@ test.describe('Guest Messaging Flow', () => {
       await expect(page.getByText(responseContent)).toBeVisible();
       
       // Verify response is saved in database
+      // Note: parent_message_id field doesn't exist - checking by content and event instead
       const { data: response } = await supabase
         .from('messages')
         .select('*')
         .eq('content', responseContent)
-        .eq('parent_message_id', context.broadcastMessageId)
+        .eq('event_id', context.eventId)
         .single();
       
       expect(response).toBeTruthy();
@@ -330,7 +331,7 @@ test.describe('Guest Messaging Flow', () => {
     test('guest cannot access other guests responses', async ({ page }) => {
       // Create response from guest 2
       const guest2Response = 'Private response from guest 2 - should not be visible to guest 1';
-      await createGuestResponse(context.eventId, context.guest2Id, context.broadcastMessageId!, guest2Response);
+      await createGuestResponse(context.eventId, context.guest2Id, guest2Response);
       
       // Login as guest 1
       await authenticateAsGuest(page, context.guest1Phone);
@@ -525,9 +526,9 @@ async function createHostMessage(eventId: string, content: string, type: 'broadc
     message_type: 'announcement'
   };
 
-  if (type === 'tags' && tags) {
-    messageData.target_tags = tags;
-  }
+  // Note: target_tags field doesn't exist in current schema
+  // Message targeting is handled via scheduled_messages table, not messages table
+  // TODO: Implement proper message targeting via scheduled_messages in future update
 
   const { data: message } = await supabase
     .from('messages')
@@ -538,13 +539,14 @@ async function createHostMessage(eventId: string, content: string, type: 'broadc
   return message.id;
 }
 
-async function createGuestResponse(eventId: string, guestId: string, parentMessageId: string, content: string) {
+async function createGuestResponse(eventId: string, guestId: string, content: string) {
+  // Note: parent_message_id field doesn't exist in current schema - message threading not implemented
   await supabase
     .from('messages')
     .insert({
       event_id: eventId,
       content: content,
-      parent_message_id: parentMessageId,
+      // TODO: Implement message threading functionality in future schema update
       message_type: 'direct'
     });
 }

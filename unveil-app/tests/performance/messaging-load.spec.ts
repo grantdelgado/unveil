@@ -502,7 +502,7 @@ test.describe('Messaging Performance & Load Tests', () => {
           .insert({
             event_id: context.eventId,
             content: `Response ${i + 1} to test rendering performance with large threads`,
-            parent_message_id: parentMessageId,
+            // Note: parent_message_id field doesn't exist - message threading not implemented
             message_type: 'direct'
           });
       }
@@ -673,9 +673,9 @@ async function createDirectMessage(eventId: string, content: string, targetGuest
     message_type: 'announcement'
   };
 
-  if (targetGuestIds) {
-    messageData.target_guest_ids = targetGuestIds;
-  }
+  // Note: target_guest_ids field doesn't exist in current schema
+  // Message targeting is handled via scheduled_messages table, not messages table
+  // TODO: Implement proper message targeting for load testing
 
   const { data: message } = await supabase
     .from('messages')

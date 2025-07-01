@@ -496,15 +496,16 @@ async function simulateGuestMessageRead(guestId: string, messageId: string) {
     .match({ guest_id: guestId, message_id: messageId });
 }
 
-async function simulateGuestResponse(page: any, eventId: string, guestId: string, parentMessageId: string, responseContent: string) {
+async function simulateGuestResponse(page: any, eventId: string, guestId: string, originalMessageId: string, responseContent: string) {
   // This would typically involve navigating to guest view and posting response
   // For E2E testing, we'll create the response directly
+  // Note: parent_message_id field doesn't exist in current schema - message threading not implemented
   await supabase
     .from('messages')
     .insert({
       event_id: eventId,
       content: responseContent,
-      parent_message_id: parentMessageId,
+      // TODO: Implement message threading in future schema update
       message_type: 'direct'
     });
 }

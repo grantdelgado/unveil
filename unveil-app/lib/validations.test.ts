@@ -123,7 +123,7 @@ describe('Message Validation', () => {
       const validMessage = {
         content: 'Hello everyone! Looking forward to the celebration.',
         message_type: 'announcement' as const,
-        recipient_tags: ['all_guests'],
+        // Note: recipient targeting removed - handled via scheduled_messages table
       };
 
       expect(() => messageCreateSchema.parse(validMessage)).not.toThrow();
