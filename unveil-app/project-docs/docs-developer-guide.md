@@ -643,9 +643,9 @@ refactor: improve component structure
 - [Tailwind CSS Documentation](https://tailwindcss.com/docs)
 
 ### Internal Documentation
-- [`docs/architecture-guide.md`](./architecture-guide.md) - System architecture
-- [`docs/rules.md`](./rules.md) - Development rules and guidelines
-- [`docs/testing-infrastructure.md`](./testing-infrastructure.md) - Testing setup
+- [`docs/architecture-guide.md`](./docs-architecture-guide.md) - System architecture
+- [`docs/rules.md`](./docs-rules.md) - Development rules and guidelines
+- [`docs/testing-infrastructure.md`](./docs-testing-infrastructure.md) - Testing setup
 
 ### Tools
 - [Supabase Dashboard](https://app.supabase.com) - Database management

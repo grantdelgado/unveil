@@ -310,14 +310,14 @@ interface MessageAnalytics {
 ## Support & Resources
 
 ### Documentation
-- [SMS Setup Guide](./SMS_SETUP_GUIDE.md)
-- [Production Environment Setup](./production-environment-setup.md)
+- [SMS Setup Guide](./docs-SMS_SETUP_GUIDE.md)
+- [Production Environment Setup](./docs-production-environment-setup.md)
 - [Database Schema Reference](../app/reference/schema.sql)
 
 ### Development
-- [Developer Guide](./developer-guide.md)
-- [Testing Infrastructure](./testing-infrastructure.md)
-- [Component Library](./component-library-implementation.md)
+- [Developer Guide](./docs-developer-guide.md)
+- [Testing Infrastructure](./docs-testing-infrastructure.md)
+- [Component Library](./docs-component-library-implementation.md)
 
 ### Contact
 For technical support or feature requests, please refer to the project documentation or contact the development team. 

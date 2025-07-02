@@ -110,9 +110,9 @@ The Unveil wedding app has reached **enterprise-grade quality** with comprehensi
 ## 📚 Documentation Created
 
 ### **Architecture Documentation**
-- **[`docs/architecture-guide.md`](./architecture-guide.md)** - Complete system architecture (15 sections)
-- **[`docs/developer-guide.md`](./developer-guide.md)** - Developer setup and workflow
-- **[`docs/refactor-roadmap.md`](./refactor-roadmap.md)** - Complete refactoring roadmap and progress
+- **[`docs/architecture-guide.md`](./docs-architecture-guide.md)** - Complete system architecture (15 sections)
+- **[`docs/developer-guide.md`](./docs-developer-guide.md)** - Developer setup and workflow
+- **[`docs/refactor-roadmap.md`](./archive-refactor-roadmap.md)** - Complete refactoring roadmap and progress
 
 ### **API Documentation**
 - **JSDoc Coverage**: All service functions documented with examples
