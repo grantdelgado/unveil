@@ -437,6 +437,10 @@ export type Database = {
         Args: { p_event_id: string }
         Returns: boolean
       }
+      can_access_message: {
+        Args: { p_message_id: string }
+        Returns: boolean
+      }
       get_user_events: {
         Args: { user_id_param?: string }
         Returns: {
@@ -448,6 +452,10 @@ export type Database = {
           rsvp_status: string
           is_host: boolean
         }[]
+      }
+      guest_exists_for_phone: {
+        Args: { p_event_id: string; p_phone: string }
+        Returns: boolean
       }
       guest_has_all_tags: {
         Args: { guest_id: string; target_tags: string[] }
