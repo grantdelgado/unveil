@@ -78,7 +78,10 @@ export function useGuestData({ eventId, onGuestUpdated }: UseGuestDataOptions): 
     filter: `event_id=eq.${eventId}`,
     enabled: Boolean(eventId),
     onDataChange: useCallback(async (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => {
-      logger.realtime('Real-time guest update', { eventType: payload.eventType, guestId: payload.new?.id });
+      logger.realtime('Real-time guest update', { 
+        eventType: payload.eventType, 
+        guestId: payload.new && 'id' in payload.new ? payload.new.id : null 
+      });
       await fetchData();
     }, [fetchData]),
     onError: useCallback((error: Error) => {

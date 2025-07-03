@@ -130,7 +130,7 @@ export default function LoginPage() {
 
       if (result.success) {
         logAuth('Authentication successful', {
-          userId: result.userId,
+          userId: result.userId || 'unknown',
           isNewUser: result.isNewUser,
         });
 
@@ -192,7 +192,7 @@ export default function LoginPage() {
 
       if (result.success) {
         logAuth('Authentication successful', {
-          userId: result.userId,
+          userId: result.userId || 'unknown',
           isNewUser: result.isNewUser,
         });
 

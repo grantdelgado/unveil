@@ -67,10 +67,3 @@ export const RealtimeDebugger = lazy(() =>
 export const TestUserCreator = lazy(() => 
   import('../dev/TestUserCreator').then(module => ({ default: module.TestUserCreator }))
 )
-
-// Lightweight components that can be imported directly
-export { WelcomeBanner } from './events'
-export { BottomNavigation, NavigationLayout, RoleSwitcher } from './navigation'
-export { AuthSessionWatcher, LogoutButton, ProfileAvatar } from './auth'
-export { QuickActions } from './host-dashboard'
-export { EventSchedule } from './scheduling'

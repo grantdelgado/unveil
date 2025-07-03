@@ -29,7 +29,7 @@ export const supabase = createClient<Database>(
       reconnectAfterMs: (tries: number) => Math.min(1000 * Math.pow(2, tries), 30000),
       // Log realtime events for debugging - must be a function
       logger: process.env.NODE_ENV === 'development' 
-        ? (kind: string, msg: string, data?: any) => {
+        ? (kind: string, msg: string, data?: unknown) => {
             logger.realtime(`[Realtime ${kind}] ${msg}`, data);
           }
         : undefined,

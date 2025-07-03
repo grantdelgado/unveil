@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback, memo, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, memo } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 import { useRealtimeSubscription } from '@/hooks/realtime';
@@ -196,7 +196,10 @@ export const GuestStatusSummary = memo<GuestStatusSummaryProps>(({
     filter: `event_id=eq.${eventId}`,
     enabled: Boolean(eventId),
     onDataChange: useCallback(async (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => {
-      logger.realtime('Real-time RSVP update', { eventType: payload.eventType, guestId: payload.new?.id });
+      logger.realtime('Real-time RSVP update', { 
+        eventType: payload.eventType, 
+        guestId: payload.new && 'id' in payload.new ? payload.new.id : null 
+      });
       
       // Update activity feed for RSVP changes
       if (payload.eventType === 'UPDATE' && payload.new && payload.old) {
@@ -330,7 +333,6 @@ export const GuestStatusSummary = memo<GuestStatusSummaryProps>(({
           return (
             <StatusPill
               key={status.key}
-              statusKey={status.key}
               label={status.label}
               icon={status.icon}
               count={count}

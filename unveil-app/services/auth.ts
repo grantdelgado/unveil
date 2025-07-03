@@ -726,7 +726,10 @@ export const getCurrentUserProfile = async () => {
 
       if (profileError) {
         // If RLS blocks access, create a fallback profile from auth user data
-        logger.auth('User profile query blocked by RLS, using auth fallback', profileError);
+        logger.auth('User profile query blocked by RLS, using auth fallback', {
+          error: profileError?.message || 'Unknown profile error',
+          code: profileError?.code || 'PROFILE_QUERY_FAILED',
+        });
         
         const fallbackProfile = {
           id: user.id,
@@ -744,7 +747,10 @@ export const getCurrentUserProfile = async () => {
       return { data: profile, error: null };
     } catch (rls_error) {
       // If there's an RLS error, fall back to auth user data
-      logger.auth('RLS error accessing user profile, using auth fallback', rls_error);
+      logger.auth('RLS error accessing user profile, using auth fallback', {
+        error: rls_error instanceof Error ? rls_error.message : String(rls_error),
+        fallback: 'Using auth metadata',
+      });
       
       const fallbackProfile = {
         id: user.id,

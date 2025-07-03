@@ -276,11 +276,11 @@ export async function getGuestMessages(
     }
 
     // Convert to MessageWithDelivery format
-    let allMessages: MessageWithDelivery[] = (deliveredMessages || []).map((message: MessageWithDeliveries) => ({
+    let allMessages: MessageWithDelivery[] = (deliveredMessages || []).map((message) => ({
       ...message,
       delivery: Array.isArray(message.message_deliveries) 
-        ? message.message_deliveries[0] 
-        : message.message_deliveries,
+        ? message.message_deliveries[0] as any
+        : message.message_deliveries as any,
       message_deliveries: undefined, // Remove nested data
     }));
 

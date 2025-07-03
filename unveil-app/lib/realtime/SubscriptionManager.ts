@@ -131,14 +131,16 @@ export class SubscriptionManager {
           },
         })
         .on(
-          'postgres_changes' as 'postgres_changes',
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          'postgres_changes' as any,
           {
             event: config.event || '*',
             schema: config.schema || 'public',
             table: config.table,
             filter: config.filter,
           },
-          (payload) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (payload: any) => {
             if (config.callback) {
               try {
                 // Update activity timestamp
@@ -177,7 +179,7 @@ export class SubscriptionManager {
       );
 
       // Enhanced subscription with timeout handling
-      const subscriptionPromise = new Promise<void>((resolve, reject) => {
+      new Promise<void>((resolve, reject) => {
         const timeout = setTimeout(() => {
           logger.error(`⏰ Subscription timeout: ${subscriptionId} (${config.timeoutMs || this.DEFAULT_TIMEOUT}ms)`);
           
@@ -697,6 +699,33 @@ export class SubscriptionManager {
         );
       }
     }, this.HEARTBEAT_INTERVAL);
+  }
+
+  private async waitForConnection(
+    channel: RealtimeChannel,
+    timeoutMs: number = 10000,
+  ): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error('Connection timeout'));
+      }, timeoutMs);
+
+      // Wait for channel to be subscribed
+      const checkStatus = () => {
+        if (channel.state === 'joined') {
+          clearTimeout(timeout);
+          resolve();
+        } else if (channel.state === 'errored' || channel.state === 'closed') {
+          clearTimeout(timeout);
+          reject(new Error(`Channel connection failed: ${channel.state}`));
+        } else {
+          // Check again in 100ms
+          setTimeout(checkStatus, 100);
+        }
+      };
+
+      checkStatus();
+    });
   }
 }
 

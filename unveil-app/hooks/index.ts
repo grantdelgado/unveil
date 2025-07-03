@@ -14,7 +14,7 @@
 export { useAuth } from './auth/useAuth';
 export { useEventDetails, useEventInsights, useUserEventsSorted } from './events';
 export { useEventMedia } from './media';
-export { useGuestMessages, useMessageAnalytics } from './messaging';
+export { useGuestMessages } from './messaging';
 export { useGuests } from './guests';
 export { useNavigation } from './navigation/useNavigation';
 export { useRealtimeSubscription } from './realtime';

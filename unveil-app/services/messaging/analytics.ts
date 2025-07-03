@@ -352,7 +352,11 @@ export async function getResponseRatesOverTime(
         timeGroups[timeKey] = { deliveries: [] };
       }
       
-      timeGroups[timeKey].deliveries.push(...(message.message_deliveries || []));
+      // Filter out deliveries with null created_at values
+      const validDeliveries = (message.message_deliveries || []).filter(
+        (delivery): delivery is DeliveryRecord => delivery.created_at !== null
+      );
+      timeGroups[timeKey].deliveries.push(...validDeliveries);
     });
     
     // Calculate metrics for each time period

@@ -4,7 +4,6 @@ import React, { memo } from 'react';
 import { cn } from '@/lib/utils';
 
 interface StatusPillProps {
-  statusKey: string;
   label: string;
   icon: string;
   count: number;
@@ -17,7 +16,6 @@ interface StatusPillProps {
 }
 
 export const StatusPill = memo<StatusPillProps>(({
-  statusKey,
   label,
   icon,
   count,

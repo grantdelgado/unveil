@@ -177,7 +177,7 @@ export interface FormState<TFormData = Record<string, BaseFormField>> {
 
 // Form actions
 export type FormAction<TFormData = Record<string, BaseFormField>> =
-  | { type: 'SET_FIELD_VALUE'; field: keyof TFormData; value: TFormData[keyof TFormData]['value'] }
+  | { type: 'SET_FIELD_VALUE'; field: keyof TFormData; value: unknown }
   | { type: 'SET_FIELD_ERROR'; field: keyof TFormData; error: string }
   | { type: 'CLEAR_FIELD_ERROR'; field: keyof TFormData }
   | { type: 'SET_FIELD_TOUCHED'; field: keyof TFormData; touched: boolean }

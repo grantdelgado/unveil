@@ -212,105 +212,127 @@ class Logger {
     this.writeLog(entry);
   }
 
+  // Helper method to safely handle unknown error types
+  private serializeError(error: unknown): Record<string, string | number | boolean | null> | string {
+    if (error instanceof Error) {
+      return {
+        name: error.name,
+        message: error.message,
+        stack: error.stack || null,
+      };
+    }
+    if (typeof error === 'string') {
+      return error;
+    }
+    if (typeof error === 'object' && error !== null) {
+      try {
+        return JSON.stringify(error);
+      } catch {
+        return '[Unserializable Error Object]';
+      }
+    }
+    return String(error);
+  }
+
   // Category-specific logging methods
   auth(message: string, data?: Record<string, string | number | boolean | null> | string | number | boolean | null, context?: string): void {
     this.log('info', 'auth', message, data, context);
   }
 
   authError(message: string, error?: unknown, context?: string): void {
-    this.log('error', 'auth', message, error, context);
+    this.log('error', 'auth', message, this.serializeError(error), context);
   }
 
   database(message: string, data?: unknown, context?: string): void {
-    this.log('info', 'database', message, data, context);
+    this.log('info', 'database', message, this.serializeError(data), context);
   }
 
   databaseError(message: string, error?: unknown, context?: string): void {
-    this.log('error', 'database', message, error, context);
+    this.log('error', 'database', message, this.serializeError(error), context);
   }
 
   api(message: string, data?: unknown, context?: string): void {
-    this.log('info', 'api', message, data, context);
+    this.log('info', 'api', message, this.serializeError(data), context);
   }
 
   apiError(message: string, error?: unknown, context?: string): void {
-    this.log('error', 'api', message, error, context);
+    this.log('error', 'api', message, this.serializeError(error), context);
   }
 
   realtime(message: string, data?: unknown, context?: string): void {
-    this.log('info', 'realtime', message, data, context);
+    this.log('info', 'realtime', message, this.serializeError(data), context);
   }
 
   realtimeError(message: string, error?: unknown, context?: string): void {
-    this.log('error', 'realtime', message, error, context);
+    this.log('error', 'realtime', message, this.serializeError(error), context);
   }
 
   media(message: string, data?: unknown, context?: string): void {
-    this.log('info', 'media', message, data, context);
+    this.log('info', 'media', message, this.serializeError(data), context);
   }
 
   mediaError(message: string, error?: unknown, context?: string): void {
-    this.log('error', 'media', message, error, context);
+    this.log('error', 'media', message, this.serializeError(error), context);
   }
 
   sms(message: string, data?: unknown, context?: string): void {
-    this.log('info', 'sms', message, data, context);
+    this.log('info', 'sms', message, this.serializeError(data), context);
   }
 
   smsError(message: string, error?: unknown, context?: string): void {
-    this.log('error', 'sms', message, error, context);
+    this.log('error', 'sms', message, this.serializeError(error), context);
   }
 
   navigation(message: string, data?: unknown, context?: string): void {
-    this.log('info', 'navigation', message, data, context);
+    this.log('info', 'navigation', message, this.serializeError(data), context);
   }
 
   navigationError(message: string, error?: unknown, context?: string): void {
-    this.log('error', 'navigation', message, error, context);
+    this.log('error', 'navigation', message, this.serializeError(error), context);
   }
 
   validation(message: string, data?: unknown, context?: string): void {
-    this.log('info', 'validation', message, data, context);
+    this.log('info', 'validation', message, this.serializeError(data), context);
   }
 
   validationError(message: string, error?: unknown, context?: string): void {
-    this.log('error', 'validation', message, error, context);
+    this.log('error', 'validation', message, this.serializeError(error), context);
   }
 
   performance(message: string, data?: unknown, context?: string): void {
-    this.log('info', 'performance', message, data, context);
+    this.log('info', 'performance', message, this.serializeError(data), context);
   }
 
   performanceWarn(message: string, data?: unknown, context?: string): void {
-    this.log('warn', 'performance', message, data, context);
+    this.log('warn', 'performance', message, this.serializeError(data), context);
   }
 
   error(message: string, error?: unknown, context?: string): void {
-    this.log('error', 'error', message, error, context);
+    this.log('error', 'error', message, this.serializeError(error), context);
   }
 
   warn(message: string, data?: unknown, context?: string): void {
-    this.log('warn', 'system', message, data, context);
+    this.log('warn', 'system', message, this.serializeError(data), context);
   }
 
   info(message: string, data?: unknown, context?: string): void {
-    this.log('info', 'system', message, data, context);
+    this.log('info', 'system', message, this.serializeError(data), context);
   }
 
   debug(message: string, data?: unknown, context?: string): void {
-    this.log('debug', 'dev', message, data, context);
+    this.log('debug', 'dev', message, this.serializeError(data), context);
   }
 
   dev(message: string, data?: unknown, context?: string): void {
-    this.log('info', 'dev', message, data, context);
+    this.log('info', 'dev', message, this.serializeError(data), context);
   }
 
   system(message: string, data?: unknown, context?: string): void {
-    this.log('info', 'system', message, data, context);
+    this.log('info', 'system', message, this.serializeError(data), context);
   }
 
   systemError(message: string, error?: unknown, context?: string): void {
-    this.log('error', 'system', message, error, context);
+    this.log('error', 'system', message, this.serializeError(error), context);
   }
 
   // Utility methods

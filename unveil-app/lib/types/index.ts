@@ -10,42 +10,48 @@ export type {
   DatabaseError,
   AuthError,
   MediaError,
-  MessagingError,
-  ValidationError as FormValidationError,
-  ErrorSeverity,
-  ErrorContext,
-  ErrorMetadata,
+  FormValidationError,
+  RealtimeError,
+  SMSError,
+  APIError,
+  DomainErrorUnion,
+} from './errors';
+
+// Error creator functions - commonly used
+export {
+  createAuthError,
+  createDatabaseError,
+  createMediaError,
+  createRealtimeError,
+  createFormValidationError,
+  createSMSError,
+  createAPIError,
+  isAuthError,
+  isDatabaseError,
+  isMediaError,
+  isRealtimeError,
 } from './errors';
 
 // Enhanced hook return types - PREFER: import from './hooks' directly
 export type {
-  AuthHookReturn,
-  EventHookReturn,
-  MediaHookReturn,
-  MessagingHookReturn,
+  AuthHookResult,
+  EventDetailsHookResult,
+  EventListHookResult,
+  GuestHookResult,
+  MediaHookResult,
+  MessagingHookResult,
   LoadingState,
   PaginationState,
-  QueryState,
-  MutationState,
+  MutationResult,
 } from './hooks';
 
 // Form validation types - PREFER: import from './forms' directly
 export type {
   FormState,
-  FormErrors,
-  FieldValidation,
-  FormSubmission,
-  ValidationRule,
-  AsyncValidator,
+  ValidationRule as FieldValidation,
+  FormSubmissionResult as FormSubmission,
+  CustomValidator as AsyncValidator,
 } from './forms';
-
-// Import path standards - PREFER: import from './import-standards' directly
-export type {
-  ComponentImportMap,
-  HookImportMap,
-  ServiceImportMap,
-  UtilImportMap,
-} from './import-standards';
 
 // Most commonly used Supabase types - PREFER: import from '@/lib/supabase/types' directly
 export type {
@@ -54,7 +60,7 @@ export type {
   EventGuest,
   Message,
   Media,
-  UserProfile,
+  PublicUserProfile as UserProfile,
   EventInsert,
   EventUpdate,
   MessageInsert,

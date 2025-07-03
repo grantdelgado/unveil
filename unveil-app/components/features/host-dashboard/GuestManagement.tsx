@@ -69,12 +69,17 @@ export function GuestManagement({
       triggerHaptic('success');
     } catch (error) {
       triggerHaptic('error');
+      console.error('Failed to update guest:', error);
     }
   }, [baseHandleRSVPUpdate, triggerHaptic]);
 
   const handleRemoveGuest = useCallback(async (guestId: string) => {
     if (!confirm('Are you sure you want to remove this guest?')) return;
-    await baseHandleRemoveGuest(guestId);
+    try {
+      await baseHandleRemoveGuest(guestId);
+    } catch (error) {
+      console.error('Failed to delete guest:', error);
+    }
   }, [baseHandleRemoveGuest]);
 
   const handleMarkAllPendingAsAttending = useCallback(async () => {
@@ -89,6 +94,7 @@ export function GuestManagement({
       triggerHaptic('success');
     } catch (error) {
       triggerHaptic('error');
+      console.error('Failed to mark guests as attending:', error);
     }
   }, [baseHandleMarkAllPendingAsAttending, statusCounts.pending, triggerHaptic]);
 
@@ -106,6 +112,7 @@ export function GuestManagement({
       triggerHaptic('success');
     } catch (error) {
       triggerHaptic('error');
+      console.error('Failed to update guests:', error);
     }
   }, [handleBulkRSVPUpdate, selectedGuests, triggerHaptic]);
 

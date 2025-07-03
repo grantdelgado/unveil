@@ -131,13 +131,13 @@ export function useGuestMessages({
 
   // Enhanced realtime message update handler
   const handleRealtimeUpdate = useCallback(
-    (payload: RealtimePostgresChangesPayload<MessagePayload>) => {
-      if (!payload.new || !payload.new.id) {
+    (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => {
+      if (!payload.new || !('id' in payload.new) || !payload.new.id) {
         logger.warn('Invalid realtime payload received', { payload: payload.eventType });
         return;
       }
 
-      const messageId = payload.new.id;
+      const messageId = payload.new.id as string;
       
       // Prevent duplicate processing
       if (processedMessageIds.current.has(messageId)) {
@@ -156,7 +156,7 @@ export function useGuestMessages({
       logger.realtime('Processing new message via realtime', {
         messageId,
         eventType: payload.eventType,
-        eventId: payload.new.event_id,
+        eventId: payload.new && 'event_id' in payload.new ? payload.new.event_id : null,
       });
 
       // Reset subscription health on successful update
@@ -299,7 +299,7 @@ export function useGuestMessages({
   const hasUnreadMessages = useMemo(() => {
     return messages.some(message => 
       message.sender_user_id !== guestId && // Not sent by this guest
-      !message.read_at // Not marked as read
+      !message.delivery?.has_responded // Not marked as responded in delivery
     );
   }, [messages, guestId]);
 
