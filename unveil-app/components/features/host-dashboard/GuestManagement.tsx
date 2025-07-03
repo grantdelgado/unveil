@@ -1,32 +1,20 @@
 'use client';
 
 // External dependencies
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
+import { useState, useCallback, useRef, useEffect } from 'react';
 
 // Internal utilities
-import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
-import { logger } from '@/lib/logger';
 
 // Internal hooks (specific imports for better tree-shaking)
-import { useRealtimeSubscription } from '@/hooks/realtime';
-import { useHapticFeedback, usePullToRefresh, useDebounce } from '@/hooks/common';
+import { useHapticFeedback, usePullToRefresh } from '@/hooks/common';
+import { useGuestData } from '@/hooks/guests/useGuestData';
 
 // Internal components (specific imports)
 import { SecondaryButton, CardContainer } from '@/components/ui';
 import { GuestStatusSummary } from './GuestStatusSummary';
 import { BulkActionShortcuts } from './BulkActionShortcuts';
-
-// Types
-import type { Database } from '@/app/reference/supabase.types';
-
-type Guest = Database['public']['Tables']['event_guests']['Row'] & {
-  users: Database['public']['Tables']['users']['Row'] | null;
-};
-
-// Backward compatibility
-
+import { GuestListItem } from './GuestListItem';
 
 interface GuestManagementProps {
   eventId: string;
@@ -41,14 +29,23 @@ export function GuestManagement({
   onImportGuests,
   onSendMessage,
 }: GuestManagementProps) {
-  const [guests, setGuests] = useState<Guest[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selectedGuests, setSelectedGuests] = useState<Set<string>>(new Set());
   
-  // Enhanced filtering and search with debouncing
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterByRSVP, setFilterByRSVP] = useState('all');
-  const debouncedSearchTerm = useDebounce(searchTerm, 300); // 300ms debounce
+  // Use extracted hook for guest data management
+  const {
+    loading,
+    filteredGuests,
+    statusCounts,
+    searchTerm,
+    setSearchTerm,
+    filterByRSVP,
+    setFilterByRSVP,
+    handleRSVPUpdate: baseHandleRSVPUpdate,
+    handleRemoveGuest: baseHandleRemoveGuest,
+    handleMarkAllPendingAsAttending: baseHandleMarkAllPendingAsAttending,
+    handleBulkRSVPUpdate,
+    fetchData,
+  } = useGuestData({ eventId, onGuestUpdated });
 
   // Interaction enhancements
   const { triggerHaptic } = useHapticFeedback();
@@ -64,184 +61,76 @@ export function GuestManagement({
     maxPullDistance: 120
   });
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
+  // Enhanced handlers with haptic feedback
+  const handleRSVPUpdate = useCallback(async (guestId: string, newStatus: string) => {
     try {
-      const { data: guestData, error: guestError } = await supabase
-        .from('event_guests')
-        .select(`
-          *,
-          users:user_id(*)
-        `)
-        .eq('event_id', eventId);
-
-      if (guestError) throw guestError;
-      setGuests(guestData || []);
+      triggerHaptic('light');
+      await baseHandleRSVPUpdate(guestId, newStatus);
+      triggerHaptic('success');
     } catch (error) {
-      logger.databaseError('Error fetching guests', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [eventId]);
-
-  // Set up real-time subscription using centralized hook
-  const { } = useRealtimeSubscription({
-    subscriptionId: `guest-management-${eventId}`,
-    table: 'event_guests',
-    event: '*',
-    filter: `event_id=eq.${eventId}`,
-    enabled: Boolean(eventId),
-    onDataChange: useCallback(async (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => {
-      logger.realtime('Real-time guest update', { eventType: payload.eventType, guestId: payload.new?.id });
-      // Refresh data when guests change
-      await fetchData();
-    }, [fetchData]),
-    onError: useCallback((error: Error) => {
-      logger.realtimeError('Guest management subscription error', error);
-    }, [])
-  });
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  // Enhanced RSVP update with optimistic updates and haptic feedback
-  const handleRSVPUpdate = async (guestId: string, newStatus: string) => {
-    try {
-      triggerHaptic('light'); // Immediate feedback
-      
-      // Optimistic update
-      setGuests(prev => 
-        prev.map(p => 
-          p.id === guestId 
-            ? { ...p, rsvp_status: newStatus as 'attending' | 'declined' | 'maybe' | 'pending' }
-            : p
-        )
-      );
-
-      const { error } = await supabase
-        .from('event_guests')
-        .update({ rsvp_status: newStatus })
-        .eq('id', guestId);
-
-      if (error) throw error;
-      
-      triggerHaptic('success'); // Success feedback
-      onGuestUpdated?.();
-    } catch (error) {
-      logger.databaseError('Error updating RSVP', error);
-      triggerHaptic('error'); // Error feedback
-      // Revert optimistic update on error
-      await fetchData();
-    }
-  };
-
-  const handleRemoveGuest = async (guestId: string) => {
-    if (!confirm('Are you sure you want to remove this guest?')) return;
-
-    try {
-      const { error } = await supabase
-        .from('event_guests')
-        .delete()
-        .eq('id', guestId);
-
-      if (error) throw error;
-      await fetchData();
-      onGuestUpdated?.();
-    } catch (error) {
-      logger.databaseError('Error removing guest', error);
-    }
-  };
-
-  // Bulk actions with haptic feedback
-  const handleMarkAllPendingAsAttending = async () => {
-    const pendingGuests = guests.filter(p => p.rsvp_status === 'pending');
-    if (pendingGuests.length === 0) return;
-
-    if (!confirm(`Mark ${pendingGuests.length} pending guests as attending?`)) return;
-
-    try {
-      triggerHaptic('medium'); // Medium feedback for bulk action
-      
-      const operations = pendingGuests.map(p =>
-        supabase
-          .from('event_guests')
-          .update({ rsvp_status: 'attending' })
-          .eq('id', p.id)
-      );
-
-      await Promise.all(operations);
-      await fetchData();
-      triggerHaptic('success'); // Success feedback
-      onGuestUpdated?.();
-    } catch (error) {
-      logger.databaseError('Error updating pending RSVPs', error);
       triggerHaptic('error');
     }
-  };
+  }, [baseHandleRSVPUpdate, triggerHaptic]);
 
-  const handleSendReminderToPending = () => {
+  const handleRemoveGuest = useCallback(async (guestId: string) => {
+    if (!confirm('Are you sure you want to remove this guest?')) return;
+    await baseHandleRemoveGuest(guestId);
+  }, [baseHandleRemoveGuest]);
+
+  const handleMarkAllPendingAsAttending = useCallback(async () => {
+    const pendingCount = statusCounts.pending;
+    if (pendingCount === 0) return;
+
+    if (!confirm(`Mark ${pendingCount} pending guests as attending?`)) return;
+
+    try {
+      triggerHaptic('medium');
+      await baseHandleMarkAllPendingAsAttending();
+      triggerHaptic('success');
+    } catch (error) {
+      triggerHaptic('error');
+    }
+  }, [baseHandleMarkAllPendingAsAttending, statusCounts.pending, triggerHaptic]);
+
+  const handleSendReminderToPending = useCallback(() => {
     onSendMessage?.('reminder');
-  };
+  }, [onSendMessage]);
 
-  const handleBulkRSVPUpdate = async (newStatus: string) => {
+  const handleBulkRSVPUpdateWithFeedback = useCallback(async (newStatus: string) => {
     if (selectedGuests.size === 0) return;
 
     try {
-      triggerHaptic('medium'); // Medium feedback for bulk action
-      
-      const operations = Array.from(selectedGuests).map(guestId =>
-        supabase
-          .from('event_guests')
-          .update({ rsvp_status: newStatus })
-          .eq('id', guestId)
-      );
-
-      await Promise.all(operations);
-      await fetchData();
+      triggerHaptic('medium');
+      await handleBulkRSVPUpdate(Array.from(selectedGuests), newStatus);
       setSelectedGuests(new Set());
-      triggerHaptic('success'); // Success feedback
-      onGuestUpdated?.();
+      triggerHaptic('success');
     } catch (error) {
-      logger.databaseError('Error updating RSVPs', error);
       triggerHaptic('error');
     }
-  };
-  
-  // Attach pull-to-refresh listeners
-  useEffect(() => {
-    pullToRefresh.bindToElement(containerRef.current);
-  }, [pullToRefresh]);
-
-  // Enhanced filtering with memoization
-  const filteredGuests = useMemo(() => {
-    return guests.filter(guest => {
-      const matchesSearch = !debouncedSearchTerm || 
-        guest.users?.full_name?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-        guest.guest_name?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-        guest.users?.id?.includes(debouncedSearchTerm);
-
-      const matchesRSVP = filterByRSVP === 'all' || guest.rsvp_status === filterByRSVP;
-      return matchesSearch && matchesRSVP;
-    });
-  }, [guests, debouncedSearchTerm, filterByRSVP]);
-
-  // Status counts with memoization
-  const statusCounts = useMemo(() => ({
-    total: guests.length,
-    attending: guests.filter(p => p.rsvp_status === 'attending').length,
-    pending: guests.filter(p => p.rsvp_status === 'pending').length,
-    maybe: guests.filter(p => p.rsvp_status === 'maybe').length,
-    declined: guests.filter(p => p.rsvp_status === 'declined').length,
-  }), [guests]);
+  }, [handleBulkRSVPUpdate, selectedGuests, triggerHaptic]);
 
   const selectAll = useCallback(() => {
     if (selectedGuests.size === filteredGuests.length) {
       setSelectedGuests(new Set());
     } else {
-      setSelectedGuests(new Set(filteredGuests.map(p => p.id)));
+      setSelectedGuests(new Set(filteredGuests.map(guest => guest.id)));
     }
   }, [selectedGuests.size, filteredGuests]);
+
+  const handleToggleGuestSelect = useCallback((guestId: string, selected: boolean) => {
+    const newSelected = new Set(selectedGuests);
+    if (selected) {
+      newSelected.add(guestId);
+    } else {
+      newSelected.delete(guestId);
+    }
+    setSelectedGuests(newSelected);
+  }, [selectedGuests]);
+
+  // Attach pull-to-refresh listeners
+  useEffect(() => {
+    pullToRefresh.bindToElement(containerRef.current);
+  }, [pullToRefresh]);
 
   if (loading) {
     return (
@@ -366,28 +255,28 @@ export function GuestManagement({
           </div>
                      <div className="flex flex-wrap gap-2">
              <SecondaryButton
-               onClick={() => handleBulkRSVPUpdate('attending')}
+               onClick={() => handleBulkRSVPUpdateWithFeedback('attending')}
                className="bg-white text-gray-900 hover:bg-gray-100 py-2 px-3"
                fullWidth={false}
              >
                ✅ Attending
              </SecondaryButton>
              <SecondaryButton
-               onClick={() => handleBulkRSVPUpdate('maybe')}
+               onClick={() => handleBulkRSVPUpdateWithFeedback('maybe')}
                className="bg-white text-gray-900 hover:bg-gray-100 py-2 px-3"
                fullWidth={false}
              >
                🤷‍♂️ Maybe
              </SecondaryButton>
              <SecondaryButton
-               onClick={() => handleBulkRSVPUpdate('declined')}
+               onClick={() => handleBulkRSVPUpdateWithFeedback('declined')}
                className="bg-white text-gray-900 hover:bg-gray-100 py-2 px-3"
                fullWidth={false}
              >
                ❌ Declined
              </SecondaryButton>
              <SecondaryButton
-               onClick={() => handleBulkRSVPUpdate('pending')}
+               onClick={() => handleBulkRSVPUpdateWithFeedback('pending')}
                className="bg-white text-gray-900 hover:bg-gray-100 py-2 px-3"
                fullWidth={false}
              >
@@ -433,68 +322,14 @@ export function GuestManagement({
             </div>
           ) : (
             filteredGuests.map((guest) => (
-              <div
+              <GuestListItem
                 key={guest.id}
-                className="p-4 hover:bg-gray-50 transition-colors"
-              >
-                <div className="flex items-start gap-3">
-                  <input
-                    type="checkbox"
-                    checked={selectedGuests.has(guest.id)}
-                    onChange={(e) => {
-                      const newSelected = new Set(selectedGuests);
-                      if (e.target.checked) {
-                        newSelected.add(guest.id);
-                      } else {
-                        newSelected.delete(guest.id);
-                      }
-                      setSelectedGuests(newSelected);
-                    }}
-                    className="mt-1 h-4 w-4 text-[#FF6B6B] focus:ring-[#FF6B6B] border-gray-300 rounded"
-                  />
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">
-                          {guest.users?.full_name || guest.guest_name || 'Unnamed Guest'}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          Role: {guest.role}
-                        </p>
-                      </div>
-                      
-                      {/* RSVP Status and Actions */}
-                      <div className="flex flex-col items-end gap-2 ml-4">
-                        <select
-                          value={guest.rsvp_status || 'pending'}
-                          onChange={(e) => handleRSVPUpdate(guest.id, e.target.value)}
-                          className={cn(
-                            'text-xs px-2 py-1 border rounded focus:ring-1 focus:ring-[#FF6B6B]',
-                            'min-h-[32px] min-w-[80px]' // Touch-friendly
-                          )}
-                        >
-                          <option value="attending">✅ Attending</option>
-                          <option value="maybe">🤷‍♂️ Maybe</option>
-                          <option value="declined">❌ Declined</option>
-                          <option value="pending">⏳ Pending</option>
-                        </select>
-                        
-                        <button
-                          onClick={() => handleRemoveGuest(guest.id)}
-                          className={cn(
-                            'text-xs px-2 py-1 text-red-600 hover:text-red-700',
-                            'hover:bg-red-50 rounded transition-colors',
-                            'min-h-[32px] min-w-[60px]' // Touch-friendly
-                          )}
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                guest={guest}
+                isSelected={selectedGuests.has(guest.id)}
+                onToggleSelect={handleToggleGuestSelect}
+                onRSVPUpdate={handleRSVPUpdate}
+                onRemove={handleRemoveGuest}
+              />
             ))
           )}
         </div>
