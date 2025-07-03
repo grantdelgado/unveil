@@ -31,6 +31,49 @@ Unveil is a modern wedding event management application built with Next.js 14, S
 
 ---
 
+## 🛠️ Architecture Refactor History (v1.0.0)
+
+As of January 2025, the codebase has undergone a comprehensive 5-phase refactor that established the current architecture standards and patterns. This refactor significantly improved code quality, maintainability, and developer experience.
+
+### Key Architectural Improvements
+
+**Phase 1 - Foundation Cleanup:**
+- Unified error handling and retry logic across all services
+- Centralized database error management with standardized patterns
+- Consolidated validation logic with composable validation utilities
+
+**Phase 2 - Component Architecture:**
+- Split complex components (305+ lines) into focused, testable modules
+- Migrated from direct Supabase usage to service layer abstraction
+- Applied Container-Hook-View pattern for better separation of concerns
+
+**Phase 3 - Type System Enhancement:**
+- Eliminated all `any` types with strong TypeScript constraints
+- Standardized service response types with `ServiceResult<T>` pattern
+- Added generic constraints for type safety in reusable hooks
+
+**Phase 4 - Performance Optimization:**
+- Implemented React.memo and callback optimization for heavy components
+- Added lazy loading for bundle optimization and improved initial load times
+- Optimized expensive computations with proper memoization patterns
+
+**Phase 5 - Code Quality Standards:**
+- Converted 100+ console.log statements to unified logger system
+- Resolved technical debt with proper documentation standards
+- Established consistent naming conventions and coding patterns
+
+### Current Architecture Benefits
+
+- **Type Safety**: 100% TypeScript coverage with no `any` types in production code
+- **Error Handling**: Unified error management with context-aware logging
+- **Performance**: Optimized component rendering and bundle splitting
+- **Maintainability**: Clear separation of concerns and consistent patterns
+- **Developer Experience**: Comprehensive logging and debugging capabilities
+
+→ **Full Refactor Details**: [`../00-OVERVIEW/unveil-codebase-refactor-plan.md`](../00-OVERVIEW/unveil-codebase-refactor-plan.md)
+
+---
+
 ## 🔐 Authentication Flow
 
 ### Phone-First OTP Authentication
