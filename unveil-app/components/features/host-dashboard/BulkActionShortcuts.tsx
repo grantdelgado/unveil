@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { memo } from 'react';
 import { PrimaryButton, SecondaryButton } from '@/components/ui';
 import { cn } from '@/lib/utils';
 
@@ -14,7 +14,7 @@ interface BulkActionShortcutsProps {
   className?: string;
 }
 
-export function BulkActionShortcuts({
+export const BulkActionShortcuts = memo<BulkActionShortcutsProps>(({
   onMarkAllPendingAsAttending,
   onSendReminderToPending,
   onImportGuests,
@@ -22,7 +22,7 @@ export function BulkActionShortcuts({
   totalCount,
   loading = false,
   className,
-}: BulkActionShortcutsProps) {
+}) => {
   const hasGuests = totalCount > 0;
   const hasPendingGuests = pendingCount > 0;
 
@@ -103,4 +103,6 @@ export function BulkActionShortcuts({
       )}
     </div>
   );
-} 
+});
+
+BulkActionShortcuts.displayName = 'BulkActionShortcuts'; 

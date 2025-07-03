@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, memo, useMemo } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 import { useRealtimeSubscription } from '@/hooks/realtime';
+import { RSVPProgressChart } from './RSVPProgressChart';
+import { StatusPill } from './StatusPill';
 
 import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
@@ -79,102 +81,6 @@ const statusConfig = [
   },
 ] as const;
 
-// Progress donut chart component
-function RSVPProgressChart({ statusCounts }: { statusCounts: StatusCount }) {
-  const { attending, maybe, declined, total } = statusCounts;
-  
-  if (total === 0) {
-    return (
-      <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center">
-        <span className="text-xs text-gray-500">No guests</span>
-      </div>
-    );
-  }
-
-  const responded = attending + maybe + declined;
-  const responseRate = Math.round((responded / total) * 100);
-  
-  const radius = 30;
-  const strokeWidth = 6;
-  const normalizedRadius = radius - strokeWidth * 0.5;
-  const circumference = normalizedRadius * 2 * Math.PI;
-
-  // Create stroke-dasharray for each segment
-  const attendingLength = (attending / total) * circumference;
-  const maybeLength = (maybe / total) * circumference;
-  const declinedLength = (declined / total) * circumference;
-
-  return (
-    <div className="relative w-20 h-20">
-      <svg
-        width="80"
-        height="80"
-        className="transform -rotate-90"
-      >
-        {/* Background circle */}
-        <circle
-          cx="40"
-          cy="40"
-          r={normalizedRadius}
-          stroke="#f3f4f6"
-          strokeWidth={strokeWidth}
-          fill="transparent"
-        />
-        
-        {/* Attending segment */}
-        {attending > 0 && (
-          <circle
-            cx="40"
-            cy="40"
-            r={normalizedRadius}
-            stroke="#10b981"
-            strokeWidth={strokeWidth}
-            fill="transparent"
-            strokeDasharray={`${attendingLength} ${circumference}`}
-            strokeDashoffset="0"
-            className="transition-all duration-500"
-          />
-        )}
-        
-        {/* Maybe segment */}
-        {maybe > 0 && (
-          <circle
-            cx="40"
-            cy="40"
-            r={normalizedRadius}
-            stroke="#f59e0b"
-            strokeWidth={strokeWidth}
-            fill="transparent"
-            strokeDasharray={`${maybeLength} ${circumference}`}
-            strokeDashoffset={-attendingLength}
-            className="transition-all duration-500"
-          />
-        )}
-        
-        {/* Declined segment */}
-        {declined > 0 && (
-          <circle
-            cx="40"
-            cy="40"
-            r={normalizedRadius}
-            stroke="#ef4444"
-            strokeWidth={strokeWidth}
-            fill="transparent"
-            strokeDasharray={`${declinedLength} ${circumference}`}
-            strokeDashoffset={-(attendingLength + maybeLength)}
-            className="transition-all duration-500"
-          />
-        )}
-      </svg>
-      
-      {/* Center text */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-sm font-bold text-gray-900">{responseRate}%</span>
-        <span className="text-xs text-gray-500">replied</span>
-      </div>
-    </div>
-  );
-}
 
 // Recent activity feed component
 function RecentActivityFeed({ activities }: { activities: RSVPActivity[] }) {
@@ -227,12 +133,12 @@ function RecentActivityFeed({ activities }: { activities: RSVPActivity[] }) {
   );
 }
 
-export function GuestStatusSummary({
+export const GuestStatusSummary = memo<GuestStatusSummaryProps>(({
   eventId,
   activeFilter,
   onFilterChange,
   className,
-}: GuestStatusSummaryProps) {
+}) => {
   const [statusCounts, setStatusCounts] = useState<StatusCount>({
     attending: 0,
     pending: 0,
@@ -422,32 +328,24 @@ export function GuestStatusSummary({
           const count = getCountForStatus(status.key);
           
           return (
-            <button
+            <StatusPill
               key={status.key}
+              statusKey={status.key}
+              label={status.label}
+              icon={status.icon}
+              count={count}
+              isActive={isActive}
+              bgColor={status.bgColor}
+              activeColor={status.activeColor}
+              textColor={status.textColor}
+              activeTextColor={status.activeTextColor}
               onClick={() => onFilterChange(status.key)}
-              className={cn(
-                'flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 border-2',
-                'hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#FF6B6B] focus:ring-offset-1',
-                'min-h-[44px] min-w-[88px] justify-center', // Touch-friendly sizing
-                isActive
-                  ? `${status.activeColor} ${status.activeTextColor} border-[#FF6B6B]`
-                  : `${status.bgColor} ${status.textColor} border-transparent hover:border-gray-200`
-              )}
-              type="button"
-              aria-pressed={isActive}
-              aria-label={`Filter by ${status.label} guests (${count})`}
-            >
-              <span className="text-base" role="img" aria-hidden="true">
-                {status.icon}
-              </span>
-              <span className="whitespace-nowrap">
-                {status.label}
-                <span className="ml-1 font-semibold">({count})</span>
-              </span>
-            </button>
+            />
           );
         })}
       </div>
     </div>
   );
-} 
+});
+
+GuestStatusSummary.displayName = 'GuestStatusSummary'; 
