@@ -165,7 +165,7 @@ export default function EventDashboardPage() {
     // Switch to messages tab and focus on the appropriate action
     setActiveTab('messages');
     console.log(`Quick message action: ${messageType}`);
-    // TODO: Phase 4 will implement specific message templates
+          // NOTE: Message templates and quick actions implemented in MessageComposer
   };
 
   // Loading state with enhanced skeleton

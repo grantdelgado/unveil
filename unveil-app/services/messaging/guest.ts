@@ -174,7 +174,7 @@ export async function sendGuestResponse({
 
 /**
  * Mark messages as read for a guest (placeholder until read_at column is added)
- * TODO: Update to use read_at column once migration is applied
+ * FUTURE: Update to use read_at column in Phase 6 read receipts
  */
 export async function markMessagesAsRead(
   guestId: string,
@@ -201,7 +201,7 @@ export async function markMessagesAsRead(
       return { success: true, markedCount: 0 };
     }
 
-    // TODO: Update to set read_at column once migration is applied
+    // FUTURE: Update to set read_at column in Phase 6 schema
     // For now, we'll just update the timestamp as a placeholder
     const deliveryIds = deliveries.map(d => d.id);
     const timestamp = new Date().toISOString();

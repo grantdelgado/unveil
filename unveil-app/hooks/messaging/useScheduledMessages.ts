@@ -1,7 +1,19 @@
-import { useState, useCallback, useRef } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useRealtimeSubscription } from '@/hooks/realtime';
-import { getScheduledMessages, type ScheduledMessageFilters } from '@/services/messaging/scheduled';
+/**
+ * useScheduledMessages Hook - Refactored Composition
+ * 
+ * Main hook that composes the three specialized hooks for better separation of concerns:
+ * - useScheduledMessagesQuery: React Query logic
+ * - useScheduledMessagesCache: Cache operations  
+ * - useScheduledMessagesRealtime: Real-time subscriptions
+ * 
+ * This maintains the original API while providing cleaner internal architecture.
+ */
+
+import { useCallback, useEffect } from 'react';
+import { useScheduledMessagesQuery } from './scheduled/useScheduledMessagesQuery';
+import { useScheduledMessagesCache } from './scheduled/useScheduledMessagesCache';
+import { useScheduledMessagesRealtime } from './scheduled/useScheduledMessagesRealtime';
+import type { ScheduledMessageFilters } from '@/services/messaging/scheduled';
 import type { Tables } from '@/app/reference/supabase.types';
 
 type ScheduledMessage = Tables<'scheduled_messages'>;
@@ -10,7 +22,7 @@ interface UseScheduledMessagesOptions {
   eventId: string;
   filters?: ScheduledMessageFilters;
   autoRefresh?: boolean;
-  refreshInterval?: number;
+  refreshInterval?: number; // Deprecated, kept for API compatibility
 }
 
 interface UseScheduledMessagesReturn {
@@ -24,237 +36,67 @@ interface UseScheduledMessagesReturn {
   removeMessage: (id: string) => void;
 }
 
+/**
+ * Composed hook for scheduled messages
+ * 
+ * Uses three specialized hooks for clean separation of concerns:
+ * 1. Query management
+ * 2. Cache operations  
+ * 3. Real-time subscriptions
+ */
 export function useScheduledMessages({
   eventId,
   filters,
   autoRefresh = true,
-  refreshInterval = 30000 // 30 seconds - deprecated, using React Query settings instead
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  refreshInterval = 30000 // Deprecated, using React Query settings instead
 }: UseScheduledMessagesOptions): UseScheduledMessagesReturn {
-  const queryClient = useQueryClient();
-  const [error, setError] = useState<Error | null>(null);
   
-  // Track processed message IDs to prevent duplicates
-  const processedMessageIds = useRef(new Set<string>());
-  
-  // Track reconnection attempts
-  const reconnectAttempts = useRef(0);
-  const maxReconnectAttempts = 3;
-
-  // Enhanced query key including filters for better caching
-  const queryKey = ['scheduled-messages', eventId, filters];
-
-  // React Query for scheduled messages with optimized settings
-  const {
-    data: messages = [],
-    isLoading: loading,
-    error: queryError,
-    refetch: queryRefetch,
-  } = useQuery({
-    queryKey,
-    queryFn: async () => {
-      const messageFilters: ScheduledMessageFilters = {
-        eventId,
-        ...filters
-      };
-      
-      const data = await getScheduledMessages(messageFilters);
-      
-      // Update processed IDs set
-      processedMessageIds.current = new Set(data.map(msg => msg.id));
-      
-      return data;
-    },
-    enabled: !!eventId,
-    staleTime: 30000, // 30 seconds - optimized for frequent updates
-    gcTime: 1000 * 60 * 10, // 10 minutes
-    refetchOnWindowFocus: true, // Refetch when user returns to window
-    refetchInterval: autoRefresh ? 60000 : false, // Background refresh every 60 seconds if enabled
-    refetchIntervalInBackground: false, // Only when tab is active
-    retry: (failureCount, error) => {
-      // Only retry on network errors
-      if (error instanceof Error && error.message.includes('permission')) {
-        return false;
-      }
-      return failureCount < 3;
-    },
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+  // 1. React Query logic
+  const query = useScheduledMessagesQuery({
+    eventId,
+    filters,
+    autoRefresh,
+    enabled: !!eventId
   });
 
-  const refresh = useCallback(async () => {
-    setError(null);
-    await queryRefetch();
-  }, [queryRefetch]);
-
-  // Enhanced real-time subscription with React Query integration
-  const { isConnected } = useRealtimeSubscription({
-    subscriptionId: `scheduled-messages-${eventId}`,
-    table: 'scheduled_messages',
-    filter: `event_id=eq.${eventId}`,
-    enabled: !!eventId,
-    onDataChange: useCallback((payload) => {
-      try {
-        if (payload.eventType === 'INSERT') {
-          const newMessage = payload.new as ScheduledMessage;
-          
-          // Check for duplicates
-          if (processedMessageIds.current.has(newMessage.id)) {
-            console.log(`🔄 Skipping duplicate INSERT for message ${newMessage.id}`);
-            return;
-          }
-          
-          // Optimistically update React Query cache
-          queryClient.setQueryData(queryKey, (old: ScheduledMessage[] | undefined) => {
-            if (!old) return [newMessage];
-            
-            // Double-check if message already exists
-            const exists = old.find(m => m.id === newMessage.id);
-            if (exists) {
-              console.log(`🔄 Message ${newMessage.id} already exists in cache`);
-              return old;
-            }
-            
-            // Add to processed set
-            processedMessageIds.current.add(newMessage.id);
-            
-            // Add new message in chronological order by send_at
-            const newMessages = [...old, newMessage];
-            return newMessages.sort((a, b) => 
-              new Date(a.send_at).getTime() - new Date(b.send_at).getTime()
-            );
-          });
-          
-        } else if (payload.eventType === 'UPDATE') {
-          const updatedMessage = payload.new as ScheduledMessage;
-          
-          // Optimistically update React Query cache
-          queryClient.setQueryData(queryKey, (old: ScheduledMessage[] | undefined) => {
-            if (!old) return old;
-            return old.map(message => 
-              message.id === updatedMessage.id ? updatedMessage : message
-            );
-          });
-          
-          // Ensure it's in processed set
-          processedMessageIds.current.add(updatedMessage.id);
-          
-        } else if (payload.eventType === 'DELETE') {
-          const deletedMessage = payload.old as ScheduledMessage;
-          
-          // Optimistically update React Query cache
-          queryClient.setQueryData(queryKey, (old: ScheduledMessage[] | undefined) => {
-            if (!old) return old;
-            return old.filter(message => message.id !== deletedMessage.id);
-          });
-          
-          // Remove from processed set
-          processedMessageIds.current.delete(deletedMessage.id);
-        }
-        
-        // Reset error state on successful update
-        setError(null);
-        reconnectAttempts.current = 0;
-        
-        // Invalidate query to ensure consistency after a delay
-        setTimeout(() => {
-          queryClient.invalidateQueries({ queryKey });
-        }, 1000);
-        
-      } catch (err) {
-        console.error('❌ Error processing real-time scheduled message update:', err);
-        setError(new Error('Failed to process real-time update'));
-      }
-    }, [queryClient, queryKey]),
-    onError: useCallback((realtimeError: Error) => {
-      console.error('❌ Scheduled message subscription error:', realtimeError);
-      setError(new Error(`Real-time connection error: ${realtimeError.message}`));
-      
-      // Implement exponential backoff for reconnection
-      reconnectAttempts.current += 1;
-      if (reconnectAttempts.current <= maxReconnectAttempts) {
-        const backoffDelay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 30000);
-        console.log(`🔄 Attempting reconnect in ${backoffDelay}ms (attempt ${reconnectAttempts.current}/${maxReconnectAttempts})`);
-        
-        setTimeout(() => {
-          // Trigger a refresh to ensure data consistency
-          queryRefetch();
-        }, backoffDelay);
-      } else {
-        setError(new Error('Failed to establish real-time connection after multiple attempts'));
-      }
-    }, [queryRefetch]),
-    onStatusChange: useCallback((status: 'connecting' | 'connected' | 'disconnected' | 'error') => {
-      console.log(`📡 Scheduled message subscription status: ${status}`);
-      
-      if (status === 'connected') {
-        setError(null);
-        reconnectAttempts.current = 0;
-        
-        // Refresh data when reconnected to ensure consistency
-        queryRefetch();
-      } else if (status === 'error') {
-        setError(new Error('Real-time connection failed'));
-      }
-    }, [queryRefetch])
+  // 2. Cache operations
+  const cache = useScheduledMessagesCache({
+    queryKey: query.queryKey
   });
 
-  // Manual cache management functions with React Query optimization
-  const addMessage = useCallback((message: ScheduledMessage) => {
-    // Check if already processed
-    if (processedMessageIds.current.has(message.id)) {
-      console.log(`🔄 Skipping duplicate manual add for message ${message.id}`);
-      return;
+  // 3. Real-time subscription
+  const realtime = useScheduledMessagesRealtime({
+    eventId,
+    cache,
+    onRefetch: query.refetch,
+    enabled: !!eventId
+  });
+
+  // Update processed message IDs when query data changes
+  useEffect(() => {
+    if (query.messages.length > 0) {
+      cache.processedMessageIds.current = new Set(query.messages.map(msg => msg.id));
     }
-    
-    // Optimistically update React Query cache
-    queryClient.setQueryData(queryKey, (old: ScheduledMessage[] | undefined) => {
-      if (!old) return [message];
-      
-      const exists = old.find(m => m.id === message.id);
-      if (exists) return old;
-      
-      // Add to processed set
-      processedMessageIds.current.add(message.id);
-      
-      const newMessages = [...old, message];
-      return newMessages.sort((a, b) => 
-        new Date(a.send_at).getTime() - new Date(b.send_at).getTime()
-      );
-    });
-  }, [queryClient, queryKey]);
+  }, [query.messages, cache.processedMessageIds]);
 
-  const updateMessage = useCallback((id: string, updates: Partial<ScheduledMessage>) => {
-    // Optimistically update React Query cache
-    queryClient.setQueryData(queryKey, (old: ScheduledMessage[] | undefined) => {
-      if (!old) return old;
-      return old.map(message => 
-        message.id === id ? { ...message, ...updates } : message
-      );
-    });
-    
-    // Ensure it's in processed set
-    processedMessageIds.current.add(id);
-  }, [queryClient, queryKey]);
+  // Create refresh function that clears real-time errors
+  const refresh = useCallback(async () => {
+    await query.refetch();
+  }, [query.refetch]);
 
-  const removeMessage = useCallback((id: string) => {
-    // Optimistically update React Query cache
-    queryClient.setQueryData(queryKey, (old: ScheduledMessage[] | undefined) => {
-      if (!old) return old;
-      return old.filter(message => message.id !== id);
-    });
-    
-    // Remove from processed set
-    processedMessageIds.current.delete(id);
-  }, [queryClient, queryKey]);
+  // Combine errors from query and real-time
+  const combinedError = query.error || realtime.error;
 
   return {
-    messages,
-    loading,
-    error: queryError || error, // Prefer React Query error, fallback to local error
-    isConnected,
+    messages: query.messages,
+    loading: query.loading,
+    error: combinedError,
+    isConnected: realtime.isConnected,
     refresh,
-    addMessage,
-    updateMessage,
-    removeMessage
+    addMessage: cache.addMessage,
+    updateMessage: cache.updateMessage,
+    removeMessage: cache.removeMessage
   };
 }
 

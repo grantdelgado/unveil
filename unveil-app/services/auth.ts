@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase/client';
 import type { UserInsert } from '@/lib/supabase/types';
-import { logAuth, logAuthError, logDev } from '@/lib/logger';
+import { logger } from '@/lib/logger';
 import { handleAuthDatabaseError } from '@/lib/error-handling/database';
 
 // Development phone whitelist - retrieved from Supabase auth.users with @dev.unveil.app emails
@@ -219,7 +219,7 @@ export const getCurrentUser = async () => {
     } = await supabase.auth.getUser();
     return { user, error };
   } catch (error) {
-    logAuthError('Error getting current user', error);
+    logger.authError('Error getting current user', error);
     return { user: null, error };
   }
 };
@@ -250,7 +250,7 @@ export const getCurrentSession = async () => {
     } = await supabase.auth.getSession();
     return { session, error };
   } catch (error) {
-    logAuthError('Error getting current session', error);
+    logger.authError('Error getting current session', error);
     return { session: null, error };
   }
 };
@@ -278,7 +278,7 @@ export const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     return { error };
   } catch (error) {
-    logAuthError('Error signing out', error);
+    logger.authError('Error signing out', error);
     return { error };
   }
 };
@@ -327,7 +327,7 @@ export const sendOTP = async (
     // Normalize phone to E.164 format
     const normalizedPhone = normalizePhoneNumber(phone);
 
-    logAuth('Sending OTP to phone', {
+    logger.auth('Sending OTP to phone', {
       originalPhone: phone,
       normalizedPhone,
     });
@@ -344,7 +344,7 @@ export const sendOTP = async (
 
     // Check if development phone - bypass OTP and create direct session
     if (isDevPhone(normalizedPhone)) {
-      logDev(
+      logger.dev(
         'Development phone detected, bypassing OTP and creating direct session',
       );
 
@@ -354,7 +354,7 @@ export const sendOTP = async (
         const devEmail = `${phoneForEmail}@dev.unveil.app`;
         const devPassword = `dev-${normalizedPhone.slice(-4)}-2024`; // Match dev-setup.ts pattern
 
-        logDev('Dev authentication attempt', {
+        logger.dev('Dev authentication attempt', {
           normalizedPhone,
           phoneForEmail,
           devEmail,
@@ -369,7 +369,7 @@ export const sendOTP = async (
           });
 
         if (authData?.user && authData?.session) {
-          logAuth('Dev user signed in successfully', {
+          logger.auth('Dev user signed in successfully', {
             userId: authData.user.id,
           });
 
@@ -380,7 +380,7 @@ export const sendOTP = async (
           );
 
           if (!userResult.success) {
-            logAuthError('Failed to handle user profile', userResult.error);
+            logger.authError('Failed to handle user profile', userResult.error);
             return {
               success: false,
               isDev: true,
@@ -396,7 +396,7 @@ export const sendOTP = async (
         }
 
         if (authError) {
-          logAuthError('Dev authentication failed', authError);
+          logger.authError('Dev authentication failed', authError);
           return {
             success: false,
             isDev: true,
@@ -410,7 +410,7 @@ export const sendOTP = async (
           error: 'Failed to create development session',
         };
       } catch (error) {
-        logAuthError('Dev authentication error', error);
+        logger.authError('Dev authentication error', error);
         return {
           success: false,
           isDev: true,
@@ -431,7 +431,7 @@ export const sendOTP = async (
     });
 
     if (error) {
-      logAuthError('Failed to send OTP', error);
+      logger.authError('Failed to send OTP', error);
       return {
         success: false,
         isDev: false,
@@ -442,13 +442,13 @@ export const sendOTP = async (
     // Record attempt for rate limiting
     recordOTPAttempt(normalizedPhone);
 
-    logAuth('OTP sent successfully');
+    logger.auth('OTP sent successfully');
     return {
       success: true,
       isDev: false,
     };
   } catch (error) {
-    logAuthError('OTP send error', error);
+    logger.authError('OTP send error', error);
     return {
       success: false,
       isDev: false,
@@ -506,11 +506,11 @@ export const verifyOTP = async (
     // Normalize phone to E.164 format
     const normalizedPhone = normalizePhoneNumber(phone);
 
-    logAuth('Verifying OTP for phone', { normalizedPhone });
+    logger.auth('Verifying OTP for phone', { normalizedPhone });
 
     // Development phones should not reach this function - they authenticate directly in sendOTP
     if (isDevPhone(normalizedPhone)) {
-      logAuthError(
+      logger.authError(
         'Dev phone should not reach verifyOTP - authentication handled in sendOTP',
       );
       return {
@@ -528,7 +528,7 @@ export const verifyOTP = async (
     });
 
     if (otpError) {
-      logAuthError('OTP verification failed', otpError);
+      logger.authError('OTP verification failed', otpError);
       return {
         success: false,
         isNewUser: false,
@@ -544,7 +544,7 @@ export const verifyOTP = async (
       };
     }
 
-    logAuth('OTP verified successfully', { userId: authData.user.id });
+    logger.auth('OTP verified successfully', { userId: authData.user.id });
 
     // Clear rate limiting on successful verification
     clearOTPRateLimit(normalizedPhone);
@@ -558,7 +558,7 @@ export const verifyOTP = async (
       isNewUser: result.isNewUser,
     };
   } catch (error) {
-    logAuthError('OTP verification error', error);
+    logger.authError('OTP verification error', error);
     return {
       success: false,
       isNewUser: false,
@@ -601,7 +601,7 @@ const handleUserCreation = async (
 
     if (lookupError && lookupError.code !== 'PGRST116') {
       // PGRST116 = no rows returned, which is expected for new users
-      logAuthError('User lookup failed', lookupError);
+      logger.authError('User lookup failed', lookupError);
       return {
         success: false,
         isNewUser: false,
@@ -612,7 +612,7 @@ const handleUserCreation = async (
     if (existingUser) {
       // Step 2a: Returning user - verify session ID matches
       if (existingUser.id === userId) {
-        logAuth('Returning user with matching session ID', {
+        logger.auth('Returning user with matching session ID', {
           userId: existingUser.id,
         });
         return {
@@ -622,7 +622,7 @@ const handleUserCreation = async (
         };
       } else {
         // This should not happen with proper OTP flow, but handle gracefully
-        logAuth('Existing user found but auth.uid() mismatch', {
+        logger.auth('Existing user found but auth.uid() mismatch', {
           existingUserId: existingUser.id,
           sessionUserId: userId,
           phone: normalizedPhone,
@@ -639,7 +639,7 @@ const handleUserCreation = async (
     }
 
     // Step 2b: New user - create profile in users table
-    logAuth('Creating new user profile for phone', { normalizedPhone });
+    logger.auth('Creating new user profile for phone', { normalizedPhone });
 
     const newUserData: UserInsert = {
       id: userId, // Use the authenticated session user ID
@@ -656,7 +656,7 @@ const handleUserCreation = async (
       .single();
 
     if (createError) {
-      logAuthError('User creation failed', createError);
+      logger.authError('User creation failed', createError);
       return {
         success: false,
         isNewUser: true,
@@ -664,7 +664,7 @@ const handleUserCreation = async (
       };
     }
 
-    logAuth('New user created', { userId: newUser.id });
+    logger.auth('New user created', { userId: newUser.id });
 
     return {
       success: true,
@@ -672,7 +672,7 @@ const handleUserCreation = async (
       userId: userId,
     };
   } catch (error) {
-    logAuthError('User creation error', error);
+    logger.authError('User creation error', error);
     return {
       success: false,
       isNewUser: false,
@@ -726,7 +726,7 @@ export const getCurrentUserProfile = async () => {
 
     return { data: profile, error: profileError };
   } catch (error) {
-    logAuthError('Error fetching user profile', error);
+    logger.authError('Error fetching user profile', error);
     return { data: null, error };
   }
 };

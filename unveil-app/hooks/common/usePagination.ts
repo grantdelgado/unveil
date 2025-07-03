@@ -27,7 +27,7 @@ export interface UsePaginationOptions {
   maxPageSize?: number
 }
 
-export interface PaginatedQuery<T> {
+export interface PaginatedQuery<T extends Record<string, unknown>> {
   queryKey: unknown[]
   queryFn: (params: { page: number; pageSize: number; offset: number }) => Promise<{
     data: T[]
@@ -41,7 +41,7 @@ export interface PaginatedQuery<T> {
 /**
  * Hook for client-side pagination of data arrays
  */
-export function usePagination<T>(
+export function usePagination<T extends Record<string, unknown>>(
   data: T[],
   options: UsePaginationOptions = {}
 ) {
@@ -125,7 +125,7 @@ export function usePagination<T>(
 /**
  * Hook for server-side pagination with React Query
  */
-export function usePaginatedQuery<T>(
+export function usePaginatedQuery<T extends Record<string, unknown>>(
   query: PaginatedQuery<T>,
   options: UsePaginationOptions = {}
 ) {
@@ -216,7 +216,7 @@ export function usePaginatedQuery<T>(
 /**
  * Hook for infinite scroll pagination
  */
-export function useInfiniteScroll<T>(
+export function useInfiniteScroll<T extends Record<string, unknown>>(
   data: T[],
   options: {
     pageSize?: number

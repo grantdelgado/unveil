@@ -5,8 +5,9 @@ import {
   sendMessage,
   getMessageStats,
 } from '@/services/messaging'
-import type { MessageInsert } from '@/lib/supabase/types'
+import type { MessageInsert, Message, MessageWithSender } from '@/lib/supabase/types'
 import { logger } from '@/lib/logger'
+import { useCallback } from 'react'
 
 // Cached hook for getting messages for an event
 export function useEventMessagesCached(eventId: string) {
@@ -102,27 +103,59 @@ export function useMessageRealtime(eventId: string) {
     queryClient.invalidateQueries({ queryKey: queryKeys.messageStats(eventId) })
   }
 
-  const addMessage = (message: any) => {
-    queryClient.setQueryData(queryKeys.eventMessages(eventId), (old: any) => [
+  const handleMessageInsert = useCallback(
+    (newMessage: Message) => {
+      queryClient.setQueryData(queryKeys.eventMessages(newMessage.event_id), (old: Message[]) => [
+        ...(old || []),
+        newMessage,
+      ])
+    },
+    [queryClient]
+  )
+
+  const handleMessageUpdate = useCallback(
+    (updatedMessage: Message) => {
+      queryClient.setQueryData(queryKeys.eventMessages(updatedMessage.event_id), (old: Message[]) =>
+        old?.map((msg: Message) => (msg.id === updatedMessage.id ? updatedMessage : msg)) || []
+      )
+    },
+    [queryClient]
+  )
+
+  const handleMessageDelete = useCallback(
+    (messageId: string) => {
+      queryClient.setQueryData(queryKeys.eventMessages(eventId), (old: Message[]) =>
+        old?.filter((msg: Message) => msg.id !== messageId) || []
+      )
+    },
+    [queryClient, eventId]
+  )
+
+  // Cache mutation functions
+  const addMessage = (message: Message) => {
+    queryClient.setQueryData(queryKeys.eventMessages(eventId), (old: Message[]) => [
       ...(old || []),
       message,
     ])
   }
 
-  const updateMessage = (updatedMessage: any) => {
-    queryClient.setQueryData(queryKeys.eventMessages(eventId), (old: any) =>
-      old?.map((msg: any) => (msg.id === updatedMessage.id ? updatedMessage : msg)) || []
+  const updateMessage = (updatedMessage: Message) => {
+    queryClient.setQueryData(queryKeys.eventMessages(eventId), (old: Message[]) =>
+      old?.map((msg: Message) => (msg.id === updatedMessage.id ? updatedMessage : msg)) || []
     )
   }
 
   const removeMessage = (messageId: string) => {
-    queryClient.setQueryData(queryKeys.eventMessages(eventId), (old: any) =>
-      old?.filter((msg: any) => msg.id !== messageId) || []
+    queryClient.setQueryData(queryKeys.eventMessages(eventId), (old: Message[]) =>
+      old?.filter((msg: Message) => msg.id !== messageId) || []
     )
   }
 
   return {
     invalidateMessages,
+    handleMessageInsert,
+    handleMessageUpdate,
+    handleMessageDelete,
     addMessage,
     updateMessage,
     removeMessage,

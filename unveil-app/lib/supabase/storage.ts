@@ -1,4 +1,5 @@
 import { supabase } from './client';
+import { logger } from '@/lib/logger';
 
 // Storage helpers
 export const uploadFile = async (
@@ -8,7 +9,7 @@ export const uploadFile = async (
   options?: { cacheControl?: string; upsert?: boolean },
 ) => {
   try {
-    console.log(`Uploading file to ${bucket}/${path}`, {
+    logger.storage(`Uploading file to ${bucket}/${path}`, {
       fileName: file.name,
       fileSize: file.size,
       fileType: file.type,
@@ -20,10 +21,10 @@ export const uploadFile = async (
       ...options,
     });
 
-    console.log('Upload result:', result);
+    logger.storage('Upload result', result);
     return result;
   } catch (error) {
-    console.error('Upload exception:', error);
+    logger.storageError('Upload exception', error);
     throw error;
   }
 };

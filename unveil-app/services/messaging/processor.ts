@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { logger } from '@/lib/logger';
 import type { Database } from '@/app/reference/supabase.types';
 import { 
   getReadyScheduledMessages,
@@ -11,13 +12,11 @@ import {
   sendBulkScheduledSMS, 
   validateAndNormalizePhone,
   type ScheduledSMSDelivery,
-  type SMSResult 
 } from '@/lib/sms';
 import {
   sendBulkScheduledPush,
   getDeviceTokensForGuests,
   type ScheduledPushDelivery,
-  type PushResult
 } from '@/lib/push-notifications';
 import {
   startProcessingSession,
@@ -66,16 +65,16 @@ export async function processScheduledMessages(): Promise<ProcessingResult> {
   };
 
   // Start metrics tracking
-  const sessionId = startProcessingSession();
+  startProcessingSession();
 
   try {
-    console.log('🔄 Starting scheduled message processing...');
+    logger.system('Starting scheduled message processing...');
     
     // Get all messages ready to be sent
     const messages = await getReadyScheduledMessages();
     result.totalProcessed = messages.length;
 
-    console.log(`📨 Found ${messages.length} messages ready for processing`);
+    logger.system(`Found ${messages.length} messages ready for processing`);
 
     // Process each message with metrics tracking
     for (const scheduledMessage of messages) {
@@ -116,7 +115,7 @@ export async function processScheduledMessages(): Promise<ProcessingResult> {
           recipientCount: recipients.length,
         });
 
-        console.log(`✅ Successfully processed message ${scheduledMessage.id} for ${recipients.length} recipients (${deliveryResults.successful} deliveries sent, ${deliveryResults.failed} failed)`);
+        logger.system(`Successfully processed message ${scheduledMessage.id} for ${recipients.length} recipients (${deliveryResults.successful} deliveries sent, ${deliveryResults.failed} failed)`);
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         
@@ -133,7 +132,7 @@ export async function processScheduledMessages(): Promise<ProcessingResult> {
           error: errorMessage,
         });
 
-        console.error(`❌ Failed to process message ${scheduledMessage.id}:`, errorMessage);
+        logger.error(`Failed to process message ${scheduledMessage.id}`, errorMessage);
       }
     }
 
@@ -141,16 +140,16 @@ export async function processScheduledMessages(): Promise<ProcessingResult> {
     const finalMetrics = completeProcessingSession();
     result.metrics = finalMetrics || undefined;
 
-    console.log(`🏁 Processing complete: ${result.successful} successful, ${result.failed} failed`);
+    logger.system(`Processing complete: ${result.successful} successful, ${result.failed} failed`);
     if (finalMetrics) {
-      console.log(`📊 Session metrics: ${finalMetrics.throughputPerMinute.toFixed(2)} msg/min, ${finalMetrics.averageProcessingTimeMs.toFixed(0)}ms avg processing time`);
+      logger.performance(`Session metrics: ${finalMetrics.throughputPerMinute.toFixed(2)} msg/min, ${finalMetrics.averageProcessingTimeMs.toFixed(0)}ms avg processing time`);
     }
     
     return result;
   } catch (error) {
     // Ensure metrics session is completed even on critical error
     completeProcessingSession();
-    console.error('❌ Critical error in scheduled message processing:', error);
+    logger.error('Critical error in scheduled message processing', error);
     throw error;
   }
 }
@@ -180,10 +179,10 @@ export async function resolveMessageRecipients(scheduledMessage: ScheduledMessag
     // Use the existing resolveRecipients function from the main messaging service
     const recipients = await resolveRecipients(event_id, recipientFilter);
     
-    console.log(`🎯 Resolved ${recipients.length} recipients for message ${scheduledMessage.id}`);
+    logger.system(`Resolved ${recipients.length} recipients for message ${scheduledMessage.id}`);
     return recipients;
   } catch (error) {
-    console.error('❌ Error resolving message recipients:', error);
+    logger.error('Error resolving message recipients', error);
     throw new Error(`Failed to resolve recipients: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
@@ -212,10 +211,10 @@ export async function createMessageFromScheduled(scheduledMessage: ScheduledMess
       throw new Error('Failed to create message record');
     }
 
-    console.log(`📝 Created message record ${message.id} from scheduled message ${scheduledMessage.id}`);
+    logger.database(`Created message record ${message.id} from scheduled message ${scheduledMessage.id}`);
     return message;
   } catch (error) {
-    console.error('❌ Error creating message from scheduled:', error);
+    logger.databaseError('Error creating message from scheduled', error);
     throw new Error(`Failed to create message: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
@@ -247,7 +246,7 @@ export async function createMessageDeliveries(
       throw error;
     }
 
-    console.log(`📬 Created ${deliveryRecords.length} delivery records for message ${message.id}`);
+    logger.database(`Created ${deliveryRecords.length} delivery records for message ${message.id}`);
 
     // Step 2: Fetch guest details for both push and SMS delivery
     const { data: guests, error: guestError } = await supabase
@@ -256,12 +255,12 @@ export async function createMessageDeliveries(
       .in('id', recipientIds);
 
     if (guestError) {
-      console.error('❌ Error fetching guest details:', guestError);
+      logger.databaseError('Error fetching guest details', guestError);
       throw new Error('Failed to fetch guest details for delivery');
     }
 
     if (!guests || guests.length === 0) {
-      console.log('⚠️ No guests found for delivery');
+      logger.warn('No guests found for delivery');
       return { successful: 0, failed: recipientIds.length };
     }
 
@@ -304,7 +303,7 @@ export async function createMessageDeliveries(
 
     // Step 5: Attempt push notifications first
     if (pushDeliveries.length > 0) {
-      console.log(`📱 Attempting push notifications for ${pushDeliveries.length} guests`);
+      logger.system(`Attempting push notifications for ${pushDeliveries.length} guests`);
       const pushResults = await sendBulkScheduledPush(pushDeliveries);
 
       // Process push results
@@ -339,7 +338,7 @@ export async function createMessageDeliveries(
 
     // Step 6: SMS fallback for guests without push or failed push delivery
     if (guestsWithoutPush.length > 0) {
-      console.log(`📱➡️📞 Falling back to SMS for ${guestsWithoutPush.length} guests`);
+      logger.system(`Falling back to SMS for ${guestsWithoutPush.length} guests`);
 
       // Prepare SMS deliveries with validation
       const smsDeliveries: ScheduledSMSDelivery[] = [];
@@ -348,7 +347,7 @@ export async function createMessageDeliveries(
       for (const guest of guestsWithoutPush) {
         if (!guest.phone) {
           invalidPhoneGuests.push(guest.id);
-          console.warn(`⚠️ No phone number for guest ${guest.id.slice(-4)}`);
+          logger.warn(`No phone number for guest ${guest.id.slice(-4)}`);
           continue;
         }
 
@@ -365,7 +364,7 @@ export async function createMessageDeliveries(
           });
         } else {
           invalidPhoneGuests.push(guest.id);
-          console.warn(`⚠️ Invalid phone number for guest ${guest.id.slice(-4)}: ${phoneValidation.error}`);
+          logger.warn(`Invalid phone number for guest ${guest.id.slice(-4)}: ${phoneValidation.error}`);
         }
       }
 
@@ -452,12 +451,12 @@ export async function createMessageDeliveries(
         .eq('guest_id', update.guest_id);
     }
 
-    console.log(`✅ Multi-channel delivery complete for message ${message.id}: ${totalSuccessful} delivered, ${totalFailed} failed`);
-    console.log(`📊 Push: ${pushDeliveries.length} attempted, SMS fallback: ${guestsWithoutPush.length} attempted`);
+    logger.system(`Multi-channel delivery complete for message ${message.id}: ${totalSuccessful} delivered, ${totalFailed} failed`);
+    logger.system(`Push: ${pushDeliveries.length} attempted, SMS fallback: ${guestsWithoutPush.length} attempted`);
 
     return { successful: totalSuccessful, failed: totalFailed };
   } catch (error) {
-    console.error('❌ Error creating message deliveries:', error);
+    logger.error('Error creating message deliveries', error);
     throw new Error(`Failed to create deliveries: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
@@ -489,7 +488,7 @@ export async function createMessageDeliveriesWithMetrics(
       throw error;
     }
 
-    console.log(`📬 Created ${deliveryRecords.length} delivery records for message ${message.id}`);
+    logger.database(`Created ${deliveryRecords.length} delivery records for message ${message.id}`);
 
     // Step 2: Fetch guest details (same as original)
     const { data: guests, error: guestError } = await supabase
@@ -498,12 +497,12 @@ export async function createMessageDeliveriesWithMetrics(
       .in('id', recipientIds);
 
     if (guestError) {
-      console.error('❌ Error fetching guest details:', guestError);
+      logger.databaseError('Error fetching guest details', guestError);
       throw new Error('Failed to fetch guest details for delivery');
     }
 
     if (!guests || guests.length === 0) {
-      console.log('⚠️ No guests found for delivery');
+      logger.warn('No guests found for delivery');
       return { successful: 0, failed: recipientIds.length };
     }
 
@@ -546,7 +545,7 @@ export async function createMessageDeliveriesWithMetrics(
 
     // Step 5: Attempt push notifications with metrics tracking
     if (pushDeliveries.length > 0) {
-      console.log(`📱 Attempting push notifications for ${pushDeliveries.length} guests`);
+      logger.system(`Attempting push notifications for ${pushDeliveries.length} guests`);
       
       const pushStartTime = Date.now();
       const pushResults = await sendBulkScheduledPush(pushDeliveries);
@@ -595,7 +594,7 @@ export async function createMessageDeliveriesWithMetrics(
 
     // Step 6: SMS fallback with metrics tracking
     if (guestsWithoutPush.length > 0) {
-      console.log(`📱➡️📞 Falling back to SMS for ${guestsWithoutPush.length} guests`);
+      logger.system(`Falling back to SMS for ${guestsWithoutPush.length} guests`);
 
       // Prepare SMS deliveries with validation (same as original)
       const smsDeliveries: ScheduledSMSDelivery[] = [];
@@ -604,7 +603,7 @@ export async function createMessageDeliveriesWithMetrics(
       for (const guest of guestsWithoutPush) {
         if (!guest.phone) {
           invalidPhoneGuests.push(guest.id);
-          console.warn(`⚠️ No phone number for guest ${guest.id.slice(-4)}`);
+          logger.warn(`No phone number for guest ${guest.id.slice(-4)}`);
           continue;
         }
 
@@ -621,7 +620,7 @@ export async function createMessageDeliveriesWithMetrics(
           });
         } else {
           invalidPhoneGuests.push(guest.id);
-          console.warn(`⚠️ Invalid phone number for guest ${guest.id.slice(-4)}: ${phoneValidation.error}`);
+          logger.warn(`Invalid phone number for guest ${guest.id.slice(-4)}: ${phoneValidation.error}`);
         }
       }
 
@@ -732,12 +731,12 @@ export async function createMessageDeliveriesWithMetrics(
         .eq('guest_id', update.guest_id);
     }
 
-    console.log(`✅ Multi-channel delivery complete for message ${message.id}: ${totalSuccessful} delivered, ${totalFailed} failed`);
-    console.log(`📊 Push: ${pushDeliveries.length} attempted, SMS fallback: ${guestsWithoutPush.length} attempted`);
+    logger.system(`Multi-channel delivery complete for message ${message.id}: ${totalSuccessful} delivered, ${totalFailed} failed`);
+    logger.system(`Push: ${pushDeliveries.length} attempted, SMS fallback: ${guestsWithoutPush.length} attempted`);
 
     return { successful: totalSuccessful, failed: totalFailed };
   } catch (error) {
-    console.error('❌ Error creating message deliveries with metrics:', error);
+    logger.error('Error creating message deliveries with metrics', error);
     throw new Error(`Failed to create deliveries: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
@@ -777,7 +776,7 @@ export async function getProcessingStats(
       failed,
     };
   } catch (error) {
-    console.error('❌ Error getting processing stats:', error);
+    logger.error('Error getting processing stats', error);
     throw new Error('Failed to get processing statistics');
   }
 }
@@ -803,11 +802,11 @@ export async function cleanupOldProcessedMessages(
     }
 
     const deletedCount = deleted?.length || 0;
-    console.log(`🧹 Cleaned up ${deletedCount} old processed messages`);
+    logger.system(`Cleaned up ${deletedCount} old processed messages`);
 
     return { deletedCount };
   } catch (error) {
-    console.error('❌ Error cleaning up old messages:', error);
+    logger.error('Error cleaning up old messages', error);
     throw new Error('Failed to cleanup old messages');
   }
 } 

@@ -6,6 +6,7 @@ import type {
 } from '@/lib/supabase/types';
 import { handleMediaDatabaseError } from '@/lib/error-handling/database';
 import { UI_CONFIG } from '@/lib/constants';
+import { logger } from '@/lib/logger';
 
 // File upload constraints with enhanced security
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
@@ -259,7 +260,7 @@ export const validateFileType = async (
     }
   } catch (error) {
     // If signature validation fails, log but don't block (fallback to MIME type validation)
-    console.warn('File signature validation failed:', error);
+    logger.warn('File signature validation failed', error);
   }
 
   return { isValid: true, mediaType };

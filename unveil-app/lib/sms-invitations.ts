@@ -144,9 +144,10 @@ export const sendSMS = async (
   to: string,
   message: string,
 ): Promise<{ success: boolean; messageId?: string; error?: string }> => {
-  // TODO: Integrate with actual SMS provider
-  console.log('SMS would be sent to:', to);
-  console.log('Message:', message);
+  // NOTE: SMS provider integration pending - requires Twilio configuration in production
+  const { logger } = await import('@/lib/logger');
+  logger.sms('SMS would be sent to', to);
+  logger.sms('Message', message);
 
   // Mock success for development
   return {

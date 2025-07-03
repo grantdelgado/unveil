@@ -8,7 +8,10 @@ import type {
   User,
   ServiceResponse,
   ServiceResponseArray,
+  ServiceResult,
 } from '@/lib/supabase/types';
+
+// Additional types for enhanced import functionality
 import { handleGuestsDatabaseError } from '@/lib/error-handling/database';
 
 // Guest service functions (unified guest management)
@@ -394,3 +397,116 @@ export const getGuestStats = async (eventId: string) => {
     };
   }
 };
+
+/**
+ * Enhanced guest import functionality for bulk operations with better error handling
+ */
+
+export interface GuestImportEntry {
+  fullName: string;
+  phone: string;
+  email?: string;
+  role?: 'host' | 'guest';
+  notes?: string;
+}
+
+export interface GuestImportResult {
+  success: boolean;
+  imported: number;
+  errors: string[];
+}
+
+/**
+ * Import multiple guests to an event with enhanced error handling
+ */
+export async function importGuestsEnhanced(
+  eventId: string, 
+  guests: GuestImportEntry[]
+): Promise<ServiceResult<GuestImportResult>> {
+  try {
+    let imported = 0;
+    const errors: string[] = [];
+
+    // Process each guest
+    for (const guest of guests) {
+      if (!guest.fullName.trim() || !guest.phone.trim()) {
+        errors.push(`Skipping invalid entry: ${guest.fullName || 'Unknown'}`);
+        continue;
+      }
+
+      try {
+        // Format phone number
+        let formattedPhone = guest.phone.trim();
+        if (!formattedPhone.startsWith('+')) {
+          formattedPhone = '+1' + formattedPhone.replace(/\D/g, '');
+        }
+
+        // First, check if user already exists
+        const { data: existingUser } = await supabase
+          .from('users')
+          .select('id')
+          .eq('phone', formattedPhone)
+          .single();
+
+        let userId: string;
+
+        if (existingUser) {
+          userId = existingUser.id;
+        } else {
+          // Create new user
+          const { data: newUser, error: userError } = await supabase
+            .from('users')
+            .insert({
+              phone: formattedPhone,
+              full_name: guest.fullName.trim(),
+              email: guest.email?.trim() || null,
+            })
+            .select('id')
+            .single();
+
+          if (userError) {
+            throw userError;
+          }
+
+          userId = newUser.id;
+        }
+
+        // Add as event guest
+        const { error: guestError } = await supabase
+          .from('event_guests')
+          .insert({
+            event_id: eventId,
+            user_id: userId,
+            phone: guest.phone,
+            guest_name: guest.fullName,
+            guest_email: guest.email || null,
+            role: guest.role || 'guest',
+            notes: guest.notes?.trim() || null,
+            rsvp_status: 'pending',
+            preferred_communication: 'sms',
+            sms_opt_out: false,
+          });
+
+        if (guestError) {
+          throw guestError;
+        }
+
+        imported++;
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        errors.push(`Failed to import ${guest.fullName}: ${errorMessage}`);
+      }
+    }
+
+    return {
+      data: {
+        success: true,
+        imported,
+        errors
+      },
+      error: null
+    };
+  } catch (error) {
+    return handleGuestsDatabaseError(error, 'importGuestsEnhanced');
+  }
+}

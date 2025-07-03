@@ -76,6 +76,11 @@ export type ServiceResponseArray<T> = {
   error: Error | null;
 };
 
+// Unified service result type following the union pattern from refactor plan
+export type ServiceResult<T> = 
+  | { data: T; error: null }
+  | { data: null; error: Error };
+
 // Enhanced types for better type safety
 export type EventGuestWithUserProfile = EventGuestWithUser & {
   user: {
@@ -106,6 +111,14 @@ export type MessageWithSenderProfile = MessageWithSender & {
     avatar_url: string | null;
   } | null;
 };
+
+// Common error types for service responses
+export class ServiceError extends Error {
+  constructor(message: string, public code?: string, public details?: unknown) {
+    super(message);
+    this.name = 'ServiceError';
+  }
+}
 
 // Event guest types have replaced participant types. 
 // All references should now use EventGuest* types from the unified guest system.

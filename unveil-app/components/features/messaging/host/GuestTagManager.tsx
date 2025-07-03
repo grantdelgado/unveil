@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo, memo } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
@@ -15,7 +15,8 @@ import {
   Check, 
   X, 
   AlertCircle,
-  Hash
+  Hash,
+  Settings
 } from 'lucide-react';
 import { useGuestTags } from '@/hooks/messaging/useGuestTags';
 import type { Tables } from '@/app/reference/supabase.types';
@@ -34,7 +35,7 @@ interface GuestTagManagerProps {
   className?: string;
 }
 
-export function GuestTagManager({
+function GuestTagManagerComponent({
   eventId,
   onTagsChange,
   className
@@ -59,41 +60,38 @@ export function GuestTagManager({
     refresh
   } = useGuestTags(eventId);
 
-  // Calculate tag usage statistics
-  const tagUsageStats = tags.reduce((acc, tagName) => {
-    const guestsWithTag = guests.filter(guest => 
-      guest.guest_tags?.includes(tagName)
-    );
-    
-    acc[tagName] = {
-      tag: tagName,
-      guestCount: guestsWithTag.length,
-      guests: guestsWithTag
-    };
-    return acc;
-  }, {} as Record<string, TagWithUsage>);
+  // Memoized expensive computations
+  const tagUsageStats = useMemo(() => {
+    return tags.reduce((acc, tagName) => {
+      const guestsWithTag = guests.filter(guest => 
+        guest.guest_tags?.includes(tagName)
+      );
+      
+      acc[tagName] = {
+        tag: tagName,
+        guestCount: guestsWithTag.length,
+        guests: guestsWithTag
+      };
+      return acc;
+    }, {} as Record<string, TagWithUsage>);
+  }, [tags, guests]);
 
-  const sortedTagsWithUsage = Object.values(tagUsageStats)
-    .sort((a, b) => b.guestCount - a.guestCount);
+  const sortedTagsWithUsage = useMemo(() => {
+    return Object.values(tagUsageStats)
+      .sort((a, b) => b.guestCount - a.guestCount);
+  }, [tagUsageStats]);
 
-  // Notify parent of tag changes
-  React.useEffect(() => {
-    if (onTagsChange) {
-      onTagsChange(sortedTagsWithUsage);
-    }
-  }, [sortedTagsWithUsage, onTagsChange]);
-
-  // Tag validation
-  const validateTagName = (name: string): string | null => {
+  // Memoized validation function
+  const validateTagName = useCallback((name: string): string | null => {
     if (!name.trim()) return 'Tag name is required';
     if (name.length > 20) return 'Tag name must be 20 characters or less';
     if (!/^[a-zA-Z0-9\s-_]+$/.test(name)) return 'Tag name can only contain letters, numbers, spaces, hyphens, and underscores';
     if (tags.includes(name.toLowerCase())) return 'Tag already exists';
     return null;
-  };
+  }, [tags]);
 
-  // Create new tag
-  const handleCreateTag = async () => {
+  // Memoized event handlers
+  const handleCreateTag = useCallback(async () => {
     const validation = validateTagName(newTagName);
     if (validation) {
       alert(validation);
@@ -108,10 +106,9 @@ export function GuestTagManager({
       console.error('Error creating tag:', err);
       alert('Failed to create tag');
     }
-  };
+  }, [newTagName, validateTagName, createTag]);
 
-  // Update existing tag
-  const handleUpdateTag = async (oldTag: string) => {
+  const handleUpdateTag = useCallback(async (oldTag: string) => {
     const validation = validateTagName(editTagName);
     if (validation) {
       alert(validation);
@@ -126,10 +123,9 @@ export function GuestTagManager({
       console.error('Error updating tag:', err);
       alert('Failed to update tag');
     }
-  };
+  }, [editTagName, validateTagName, updateTag]);
 
-  // Delete tag
-  const handleDeleteTag = async (tagName: string) => {
+  const handleDeleteTag = useCallback(async (tagName: string) => {
     const usage = tagUsageStats[tagName];
     const confirmMessage = usage?.guestCount > 0 
       ? `Delete "${tagName}"? This will remove it from ${usage.guestCount} guest(s).`
@@ -143,42 +139,29 @@ export function GuestTagManager({
       console.error('Error deleting tag:', err);
       alert('Failed to delete tag');
     }
-  };
+  }, [tagUsageStats, deleteTag]);
 
-  // Start editing a tag
-  const startEditingTag = (tagName: string) => {
+  const startEditingTag = useCallback((tagName: string) => {
     setEditingTag(tagName);
     setEditTagName(tagName);
-  };
+  }, []);
 
-  // Cancel editing
-  const cancelEditing = () => {
+  const cancelEditing = useCallback(() => {
     setEditingTag(null);
     setEditTagName('');
-  };
+  }, []);
 
-  // Toggle guest selection for bulk assignment
-  const toggleGuestSelection = (guestId: string) => {
+  const toggleGuestSelection = useCallback((guestId: string) => {
     setSelectedGuests(prev => 
       prev.includes(guestId) 
         ? prev.filter(id => id !== guestId)
         : [...prev, guestId]
     );
-  };
+  }, []);
 
-  // Toggle tag for assignment
-  const toggleAssignmentTag = (tagName: string) => {
-    setAssignmentTags(prev => 
-      prev.includes(tagName)
-        ? prev.filter(tag => tag !== tagName)
-        : [...prev, tagName]
-    );
-  };
-
-  // Apply bulk tag assignment
-  const handleBulkAssignment = async () => {
+  const handleBulkAssignment = useCallback(async () => {
     if (selectedGuests.length === 0 || assignmentTags.length === 0) {
-      alert('Please select both guests and tags');
+      alert('Please select guests and tags');
       return;
     }
 
@@ -188,10 +171,38 @@ export function GuestTagManager({
       setAssignmentTags([]);
       setShowBulkAssignment(false);
     } catch (err) {
-      console.error('Error assigning tags:', err);
+      console.error('Error in bulk assignment:', err);
       alert('Failed to assign tags');
     }
-  };
+  }, [selectedGuests, assignmentTags, assignTagsToGuests]);
+
+  // Effect to notify parent of tag changes
+  React.useEffect(() => {
+    if (onTagsChange) {
+      onTagsChange(sortedTagsWithUsage);
+    }
+  }, [sortedTagsWithUsage, onTagsChange]);
+
+  // Input change handlers
+  const handleNewTagNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewTagName(e.target.value);
+  }, []);
+
+  const handleEditTagNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditTagName(e.target.value);
+  }, []);
+
+  // Toggle handlers
+  const handleToggleCreating = useCallback(() => {
+    setIsCreating(prev => !prev);
+    setNewTagName('');
+  }, []);
+
+  const handleToggleBulkAssignment = useCallback(() => {
+    setShowBulkAssignment(prev => !prev);
+    setSelectedGuests([]);
+    setAssignmentTags([]);
+  }, []);
 
   if (loading) {
     return (
@@ -240,14 +251,14 @@ export function GuestTagManager({
         <div className="flex items-center gap-2">
           <Button
             variant="secondary"
-            onClick={() => setShowBulkAssignment(true)}
+            onClick={handleToggleBulkAssignment}
             disabled={tags.length === 0 || guests.length === 0}
           >
-            <Users className="w-4 h-4 mr-2" />
+            <Settings className="w-4 h-4 mr-2" />
             Bulk Assign
           </Button>
 
-          <Button onClick={() => setIsCreating(true)}>
+          <Button onClick={handleToggleCreating}>
             <Plus className="w-4 h-4 mr-2" />
             New Tag
           </Button>
@@ -261,7 +272,7 @@ export function GuestTagManager({
             <div className="flex-1">
               <Input
                 value={newTagName}
-                onChange={(e) => setNewTagName(e.target.value)}
+                onChange={handleNewTagNameChange}
                 placeholder="Enter tag name (max 20 characters)"
                 maxLength={20}
                 autoFocus
@@ -280,10 +291,7 @@ export function GuestTagManager({
             <Button 
               variant="secondary" 
               size="sm"
-              onClick={() => {
-                setIsCreating(false);
-                setNewTagName('');
-              }}
+              onClick={handleToggleCreating}
             >
               <X className="w-4 h-4" />
             </Button>
@@ -301,7 +309,7 @@ export function GuestTagManager({
           title="No tags yet"
           description="Create your first tag to start organizing your guests by categories like family, friends, or plus-ones."
           actionText="Create Tag"
-          onAction={() => setIsCreating(true)}
+          onAction={handleToggleCreating}
         />
       ) : (
         <div className="space-y-3">
@@ -316,7 +324,7 @@ export function GuestTagManager({
                     <div className="flex items-center gap-2 flex-1">
                       <Input
                         value={editTagName}
-                        onChange={(e) => setEditTagName(e.target.value)}
+                        onChange={handleEditTagNameChange}
                         className="flex-1"
                         maxLength={20}
                         autoFocus
@@ -422,11 +430,15 @@ export function GuestTagManager({
                   {tags.map((tag) => (
                     <button
                       key={tag}
-                      onClick={() => toggleAssignmentTag(tag)}
+                      onClick={() => setAssignmentTags(prev => 
+                        prev.includes(tag) 
+                          ? prev.filter(t => t !== tag)
+                          : [...prev, tag]
+                      )}
                       className={cn(
                         'px-3 py-1 text-sm rounded-full border transition-colors',
                         assignmentTags.includes(tag)
-                          ? 'bg-blue-100 border-blue-300 text-blue-700'
+                          ? 'bg-purple-200 border-purple-300 text-purple-700'
                           : 'bg-gray-100 border-gray-300 text-gray-700 hover:bg-gray-200'
                       )}
                     >
@@ -475,11 +487,7 @@ export function GuestTagManager({
             <div className="p-6 border-t border-gray-200 flex justify-end gap-3">
               <Button
                 variant="secondary"
-                onClick={() => {
-                  setShowBulkAssignment(false);
-                  setSelectedGuests([]);
-                  setAssignmentTags([]);
-                }}
+                onClick={handleToggleBulkAssignment}
               >
                 Cancel
               </Button>
@@ -495,4 +503,7 @@ export function GuestTagManager({
       )}
     </div>
   );
-} 
+}
+
+// Memoize the component
+export const GuestTagManager = memo(GuestTagManagerComponent); 

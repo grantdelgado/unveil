@@ -1,7 +1,6 @@
 'use client';
 
-import React from 'react';
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import type { Database } from '@/app/reference/supabase.types';
@@ -10,8 +9,6 @@ import { CardContainer } from '@/components/ui/CardContainer';
 import { SectionTitle, MicroCopy } from '@/components/ui/Typography';
 
 type Guest = Database['public']['Tables']['event_guests']['Row'];
-// Backward compatibility
-
 type Message = Database['public']['Tables']['messages']['Row'];
 type Media = Database['public']['Tables']['media']['Row'];
 
@@ -19,7 +16,7 @@ interface EventAnalyticsProps {
   eventId: string;
 }
 
-export function EventAnalytics({ eventId }: EventAnalyticsProps) {
+function EventAnalyticsComponent({ eventId }: EventAnalyticsProps) {
   const [guests, setGuests] = useState<Guest[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [media, setMedia] = useState<Media[]>([]);
@@ -27,95 +24,97 @@ export function EventAnalytics({ eventId }: EventAnalyticsProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function fetchAnalyticsData() {
-      try {
-        setLoading(true);
-        setError(null);
+  const fetchAnalyticsData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-        // Fetch all analytics data in parallel
-        const [guestsResponse, messagesResponse, mediaResponse] =
-          await Promise.all([
-            supabase
-              .from('event_guests')
-              .select('*')
-              .eq('event_id', eventId),
+      // Fetch all analytics data in parallel
+      const [guestsResponse, messagesResponse, mediaResponse] =
+        await Promise.all([
+          supabase
+            .from('event_guests')
+            .select('*')
+            .eq('event_id', eventId),
 
-            supabase
-              .from('messages')
-              .select('*')
-              .eq('event_id', eventId)
-              .order('created_at', { ascending: false }),
+          supabase
+            .from('messages')
+            .select('*')
+            .eq('event_id', eventId)
+            .order('created_at', { ascending: false }),
 
-            supabase
-              .from('media')
-              .select('*')
-              .eq('event_id', eventId)
-              .order('created_at', { ascending: false }),
-          ]);
+          supabase
+            .from('media')
+            .select('*')
+            .eq('event_id', eventId)
+            .order('created_at', { ascending: false }),
+        ]);
 
-        if (guestsResponse.error) throw guestsResponse.error;
-        if (messagesResponse.error) throw messagesResponse.error;
-        if (mediaResponse.error) throw mediaResponse.error;
+      if (guestsResponse.error) throw guestsResponse.error;
+      if (messagesResponse.error) throw messagesResponse.error;
+      if (mediaResponse.error) throw mediaResponse.error;
 
-        setGuests(guestsResponse.data || []);
-        setMessages(messagesResponse.data || []);
-        setMedia(mediaResponse.data || []);
-      } catch (err) {
-        console.error('Error fetching analytics data:', err);
-        setError('Failed to load analytics data');
-      } finally {
-        setLoading(false);
-      }
+      setGuests(guestsResponse.data || []);
+      setMessages(messagesResponse.data || []);
+      setMedia(mediaResponse.data || []);
+    } catch (err) {
+      console.error('Error fetching analytics data:', err);
+      setError('Failed to load analytics data');
+    } finally {
+      setLoading(false);
     }
-
-    fetchAnalyticsData();
   }, [eventId]);
 
+  useEffect(() => {
+    fetchAnalyticsData();
+  }, [fetchAnalyticsData]);
+
+  // Memoized analytics calculations for performance
   const analytics = useMemo(() => {
+    // RSVP Statistics - single pass through guests for efficiency
+    const rsvpStats = guests.reduce(
+      (acc, guest) => {
+        const status = guest.rsvp_status || 'pending';
+        acc.total++;
+        acc[status as keyof typeof acc] = (acc[status as keyof typeof acc] || 0) + 1;
+        return acc;
+      },
+      { total: 0, attending: 0, declined: 0, maybe: 0, pending: 0 }
+    );
 
-    // RSVP Statistics
-    const rsvpStats = {
-      total: guests.length,
-      attending: guests.filter((p) => p.rsvp_status === 'attending')
-        .length,
-      declined: guests.filter((p) => p.rsvp_status === 'declined').length,
-      maybe: guests.filter((p) => p.rsvp_status === 'maybe').length,
-      pending: guests.filter(
-        (p) => !p.rsvp_status || p.rsvp_status === 'pending',
-      ).length,
-    };
+    // Engagement Statistics - single pass through arrays
+    const engagementStats = messages.reduce(
+      (acc, message) => {
+        acc.totalMessages++;
+        if (message.message_type === 'announcement') acc.announcements++;
+        if (message.message_type === 'direct') acc.directMessages++;
+        return acc;
+      },
+      { 
+        totalMessages: 0, 
+        totalMedia: media.length,
+        announcements: 0, 
+        directMessages: 0,
+        images: media.filter(m => m.media_type === 'image').length,
+        videos: media.filter(m => m.media_type === 'video').length,
+      }
+    );
 
-    // Engagement Statistics
-    const engagementStats = {
-      totalMessages: messages.length,
-      totalMedia: media.length,
-      announcements: messages.filter((m) => m.message_type === 'announcement')
-        .length,
-      directMessages: messages.filter((m) => m.message_type === 'direct')
-        .length,
-      images: media.filter((m) => m.media_type === 'image').length,
-      videos: media.filter((m) => m.media_type === 'video').length,
-    };
-
-    // Recent Activity
+    // Recent Activity - optimized with single sort
     const recentActivity = [
       ...messages.slice(0, 5).map((m) => ({
-        type: 'message',
-        content: `New ${m.message_type}: ${m.content.substring(0, 50)}...`,
+        type: 'message' as const,
+        content: `New ${m.message_type}: ${m.content?.substring(0, 50) || ''}...`,
         timestamp: m.created_at,
       })),
       ...media.slice(0, 5).map((m) => ({
-        type: 'media',
+        type: 'media' as const,
         content: `New ${m.media_type} uploaded${m.caption ? `: ${m.caption.substring(0, 30)}...` : ''}`,
         timestamp: m.created_at,
       })),
     ]
       .filter((activity) => activity.timestamp)
-      .sort(
-        (a, b) =>
-          new Date(b.timestamp!).getTime() - new Date(a.timestamp!).getTime(),
-      )
+      .sort((a, b) => new Date(b.timestamp!).getTime() - new Date(a.timestamp!).getTime())
       .slice(0, 10);
 
     return {
@@ -328,4 +327,7 @@ export function EventAnalytics({ eventId }: EventAnalyticsProps) {
     </div>
   );
 }
+
+// Memoize the component to prevent unnecessary re-renders
+export const EventAnalytics = memo(EventAnalyticsComponent);
 

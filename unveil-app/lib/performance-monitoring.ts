@@ -5,6 +5,7 @@
 
 import * as Sentry from '@sentry/nextjs';
 import type { WindowWithGtag } from './types/analytics';
+import { logger } from '@/lib/logger';
 
 // Core Web Vitals tracking
 export function trackWebVitals() {
@@ -182,5 +183,5 @@ export function initializePerformanceMonitoring() {
     Sentry.captureException(event.reason);
   });
 
-  console.log('🔍 Performance monitoring initialized');
+  logger.system('Performance monitoring initialized');
 } 

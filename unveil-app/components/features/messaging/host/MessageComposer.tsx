@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { supabase } from '@/lib/supabase/client';
+import React, { useState, useEffect, useCallback, useRef, useMemo, memo } from 'react';
 import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { FieldLabel } from '@/components/ui/Typography';
 import { cn } from '@/lib/utils';
 import { useHapticFeedback } from '@/hooks/common';
+import { sendMessageToEvent, type SendMessageRequest } from '@/services/messaging';
 import type { Database } from '@/app/reference/supabase.types';
 import type { MessageTemplate } from './MessageTemplates';
 import type { RecipientFilter } from './RecipientPresets';
@@ -25,7 +25,7 @@ interface MessageComposerProps {
   className?: string;
 }
 
-export function MessageComposer({
+function MessageComposerComponent({
   eventId,
   guests,
   selectedTemplate,
@@ -41,7 +41,7 @@ export function MessageComposer({
   const [characterCount, setCharacterCount] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   
-  const maxCharacters = 500;
+  const maxCharacters = useMemo(() => 160, []); // SMS standard
   const { triggerHaptic } = useHapticFeedback();
 
   // Auto-fill message when template is selected
@@ -62,39 +62,33 @@ export function MessageComposer({
     setCharacterCount(message.length);
   }, [message]);
 
-
-
   const filteredGuests = useMemo(() => {
-    switch (selectedRecipientFilter) {
-      case 'attending':
-        return guests.filter(p => p.rsvp_status === 'attending');
-      case 'pending':
-        return guests.filter(p => p.rsvp_status === 'pending');
-      case 'maybe':
-        return guests.filter(p => p.rsvp_status === 'maybe');
-      case 'declined':
-        return guests.filter(p => p.rsvp_status === 'declined');
-      default:
-        return guests;
-    }
+    return guests.filter(guest => {
+      switch (selectedRecipientFilter) {
+        case 'attending':
+          return guest.rsvp_status === 'attending';
+        case 'pending':
+          return guest.rsvp_status === 'pending';
+        case 'maybe':
+          return guest.rsvp_status === 'maybe';
+        case 'declined':
+          return guest.rsvp_status === 'declined';
+        default:
+          return true;
+      }
+    });
   }, [guests, selectedRecipientFilter]);
 
+  const isCharacterLimitExceeded = useMemo(() => 
+    characterCount > maxCharacters, [characterCount, maxCharacters]
+  );
+  
+  const isNearLimit = useMemo(() => 
+    characterCount > maxCharacters * 0.8, [characterCount, maxCharacters]
+  );
+
   const handleSendMessage = useCallback(async () => {
-    if (!message.trim()) {
-      setError('Please enter a message');
-      triggerHaptic('warning');
-      return;
-    }
-
-    if (characterCount > maxCharacters) {
-      setError(`Message is too long. Please keep it under ${maxCharacters} characters.`);
-      triggerHaptic('warning');
-      return;
-    }
-
-    if (filteredGuests.length === 0) {
-      setError('No recipients match the selected filter. Please choose a different recipient group.');
-      triggerHaptic('warning');
+    if (!message.trim() || loading || isCharacterLimitExceeded || filteredGuests.length === 0) {
       return;
     }
 
@@ -102,29 +96,24 @@ export function MessageComposer({
     setError(null);
 
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
-      // Determine message type based on filter and template
-      const messageType = selectedRecipientFilter === 'all' ? 'announcement' : 'direct';
-      
-      // Insert message into database
-      const { error: messageError } = await supabase.from('messages').insert({
-        event_id: eventId,
-        sender_user_id: user.id,
+      const request: SendMessageRequest = {
+        eventId,
         content: message.trim(),
-        message_type: messageType,
-      });
+        type: 'announcement',
+        recipientFilter: selectedRecipientFilter
+      };
 
-      if (messageError) throw messageError;
+      const result = await sendMessageToEvent(request);
+
+      if (result.error) {
+        throw result.error;
+      }
 
       // Reset form
       setMessage('');
       setCharacterCount(0);
       setSuccess(true);
-      triggerHaptic('success'); // Success haptic feedback
+      triggerHaptic('success');
 
       // Clear success message after 3 seconds
       setTimeout(() => setSuccess(false), 3000);
@@ -132,12 +121,13 @@ export function MessageComposer({
       onMessageSent?.();
     } catch (err) {
       console.error('Error sending message:', err);
-      setError('Failed to send message. Please try again.');
-      triggerHaptic('error'); // Error haptic feedback
+      const errorMessage = err instanceof Error ? err.message : 'Failed to send message. Please try again.';
+      setError(errorMessage);
+      triggerHaptic('error');
     } finally {
       setLoading(false);
     }
-  }, [message, characterCount, maxCharacters, filteredGuests, selectedRecipientFilter, eventId, onMessageSent, triggerHaptic]);
+  }, [message, loading, isCharacterLimitExceeded, filteredGuests.length, selectedRecipientFilter, eventId, onMessageSent, triggerHaptic]);
 
   const handleClear = useCallback(() => {
     setMessage('');
@@ -147,10 +137,9 @@ export function MessageComposer({
     onClear?.();
   }, [onClear]);
 
-
-
-  const isCharacterLimitExceeded = characterCount > maxCharacters;
-  const isNearLimit = characterCount > maxCharacters * 0.8;
+  const handleMessageChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setMessage(e.target.value);
+  }, []);
 
   return (
     <div className={cn('space-y-4', className)}>
@@ -201,7 +190,7 @@ export function MessageComposer({
             ref={textareaRef}
             id="message"
             value={message}
-            onChange={(e) => setMessage(e.target.value)}
+            onChange={handleMessageChange}
             placeholder={selectedTemplate 
               ? "Customize your message..." 
               : "Type your message here..."
@@ -215,7 +204,7 @@ export function MessageComposer({
                 ? 'border-red-300 bg-red-50 focus:ring-red-500'
                 : 'border-gray-300 bg-white'
             )}
-            maxLength={maxCharacters + 50} // Allow slight overflow for UX
+            maxLength={maxCharacters + 50}
           />
           
           {/* Character Counter */}
@@ -299,3 +288,6 @@ export function MessageComposer({
     </div>
   );
 }
+
+// Memoize the component to prevent unnecessary re-renders
+export const MessageComposer = memo(MessageComposerComponent);

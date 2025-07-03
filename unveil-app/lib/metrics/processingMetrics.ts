@@ -1,4 +1,5 @@
-// import { supabase } from '@/lib/supabase'; // TODO: Use for database storage when processing_metrics table is created
+// import { supabase } from '@/lib/supabase'; // FUTURE: Use for database storage when processing_metrics table is created in Phase 6
+import { logger } from '@/lib/logger';
 
 export interface ProcessingMetrics {
   sessionId: string;
@@ -79,7 +80,7 @@ export function startProcessingSession(): string {
     messageTimings: [],
   };
   
-  console.log(`📊 Started processing metrics session: ${sessionId}`);
+  logger.metrics(`Started processing metrics session: ${sessionId}`);
   return sessionId;
 }
 
@@ -88,7 +89,7 @@ export function startProcessingSession(): string {
  */
 export function recordMessageStart(messageId: string): void {
   if (!currentSession) {
-    console.warn('⚠️ No active processing session for message start recording');
+    logger.warn('No active processing session for message start recording');
     return;
   }
   
@@ -105,7 +106,7 @@ export function recordMessageStart(messageId: string): void {
  */
 export function recordMessageComplete(messageId: string, success: boolean, error?: string): void {
   if (!currentSession) {
-    console.warn('⚠️ No active processing session for message completion recording');
+    logger.warn('No active processing session for message completion recording');
     return;
   }
   
@@ -136,7 +137,7 @@ export function recordMessageComplete(messageId: string, success: boolean, error
  */
 export function recordChannelDelivery(result: ChannelDeliveryResult): void {
   if (!currentSession) {
-    console.warn('⚠️ No active processing session for channel delivery recording');
+    logger.warn('No active processing session for channel delivery recording');
     return;
   }
   
@@ -162,7 +163,7 @@ export function recordChannelDelivery(result: ChannelDeliveryResult): void {
  */
 export function completeProcessingSession(): ProcessingMetrics | null {
   if (!currentSession) {
-    console.warn('⚠️ No active processing session to complete');
+    logger.warn('No active processing session to complete');
     return null;
   }
   
@@ -193,7 +194,7 @@ export function completeProcessingSession(): ProcessingMetrics | null {
     throughputPerMinute,
   };
   
-  console.log(`📊 Completed processing session ${currentSession.sessionId}:`, {
+  logger.metrics(`Completed processing session ${currentSession.sessionId}`, {
     duration: `${Math.round(durationMs / 1000)}s`,
     processed: currentSession.metrics.processedMessages,
     successful: currentSession.metrics.successfulMessages,
@@ -204,7 +205,7 @@ export function completeProcessingSession(): ProcessingMetrics | null {
   
   // Store metrics for historical analysis
   storeMetricsToDatabase(finalMetrics).catch(error => {
-    console.error('❌ Failed to store processing metrics to database:', error);
+    logger.metricsError('Failed to store processing metrics to database', error);
   });
   
   // Clear the current session
@@ -282,9 +283,9 @@ async function storeMetricsToDatabase(metrics: ProcessingMetrics): Promise<void>
       created_at: new Date().toISOString(),
     };
     
-    // TODO: Create processing_metrics table in future migration
+    // FUTURE: Create processing_metrics table in Phase 6 analytics expansion
     // For now, we'll log the metrics for manual analysis
-    console.log('📊 Processing Metrics (would store to DB):', metricsRecord);
+    logger.metrics('Processing Metrics (would store to DB)', metricsRecord);
     
     // In the future, this would be:
     // const { error } = await supabase
@@ -293,7 +294,7 @@ async function storeMetricsToDatabase(metrics: ProcessingMetrics): Promise<void>
     // 
     // if (error) throw error;
   } catch (error) {
-    console.error('❌ Error storing processing metrics:', error);
+    logger.metricsError('Error storing processing metrics', error);
     // Don't throw here to avoid disrupting main processing flow
   }
 }
@@ -313,8 +314,8 @@ export async function getProcessingStats(hoursBack: number = 24): Promise<{
     email: { attempts: number; successRate: number };
   };
 }> {
-  // TODO: Query actual database once processing_metrics table exists
-  // TODO: Use hoursBack parameter to filter results by time range
+  // FUTURE: Query actual database once processing_metrics table exists in Phase 6
+  // FUTURE: Use hoursBack parameter to filter results by time range
   // For now, return mock/default values as documentation
   void hoursBack; // Suppress unused parameter warning until implementation
   return {
@@ -357,6 +358,6 @@ export function safeRecordMetrics(fn: () => void): void {
   try {
     fn();
   } catch (error) {
-    console.warn('⚠️ Non-critical error recording processing metrics:', error);
+    logger.warn('Non-critical error recording processing metrics', error);
   }
 } 

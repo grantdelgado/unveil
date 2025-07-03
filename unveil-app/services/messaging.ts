@@ -1,9 +1,17 @@
 import { supabase } from '@/lib/supabase/client';
 import type {
+  Message,
   MessageInsert,
   MessageUpdate,
   MessageType,
   MessageWithSender,
+  MessageWithDelivery,
+  Event,
+  EventGuest,
+  ServiceResult,
+  ServiceResponse,
+  ServiceResponseArray,
+  ServiceError,
 } from '@/lib/supabase/types';
 import { handleMessagingDatabaseError } from '@/lib/error-handling/database';
 import { UI_CONFIG } from '@/lib/constants';
@@ -517,5 +525,76 @@ export const searchMessages = async (
     }
   } catch (error) {
     handleMessagingDatabaseError(error, 'SELECT', 'messages')
+  }
+}
+
+/**
+ * Message sending functionality for UI components
+ */
+
+export interface SendMessageRequest {
+  eventId: string;
+  content: string;
+  type: MessageType;
+  recipientFilter: 'all' | 'attending' | 'pending' | 'declined' | 'maybe' | 'tags' | 'custom';
+  tags?: string[];
+  customRecipients?: string[];
+}
+
+export interface SendMessageResult {
+  messageId: string;
+  success: boolean;
+}
+
+/**
+ * Send a message to event participants (UI component helper)
+ */
+export async function sendMessageToEvent(
+  request: SendMessageRequest
+): Promise<ServiceResult<SendMessageResult>> {
+  try {
+    // Get current user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      throw new Error('Authentication required');
+    }
+
+    // Validate input
+    if (!request.content.trim()) {
+      throw new Error('Message content is required');
+    }
+
+    if (request.content.length > 500) {
+      throw new Error('Message is too long. Please keep it under 500 characters.');
+    }
+
+    // Determine message type based on filter
+    const messageType = request.recipientFilter === 'all' ? 'announcement' : 'direct';
+    
+    // Insert message into database
+    const { data: messageData, error: messageError } = await supabase
+      .from('messages')
+      .insert({
+        event_id: request.eventId,
+        sender_user_id: user.id,
+        content: request.content.trim(),
+        message_type: request.type || messageType,
+      })
+      .select('id')
+      .single();
+
+    if (messageError) {
+      throw messageError;
+    }
+
+    return {
+      data: {
+        messageId: messageData.id,
+        success: true
+      },
+      error: null
+    };
+  } catch (error) {
+    return handleMessagingDatabaseError(error, 'sendMessageToEvent');
   }
 }

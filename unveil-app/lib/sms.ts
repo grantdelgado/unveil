@@ -66,7 +66,7 @@ export async function sendScheduledSMS(delivery: ScheduledSMSDelivery): Promise<
       // If successful, return immediately
       if (result.success) {
         if (attempt > 0) {
-          console.log(`✅ SMS sent successfully on retry ${attempt + 1} for guest ${delivery.guestId.slice(-4)}`);
+          logger.sms(`SMS sent successfully on retry ${attempt + 1} for guest ${delivery.guestId.slice(-4)}`);
         }
         return result;
       }
@@ -82,7 +82,7 @@ export async function sendScheduledSMS(delivery: ScheduledSMSDelivery): Promise<
       // Check if error is retryable (5xx errors, rate limits, temporary failures)
       const shouldRetry = SMSRetry.isRetryable(result.error);
       if (!shouldRetry) {
-        console.log(`❌ Non-retryable error for guest ${delivery.guestId.slice(-4)}: ${result.error}`);
+        logger.smsError(`Non-retryable error for guest ${delivery.guestId.slice(-4)}`, result.error);
         return {
           ...result,
           shouldRetry: false,
@@ -90,7 +90,7 @@ export async function sendScheduledSMS(delivery: ScheduledSMSDelivery): Promise<
       }
       
       lastError = result.error || 'Unknown error';
-      console.log(`⚠️ Retryable error for guest ${delivery.guestId.slice(-4)}, attempt ${attempt + 1}/${maxRetries}: ${lastError}`);
+      logger.sms(`Retryable error for guest ${delivery.guestId.slice(-4)}, attempt ${attempt + 1}/${maxRetries}: ${lastError}`);
       
       // Wait before retry
       await new Promise(resolve => setTimeout(resolve, retryDelays[attempt]));
@@ -150,10 +150,9 @@ export async function sendSMS({
       ? `${formattedPhone.slice(0, 3)}...${formattedPhone.slice(-4)}`
       : '***redacted***';
       
-    console.log(
-      `📱 Sending SMS to ${redactedPhone}:`,
-      message.substring(0, 50) + '...',
-    );
+    logger.sms(`Sending SMS to ${redactedPhone}`, {
+      messagePreview: message.substring(0, 50) + '...',
+    });
 
     // Create message params - use messaging service if available, otherwise phone number
     const messageParams: {
@@ -168,10 +167,10 @@ export async function sendSMS({
 
     if (twilioMessagingServiceSid) {
       messageParams.messagingServiceSid = twilioMessagingServiceSid;
-      console.log(`📱 Using Messaging Service: ${twilioMessagingServiceSid}`);
+      logger.sms(`Using Messaging Service: ${twilioMessagingServiceSid}`);
     } else if (twilioPhoneNumber) {
       messageParams.from = twilioPhoneNumber;
-      console.log(`📱 Using Phone Number: ${twilioPhoneNumber}`);
+      logger.sms(`Using Phone Number: ${twilioPhoneNumber}`);
     } else {
       throw new Error('No Twilio sender configured');
     }
@@ -179,7 +178,7 @@ export async function sendSMS({
     // Send SMS via Twilio
     const twilioMessage = await client.messages.create(messageParams);
 
-    console.log(`✅ SMS sent successfully. SID: ${twilioMessage.sid}`);
+    logger.sms(`SMS sent successfully. SID: ${twilioMessage.sid}`);
 
     // Log to database for tracking
     await logSMSToDatabase({
@@ -199,7 +198,7 @@ export async function sendSMS({
     };
   } catch (error) {
     const errorMessage = getErrorMessage(error);
-    console.error('❌ Failed to send SMS:', errorMessage);
+    logger.smsError('Failed to send SMS', errorMessage);
 
     // Log failed message to database
     if (eventId) {
@@ -231,7 +230,7 @@ export async function sendBulkSMS(
   let sent = 0;
   let failed = 0;
 
-  console.log(`📱 Sending bulk SMS to ${messages.length} recipients`);
+  logger.sms(`Sending bulk SMS to ${messages.length} recipients`);
 
   // Send messages with a small delay to avoid rate limiting
   for (const message of messages) {
@@ -248,7 +247,7 @@ export async function sendBulkSMS(
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
 
-  console.log(`✅ Bulk SMS complete: ${sent} sent, ${failed} failed`);
+  logger.sms(`Bulk SMS complete: ${sent} sent, ${failed} failed`);
 
   return { sent, failed, results };
 }
@@ -319,19 +318,13 @@ export async function sendRSVPReminder(
     // This is a placeholder implementation for the simplified schema
     const messages: SMSMessage[] = [];
 
-    console.log(
-      '📱 SMS Reminder would be sent to',
-      guests.length,
-      'guests',
-    );
-    console.log(
-      '⚠️ SMS functionality requires phone access - not available in simplified schema',
-    );
+    logger.sms(`SMS Reminder would be sent to ${guests.length} guests`);
+    logger.sms('SMS functionality requires phone access - not available in simplified schema');
 
     const result = await sendBulkSMS(messages);
     return { sent: result.sent, failed: result.failed };
   } catch (error) {
-    console.error('❌ Failed to send RSVP reminders:', error);
+    logger.smsError('Failed to send RSVP reminders', error);
     return { sent: 0, failed: 1 };
   }
 }
@@ -392,19 +385,13 @@ export async function sendEventAnnouncement(
     // This is a placeholder implementation for the simplified schema
     const messages: SMSMessage[] = [];
 
-    console.log(
-      '📱 SMS Announcement would be sent to',
-      guests.length,
-      'guests',
-    );
-    console.log(
-      '⚠️ SMS functionality requires phone access - not available in simplified schema',
-    );
+    logger.sms(`SMS Announcement would be sent to ${guests.length} guests`);
+    logger.sms('SMS functionality requires phone access - not available in simplified schema');
 
     const result = await sendBulkSMS(messages);
     return { sent: result.sent, failed: result.failed };
   } catch (error) {
-    console.error('❌ Failed to send announcement:', error);
+    logger.smsError('Failed to send announcement', error);
     return { sent: 0, failed: 1 };
   }
 }
@@ -479,7 +466,7 @@ export async function sendBulkScheduledSMS(
   failed: number;
   results: Array<{ guestId: string; result: SMSResult }>;
 }> {
-  console.log(`📱 Sending scheduled SMS to ${deliveries.length} recipients`);
+  logger.sms(`Sending scheduled SMS to ${deliveries.length} recipients`);
   
   // Use Promise.allSettled for efficient bulk processing
   const promises = deliveries.map(async (delivery) => ({
@@ -505,7 +492,7 @@ export async function sendBulkScheduledSMS(
   const successful = processedResults.filter(r => r.result.success).length;
   const failed = processedResults.filter(r => !r.result.success).length;
   
-  console.log(`✅ Bulk scheduled SMS complete: ${successful} sent, ${failed} failed`);
+  logger.sms(`Bulk scheduled SMS complete: ${successful} sent, ${failed} failed`);
   
   return {
     successful,
@@ -552,7 +539,7 @@ async function logSMSToDatabase(logData: {
   try {
     // In the simplified schema, we don't have SMS logging tables
     // This is a stub for future implementation
-    console.log('📝 SMS Log:', {
+    logger.sms('SMS Log', {
       event: logData.eventId,
       phone: logData.phoneNumber.slice(-4), // Only log last 4 digits for privacy
       status: logData.status,
@@ -560,6 +547,6 @@ async function logSMSToDatabase(logData: {
       sid: logData.twilioSid,
     });
   } catch (error) {
-    console.warn('⚠️ Failed to log SMS to database:', error);
+    logger.warn('Failed to log SMS to database', error);
   }
 }

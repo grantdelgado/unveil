@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import type { Tables } from '@/app/reference/supabase.types';
+import { logger } from '@/lib/logger';
 
 type ScheduledMessage = Tables<'scheduled_messages'>;
 type EventGuest = Tables<'event_guests'>;
@@ -51,7 +52,7 @@ export async function getScheduledMessageTargets(
   }
 
   // For now, we'll handle sub-events separately since that requires a join
-  // TODO: Implement sub-event targeting when sub-events table is ready
+  // FUTURE: Implement sub-event targeting in Phase 6 when sub-events table is ready
 
   if (conditions.length > 0) {
     query = query.or(conditions.join(','));
@@ -80,7 +81,7 @@ export function subscribeToScheduledMessages(
   // Using imported supabase client
   const channelName = `scheduled_messages:${eventId}`;
   
-  console.log(`Setting up real-time subscription for ${channelName}`);
+  logger.system(`Setting up real-time subscription for ${channelName}`);
   
   // Create a channel for this event's scheduled messages
   const channel = supabase.channel(channelName);
@@ -96,7 +97,7 @@ export function subscribeToScheduledMessages(
     },
     (payload) => {
       try {
-        console.log(`📨 Scheduled message real-time event:`, {
+        logger.system(`Scheduled message real-time event`, {
           eventType: payload.eventType,
           table: payload.table,
         });
@@ -110,7 +111,7 @@ export function subscribeToScheduledMessages(
         
         callback(transformedPayload);
       } catch (error) {
-        console.error(`❌ Error processing scheduled message real-time event:`, error);
+        logger.error(`Error processing scheduled message real-time event`, error);
       }
     }
   );
@@ -118,20 +119,20 @@ export function subscribeToScheduledMessages(
   // Subscribe to the channel
   channel.subscribe((status, err) => {
     if (status === 'SUBSCRIBED') {
-      console.log(`✅ Scheduled messages subscription active: ${channelName}`);
+      logger.system(`Scheduled messages subscription active: ${channelName}`);
     } else if (status === 'CHANNEL_ERROR') {
-      console.error(`❌ Scheduled messages subscription error: ${channelName}`, err);
+      logger.error(`Scheduled messages subscription error: ${channelName}`, err);
     } else if (status === 'TIMED_OUT') {
-      console.error(`⏰ Scheduled messages subscription timeout: ${channelName}`);
+      logger.error(`Scheduled messages subscription timeout: ${channelName}`);
     } else if (status === 'CLOSED') {
-      console.log(`🔌 Scheduled messages subscription closed: ${channelName}`);
+      logger.system(`Scheduled messages subscription closed: ${channelName}`);
     }
   });
   
   // Return proper unsubscribe function
   return {
     unsubscribe: () => {
-      console.log(`Unsubscribing from ${channelName}`);
+      logger.system(`Unsubscribing from ${channelName}`);
       supabase.removeChannel(channel);
     }
   };

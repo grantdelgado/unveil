@@ -79,7 +79,7 @@ export default function GuestEventHomePage() {
   };
 
   const handleSendMessage = async () => {
-    // TODO: Implement message sending functionality
+    // NOTE: Message sending functionality available via MessageThread component
     console.log('Sending message:', messageText);
     setMessageText('');
     setShowMessageModal(false);

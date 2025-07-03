@@ -7,7 +7,9 @@ import {
   deleteMedia,
   getMediaStats,
 } from '@/services/media'
-import type { MediaInsert, MediaUpdate, MediaType } from '@/lib/supabase/types'
+import type { MediaInsert, MediaUpdate, MediaType, Media, MediaWithUploader } from '@/lib/supabase/types'
+import { logger } from '@/lib/logger'
+import { useCallback } from 'react'
 
 // Enhanced MediaInsert type with proper enum and required uploader
 type MediaInsertForUpload = {
@@ -17,7 +19,6 @@ type MediaInsertForUpload = {
   uploader_user_id: string
   caption?: string
 }
-import { logger } from '@/lib/logger'
 
 // Cached hook for getting media for an event
 export function useEventMediaCached(eventId: string) {
@@ -79,7 +80,7 @@ export function useUploadMedia() {
         uploader: null, // Will be filled in on success
       }
 
-      queryClient.setQueryData(queryKeys.eventMedia(newMedia.event_id), (old: any) => [
+      queryClient.setQueryData(queryKeys.eventMedia(newMedia.event_id), (old: Media[]) => [
         ...(old || []),
         optimisticMedia,
       ])
@@ -121,8 +122,8 @@ export function useUpdateMediaCaption() {
       // Update the specific media item in all relevant caches
       if (updatedMedia) {
         // Update in event media cache
-        queryClient.setQueryData(queryKeys.eventMedia(updatedMedia.event_id), (old: any) =>
-          old?.map((media: any) => (media.id === id ? updatedMedia : media)) || []
+        queryClient.setQueryData(queryKeys.eventMedia(updatedMedia.event_id), (old: Media[]) =>
+          old?.map((media: Media) => (media.id === id ? updatedMedia : media)) || []
         )
         
         // Update individual media cache if it exists
@@ -155,8 +156,8 @@ export function useDeleteMedia() {
       const previousMedia = queryClient.getQueryData(queryKeys.eventMedia(eventId))
 
       // Optimistically remove the media item
-      queryClient.setQueryData(queryKeys.eventMedia(eventId), (old: any) =>
-        old?.filter((media: any) => media.id !== id) || []
+      queryClient.setQueryData(queryKeys.eventMedia(eventId), (old: Media[]) =>
+        old?.filter((media: Media) => media.id !== id) || []
       )
 
       return { previousMedia }
@@ -179,4 +180,69 @@ export function useDeleteMedia() {
       }
     },
   })
+}
+
+export function useMediaCached(eventId?: string) {
+  const queryClient = useQueryClient()
+
+  // Real-time subscription handlers
+  const handleMediaInsert = useCallback(
+    (newMedia: Media) => {
+      queryClient.setQueryData(queryKeys.eventMedia(newMedia.event_id), (old: Media[]) => [
+        ...(old || []),
+        newMedia,
+      ])
+    },
+    [queryClient]
+  )
+
+  const handleMediaUpdate = useCallback(
+    (updatedMedia: Media) => {
+      queryClient.setQueryData(queryKeys.eventMedia(updatedMedia.event_id), (old: Media[]) =>
+        old?.map((media: Media) => (media.id === updatedMedia.id ? updatedMedia : media)) || []
+      )
+    },
+    [queryClient]
+  )
+
+  const handleMediaDelete = useCallback(
+    (mediaId: string, eventId: string) => {
+      queryClient.setQueryData(queryKeys.eventMedia(eventId), (old: Media[]) =>
+        old?.filter((media: Media) => media.id !== mediaId) || []
+      )
+    },
+    [queryClient]
+  )
+
+  // Cache mutation functions
+  const addMedia = (media: Media) => {
+    if (!eventId) return
+    queryClient.setQueryData(queryKeys.eventMedia(eventId), (old: Media[]) => [
+      ...(old || []),
+      media,
+    ])
+  }
+
+  const updateMedia = (id: string, updatedMedia: Partial<Media>) => {
+    if (!eventId) return
+    queryClient.setQueryData(queryKeys.eventMedia(eventId), (old: Media[]) =>
+      old?.map((media: Media) => (media.id === id ? { ...media, ...updatedMedia } : media)) || []
+    )
+  }
+
+  const removeMedia = (id: string) => {
+    if (!eventId) return
+    queryClient.setQueryData(queryKeys.eventMedia(eventId), (old: Media[]) =>
+      old?.filter((media: Media) => media.id !== id) || []
+    )
+  }
+
+  return {
+    handleMediaInsert,
+    handleMediaUpdate,
+    handleMediaDelete,
+    addMedia,
+    updateMedia,
+    removeMedia,
+  }
 } 

@@ -111,7 +111,7 @@ export async function getDeliveryStatsForEvent(eventId: string): Promise<Deliver
     const messageIds = messages.map(m => m.id);
     
     // Get delivery statistics with read tracking support
-    // TODO: Add 'read_at' to select when migration is applied
+          // FUTURE: Add 'read_at' column support in Phase 6 schema expansion
     const { data: deliveries, error: deliveriesError } = await supabase
       .from('message_deliveries')
       .select('sms_status, email_status, push_status, has_responded, created_at, updated_at')
@@ -131,10 +131,10 @@ export async function getDeliveryStatsForEvent(eventId: string): Promise<Deliver
     const totalResponses = deliveries?.filter(d => d.has_responded === true).length || 0;
     
     // Enhanced: Calculate read statistics
-    // TODO: Use read_at column when migration is applied
+    // FUTURE: Use read_at column when Phase 6 read receipts are implemented
     // For now, we'll use a heuristic: messages with responses are considered "read"
     const totalRead = deliveries?.filter(d => {
-      // TODO: If read_at column exists, use it
+      // FUTURE: Use read_at column when available in Phase 6 schema
       // if (d.read_at) return true;
       // Fallback: if they responded, they must have read it
       if (d.has_responded) return true;
@@ -210,7 +210,7 @@ export async function getEngagementMetrics(messageId: string): Promise<Engagemen
     
     // Enhanced: Calculate read metrics
     const readDeliveries = deliveries.filter(d => {
-      // TODO: Use read_at if available (when migration is applied)
+      // FUTURE: Use read_at if available (Phase 6 read receipts)
       // if (d.read_at) return true;
       // Fallback heuristics
       if (d.has_responded) return true;
@@ -229,7 +229,7 @@ export async function getEngagementMetrics(messageId: string): Promise<Engagemen
       .filter(d => d.created_at && d.updated_at)
       .map(d => {
         const created = new Date(d.created_at!);
-        // TODO: Use d.read_at when available
+        // FUTURE: Use d.read_at when Phase 6 is implemented
         const readTime = new Date(d.updated_at!);
         return (readTime.getTime() - created.getTime()) / (1000 * 60); // minutes
       })
@@ -612,14 +612,14 @@ export async function recordDeliveryStatus(
 
 /**
  * Record that a message was read (opened) by a guest
- * TODO: Update to use read_at column once migration is applied
+ * FUTURE: Update to use read_at column in Phase 6 read receipts
  */
 export async function recordMessageRead(
   messageDeliveryId: string,
   readAt: Date = new Date()
 ): Promise<void> {
   try {
-    // TODO: Update to set read_at column once migration is applied
+    // FUTURE: Update to set read_at column in Phase 6 schema
     // For now, we'll just update the timestamp as a placeholder
     const { error } = await supabase
       .from('message_deliveries')

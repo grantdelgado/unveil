@@ -2,10 +2,10 @@
 
 import React, { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/Button';
-import { supabase } from '@/lib/supabase/client';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { CardContainer } from '@/components/ui/CardContainer';
 import { SectionTitle, FieldLabel, MicroCopy } from '@/components/ui/Typography';
+import { importGuestsEnhanced, type GuestImportEntry } from '@/services/guests';
 
 interface GuestImportWizardProps {
   eventId: string;
@@ -13,13 +13,8 @@ interface GuestImportWizardProps {
   onImportComplete: () => void;
 }
 
-interface GuestEntry {
-  fullName: string;
-  phone: string;
-  email?: string;
-  role?: 'host' | 'guest';
-  notes?: string;
-}
+// Using GuestImportEntry from service layer
+type GuestEntry = GuestImportEntry;
 
 export function GuestImportWizard({
   eventId,
@@ -58,74 +53,29 @@ export function GuestImportWizard({
     setError(null);
 
     try {
-      // Process each guest
-      for (const guest of guests) {
-        if (!guest.fullName.trim() || !guest.phone.trim()) {
-          continue; // Skip invalid entries
-        }
+      // Use the service layer for guest import
+      const result = await importGuestsEnhanced(eventId, guests);
 
-        // Format phone number
-        let formattedPhone = guest.phone.trim();
-        if (!formattedPhone.startsWith('+')) {
-          formattedPhone = '+1' + formattedPhone.replace(/\D/g, '');
-        }
+      if (result.error) {
+        throw result.error;
+      }
 
-        // First, check if user already exists
-        const { data: existingUser } = await supabase
-          .from('users')
-          .select('id')
-          .eq('phone', formattedPhone)
-          .single();
-
-        let userId: string;
-
-        if (existingUser) {
-          userId = existingUser.id;
+      if (result.data) {
+        const { imported, errors } = result.data;
+        
+        if (errors.length > 0) {
+          console.warn('Some guests failed to import:', errors);
+          setError(`Imported ${imported} guests. ${errors.length} failed: ${errors.join(', ')}`);
         } else {
-          // Create new user
-          const { data: newUser, error: userError } = await supabase
-            .from('users')
-            .insert({
-              phone: formattedPhone,
-              full_name: guest.fullName.trim(),
-              email: guest.email?.trim() || null,
-            })
-            .select('id')
-            .single();
-
-          if (userError) {
-            console.error('Error creating user:', userError);
-            continue;
-          }
-
-          userId = newUser.id;
-        }
-
-        // Add as event guest
-        const { error: guestError } = await supabase
-          .from('event_guests')
-          .insert({
-            event_id: eventId,
-            user_id: userId,
-            phone: guest.phone,
-            guest_name: guest.fullName,
-            guest_email: guest.email || null,
-            role: guest.role || 'guest',
-            notes: guest.notes?.trim() || null,
-            rsvp_status: 'pending',
-            preferred_communication: 'sms',
-            sms_opt_out: false,
-          });
-
-        if (guestError) {
-          console.error('Error adding guest:', guestError);
+          console.log(`Successfully imported ${imported} guests`);
         }
       }
 
       onImportComplete();
     } catch (err) {
       console.error('Error processing guests:', err);
-      setError('Failed to import guests. Please try again.');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to import guests. Please try again.';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
