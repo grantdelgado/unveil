@@ -5,39 +5,14 @@ import type {
   MessageType,
   MessageWithSender,
 } from '@/lib/supabase/types';
-import { logDatabaseError } from '@/lib/logger';
+import { handleMessagingDatabaseError } from '@/lib/error-handling/database';
 import { UI_CONFIG } from '@/lib/constants';
 
 // Message constraints
 const MAX_MESSAGE_LENGTH = 2000;
 const MIN_MESSAGE_LENGTH = 1;
 
-// Error handling for database constraints
-const handleDatabaseError = (error: unknown, context: string) => {
-  logDatabaseError(`Database error in ${context}`, error, context);
-
-  const dbError = error as { code?: string; message?: string };
-
-  if (dbError.code === '23505') {
-    throw new Error('Duplicate message detected');
-  }
-
-  if (dbError.code === '23503') {
-    if (dbError.message?.includes('event_id')) {
-      throw new Error('Invalid event ID');
-    }
-    if (dbError.message?.includes('sender_user_id')) {
-      throw new Error('Invalid sender user ID');
-    }
-    throw new Error('Invalid reference in database');
-  }
-
-  if (dbError.code === '23514') {
-    throw new Error('Invalid message type - must be direct or announcement');
-  }
-
-  throw new Error(dbError.message || 'Database operation failed');
-};
+// Removed: handleDatabaseError function - now using unified DatabaseErrorHandler from lib/error-handling/database.ts
 
 /**
  * Validates message content for length and format requirements
@@ -124,7 +99,7 @@ export const getEventMessages = async (eventId: string) => {
       .eq('event_id', eventId)
       .order('created_at', { ascending: true });
   } catch (error) {
-    handleDatabaseError(error, 'getEventMessages');
+    handleMessagingDatabaseError(error, 'SELECT', 'messages');
   }
 };
 
@@ -174,7 +149,7 @@ export const sendMessage = async (messageData: MessageInsert) => {
       )
       .single();
   } catch (error) {
-    handleDatabaseError(error, 'sendMessage');
+    handleMessagingDatabaseError(error, 'INSERT', 'messages');
   }
 };
 
@@ -182,7 +157,7 @@ export const deleteMessage = async (id: string) => {
   try {
     return await supabase.from('messages').delete().eq('id', id);
   } catch (error) {
-    handleDatabaseError(error, 'deleteMessage');
+    handleMessagingDatabaseError(error, 'DELETE', 'messages');
   }
 };
 
@@ -203,7 +178,7 @@ export const getMessagesByType = async (
       .eq('message_type', messageType)
       .order('created_at', { ascending: true });
   } catch (error) {
-    handleDatabaseError(error, 'getMessagesByType');
+    handleMessagingDatabaseError(error, 'SELECT', 'messages');
   }
 };
 
@@ -229,7 +204,7 @@ export const updateMessage = async (id: string, updates: MessageUpdate) => {
       )
       .single();
   } catch (error) {
-    handleDatabaseError(error, 'updateMessage');
+    handleMessagingDatabaseError(error, 'UPDATE', 'messages');
   }
 };
 
@@ -254,7 +229,7 @@ export const getMessageById = async (id: string) => {
     ) {
       throw new Error('Message not found');
     }
-    handleDatabaseError(error, 'getMessageById');
+    handleMessagingDatabaseError(error, 'SELECT', 'messages');
   }
 };
 
@@ -275,7 +250,7 @@ export const getMessagesBySender = async (
       .eq('sender_user_id', senderId)
       .order('created_at', { ascending: true });
   } catch (error) {
-    handleDatabaseError(error, 'getMessagesBySender');
+    handleMessagingDatabaseError(error, 'SELECT', 'messages');
   }
 };
 
@@ -296,7 +271,7 @@ export const getRecentMessages = async (
       .order('created_at', { ascending: false })
       .limit(limit);
   } catch (error) {
-    handleDatabaseError(error, 'getRecentMessages');
+    handleMessagingDatabaseError(error, 'SELECT', 'messages');
   }
 };
 
@@ -320,7 +295,7 @@ export const getMessageStats = async (eventId: string) => {
 
     return { data: stats, error: null };
   } catch (error) {
-    handleDatabaseError(error, 'getMessageStats');
+    handleMessagingDatabaseError(error, 'SELECT', 'messages');
   }
 };
 
@@ -371,7 +346,7 @@ export const sendBulkMessage = async (
       message_type: messageType,
     });
   } catch (error) {
-    handleDatabaseError(error, 'sendBulkMessage');
+    handleMessagingDatabaseError(error, 'INSERT', 'messages');
   }
 };
 
@@ -422,7 +397,7 @@ export const getEventMessagesPaginated = async (
       error: result.error ? new Error(result.error.message) : null,
     }
   } catch (error) {
-    handleDatabaseError(error, 'getEventMessagesPaginated')
+    handleMessagingDatabaseError(error, 'SELECT', 'messages')
   }
 }
 
@@ -490,7 +465,7 @@ export const getMessageThread = async (
       error: null,
     }
   } catch (error) {
-    handleDatabaseError(error, 'getMessageThread')
+    handleMessagingDatabaseError(error, 'SELECT', 'messages')
   }
 }
 
@@ -541,6 +516,6 @@ export const searchMessages = async (
       error: result.error ? new Error(result.error.message) : null,
     }
   } catch (error) {
-    handleDatabaseError(error, 'searchMessages')
+    handleMessagingDatabaseError(error, 'SELECT', 'messages')
   }
 }

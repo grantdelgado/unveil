@@ -1,4 +1,5 @@
 import { getErrorMessage } from './utils';
+import { SMSRetry } from '@/lib/utils/retry';
 
 // Twilio configuration - will be dynamically imported to avoid server-side issues
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -79,7 +80,7 @@ export async function sendScheduledSMS(delivery: ScheduledSMSDelivery): Promise<
       }
       
       // Check if error is retryable (5xx errors, rate limits, temporary failures)
-      const shouldRetry = isRetryableError(result.error);
+      const shouldRetry = SMSRetry.isRetryable(result.error);
       if (!shouldRetry) {
         console.log(`❌ Non-retryable error for guest ${delivery.guestId.slice(-4)}: ${result.error}`);
         return {
@@ -513,25 +514,7 @@ export async function sendBulkScheduledSMS(
   };
 }
 
-/**
- * Check if an SMS error is retryable
- */
-function isRetryableError(error?: string): boolean {
-  if (!error) return false;
-  
-  const retryablePatterns = [
-    /rate.?limit/i,
-    /timeout/i,
-    /network/i,
-    /service.?unavailable/i,
-    /internal.?server.?error/i,
-    /502|503|504/,
-    /temporarily.?unavailable/i,
-    /queue.?full/i,
-  ];
-  
-  return retryablePatterns.some(pattern => pattern.test(error));
-}
+// Removed: isRetryableError function - now using unified RetryManager from lib/utils/retry.ts
 
 /**
  * Validate and normalize phone number for SMS delivery

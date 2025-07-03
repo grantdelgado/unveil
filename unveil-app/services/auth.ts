@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase/client';
 import type { UserInsert } from '@/lib/supabase/types';
 import { logAuth, logAuthError, logDev } from '@/lib/logger';
+import { handleAuthDatabaseError } from '@/lib/error-handling/database';
 
 // Development phone whitelist - retrieved from Supabase auth.users with @dev.unveil.app emails
 const DEV_PHONE_WHITELIST = ['+15550000001', '+15550000002', '+15550000003'];
@@ -42,25 +43,7 @@ const OTP_RATE_LIMIT_WINDOW = 60 * 60 * 1000; // 1 hour in milliseconds
 const OTP_BLOCK_DURATION = 15 * 60 * 1000; // 15 minutes in milliseconds
 const MIN_RETRY_INTERVAL = 60 * 1000; // 1 minute between attempts
 
-// Error handling for database constraints
-const handleDatabaseError = (error: unknown, context: string) => {
-  logAuthError(`Database error in ${context}`, error, context);
-
-  const dbError = error as { code?: string; message?: string };
-
-  if (dbError.code === '23505') {
-    if (dbError.message?.includes('phone')) {
-      throw new Error('A user with this phone number already exists');
-    }
-    throw new Error('User already exists');
-  }
-
-  if (dbError.code === '23503') {
-    throw new Error('Invalid user reference');
-  }
-
-  throw new Error(dbError.message || 'Database operation failed');
-};
+// Removed: handleDatabaseError function - now using unified DatabaseErrorHandler from lib/error-handling/database.ts
 
 // Phone number normalization utility
 const normalizePhoneNumber = (phone: string): string => {
@@ -826,7 +809,7 @@ export const getUserByPhone = async (phone: string) => {
     ) {
       return { data: null, error: null }; // User not found is OK
     }
-    handleDatabaseError(error, 'getUserByPhone');
+    handleAuthDatabaseError(error, 'SELECT', 'users');
   }
 };
 

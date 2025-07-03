@@ -365,7 +365,7 @@ export async function recordGuestResponse(
     // This would require a separate responses table or adding a response_content field
     if (responseContent) {
       // For now, we'll just log it
-      console.log('Guest response content:', responseContent);
+      // Log guest response content for debugging if needed
     }
   } catch (error) {
     console.error('Error recording guest response:', error);

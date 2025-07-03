@@ -9,30 +9,7 @@ import type {
   ServiceResponse,
   ServiceResponseArray,
 } from '@/lib/supabase/types';
-import { logDatabaseError } from '@/lib/logger';
-
-// Error handling for database constraints
-const handleDatabaseError = (error: unknown, context: string) => {
-  logDatabaseError(`Database error in ${context}`, error, context);
-
-  const dbError = error as { code?: string; message?: string };
-
-  if (dbError.code === '23505') {
-    if (dbError.message?.includes('phone')) {
-      throw new Error('A user with this phone number already exists');
-    }
-    if (dbError.message?.includes('event_participants_event_id_user_id_key') || 
-        dbError.message?.includes('event_guests_event_id_user_id_key')) {
-      throw new Error('This user is already a guest in this event');
-    }
-  }
-
-  if (dbError.code === '23503') {
-    throw new Error('Invalid event or user reference');
-  }
-
-  throw new Error(dbError.message || 'Database operation failed');
-};
+import { handleGuestsDatabaseError } from '@/lib/error-handling/database';
 
 // Guest service functions (unified guest management)
 export const getEventGuests = async (
@@ -139,9 +116,9 @@ export const updateGuest = async (
       `,
       )
       .single();
-  } catch (error) {
-    handleDatabaseError(error, 'updateGuest');
-  }
+      } catch (error) {
+      handleGuestsDatabaseError(error, 'UPDATE', 'event_guests');
+    }
 };
 
 // Legacy participant function replaced with updateGuest
@@ -154,7 +131,7 @@ export const removeGuest = async (eventId: string, userId: string) => {
       .eq('event_id', eventId)
       .eq('user_id', userId);
   } catch (error) {
-    handleDatabaseError(error, 'removeGuest');
+    handleGuestsDatabaseError(error, 'DELETE', 'event_guests');
   }
 };
 
@@ -168,7 +145,7 @@ export const removeGuestByPhone = async (eventId: string, phone: string) => {
       .eq('phone', phone)
       .is('user_id', null);
   } catch (error) {
-    handleDatabaseError(error, 'removeGuestByPhone');
+    handleGuestsDatabaseError(error, 'DELETE', 'event_guests');
   }
 };
 
@@ -211,7 +188,7 @@ export const importGuests = async (
         users:user_id(*)
       `);
   } catch (error) {
-    handleDatabaseError(error, 'importGuests');
+    handleGuestsDatabaseError(error, 'INSERT', 'event_guests');
   }
 };
 
@@ -236,7 +213,7 @@ export const updateGuestRSVP = async (
       )
       .single();
   } catch (error) {
-    handleDatabaseError(error, 'updateGuestRSVP');
+    handleGuestsDatabaseError(error, 'UPDATE', 'event_guests');
   }
 };
 
@@ -260,7 +237,7 @@ export const updateGuestRSVPByPhone = async (
       )
       .single();
   } catch (error) {
-    handleDatabaseError(error, 'updateGuestRSVPByPhone');
+    handleGuestsDatabaseError(error, 'UPDATE', 'event_guests');
   }
 };
 
@@ -281,7 +258,7 @@ export const addGuestToEvent = async (
       )
       .single();
   } catch (error) {
-    handleDatabaseError(error, 'addGuestToEvent');
+    handleGuestsDatabaseError(error, 'INSERT', 'event_guests');
   }
 };
 
@@ -304,7 +281,7 @@ export const getGuestsByRole = async (
       .eq('role', role)
       .order('created_at', { ascending: false });
   } catch (error) {
-    handleDatabaseError(error, 'getGuestsByRole');
+    handleGuestsDatabaseError(error, 'SELECT', 'event_guests');
   }
 };
 
@@ -338,7 +315,7 @@ export const inviteGuest = async (
       preferred_communication: 'sms',
     });
   } catch (error) {
-    handleDatabaseError(error, 'inviteGuest');
+    handleGuestsDatabaseError(error, 'INSERT', 'event_guests');
   }
 };
 
@@ -367,7 +344,7 @@ export const getGuestsByTags = async (eventId: string, tags?: string[]) => {
       .overlaps('guest_tags', tags)
       .order('created_at', { ascending: false });
   } catch (error) {
-    handleDatabaseError(error, 'getGuestsByTags');
+    handleGuestsDatabaseError(error, 'SELECT', 'event_guests');
   }
 };
 

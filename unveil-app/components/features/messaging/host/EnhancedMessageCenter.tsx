@@ -65,8 +65,7 @@ export function EnhancedMessageCenter({ eventId, className }: EnhancedMessageCen
 
         setGuests(guestsData || []);
         setMessages(messagesData || []);
-      } catch (err) {
-        console.error('Error fetching data:', err);
+      } catch {
         setError('Failed to load messaging data. Please try again.');
       } finally {
         setLoading(false);
@@ -89,11 +88,13 @@ export function EnhancedMessageCenter({ eventId, className }: EnhancedMessageCen
     }
   };
 
-  const handleRecipientFilterChange = (filter: RecipientFilter, advancedFilter?: AdvancedRecipientFilter) => {
+  const handleRecipientFilterChange = (
+    filter: RecipientFilter, 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    advancedFilter?: AdvancedRecipientFilter
+  ) => {
     setSelectedRecipientFilter(filter);
-    // TODO: Handle advanced filter in future iterations
-    // Currently unused but preserved for API compatibility
-    console.debug('Advanced filter:', advancedFilter);
+    // Advanced filter preserved for future iterations - currently unused but maintains API compatibility
   };
 
   // Convert guests to guests format for compatibility
@@ -140,8 +141,8 @@ export function EnhancedMessageCenter({ eventId, className }: EnhancedMessageCen
         // Switch to history view briefly to show sent message
         setActiveView('history');
         setTimeout(() => setActiveView('compose'), 2000);
-      } catch (err) {
-        console.error('Error refreshing messages:', err);
+      } catch {
+        // Message refresh failed - user will see stale data
       }
     };
 

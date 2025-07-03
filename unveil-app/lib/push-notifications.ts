@@ -1,4 +1,5 @@
 import { getErrorMessage } from './utils';
+import { PushRetry } from '@/lib/utils/retry';
 
 // Push notification configuration
 const fcmServerKey = process.env.FCM_SERVER_KEY;
@@ -91,7 +92,7 @@ export async function sendPushNotification(payload: PushNotificationPayload): Pr
       }
       
       // Check if error is retryable
-      const shouldRetry = isPushRetryableError(result.error, result.failureReason);
+      const shouldRetry = PushRetry.isRetryable(result.error, result.failureReason);
       if (!shouldRetry) {
         console.log(`❌ Non-retryable push error for token ${redactedToken}: ${result.error}`);
         return {
@@ -389,33 +390,7 @@ export async function registerDeviceToken(
   }
 }
 
-/**
- * Check if a push notification error is retryable
- */
-function isPushRetryableError(error?: string, failureReason?: string): boolean {
-  if (!error && !failureReason) return false;
-  
-  const retryableReasons = ['network_error', 'service_unavailable', 'rate_limited'];
-  if (failureReason && retryableReasons.includes(failureReason)) {
-    return true;
-  }
-  
-  if (error) {
-    const retryablePatterns = [
-      /rate.?limit/i,
-      /timeout/i,
-      /network/i,
-      /service.?unavailable/i,
-      /internal.?server.?error/i,
-      /502|503|504/,
-      /temporarily.?unavailable/i,
-    ];
-    
-    return retryablePatterns.some(pattern => pattern.test(error));
-  }
-  
-  return false;
-}
+// Removed: isPushRetryableError function - now using unified RetryManager from lib/utils/retry.ts
 
 /**
  * Map FCM error codes to failure reasons

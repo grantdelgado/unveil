@@ -4,7 +4,7 @@ import type {
   EventUpdate,
   EventGuestInsert,
 } from '@/lib/supabase/types';
-import { logDatabaseError } from '@/lib/logger';
+import { handleEventsDatabaseError } from '@/lib/error-handling/database';
 import {
   getEventGuests,
   addGuestToEvent,
@@ -12,36 +12,6 @@ import {
   removeGuest,
   updateGuest,
 } from './guests';
-
-// Error handling for database constraints
-const handleDatabaseError = (error: unknown, context: string) => {
-  logDatabaseError(`Database error in ${context}`, error, context);
-
-  const dbError = error as { code?: string; message?: string };
-
-  if (dbError.code === '23505') {
-    throw new Error('A record with this information already exists');
-  }
-
-  if (dbError.code === '23503') {
-    if (dbError.message?.includes('host_user_id')) {
-      throw new Error('Invalid host user ID');
-    }
-    if (dbError.message?.includes('event_id')) {
-      throw new Error('Invalid event ID');
-    }
-    if (dbError.message?.includes('user_id')) {
-      throw new Error('Invalid user ID');
-    }
-    throw new Error('Invalid reference in database');
-  }
-
-  if (dbError.code === '23514') {
-    throw new Error('Data validation failed - please check your input');
-  }
-
-  throw new Error(dbError.message || 'Database operation failed');
-};
 
 /**
  * Creates a new event in the database
@@ -81,7 +51,7 @@ export const createEvent = async (eventData: EventInsert) => {
       )
       .single();
   } catch (error) {
-    handleDatabaseError(error, 'createEvent');
+    handleEventsDatabaseError(error, 'INSERT', 'events');
   }
 };
 
@@ -123,7 +93,7 @@ export const updateEvent = async (id: string, updates: EventUpdate) => {
       )
       .single();
   } catch (error) {
-    handleDatabaseError(error, 'updateEvent');
+    handleEventsDatabaseError(error, 'UPDATE', 'events');
   }
 };
 
@@ -158,7 +128,7 @@ export const deleteEvent = async (id: string) => {
   try {
     return await supabase.from('events').delete().eq('id', id);
   } catch (error) {
-    handleDatabaseError(error, 'deleteEvent');
+    handleEventsDatabaseError(error, 'DELETE', 'events');
   }
 };
 
@@ -206,7 +176,7 @@ export const getEventById = async (id: string) => {
     ) {
       throw new Error('Event not found');
     }
-    handleDatabaseError(error, 'getEventById');
+    handleEventsDatabaseError(error, 'SELECT', 'events');
   }
 };
 
@@ -223,7 +193,7 @@ export const getHostEvents = async (hostId: string) => {
       .eq('host_user_id', hostId)
       .order('event_date', { ascending: true });
   } catch (error) {
-    handleDatabaseError(error, 'getHostEvents');
+    handleEventsDatabaseError(error, 'SELECT', 'events');
   }
 };
 
@@ -243,7 +213,7 @@ export const getGuestEvents = async (userId: string) => {
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
   } catch (error) {
-    handleDatabaseError(error, 'getGuestEvents');
+    handleEventsDatabaseError(error, 'SELECT', 'events');
   }
 };
 
@@ -291,7 +261,7 @@ export const getEventStats = async (eventId: string) => {
       error: null,
     };
   } catch (error) {
-    handleDatabaseError(error, 'getEventStats');
+    handleEventsDatabaseError(error, 'SELECT', 'events');
   }
 };
 

@@ -4,7 +4,7 @@ import type {
   MediaType,
   MediaWithUploader,
 } from '@/lib/supabase/types';
-import { logDatabaseError } from '@/lib/logger';
+import { handleMediaDatabaseError } from '@/lib/error-handling/database';
 import { UI_CONFIG } from '@/lib/constants';
 
 // File upload constraints with enhanced security
@@ -82,32 +82,7 @@ const FILE_SIGNATURES = {
   ],
 };
 
-// Error handling for database constraints
-const handleDatabaseError = (error: unknown, context: string) => {
-  logDatabaseError(`Database error in ${context}`, error, context);
-
-  const dbError = error as { code?: string; message?: string };
-
-  if (dbError.code === '23505') {
-    throw new Error('A media file with this path already exists');
-  }
-
-  if (dbError.code === '23503') {
-    if (dbError.message?.includes('event_id')) {
-      throw new Error('Invalid event ID');
-    }
-    if (dbError.message?.includes('uploader_user_id')) {
-      throw new Error('Invalid user ID');
-    }
-    throw new Error('Invalid reference in database');
-  }
-
-  if (dbError.code === '23514') {
-    throw new Error('Invalid media type - must be image or video');
-  }
-
-  throw new Error(dbError.message || 'Database operation failed');
-};
+// Removed: handleDatabaseError function - now using unified DatabaseErrorHandler from lib/error-handling/database.ts
 
 /**
  * File validation functions for media uploads
@@ -362,7 +337,7 @@ export const getEventMedia = async (eventId: string) => {
       .eq('event_id', eventId)
       .order('created_at', { ascending: false });
   } catch (error) {
-    handleDatabaseError(error, 'getEventMedia');
+    handleMediaDatabaseError(error, 'SELECT', 'media');
   }
 };
 
@@ -393,7 +368,7 @@ export const uploadMedia = async (mediaData: {
       )
       .single();
   } catch (error) {
-    handleDatabaseError(error, 'uploadMedia');
+    handleMediaDatabaseError(error, 'INSERT', 'media');
   }
 };
 
@@ -411,7 +386,7 @@ export const updateMediaCaption = async (id: string, caption: string) => {
       )
       .single();
   } catch (error) {
-    handleDatabaseError(error, 'updateMediaCaption');
+    handleMediaDatabaseError(error, 'UPDATE', 'media');
   }
 };
 
@@ -419,7 +394,7 @@ export const deleteMedia = async (id: string) => {
   try {
     return await supabase.from('media').delete().eq('id', id);
   } catch (error) {
-    handleDatabaseError(error, 'deleteMedia');
+    handleMediaDatabaseError(error, 'DELETE', 'media');
   }
 };
 
@@ -444,7 +419,7 @@ export const getMediaById = async (id: string) => {
     ) {
       throw new Error('Media not found');
     }
-    handleDatabaseError(error, 'getMediaById');
+    handleMediaDatabaseError(error, 'SELECT', 'media');
   }
 };
 
@@ -465,7 +440,7 @@ export const getMediaStats = async (eventId: string) => {
 
     return { data: stats, error: null };
   } catch (error) {
-    handleDatabaseError(error, 'getMediaStats');
+    handleMediaDatabaseError(error, 'SELECT', 'media');
   }
 };
 
@@ -483,7 +458,7 @@ export const getMediaByType = async (eventId: string, mediaType: MediaType) => {
       .eq('media_type', mediaType)
       .order('created_at', { ascending: false });
   } catch (error) {
-    handleDatabaseError(error, 'getMediaByType');
+    handleMediaDatabaseError(error, 'SELECT', 'media');
   }
 };
 
@@ -504,7 +479,7 @@ export const getMediaByUploader = async (
       .eq('uploader_user_id', uploaderId)
       .order('created_at', { ascending: false });
   } catch (error) {
-    handleDatabaseError(error, 'getMediaByUploader');
+    handleMediaDatabaseError(error, 'SELECT', 'media');
   }
 };
 
@@ -557,7 +532,7 @@ export const getEventMediaPaginated = async (
       error: result.error ? new Error(result.error.message) : null,
     }
   } catch (error) {
-    handleDatabaseError(error, 'getEventMediaPaginated')
+    handleMediaDatabaseError(error, 'SELECT', 'media')
   }
 }
 
@@ -625,7 +600,7 @@ export const getRecentMediaPaginated = async (
       error: result.error ? new Error(result.error.message) : null,
     }
   } catch (error) {
-    handleDatabaseError(error, 'getRecentMediaPaginated')
+    handleMediaDatabaseError(error, 'SELECT', 'media')
   }
 }
 
