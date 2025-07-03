@@ -12,6 +12,7 @@ import {
   type MessageAnalytics,
 } from '@/services/messaging/analytics';
 import { useRealtimeSubscription } from '@/hooks/realtime/useRealtimeSubscription';
+import { logger } from '@/lib/logger';
 
 /**
  * Hook for getting overall delivery statistics for an event
@@ -117,14 +118,23 @@ export function useRealtimeAnalytics(eventId: string) {
       });
       
       // If we have a specific message ID, invalidate its engagement metrics
-      if (payload.new?.scheduled_message_id) {
+      interface MessageDeliveryPayload {
+        scheduled_message_id?: string;
+        sms_status?: string;
+        email_status?: string;
+        push_status?: string;
+        has_responded?: boolean;
+      }
+      
+      const newData = payload.new as MessageDeliveryPayload;
+      if (newData?.scheduled_message_id) {
         queryClient.invalidateQueries({
-          queryKey: ['engagement-metrics', payload.new.scheduled_message_id],
+          queryKey: ['engagement-metrics', newData.scheduled_message_id],
         });
       }
     },
     onError: (error) => {
-      console.error('Real-time analytics subscription error:', error);
+      logger.realtimeError('Real-time analytics subscription error', error);
     },
   });
 
@@ -144,7 +154,7 @@ export function useRealtimeAnalytics(eventId: string) {
       });
     },
     onError: (error) => {
-      console.error('Real-time RSVP analytics subscription error:', error);
+      logger.realtimeError('Real-time RSVP analytics subscription error', error);
     },
   });
 }

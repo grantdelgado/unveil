@@ -19,7 +19,7 @@ import type { DomainErrorUnion } from './errors';
 import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
 
 // Base hook result pattern
-export interface BaseHookResult<TData = unknown, TError = DomainErrorUnion> {
+export interface BaseHookResult<TData = Record<string, never>, TError = DomainErrorUnion> {
   loading: boolean;
   error: TError | null;
   refetch: () => Promise<void>;
@@ -34,7 +34,7 @@ export interface LoadingState {
 }
 
 export interface EnhancedHookResult<
-  TData = unknown,
+  TData = Record<string, never>,
   TError = DomainErrorUnion,
 > {
   loading: LoadingState;
@@ -164,7 +164,7 @@ export interface FormHookResult<TFormData = Record<string, unknown>> {
 }
 
 // Real-time Hook Types
-export interface RealtimeHookResult<TData = unknown>
+export interface RealtimeHookResult<TData = Record<string, never>>
   extends BaseHookResult<TData[]> {
   data: TData[];
   isConnected: boolean;
@@ -176,7 +176,7 @@ export interface RealtimeHookResult<TData = unknown>
 }
 
 // Mutation result type for consistent mutation responses
-export interface MutationResult<TData = unknown> {
+export interface MutationResult<TData = Record<string, never>> {
   success: boolean;
   data?: TData;
   error?: DomainErrorUnion | null;
@@ -201,7 +201,7 @@ export interface PaginationState {
   hasPreviousPage: boolean;
 }
 
-export interface PaginatedHookResult<TData = unknown>
+export interface PaginatedHookResult<TData = Record<string, never>>
   extends BaseHookResult<TData[]> {
   data: TData[];
   pagination: PaginationState;
@@ -212,7 +212,7 @@ export interface PaginatedHookResult<TData = unknown>
 }
 
 // Filter and search types
-export interface FilterState<TFilters = Record<string, unknown>> {
+export interface FilterState<TFilters = Record<string, string | number | boolean>> {
   filters: TFilters;
   searchQuery: string;
   sortBy: string;
@@ -220,13 +220,13 @@ export interface FilterState<TFilters = Record<string, unknown>> {
 }
 
 export interface FilterableHookResult<
-  TData = unknown,
-  TFilters = Record<string, unknown>,
+  TData = Record<string, never>,
+  TFilters = Record<string, string | number | boolean>,
 > extends BaseHookResult<TData[]> {
   data: TData[];
   filteredData: TData[];
   filterState: FilterState<TFilters>;
-  setFilter: (key: keyof TFilters, value: unknown) => void;
+  setFilter: (key: keyof TFilters, value: TFilters[keyof TFilters]) => void;
   clearFilter: (key: keyof TFilters) => void;
   clearAllFilters: () => void;
   setSearchQuery: (query: string) => void;
@@ -234,14 +234,14 @@ export interface FilterableHookResult<
 }
 
 // Cache management types
-export interface CacheState<TData = unknown> {
+export interface CacheState<TData = Record<string, never>> {
   data: TData | null;
   timestamp: Date | null;
   isStale: boolean;
   ttl: number; // Time to live in milliseconds
 }
 
-export interface CachedHookResult<TData = unknown>
+export interface CachedHookResult<TData = Record<string, never>>
   extends BaseHookResult<TData> {
   cache: CacheState<TData>;
   invalidateCache: () => void;
@@ -270,13 +270,13 @@ export interface FileUploadHookResult {
 }
 
 // Optimistic update types
-export interface OptimisticUpdateState<TData = unknown> {
+export interface OptimisticUpdateState<TData = Record<string, never>> {
   optimisticData: TData[];
   pendingUpdates: Map<string, TData>;
   rollbackQueue: Array<() => void>;
 }
 
-export interface OptimisticHookResult<TData = unknown>
+export interface OptimisticHookResult<TData = Record<string, never>>
   extends BaseHookResult<TData[]> {
   data: TData[];
   optimisticState: OptimisticUpdateState<TData>;
@@ -288,7 +288,7 @@ export interface OptimisticHookResult<TData = unknown>
 
 // Subscription management for real-time features
 export interface SubscriptionState {
-  subscriptions: Map<string, unknown>;
+  subscriptions: Map<string, { channel: string; callback: (data: Record<string, never>) => void }>;
   activeChannels: string[];
   connectionErrors: DomainErrorUnion[];
   reconnectAttempts: number;
@@ -297,7 +297,7 @@ export interface SubscriptionState {
 
 export interface SubscriptionHookResult {
   subscriptionState: SubscriptionState;
-  subscribe: (channel: string, callback: (data: unknown) => void) => string;
+  subscribe: (channel: string, callback: (data: Record<string, never>) => void) => string;
   unsubscribe: (subscriptionId: string) => void;
   unsubscribeAll: () => void;
   reconnect: () => Promise<void>;
@@ -312,7 +312,7 @@ export type AsyncHookFactory<TParams, TResult> = (
 ) => Promise<TResult>;
 
 // Generic hook result creator
-export function createHookResult<TData = unknown>(
+export function createHookResult<TData = Record<string, never>>(
   data: TData,
   loading = false,
   error: DomainErrorUnion | null = null,
@@ -328,7 +328,7 @@ export function createHookResult<TData = unknown>(
 }
 
 // Mutation result creator
-export function createMutationResult<TData = unknown>(
+export function createMutationResult<TData = Record<string, never>>(
   success: boolean,
   data?: TData,
   error?: DomainErrorUnion | null,

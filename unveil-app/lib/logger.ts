@@ -24,7 +24,7 @@ interface LogEntry {
   level: LogLevel;
   category: LogCategory;
   message: string;
-  data?: unknown;
+  data?: Record<string, string | number | boolean | null> | string | number | boolean | null;
   timestamp: string;
   context?: string;
 }
@@ -117,7 +117,7 @@ class Logger {
     level: LogLevel,
     category: LogCategory,
     message: string,
-    data?: unknown,
+    data?: Record<string, string | number | boolean | null> | string | number | boolean | null,
     context?: string,
   ): LogEntry {
     return {
@@ -201,7 +201,7 @@ class Logger {
     level: LogLevel,
     category: LogCategory,
     message: string,
-    data?: unknown,
+    data?: Record<string, string | number | boolean | null> | string | number | boolean | null,
     context?: string,
   ): void {
     if (!this.shouldLog(level, category)) {
@@ -213,7 +213,7 @@ class Logger {
   }
 
   // Category-specific logging methods
-  auth(message: string, data?: unknown, context?: string): void {
+  auth(message: string, data?: Record<string, string | number | boolean | null> | string | number | boolean | null, context?: string): void {
     this.log('info', 'auth', message, data, context);
   }
 

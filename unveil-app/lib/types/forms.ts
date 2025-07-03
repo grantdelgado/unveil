@@ -9,41 +9,41 @@ import type { z } from 'zod';
 import type { FormValidationError } from './errors';
 
 // Base form field types
-export interface BaseFormField {
-  value: unknown;
+export interface BaseFormField<T = string | number | boolean | Date | File | null> {
+  value: T;
   error?: string;
   touched: boolean;
   dirty: boolean;
   validated: boolean;
 }
 
-export interface StringFormField extends BaseFormField {
+export interface StringFormField extends BaseFormField<string> {
   value: string;
 }
 
-export interface NumberFormField extends BaseFormField {
+export interface NumberFormField extends BaseFormField<number | null> {
   value: number | null;
 }
 
-export interface BooleanFormField extends BaseFormField {
+export interface BooleanFormField extends BaseFormField<boolean> {
   value: boolean;
 }
 
-export interface DateFormField extends BaseFormField {
+export interface DateFormField extends BaseFormField<Date | null> {
   value: Date | null;
 }
 
-export interface FileFormField extends BaseFormField {
+export interface FileFormField extends BaseFormField<File | null> {
   value: File | null;
   preview?: string;
 }
 
-export interface ArrayFormField<T = unknown> extends BaseFormField {
+export interface ArrayFormField<T = string> extends BaseFormField<T[]> {
   value: T[];
 }
 
 // Form validation rules
-export interface ValidationRule<T = unknown> {
+export interface ValidationRule<T = string | number | boolean | Date | File | null> {
   required?: boolean;
   minLength?: number;
   maxLength?: number;
@@ -177,7 +177,7 @@ export interface FormState<TFormData = Record<string, BaseFormField>> {
 
 // Form actions
 export type FormAction<TFormData = Record<string, BaseFormField>> =
-  | { type: 'SET_FIELD_VALUE'; field: keyof TFormData; value: unknown }
+  | { type: 'SET_FIELD_VALUE'; field: keyof TFormData; value: TFormData[keyof TFormData]['value'] }
   | { type: 'SET_FIELD_ERROR'; field: keyof TFormData; error: string }
   | { type: 'CLEAR_FIELD_ERROR'; field: keyof TFormData }
   | { type: 'SET_FIELD_TOUCHED'; field: keyof TFormData; touched: boolean }

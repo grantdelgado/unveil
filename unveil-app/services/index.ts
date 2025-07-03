@@ -1,4 +1,16 @@
-// Export service modules individually to avoid naming conflicts
+/**
+ * Services Barrel - OPTIMIZED FOR TREE-SHAKING
+ * 
+ * WARNING: This barrel export can cause significant bundle bloat.
+ * RECOMMENDED: Import directly from individual service files:
+ * - import { getCurrentUser } from '@/services/auth'
+ * - import { getEventById } from '@/services/events'
+ * - import { uploadMedia } from '@/services/media'
+ * 
+ * Use this barrel only when you need multiple services in one file.
+ */
+
+// Service namespaces - use for multiple imports from same service
 export * as AuthService from './auth';
 export * as EventsService from './events';
 export * as GuestsService from './guests';
@@ -7,113 +19,50 @@ export * as MessagingService from './messaging';
 export * as StorageService from './storage';
 export * as UsersService from './users';
 
-// Authentication exports (OTP-based)
+// MOST FREQUENTLY USED FUNCTIONS (for convenience)
+// For better tree-shaking, import directly from service files
 export {
+  // Auth essentials
   getCurrentUser,
   getCurrentSession,
-  getCurrentUserProfile,
   signOut,
-  sendOTP,
-  verifyOTP,
-  validatePhoneNumber,
-  getUserByPhone,
-  checkOTPRateLimit,
-  recordOTPAttempt,
-  clearOTPRateLimit,
-  OTP_RATE_LIMITING,
 } from './auth';
 
-// Events exports
 export {
-  getEventsByUser,
   getEventById,
-  getHostEvents,
-  getGuestEvents,
   createEvent,
-  updateEvent,
-  deleteEvent,
+  getEventsByUser,
   getUserEventRole,
-  isEventHost,
-  isEventGuest,
-  getEventStats,
-
 } from './events';
 
-// Guest management exports (unified guest system)
 export {
-  // New guest functions
   getEventGuests,
-  updateGuest,
-  removeGuest,
-  removeGuestByPhone,
-  importGuests,
   updateGuestRSVP,
-  updateGuestRSVPByPhone,
+  importGuests,
   addGuestToEvent,
-  getGuestsByRole,
-  inviteGuest,
-  bulkInviteGuests,
-  getGuestsByTags,
-  getGuestStats,
-  // Guest management functions above
 } from './guests';
 
-// Media exports
 export {
-  getEventMedia,
   uploadMedia,
-  updateMediaCaption,
-  deleteMedia,
-  getMediaById,
-  getMediaStats,
-  getMediaByType,
-  getMediaByUploader,
-  validateFileSize,
-  validateFileType,
+  getEventMedia,
   validateMediaFile,
   MEDIA_CONSTRAINTS,
 } from './media';
 
-// Messaging exports
-export { getEventMessages, sendMessage, sendBulkMessage } from './messaging';
-
-// Storage exports
 export {
-  uploadFile,
-  deleteFile,
-  getPublicUrl,
-  createSignedUrl,
-} from './storage';
+  getEventMessages,
+  sendMessage,
+} from './messaging';
 
-// Users exports (no duplicates with auth)
-export {
-  getUserById,
-  getUserByPhone as getPhoneUser,
-  createUser,
-  updateUser,
-  deleteUser,
-  searchUsers,
-  getUsersWithRoles,
-} from './users';
-
-// Type exports for external use
+// Essential types only (for better tree-shaking, import from @/lib/supabase/types directly)
 export type {
-  EventInsert,
-  EventUpdate,
-  EventGuestInsert,
-  EventGuestUpdate,
-  MediaInsert,
-  MediaUpdate,
-  MessageInsert,
-  MessageUpdate,
-  UserInsert,
-  UserUpdate,
-  MediaType,
-  MessageType,
   User,
   Event,
   EventGuest,
-  Media,
   Message,
-  // Event guest type system
+  Media,
+  EventInsert,
+  EventUpdate,
+  MessageInsert,
+  MediaInsert,
 } from '@/lib/supabase/types';

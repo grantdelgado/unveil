@@ -1,13 +1,24 @@
 'use client';
 
+// External dependencies
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
+
+// Internal utilities
 import { supabase } from '@/lib/supabase';
+import { cn } from '@/lib/utils';
+import { logger } from '@/lib/logger';
+
+// Internal hooks (specific imports for better tree-shaking)
 import { useRealtimeSubscription } from '@/hooks/realtime';
+import { useHapticFeedback, usePullToRefresh, useDebounce } from '@/hooks/common';
+
+// Internal components (specific imports)
 import { SecondaryButton, CardContainer } from '@/components/ui';
 import { GuestStatusSummary } from './GuestStatusSummary';
 import { BulkActionShortcuts } from './BulkActionShortcuts';
-import { cn } from '@/lib/utils';
-import { useHapticFeedback, usePullToRefresh, useDebounce } from '@/hooks/common';
+
+// Types
 import type { Database } from '@/app/reference/supabase.types';
 
 type Guest = Database['public']['Tables']['event_guests']['Row'] & {
@@ -67,7 +78,7 @@ export function GuestManagement({
       if (guestError) throw guestError;
       setGuests(guestData || []);
     } catch (error) {
-      console.error('Error fetching guests:', error);
+      logger.databaseError('Error fetching guests', error);
     } finally {
       setLoading(false);
     }
@@ -80,13 +91,13 @@ export function GuestManagement({
     event: '*',
     filter: `event_id=eq.${eventId}`,
     enabled: Boolean(eventId),
-    onDataChange: useCallback(async (payload) => {
-      console.log('🔄 Real-time guest update:', payload);
+    onDataChange: useCallback(async (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => {
+      logger.realtime('Real-time guest update', { eventType: payload.eventType, guestId: payload.new?.id });
       // Refresh data when guests change
       await fetchData();
     }, [fetchData]),
     onError: useCallback((error: Error) => {
-      console.error('❌ Guest management subscription error:', error);
+      logger.realtimeError('Guest management subscription error', error);
     }, [])
   });
 
@@ -118,7 +129,7 @@ export function GuestManagement({
       triggerHaptic('success'); // Success feedback
       onGuestUpdated?.();
     } catch (error) {
-      console.error('Error updating RSVP:', error);
+      logger.databaseError('Error updating RSVP', error);
       triggerHaptic('error'); // Error feedback
       // Revert optimistic update on error
       await fetchData();
@@ -138,7 +149,7 @@ export function GuestManagement({
       await fetchData();
       onGuestUpdated?.();
     } catch (error) {
-      console.error('Error removing guest:', error);
+      logger.databaseError('Error removing guest', error);
     }
   };
 
@@ -164,7 +175,7 @@ export function GuestManagement({
       triggerHaptic('success'); // Success feedback
       onGuestUpdated?.();
     } catch (error) {
-      console.error('Error updating pending RSVPs:', error);
+      logger.databaseError('Error updating pending RSVPs', error);
       triggerHaptic('error');
     }
   };
@@ -192,7 +203,7 @@ export function GuestManagement({
       triggerHaptic('success'); // Success feedback
       onGuestUpdated?.();
     } catch (error) {
-      console.error('Error updating RSVPs:', error);
+      logger.databaseError('Error updating RSVPs', error);
       triggerHaptic('error');
     }
   };

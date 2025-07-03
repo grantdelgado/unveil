@@ -2,10 +2,15 @@ import { supabase } from '@/lib/supabase';
 import type { Database } from '@/app/reference/supabase.types';
 import type { MessageWithDelivery } from '@/lib/supabase/types';
 import { recordDeliveryStatus } from './analytics';
+import { logger } from '@/lib/logger';
 
 // Types
 type Message = Database['public']['Tables']['messages']['Row'];
 type MessageDelivery = Database['public']['Tables']['message_deliveries']['Row'];
+
+interface MessageWithDeliveries extends Message {
+  message_deliveries: MessageDelivery[] | MessageDelivery;
+}
 
 // Using shared MessageWithDelivery interface from types.ts
 
@@ -118,7 +123,7 @@ export async function sendGuestResponse({
       .single();
 
     if (responseError) {
-      console.error('Error creating guest response:', responseError);
+      logger.smsError('Error creating guest response', responseError);
       throw new Error('Failed to send response');
     }
 
@@ -156,7 +161,7 @@ export async function sendGuestResponse({
           });
 
         if (deliveryError) {
-          console.warn('Failed to create delivery record for host:', deliveryError);
+          logger.warn('Failed to create delivery record for host', deliveryError);
           // Don't fail the whole operation for this
         }
       }
@@ -167,7 +172,7 @@ export async function sendGuestResponse({
       success: true,
     };
   } catch (error) {
-    console.error('Error sending guest response:', error);
+    logger.smsError('Error sending guest response', error);
     throw new Error(error instanceof Error ? error.message : 'Failed to send response');
   }
 }
@@ -193,7 +198,7 @@ export async function markMessagesAsRead(
     const { data: deliveries, error: selectError } = await query;
 
     if (selectError) {
-      console.error('Error selecting deliveries to mark as read:', selectError);
+      logger.databaseError('Error selecting deliveries to mark as read', selectError);
       throw new Error(`Failed to select deliveries: ${selectError.message}`);
     }
 
@@ -214,7 +219,7 @@ export async function markMessagesAsRead(
       .in('id', deliveryIds);
 
     if (updateError) {
-      console.error('Error updating read status:', updateError);
+      logger.databaseError('Error updating read status', updateError);
       throw new Error(`Failed to mark messages as read: ${updateError.message}`);
     }
 
@@ -223,7 +228,7 @@ export async function markMessagesAsRead(
       markedCount: deliveries.length,
     };
   } catch (error) {
-    console.error('Error marking messages as read:', error);
+    logger.databaseError('Error marking messages as read', error);
     const errorMessage = error instanceof Error ? error.message : 'Failed to mark messages as read';
     throw new Error(errorMessage);
   }
@@ -250,13 +255,10 @@ export async function getGuestMessages(
       .from('messages')
       .select(`
         *,
-        message_deliveries!inner (
+        message_deliveries!message_deliveries_message_id_fkey (
           id,
           guest_id,
-          status,
-          delivered_at,
           sms_status,
-          email_status,
           push_status,
           has_responded,
           created_at,
@@ -269,12 +271,12 @@ export async function getGuestMessages(
       .limit(limit);
 
     if (error) {
-      console.error('Error fetching delivered messages:', error);
+      logger.databaseError('Error fetching delivered messages', error);
       throw new Error(`Failed to fetch delivered messages: ${error.message}`);
     }
 
     // Convert to MessageWithDelivery format
-    let allMessages: MessageWithDelivery[] = (deliveredMessages || []).map((message: any) => ({
+    let allMessages: MessageWithDelivery[] = (deliveredMessages || []).map((message: MessageWithDeliveries) => ({
       ...message,
       delivery: Array.isArray(message.message_deliveries) 
         ? message.message_deliveries[0] 
@@ -293,7 +295,7 @@ export async function getGuestMessages(
         .order('created_at', { ascending: true });
 
       if (responseError) {
-        console.warn('Error fetching guest responses, continuing without them:', responseError);
+        logger.warn('Error fetching guest responses, continuing without them', responseError);
       } else if (guestResponses) {
         // Convert guest responses to MessageWithDelivery format
         const responseMessages: MessageWithDelivery[] = guestResponses.map(response => ({
@@ -325,14 +327,14 @@ export async function getGuestMessages(
           await markMessagesAsRead(guestId, messageIds);
         }
       } catch (markError) {
-        console.warn('Error marking messages as read:', markError);
+        logger.warn('Error marking messages as read', markError);
         // Don't fail the whole operation for this
       }
     }
 
     return uniqueMessages;
   } catch (error) {
-    console.error('Error getting guest messages:', error);
+    logger.databaseError('Error getting guest messages', error);
     const errorMessage = error instanceof Error ? error.message : 'Failed to get guest messages';
     throw new Error(errorMessage);
   }
@@ -358,11 +360,12 @@ export async function getGuestMessageThread(
       .from('messages')
       .select(`
         *,
-        message_deliveries!inner (
+        message_deliveries!message_deliveries_message_id_fkey (
           id,
           guest_id,
-          delivered_at,
-          read_at
+          sms_status,
+          push_status,
+          has_responded
         )
       `)
       .eq('event_id', eventId)
@@ -395,7 +398,7 @@ export async function getGuestMessageThread(
       message_deliveries: undefined,
     }));
   } catch (error) {
-    console.error('Error getting guest messages:', error);
+    logger.databaseError('Error getting guest messages', error);
     throw new Error('Failed to get guest messages');
   }
 }
@@ -414,7 +417,7 @@ export async function getLatestHostMessage(
         .from('messages')
         .select(`
           *,
-          message_deliveries!inner (
+          message_deliveries!message_deliveries_message_id_fkey (
             guest_id
           )
         `)
@@ -454,7 +457,7 @@ export async function getLatestHostMessage(
       return data[0] as Message;
     }
   } catch (error) {
-    console.error('Error getting latest host message:', error);
+    logger.databaseError('Error getting latest host message', error);
     throw new Error('Failed to get latest host message');
   }
 }
@@ -489,10 +492,60 @@ export async function canGuestRespond(
       canRespond: true
     };
   } catch (error) {
-    console.error('Error checking guest response permissions:', error);
+    logger.authError('Error checking guest response permissions', error);
     return {
       canRespond: false,
       reason: 'Permission check failed'
     };
+  }
+}
+
+/**
+ * Simplified wrapper for responding to a message
+ * Used by the useGuestMessages hook for easier integration
+ */
+export async function respondToMessage(
+  messageId: string, 
+  content: string,
+  options?: {
+    guestId?: string;
+    eventId?: string;
+  }
+): Promise<{ messageId: string; success: boolean }> {
+  try {
+    // If guestId and eventId are not provided, we need to get them from the message
+    let guestId = options?.guestId;
+    let eventId = options?.eventId;
+
+    if (!guestId || !eventId) {
+      // Get message details to extract eventId and then determine guestId
+      const { data: message, error: messageError } = await supabase
+        .from('messages')
+        .select('event_id')
+        .eq('id', messageId)
+        .single();
+
+      if (messageError || !message) {
+        throw new Error('Message not found or access denied');
+      }
+
+      eventId = message.event_id;
+
+      // For now, this is a limitation - the caller should provide guestId
+      // In a full implementation, we'd get it from the auth context
+      if (!guestId) {
+        throw new Error('Guest ID is required for responding to messages');
+      }
+    }
+
+    return await sendGuestResponse({
+      guestId,
+      messageId,
+      content,
+      eventId,
+    });
+  } catch (error) {
+    logger.smsError('Error responding to message', error);
+    throw error;
   }
 } 

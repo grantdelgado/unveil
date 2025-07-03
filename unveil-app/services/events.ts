@@ -12,6 +12,7 @@ import {
   removeGuest,
   updateGuest,
 } from './guests';
+import { logger } from '@/lib/logger';
 
 /**
  * Creates a new event in the database
@@ -135,11 +136,12 @@ export const deleteEvent = async (id: string) => {
 /**
  * Retrieves a single event by ID with host information
  * 
- * Fetches complete event details including host profile data.
+ * Fetches complete event details. Host information is fetched separately
+ * to avoid RLS policy conflicts with direct table joins.
  * Access is controlled by RLS policies based on user's relationship to the event.
  * 
  * @param id - The event ID to retrieve
- * @returns Promise resolving to Supabase response with event and host data
+ * @returns Promise resolving to Supabase response with event data
  * 
  * @throws {Error} If event not found or access denied
  * 
@@ -148,7 +150,6 @@ export const deleteEvent = async (id: string) => {
  * const { data: event, error } = await getEventById('event-123')
  * if (event) {
  *   console.log('Event:', event.title)
- *   console.log('Host:', event.host.display_name)
  * }
  * ```
  * 
@@ -157,16 +158,49 @@ export const deleteEvent = async (id: string) => {
  */
 export const getEventById = async (id: string) => {
   try {
-    return await supabase
+    // Fetch event without user join to avoid RLS conflicts
+    const result = await supabase
       .from('events')
-      .select(
-        `
-        *,
-        host:users!events_host_user_id_fkey(*)
-      `,
-      )
+      .select('*')
       .eq('id', id)
       .single();
+
+    // If we got the event, try to fetch host info separately (gracefully handle RLS)
+    if (result.data && !result.error) {
+      try {
+        const { data: hostData } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', result.data.host_user_id)
+          .single();
+
+        // Add host data if we successfully fetched it
+        if (hostData) {
+          return {
+            data: {
+              ...result.data,
+              host: hostData,
+            },
+            error: null,
+          };
+        }
+      } catch (hostError) {
+        // Host fetch failed due to RLS - this is expected behavior
+        // Return event without host information rather than failing entirely
+        logger.warn('Could not fetch host information (RLS blocked)', hostError);
+      }
+
+      // Return event data without host information when RLS blocks access
+      return {
+        data: {
+          ...result.data,
+          host: null,
+        },
+        error: null,
+      };
+    }
+
+    return result;
   } catch (error) {
     if (
       error &&
@@ -182,14 +216,10 @@ export const getEventById = async (id: string) => {
 
 export const getHostEvents = async (hostId: string) => {
   try {
+    // Fetch events without user join to avoid RLS conflicts
     return await supabase
       .from('events')
-      .select(
-        `
-        *,
-        host:users!events_host_user_id_fkey(*)
-      `,
-      )
+      .select('*')
       .eq('host_user_id', hostId)
       .order('event_date', { ascending: true });
   } catch (error) {
@@ -199,35 +229,21 @@ export const getHostEvents = async (hostId: string) => {
 
 export const getGuestEvents = async (userId: string) => {
   try {
-    return await supabase
+    // Fetch guest events without nested user join to avoid RLS conflicts
+    const result = await supabase
       .from('event_guests')
-      .select(
-        `
+      .select(`
         *,
-        event:events(
-          *,
-          host:users!events_host_user_id_fkey(*)
-        )
-      `,
-      )
+        event:events(*)
+      `)
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
+
+    return result;
   } catch (error) {
     handleEventsDatabaseError(error, 'SELECT', 'events');
   }
 };
-
-
-
-
-
-
-
-
-
-
-
-
 
 export const getEventStats = async (eventId: string) => {
   try {

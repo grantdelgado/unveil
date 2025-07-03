@@ -1,5 +1,6 @@
 import { getErrorMessage } from './utils';
 import { SMSRetry } from '@/lib/utils/retry';
+import { logger } from '@/lib/logger';
 
 // Twilio configuration - will be dynamically imported to avoid server-side issues
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -97,7 +98,7 @@ export async function sendScheduledSMS(delivery: ScheduledSMSDelivery): Promise<
       
     } catch (error) {
       lastError = getErrorMessage(error);
-      console.error(`❌ Exception during SMS send attempt ${attempt + 1} for guest ${delivery.guestId.slice(-4)}:`, lastError);
+      logger.smsError(`Exception during SMS send attempt ${attempt + 1} for guest ${delivery.guestId.slice(-4)}`, lastError);
       
       // If this was the last attempt, return failure
       if (attempt === maxRetries - 1) {

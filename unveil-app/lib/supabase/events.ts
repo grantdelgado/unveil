@@ -16,16 +16,49 @@ export const updateEvent = async (eventId: string, eventData: EventUpdate) => {
 };
 
 export const getEventWithHost = async (eventId: string) => {
-  return await supabase
+  // Fetch event without user join to avoid RLS conflicts
+  const result = await supabase
     .from('events')
-    .select(
-      `
-      *,
-      host:users!events_host_user_id_fkey(*)
-    `,
-    )
+    .select('*')
     .eq('id', eventId)
     .single();
+
+  // If we got the event, try to fetch host info separately (gracefully handle RLS)
+  if (result.data && !result.error) {
+    try {
+      const { data: hostData } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', result.data.host_user_id)
+        .single();
+
+      // Add host data if we successfully fetched it
+      if (hostData) {
+        return {
+          data: {
+            ...result.data,
+            host: hostData,
+          },
+          error: null,
+        };
+      }
+    } catch (hostError) {
+      // Host fetch failed due to RLS - this is expected behavior
+      // Return event without host information rather than failing entirely
+      console.warn('Could not fetch host information (RLS blocked):', hostError);
+    }
+
+    // Return event data without host information when RLS blocks access
+    return {
+      data: {
+        ...result.data,
+        host: null,
+      },
+      error: null,
+    };
+  }
+
+  return result;
 };
 
 // Permission helpers using MCP-verified RLS functions

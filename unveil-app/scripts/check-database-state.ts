@@ -93,7 +93,7 @@ async function checkDatabaseState() {
 
     // Check event participants
     const { data: guests, error: guestsError } = await supabase
-      .from('event_participants')
+      .from('event_guests')
       .select(
         'id, event_id, user_id, role, rsvp_status, created_at',
       )

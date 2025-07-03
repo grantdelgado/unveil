@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/app/reference/supabase.types';
+import { logger } from '@/lib/logger';
 
 type MessageDelivery = Database['public']['Tables']['message_deliveries']['Row'];
 type ScheduledMessage = Database['public']['Tables']['scheduled_messages']['Row'];
@@ -165,7 +166,7 @@ export async function getDeliveryStatsForEvent(eventId: string): Promise<Deliver
       readRatio,
     };
   } catch (error) {
-    console.error('Error getting delivery stats:', error);
+    logger.databaseError('Error getting delivery stats', error);
     throw new Error('Failed to fetch delivery statistics');
   }
 }
@@ -181,7 +182,7 @@ export async function getEngagementMetrics(messageId: string): Promise<Engagemen
       .eq('message_id', messageId);
     
     if (error) {
-      console.error('Error fetching delivery data:', error);
+      logger.databaseError('Error fetching delivery data', error);
       throw new Error(`Failed to fetch delivery data: ${error.message}`);
     }
     
@@ -272,7 +273,7 @@ export async function getEngagementMetrics(messageId: string): Promise<Engagemen
       responseToReadRatio,
     };
   } catch (error) {
-    console.error('Error getting engagement metrics:', error);
+    logger.databaseError('Error getting engagement metrics', error);
     const errorMessage = error instanceof Error ? error.message : 'Failed to get engagement metrics';
     throw new Error(errorMessage);
   }
@@ -312,8 +313,18 @@ export async function getResponseRatesOverTime(
     if (messagesError) throw messagesError;
     
     // Group data by time period
+    interface DeliveryRecord {
+      created_at: string;
+      sms_status: string | null;
+      email_status: string | null;
+      push_status: string | null;
+      has_responded: boolean;
+      updated_at: string;
+      read_at?: string | null;
+    }
+    
     const timeGroups: Record<string, {
-      deliveries: any[];
+      deliveries: DeliveryRecord[];
     }> = {};
     
     (messages || []).forEach(message => {
@@ -412,7 +423,7 @@ export async function getResponseRatesOverTime(
     
     return results.sort((a, b) => a.timeRange.localeCompare(b.timeRange));
   } catch (error) {
-    console.error('Error getting response rates over time:', error);
+    logger.databaseError('Error getting response rates over time', error);
     throw new Error('Failed to calculate response rates over time');
   }
 }
@@ -487,7 +498,7 @@ export async function getRSVPCorrelation(messageId: string): Promise<RSVPCorrela
       influenceScore,
     };
   } catch (error) {
-    console.error('Error getting RSVP correlation:', error);
+    logger.databaseError('Error getting RSVP correlation', error);
     throw new Error('Failed to analyze RSVP correlation');
   }
 }
@@ -520,7 +531,7 @@ export async function getEventAnalytics(eventId: string): Promise<MessageAnalyti
     const rsvpCorrelations = await Promise.all(
       (messages || []).slice(0, 5).map(message => 
         getRSVPCorrelation(message.id).catch(error => {
-          console.warn(`Failed to get RSVP correlation for message ${message.id}:`, error);
+          logger.warn(`Failed to get RSVP correlation for message ${message.id}`, error);
           return null;
         })
       )
@@ -563,7 +574,7 @@ export async function getEventAnalytics(eventId: string): Promise<MessageAnalyti
       topPerformingMessages,
     };
   } catch (error) {
-    console.error('Error getting event analytics:', error);
+    logger.databaseError('Error getting event analytics', error);
     throw new Error('Failed to fetch event analytics');
   }
 }
@@ -605,7 +616,7 @@ export async function recordDeliveryStatus(
     
     if (error) throw error;
   } catch (error) {
-    console.error('Error recording delivery status:', error);
+    logger.databaseError('Error recording delivery status', error);
     throw new Error('Failed to record delivery status');
   }
 }
@@ -629,11 +640,11 @@ export async function recordMessageRead(
       .eq('id', messageDeliveryId);
     
     if (error) {
-      console.error('Error updating read status:', error);
+      logger.databaseError('Error updating read status', error);
       throw new Error(`Failed to record message read: ${error.message}`);
     }
   } catch (error) {
-    console.error('Error recording message read:', error);
+    logger.databaseError('Error recording message read', error);
     const errorMessage = error instanceof Error ? error.message : 'Failed to record message read';
     throw new Error(errorMessage);
   }
@@ -657,7 +668,7 @@ export async function recordMessageResponse(
     
     if (error) throw error;
   } catch (error) {
-    console.error('Error recording message response:', error);
+    logger.databaseError('Error recording message response', error);
     throw new Error('Failed to record message response');
   }
 }
@@ -707,7 +718,7 @@ export async function getResponseRatesByMessageType(eventId: string): Promise<Ar
       responseRate: data.totalSent > 0 ? (data.totalResponses / data.totalSent) * 100 : 0,
     }));
   } catch (error) {
-    console.error('Error getting response rates by message type:', error);
+    logger.databaseError('Error getting response rates by message type', error);
     throw new Error('Failed to calculate response rates by message type');
   }
 } 

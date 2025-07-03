@@ -60,5 +60,18 @@ export const updateUserProfile = async (userData: {
 };
 
 export const getUserByPhone = async (phone: string) => {
-  return await supabase.from('users').select('*').eq('phone', phone).single();
+  try {
+    return await supabase.from('users').select('*').eq('phone', phone).single();
+  } catch (error) {
+    // Handle RLS policy blocks gracefully
+    if (
+      error &&
+      typeof error === 'object' &&
+      'code' in error &&
+      (error.code === 'PGRST116' || error.code === '42501')
+    ) {
+      return { data: null, error: null }; // RLS blocked or user not found
+    }
+    throw error; // Re-throw unexpected errors
+  }
 };

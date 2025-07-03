@@ -80,7 +80,7 @@ export function startProcessingSession(): string {
     messageTimings: [],
   };
   
-  logger.metrics(`Started processing metrics session: ${sessionId}`);
+  logger.performance(`Started processing metrics session: ${sessionId}`);
   return sessionId;
 }
 
@@ -194,7 +194,7 @@ export function completeProcessingSession(): ProcessingMetrics | null {
     throughputPerMinute,
   };
   
-  logger.metrics(`Completed processing session ${currentSession.sessionId}`, {
+  logger.performance(`Completed processing session ${currentSession.sessionId}`, {
     duration: `${Math.round(durationMs / 1000)}s`,
     processed: currentSession.metrics.processedMessages,
     successful: currentSession.metrics.successfulMessages,
@@ -205,7 +205,7 @@ export function completeProcessingSession(): ProcessingMetrics | null {
   
   // Store metrics for historical analysis
   storeMetricsToDatabase(finalMetrics).catch(error => {
-    logger.metricsError('Failed to store processing metrics to database', error);
+    logger.performanceWarn('Failed to store processing metrics to database', error);
   });
   
   // Clear the current session
@@ -285,7 +285,7 @@ async function storeMetricsToDatabase(metrics: ProcessingMetrics): Promise<void>
     
     // FUTURE: Create processing_metrics table in Phase 6 analytics expansion
     // For now, we'll log the metrics for manual analysis
-    logger.metrics('Processing Metrics (would store to DB)', metricsRecord);
+    logger.performance('Processing Metrics (would store to DB)', metricsRecord);
     
     // In the future, this would be:
     // const { error } = await supabase
@@ -294,7 +294,7 @@ async function storeMetricsToDatabase(metrics: ProcessingMetrics): Promise<void>
     // 
     // if (error) throw error;
   } catch (error) {
-    logger.metricsError('Error storing processing metrics', error);
+    logger.performanceWarn('Error storing processing metrics', error);
     // Don't throw here to avoid disrupting main processing flow
   }
 }

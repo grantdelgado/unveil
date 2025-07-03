@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,7 +13,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    console.log('🕒 Cron job triggered: processing scheduled messages');
+    logger.api('Cron job triggered: processing scheduled messages');
 
     // Call the message processor with proper authorization
     const processorUrl = new URL(
@@ -40,7 +41,7 @@ export async function GET(request: NextRequest) {
       throw new Error(`Message processor failed: ${result.error}`);
     }
 
-    console.log('✅ Cron job completed:', result);
+    logger.api('Cron job completed', result);
 
     // Extract metrics for response
     const responseData = {
@@ -81,7 +82,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(responseData);
   } catch (error) {
-    console.error('❌ Cron job failed:', error);
+    logger.apiError('Cron job failed', error);
     return NextResponse.json(
       {
         error: 'Cron job failed',

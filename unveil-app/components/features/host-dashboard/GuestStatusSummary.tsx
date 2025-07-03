@@ -1,9 +1,12 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 import { useRealtimeSubscription } from '@/hooks/realtime';
+
+import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
+import { logger } from '@/lib/logger';
 
 interface GuestStatusSummaryProps {
   eventId: string;
@@ -252,7 +255,7 @@ export function GuestStatusSummary({
         .eq('event_id', eventId);
 
       if (error) {
-        console.error('Error fetching RSVP status counts:', error);
+        logger.databaseError('Error fetching RSVP status counts', error);
         return;
       }
 
@@ -273,7 +276,7 @@ export function GuestStatusSummary({
 
       setStatusCounts(counts);
     } catch (error) {
-      console.error('Unexpected error fetching status counts:', error);
+      logger.databaseError('Unexpected error fetching status counts', error);
     } finally {
       setLoading(false);
     }
@@ -286,39 +289,34 @@ export function GuestStatusSummary({
     event: '*',
     filter: `event_id=eq.${eventId}`,
     enabled: Boolean(eventId),
-    onDataChange: useCallback(async (payload) => {
-      console.log('🔄 Real-time RSVP update:', payload);
+    onDataChange: useCallback(async (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => {
+      logger.realtime('Real-time RSVP update', { eventType: payload.eventType, guestId: payload.new?.id });
       
       // Update activity feed for RSVP changes
-      if (payload.eventType === 'UPDATE' && payload.old && payload.new) {
-        const oldStatus = payload.old.rsvp_status;
-        const newStatus = payload.new.rsvp_status;
+      if (payload.eventType === 'UPDATE' && payload.new && payload.old) {
+        const oldData = payload.old as Record<string, unknown>;
+        const newData = payload.new as Record<string, unknown>;
+        const oldRsvp = oldData?.rsvp_status;
+        const newRsvp = newData?.rsvp_status;
         
-        if (oldStatus !== newStatus) {
-          // Fetch user name for activity
-          const { data: userData } = await supabase
-            .from('users')
-            .select('full_name')
-            .eq('id', payload.new.user_id)
-            .single();
-
+        if (oldRsvp !== newRsvp) {
           const activity: RSVPActivity = {
-            id: payload.new.id,
-            user_name: userData?.full_name || 'Unknown User',
-            old_status: oldStatus,
-            new_status: newStatus,
+            id: `rsvp-${Date.now()}`,
+            user_name: (newData?.guest_name as string) || 'Unknown Guest',
+            old_status: (oldRsvp as string) || null,
+            new_status: (newRsvp as string) || 'pending',
             timestamp: new Date().toISOString(),
           };
-
+          
           setRecentActivity(prev => [activity, ...prev.slice(0, 9)]);
         }
       }
       
-      // Refresh counts
+      // Refresh the main data
       await fetchStatusCounts();
     }, [fetchStatusCounts]),
     onError: useCallback((error: Error) => {
-      console.error('❌ Guest status summary subscription error:', error);
+      logger.realtimeError('Guest status summary subscription error', error);
     }, [])
   });
 

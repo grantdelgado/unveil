@@ -9,7 +9,7 @@ export const uploadFile = async (
   options?: { cacheControl?: string; upsert?: boolean },
 ) => {
   try {
-    logger.storage(`Uploading file to ${bucket}/${path}`, {
+    logger.system(`Uploading file to ${bucket}/${path}`, {
       fileName: file.name,
       fileSize: file.size,
       fileType: file.type,
@@ -21,10 +21,10 @@ export const uploadFile = async (
       ...options,
     });
 
-    logger.storage('Upload result', result);
+    logger.system('Upload result', result);
     return result;
   } catch (error) {
-    logger.storageError('Upload exception', error);
+    logger.systemError('Upload exception', error);
     throw error;
   }
 };

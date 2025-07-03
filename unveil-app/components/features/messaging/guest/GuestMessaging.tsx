@@ -7,6 +7,7 @@ import { useGuestMessages } from '@/hooks/messaging/useGuestMessages';
 import { GuestMessageInput } from './GuestMessageInput';
 import { ResponseIndicator } from './ResponseIndicator';
 import { MessageCircle, Send } from 'lucide-react';
+import { logger } from '@/lib/logger';
 
 // Types - using hook's MessageWithDelivery type directly
 
@@ -22,9 +23,7 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
     messages,
     loading,
     error,
-    sendResponse,
-    validateResponse,
-    canRespond,
+    respondToMessage,
     isConnected,
     refetch,
   } = useGuestMessages({
@@ -36,6 +35,7 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
   // Response UI state
   const [showResponseInput, setShowResponseInput] = useState(false);
   const [responseError, setResponseError] = useState<string | null>(null);
+  const [canRespond] = useState(true); // For now, assume guests can respond
   
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -50,11 +50,32 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
   }, [messages.length]);
 
   /**
+   * Simple response validation
+   */
+  const validateResponse = useCallback((content: string) => {
+    if (!content.trim()) {
+      return { isValid: false, error: 'Response cannot be empty' };
+    }
+    if (content.length > 500) {
+      return { isValid: false, error: 'Response must be 500 characters or less' };
+    }
+    return { isValid: true };
+  }, []);
+
+  /**
    * Response handlers using the hook
    */
   const handleResponseSubmit = useCallback(async (content: string) => {
     try {
       setResponseError(null);
+      
+      // Validate content first
+      const validation = validateResponse(content);
+      if (!validation.isValid) {
+        setResponseError(validation.error || 'Invalid response');
+        return;
+      }
+      
       // For functional responses, we need a message to reply to
       // Using the most recent message as the target
       const latestMessage = messages[messages.length - 1];
@@ -62,14 +83,14 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
         throw new Error('No message to reply to');
       }
       
-      await sendResponse(latestMessage.id, content);
+      await respondToMessage(latestMessage.id, content);
       setShowResponseInput(false);
     } catch (err) {
       const error = err instanceof Error ? err.message : 'Failed to send response';
       setResponseError(error);
-      console.error('Response send failed:', err);
+      logger.smsError('Response send failed', err);
     }
-  }, [sendResponse, messages]);
+  }, [respondToMessage, messages, validateResponse]);
 
   const handleResponseCancel = useCallback(() => {
     setShowResponseInput(false);

@@ -62,13 +62,14 @@ export const getUserByPhone = async (
       error: result.error ? new Error(result.error.message) : null,
     };
   } catch (error) {
+    // Handle RLS policy blocks gracefully
     if (
       error &&
       typeof error === 'object' &&
       'code' in error &&
-      error.code === 'PGRST116'
+      (error.code === 'PGRST116' || error.code === '42501')
     ) {
-      return { data: null, error: null }; // User not found is OK
+      return { data: null, error: null }; // RLS blocked or user not found
     }
     return {
       data: null,

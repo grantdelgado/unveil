@@ -30,13 +30,19 @@ export function useEventInsights(): UseEventInsightsResult {
   const [error, setError] = useState<string | null>(null);
 
   const fetchInsights = useCallback(async (eventIds: string[]) => {
-    if (eventIds.length === 0) return;
+    // Filter out any undefined or null eventIds
+    const validEventIds = eventIds.filter(id => id != null && id !== undefined && id !== '');
+    
+    if (validEventIds.length === 0) {
+      console.warn('No valid event IDs provided to fetchInsights');
+      return;
+    }
 
     setLoading(true);
     setError(null);
 
     try {
-      // Fetch guest data for all events
+      // Fetch guest data for all events with proper relationship syntax
       const { data: guestsData, error: guestsError } = await supabase
         .from('event_guests')
         .select(`
@@ -44,9 +50,9 @@ export function useEventInsights(): UseEventInsightsResult {
           rsvp_status,
           created_at,
           guest_name,
-          users:user_id(full_name)
+          users!user_id(full_name)
         `)
-        .in('event_id', eventIds)
+        .in('event_id', validEventIds)
         .order('created_at', { ascending: false });
 
       if (guestsError) {
@@ -56,7 +62,7 @@ export function useEventInsights(): UseEventInsightsResult {
       // Process insights for each event
       const newInsights: Record<string, EventInsights> = {};
 
-      for (const eventId of eventIds) {
+      for (const eventId of validEventIds) {
         const eventGuests = guestsData?.filter(g => g.event_id === eventId) || [];
         
         // Count RSVPs

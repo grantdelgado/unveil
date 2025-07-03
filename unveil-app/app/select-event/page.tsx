@@ -1,16 +1,20 @@
 'use client';
 
+// External dependencies
 import React, { useRef, useEffect } from 'react';
+
+// Internal utilities
 import { formatEventDate } from '@/lib/utils/date';
 import { cn } from '@/lib/utils';
-import { useUserEventsSorted, useEventInsights } from '@/hooks';
+
+// Internal hooks (specific imports for better tree-shaking)
+import { useUserEventsSorted, useEventInsights } from '@/hooks/events';
 import { useAuth } from '@/hooks/auth';
 import { usePullToRefresh } from '@/hooks/common/usePullToRefresh';
+
+// Internal components (specific imports)
 import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
-import { 
-  PageWrapper,
-  SkeletonLoader
-} from '@/components/ui';
+import { PageWrapper, SkeletonLoader } from '@/components/ui';
 
 export default function SelectEventPage() {
   const { events, loading, error, refetch } = useUserEventsSorted();

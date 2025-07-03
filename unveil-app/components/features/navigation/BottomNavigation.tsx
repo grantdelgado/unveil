@@ -67,33 +67,36 @@ export function BottomNavigation({
         } = await supabase.auth.getUser();
         if (!user) return;
 
-        // Check if user is host of this event
-        const { data: hostEvent } = await supabase
+        // First, try to fetch the event - this will succeed if user has any access
+        const { data: event } = await supabase
           .from('events')
           .select('title, host_user_id')
           .eq('id', eventId)
-          .eq('host_user_id', user.id)
           .single();
 
-        if (hostEvent) {
-          setUserRole('host');
-          setEventTitle(hostEvent.title);
-        } else {
-          // Check if user is guest of this event
-          const { data: guestEvent } = await supabase
-            .from('event_guests')
-            .select('event:events(title)')
-            .eq('event_id', eventId)
-            .eq('user_id', user.id)
-            .single();
-
-          if (guestEvent) {
-            setUserRole('guest');
-            const event = guestEvent.event as unknown as {
-              title: string;
-            } | null;
-            setEventTitle(event?.title || '');
+        if (event) {
+          // Check if user is host by comparing IDs locally
+          if (event.host_user_id === user.id) {
+            setUserRole('host');
+            setEventTitle(event.title);
+            return;
           }
+        }
+
+        // If not host, check if user is guest of this event
+        const { data: guestEvent } = await supabase
+          .from('event_guests')
+          .select('event:events(title)')
+          .eq('event_id', eventId)
+          .eq('user_id', user.id)
+          .single();
+
+        if (guestEvent) {
+          setUserRole('guest');
+          const event = guestEvent.event as unknown as {
+            title: string;
+          } | null;
+          setEventTitle(event?.title || '');
         }
       } catch (error) {
         console.error('Error determining user role:', error);

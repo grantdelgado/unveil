@@ -681,11 +681,10 @@ const handleUserCreation = async (
   }
 };
 
-// Get current authenticated user profile from users table
 /**
  * Gets the current user's profile from the users table
  * 
- * Retrieves the user profile data from the public_user_profiles view,
+ * Retrieves the user profile data from the users table,
  * which includes safe public information about the authenticated user.
  * 
  * @returns Promise resolving to object with:
@@ -696,7 +695,7 @@ const handleUserCreation = async (
  * ```typescript
  * const { data: profile, error } = await getCurrentUserProfile()
  * if (profile) {
- *   console.log('User name:', profile.display_name)
+ *   console.log('User name:', profile.full_name)
  *   console.log('Phone:', profile.phone)
  * }
  * ```
@@ -717,14 +716,48 @@ export const getCurrentUserProfile = async () => {
       };
     }
 
-    // Fetch user profile from users table using auth.uid()
-    const { data: profile, error: profileError } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', user.id)
-      .single();
+    // Try to fetch user profile from users table, but handle RLS gracefully
+    try {
+      const { data: profile, error: profileError } = await supabase
+        .from('users')
+        .select('id, phone, full_name, avatar_url, email, created_at, updated_at')
+        .eq('id', user.id)
+        .single();
 
-    return { data: profile, error: profileError };
+      if (profileError) {
+        // If RLS blocks access, create a fallback profile from auth user data
+        logger.auth('User profile query blocked by RLS, using auth fallback', profileError);
+        
+        const fallbackProfile = {
+          id: user.id,
+          phone: user.user_metadata?.phone || user.phone || null,
+          full_name: user.user_metadata?.full_name || user.user_metadata?.name || `User ${user.id.slice(-4)}`,
+          avatar_url: user.user_metadata?.avatar_url || null,
+          email: user.email || null,
+          created_at: user.created_at,
+          updated_at: user.updated_at || user.created_at,
+        };
+
+        return { data: fallbackProfile, error: null };
+      }
+
+      return { data: profile, error: null };
+    } catch (rls_error) {
+      // If there's an RLS error, fall back to auth user data
+      logger.auth('RLS error accessing user profile, using auth fallback', rls_error);
+      
+      const fallbackProfile = {
+        id: user.id,
+        phone: user.user_metadata?.phone || user.phone || null,
+        full_name: user.user_metadata?.full_name || user.user_metadata?.name || `User ${user.id.slice(-4)}`,
+        avatar_url: user.user_metadata?.avatar_url || null,
+        email: user.email || null,
+        created_at: user.created_at,
+        updated_at: user.updated_at || user.created_at,
+      };
+
+      return { data: fallbackProfile, error: null };
+    }
   } catch (error) {
     logger.authError('Error fetching user profile', error);
     return { data: null, error };

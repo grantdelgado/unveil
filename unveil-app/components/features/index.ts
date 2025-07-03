@@ -1,12 +1,31 @@
-// Feature Components
-export * from './auth';
-export * from './events';
-export * from './guests';
-export * from './host-dashboard';
-export * from './media';
-export * from './messaging';
-export * from './navigation';
-export * from './scheduling';
+/**
+ * Feature Components Barrel - OPTIMIZED FOR TREE-SHAKING
+ * 
+ * WARNING: Wildcard exports can significantly bloat your bundle.
+ * RECOMMENDED: Import components directly:
+ * - import { AuthSessionWatcher } from '@/components/features/auth'
+ * - import { GuestManagement } from '@/components/features/host-dashboard'
+ * - import { GuestMessaging } from '@/components/features/messaging/guest'
+ * 
+ * Use this barrel only when importing multiple components from the same feature.
+ */
+
+// Most frequently used lightweight components (specific imports)
+export { AuthSessionWatcher, LogoutButton, ProfileAvatar } from './auth';
+export { WelcomeBanner } from './events';
+export { BottomNavigation, NavigationLayout, RoleSwitcher } from './navigation';
+export { QuickActions } from './host-dashboard';
+export { EventSchedule } from './scheduling';
+
+// Feature namespaces for multiple imports from same feature
+export * as AuthComponents from './auth';
+export * as EventComponents from './events';
+export * as GuestComponents from './guests';
+export * as HostDashboardComponents from './host-dashboard';
+export * as MediaComponents from './media';
+export * as MessagingComponents from './messaging';
+export * as NavigationComponents from './navigation';
+export * as SchedulingComponents from './scheduling';
 
 // Lazy-loaded exports for heavy components
 import { lazy } from 'react'

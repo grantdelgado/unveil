@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { processScheduledMessages, getProcessingStats } from '@/services/messaging/processor';
+import { logger } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('🚀 Processing scheduled messages API called');
+    logger.api('Processing scheduled messages API called');
 
     // Verify the request is authorized (internal calls only)
     const authHeader = request.headers.get('authorization');
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest) {
     // Get current processing stats for context
     const stats = await getProcessingStats(1); // Last hour
 
-    console.log('📊 Processing completed:', {
+    logger.api('Processing completed', {
       result,
       stats,
     });
@@ -33,7 +34,7 @@ export async function POST(request: NextRequest) {
       stats,
     });
   } catch (error) {
-    console.error('❌ Error processing scheduled messages:', error);
+    logger.apiError('Error processing scheduled messages', error);
     
     return NextResponse.json(
       {
@@ -49,7 +50,7 @@ export async function POST(request: NextRequest) {
 // Also support GET for status checks
 export async function GET() {
   try {
-    console.log('📊 Scheduled messages status check');
+    logger.api('Scheduled messages status check');
 
     // Get processing stats
     const stats = await getProcessingStats(24); // Last 24 hours
@@ -60,7 +61,7 @@ export async function GET() {
       stats,
     });
   } catch (error) {
-    console.error('❌ Error getting processing stats:', error);
+    logger.apiError('Error getting processing stats', error);
     
     return NextResponse.json(
       {

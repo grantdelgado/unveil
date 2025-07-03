@@ -63,7 +63,7 @@ export async function sendPushNotification(payload: PushNotificationPayload): Pr
   
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      logger.push(`Sending push notification to ${redactedToken}`, payload.title);
+      logger.system(`Sending push notification to ${redactedToken}`, payload.title);
 
       // Try FCM first (Android/Web), then APNS (iOS)
       let result: PushResult;
@@ -79,7 +79,7 @@ export async function sendPushNotification(payload: PushNotificationPayload): Pr
       // If successful, return immediately
       if (result.success) {
         if (attempt > 0) {
-          logger.push(`Push notification sent successfully on retry ${attempt + 1} for token ${redactedToken}`);
+          logger.system(`Push notification sent successfully on retry ${attempt + 1} for token ${redactedToken}`);
         }
         return result;
       }
@@ -95,7 +95,7 @@ export async function sendPushNotification(payload: PushNotificationPayload): Pr
       // Check if error is retryable
       const shouldRetry = PushRetry.isRetryable(result.error, result.failureReason);
       if (!shouldRetry) {
-        logger.pushError(`Non-retryable push error for token ${redactedToken}`, result.error);
+        logger.systemError(`Non-retryable push error for token ${redactedToken}`, result.error);
         return {
           ...result,
           shouldRetry: false,
@@ -103,14 +103,14 @@ export async function sendPushNotification(payload: PushNotificationPayload): Pr
       }
       
       lastError = result.error || 'Unknown error';
-      logger.pushError(`Retryable push error for token ${redactedToken}, attempt ${attempt + 1}/${maxRetries}`, lastError);
+      logger.systemError(`Retryable push error for token ${redactedToken}, attempt ${attempt + 1}/${maxRetries}`, lastError);
       
       // Wait before retry
       await new Promise(resolve => setTimeout(resolve, retryDelays[attempt]));
       
     } catch (error) {
       lastError = getErrorMessage(error);
-      logger.pushError(`Exception during push send attempt ${attempt + 1} for token ${redactedToken}`, lastError);
+      logger.systemError(`Exception during push send attempt ${attempt + 1} for token ${redactedToken}`, lastError);
       
       // If this was the last attempt, return failure
       if (attempt === maxRetries - 1) {
@@ -207,7 +207,7 @@ async function sendAPNSNotification(payload: PushNotificationPayload): Promise<P
   try {
     // Note: This is a simplified implementation
     // In production, you'd use proper APNS libraries like @parse/node-apn
-    logger.push('APNS implementation is simplified - would send', {
+    logger.system('APNS implementation is simplified - would send', {
       token: `${payload.to.slice(0, 8)}...${payload.to.slice(-4)}`,
       title: payload.title,
       body: payload.body,
@@ -241,7 +241,7 @@ export async function getDeviceTokensForGuests(
 
     // In the simplified schema, we don't have a device_tokens table
     // This is a placeholder implementation for the current schema
-    logger.push(`Would fetch device tokens for ${guestIds.length} guests in event ${eventId}`);
+    logger.system(`Would fetch device tokens for ${guestIds.length} guests in event ${eventId}`);
     
     // For now, return empty map (in production, query actual device_tokens table)
     const tokenMap = new Map<string, DeviceToken[]>();
@@ -276,7 +276,7 @@ export async function getDeviceTokensForGuests(
     
     return tokenMap;
   } catch (error) {
-    logger.pushError('Error fetching device tokens', error);
+    logger.systemError('Error fetching device tokens', error);
     throw new Error('Failed to fetch device tokens');
   }
 }
@@ -291,7 +291,7 @@ export async function sendBulkScheduledPush(
   failed: number;
   results: Array<{ guestId: string; tokenResults: Array<{ token: string; result: PushResult }> }>;
 }> {
-  logger.push(`Sending scheduled push notifications to ${deliveries.length} recipients`);
+  logger.system(`Sending scheduled push notifications to ${deliveries.length} recipients`);
   
   // Process each guest's device tokens
   const promises = deliveries.map(async (delivery) => {
@@ -349,7 +349,7 @@ export async function sendBulkScheduledPush(
     !r.tokenResults.some(tr => tr.result.success)
   ).length;
   
-  logger.push(`Bulk scheduled push complete: ${successful} delivered, ${failed} failed`);
+  logger.system(`Bulk scheduled push complete: ${successful} delivered, ${failed} failed`);
   
   return {
     successful,
@@ -373,7 +373,7 @@ export async function registerDeviceToken(
 
     // In the simplified schema, we don't have a device_tokens table
     // This is a placeholder for future implementation
-    logger.push('Device token registration', {
+    logger.system('Device token registration', {
       guest: guestId.slice(-4),
       platform,
       token: `${token.slice(0, 8)}...${token.slice(-4)}`,
@@ -383,7 +383,7 @@ export async function registerDeviceToken(
     // For now, just log the registration (in production, insert into device_tokens table)
     return { success: true };
   } catch (error) {
-    logger.pushError('Error registering device token', error);
+    logger.systemError('Error registering device token', error);
     return { 
       success: false, 
       error: error instanceof Error ? error.message : 'Unknown error' 

@@ -472,53 +472,43 @@ export async function getMessageThread(
   }
 }
 
-// Re-export analytics functions for convenience
+/**
+ * Messaging Services Barrel - TREE-SHAKING OPTIMIZED
+ * 
+ * RECOMMENDATION: Import directly from specific modules:
+ * - import { recordDeliveryStatus } from '@/services/messaging/analytics'
+ * - import { createScheduledMessage } from '@/services/messaging/scheduled'
+ * - import { sendGuestResponse } from '@/services/messaging/guest'
+ */
+
+// Most frequently used functions only
 export { 
   recordDeliveryStatus,
-  recordMessageRead,
-  recordMessageResponse,
-  getDeliveryStatsForEvent,
-  getEngagementMetrics,
-  getRSVPCorrelation,
   getEventAnalytics,
 } from './analytics';
 
-// Re-export scheduled messaging functions
 export {
   createScheduledMessage,
   getScheduledMessages,
-  updateScheduledMessage,
   cancelScheduledMessage,
-  deleteScheduledMessage,
-  getReadyScheduledMessages,
-  markScheduledMessageAsSending,
-  markScheduledMessageAsSent,
-  markScheduledMessageAsFailed,
 } from './scheduled';
 
-// Re-export tagging functions
 export {
-  getEventTags,
-  getEventGuests,
-  createTag,
-  updateTag,
-  deleteTag,
   assignTagsToGuests,
-  removeTagsFromGuests,
-  bulkTagOperation,
   getGuestsByTags,
 } from './tags';
 
-// Re-export guest messaging functions
 export {
   sendGuestResponse,
-  markMessagesAsRead,
-  getGuestMessages as getGuestMessagesDetailed,
   getGuestMessageThread,
-  getLatestHostMessage,
   canGuestRespond,
-  validateGuestResponse,
 } from './guest';
+
+// Module namespaces for bulk imports
+export * as AnalyticsService from './analytics';
+export * as ScheduledService from './scheduled';
+export * as TagsService from './tags';
+export * as GuestMessagingService from './guest';
 
 // NOTE: Message processing functions are intentionally NOT re-exported here
 // to prevent client-side imports of SMS/Twilio functionality.

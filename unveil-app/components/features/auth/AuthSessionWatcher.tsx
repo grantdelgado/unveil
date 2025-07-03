@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
+import { getCurrentUserProfile } from '@/services/auth';
 import type { User, Session } from '@supabase/supabase-js';
 import { logAuth, logAuthError } from '@/lib/logger';
 
@@ -21,20 +22,14 @@ export function AuthSessionWatcher({ children }: AuthSessionWatcherProps) {
       try {
         logAuth('Handling authenticated user', { userId: authUser.id });
 
-        // Fetch user profile from users table using auth.uid()
-        const { data: userProfile, error: profileError } = await supabase
-          .from('users')
-          .select(
-            'id, phone, full_name, email, avatar_url, created_at, updated_at',
-          )
-          .eq('id', authUser.id)
-          .single();
+        // Fetch user profile using the auth service (handles RLS gracefully)
+        const { data: userProfile, error: profileError } = await getCurrentUserProfile();
 
         if (profileError) {
           logAuthError('Failed to fetch user profile', profileError);
 
           // If profile doesn't exist, redirect to login to recreate it
-          if (profileError.code === 'PGRST116') {
+          if (profileError && typeof profileError === 'object' && 'code' in profileError && profileError.code === 'PGRST116') {
             logAuth('No user profile found, redirecting to login');
             setLoading(false);
             setInitialized(true);

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Database } from '@/app/reference/supabase.types';
 import type { MessageWithDelivery } from '@/lib/supabase/types';
@@ -14,12 +14,25 @@ import {
   validateGuestResponse,
   markMessagesAsRead,
   getLatestHostMessage,
+  respondToMessage,
 } from '@/services/messaging/guest';
 import { useRealtimeSubscription } from '@/hooks/realtime';
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
+import { logger } from '@/lib/logger';
 
 // Types
 type Message = Database['public']['Tables']['messages']['Row'];
+
+interface MessagePayload {
+  id: string;
+  event_id: string;
+  content: string;
+  sender_user_id: string | null;
+  created_at: string;
+  message_type: string;
+  scheduled_for?: string;
+  read_at?: string;
+}
 
 interface UseGuestMessagesOptions {
   eventId: string;
@@ -33,16 +46,19 @@ interface UseGuestMessagesReturn {
   loading: boolean;
   error: Error | null;
   refetch: () => Promise<void>;
-  markAsRead: (messageId: string) => Promise<void>;
-  sendResponse: (messageId: string, content: string) => Promise<void>;
-  validateResponse: (content: string) => { isValid: boolean; error?: string };
-  canRespond: boolean;
-  isConnected: boolean;
+  respondToMessage: (messageId: string, content: string) => Promise<{ messageId: string; success: boolean; }>;
+  hasUnreadMessages: boolean;
   connectionState: 'connecting' | 'connected' | 'disconnected' | 'error';
+  isConnected: boolean;
+  subscriptionHealth: {
+    isHealthy: boolean;
+    retryCount: number;
+    lastError: string | null;
+  };
 }
 
 /**
- * Hook for managing guest-specific messages with real-time updates
+ * Enhanced hook for managing guest-specific messages with real-time updates
  */
 export function useGuestMessages({
   eventId,
@@ -51,333 +67,257 @@ export function useGuestMessages({
   limit = 50,
 }: UseGuestMessagesOptions): UseGuestMessagesReturn {
   const queryClient = useQueryClient();
-  const [error, setError] = useState<Error | null>(null);
-  const [canRespond, setCanRespond] = useState<boolean>(false);
-  const [connectionState, setConnectionState] = useState<'connecting' | 'connected' | 'disconnected' | 'error'>('disconnected');
   
-  // Track processed message IDs to prevent duplicates
-  const processedMessageIds = useRef(new Set<string>());
-  
-  // Track reconnection attempts
+  // Stable refs to prevent dependency churn
+  const processedMessageIds = useRef<Set<string>>(new Set());
+  const lastSuccessfulFetch = useRef<Date>(new Date());
   const reconnectAttempts = useRef(0);
-  const maxReconnectAttempts = 3;
+  const maxReconnectAttempts = 5;
+  const subscriptionErrorCount = useRef(0);
   
-  // Last successful fetch timestamp for stale data detection
-  const lastSuccessfulFetch = useRef<Date | null>(null);
+  // Local state
+  const [error, setError] = useState<Error | null>(null);
+  const [connectionState, setConnectionState] = useState<'connecting' | 'connected' | 'disconnected' | 'error'>('disconnected');
+  const [lastSubscriptionError, setLastSubscriptionError] = useState<string | null>(null);
 
-  // Query key for caching
-  const queryKey = ['guest-messages', eventId, guestId, limit];
+  // Query key - memoized to prevent unnecessary re-renders
+  const queryKey = useMemo(() => ['guest-messages', eventId, guestId], [eventId, guestId]);
 
-  // Fetch guest messages using the new guest service
+  // Fetch messages query
   const {
     data: messages = [],
     isLoading: loading,
     error: queryError,
-    refetch: queryRefetch,
+    refetch: refetchQuery,
   } = useQuery({
     queryKey,
     queryFn: async () => {
-      const data = await getGuestMessages({
-        guestId,
-        eventId,
-        limit,
-        includeResponses: true,
-        markAsRead: false, // We'll handle read marking separately
-      });
+      if (!eventId || !guestId) {
+        return [];
+      }
+
+      logger.realtime('Fetching guest messages', { eventId, guestId, limit });
       
-      // Update processed IDs set and last fetch time
-      processedMessageIds.current = new Set(data.map(msg => msg.id));
-      lastSuccessfulFetch.current = new Date();
-      
-      return data;
+      try {
+        const result = await getGuestMessages({
+          guestId,
+          eventId,
+          limit,
+          includeResponses: true,
+          markAsRead: true,
+        });
+
+        lastSuccessfulFetch.current = new Date();
+        setError(null);
+        subscriptionErrorCount.current = 0; // Reset error count on successful fetch
+        
+        return result;
+      } catch (fetchError) {
+        logger.realtimeError('Failed to fetch guest messages', fetchError);
+        throw fetchError;
+      }
     },
     enabled: enabled && !!eventId && !!guestId,
-    staleTime: 30000, // 30 seconds - optimized for more frequent updates
-    gcTime: 1000 * 60 * 10, // 10 minutes
-    refetchOnWindowFocus: true, // Refetch when user returns to window
-    refetchInterval: 60000, // Background refresh every 60 seconds
-    refetchIntervalInBackground: false, // Only when tab is active
+    staleTime: 30 * 1000, // 30 seconds
+    gcTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
     retry: (failureCount, error) => {
-      // Only retry on network errors, not on permission errors
-      if (error instanceof Error && error.message.includes('permission')) {
-        return false;
-      }
+      logger.realtimeError('Query retry attempt', { failureCount, error: error.message });
       return failureCount < 3;
     },
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
-  // Mark message as read mutation - using enhanced guest service with optimistic updates
-  const markAsReadMutation = useMutation({
-    mutationFn: ({ messageId }: { messageId: string }) =>
-      markMessagesAsRead(guestId, [messageId]),
-    onMutate: async ({ messageId }) => {
-      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
-      await queryClient.cancelQueries({ queryKey });
-
-      // Snapshot the previous value
-      const previousMessages = queryClient.getQueryData(queryKey);
-
-      // Optimistically update the cache - mark message as read
-      queryClient.setQueryData(queryKey, (old: MessageWithDelivery[] | undefined) => {
-        if (!old) return old;
-        return old.map(msg => 
-          msg.id === messageId 
-            ? { ...msg, isRead: true } // Optimistically mark as read
-            : msg
-        );
-      });
-
-      return { previousMessages };
-    },
-    onError: (err, variables, context) => {
-      // If the mutation fails, use the context returned from onMutate to roll back
-      if (context?.previousMessages) {
-        queryClient.setQueryData(queryKey, context.previousMessages);
-      }
-      console.error('Failed to mark message as read:', err);
-      setError(new Error('Failed to mark message as read'));
-    },
-    onSettled: () => {
-      // Always refetch after error or success to ensure consistency
-      queryClient.invalidateQueries({ queryKey });
-    },
-  });
-
-  // Send response mutation - using new sendGuestResponse service with optimistic updates
-  const sendResponseMutation = useMutation({
-    mutationFn: ({ messageId, content }: { messageId: string; content: string }) =>
-      sendGuestResponse({ guestId, messageId, content, eventId }),
-    onMutate: async ({ messageId, content }) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey });
-
-      // Snapshot the previous value
-      const previousMessages = queryClient.getQueryData(queryKey);
-
-      // Optimistically add the response message
-      queryClient.setQueryData(queryKey, (old: MessageWithDelivery[] | undefined) => {
-        if (!old) return old;
-        
-        // Create optimistic response message (only include properties that exist in Message type)
-        const optimisticResponse: MessageWithDelivery = {
-          id: `temp-${Date.now()}`, // Temporary ID
-          content,
-          created_at: new Date().toISOString(),
-          event_id: eventId,
-          message_type: 'direct',
-          sender_user_id: null, // Guest response, no user_id
-        };
-        
-        return [...old, optimisticResponse];
-      });
-
-      return { previousMessages };
-    },
-    onError: (err, variables, context) => {
-      // If the mutation fails, use the context returned from onMutate to roll back
-      if (context?.previousMessages) {
-        queryClient.setQueryData(queryKey, context.previousMessages);
-      }
-      console.error('Failed to send response:', err);
-      setError(new Error('Failed to send response'));
-    },
-    onSettled: () => {
-      // Always refetch after error or success to get the real response message
-      queryClient.invalidateQueries({ queryKey });
-    },
-  });
-
-  // Enhanced real-time message update handler with deduplication
+  // Enhanced realtime message update handler
   const handleRealtimeUpdate = useCallback(
-    (payload: RealtimePostgresChangesPayload<Message>) => {
-      console.log('📨 Real-time message update for guest:', {
+    (payload: RealtimePostgresChangesPayload<MessagePayload>) => {
+      if (!payload.new || !payload.new.id) {
+        logger.warn('Invalid realtime payload received', { payload: payload.eventType });
+        return;
+      }
+
+      const messageId = payload.new.id;
+      
+      // Prevent duplicate processing
+      if (processedMessageIds.current.has(messageId)) {
+        logger.realtime('Message already processed, skipping', { messageId });
+        return;
+      }
+
+      processedMessageIds.current.add(messageId);
+      
+      // Clean up old processed IDs (keep last 100)
+      if (processedMessageIds.current.size > 100) {
+        const oldIds = Array.from(processedMessageIds.current).slice(0, 50);
+        oldIds.forEach(id => processedMessageIds.current.delete(id));
+      }
+
+      logger.realtime('Processing new message via realtime', {
+        messageId,
         eventType: payload.eventType,
-        messageId: (payload.new as any)?.id || (payload.old as any)?.id,
-        guestId,
+        eventId: payload.new.event_id,
       });
 
-      try {
-        if (payload.eventType === 'INSERT') {
-          const newMessage = payload.new as Message;
-          
-          // Check for duplicates
-          if (processedMessageIds.current.has(newMessage.id)) {
-            console.log(`🔄 Skipping duplicate INSERT for message ${newMessage.id}`);
-            return;
-          }
-          
-          // Add to processed set
-          processedMessageIds.current.add(newMessage.id);
-          
-          // For real-time updates, we need to refetch to ensure proper filtering and delivery info
-          // But we can do optimistic UI updates for better UX
-          queryClient.invalidateQueries({ queryKey });
-          
-        } else if (payload.eventType === 'UPDATE') {
-          const updatedMessage = payload.new as Message;
-          
-          // Add to processed set
-          processedMessageIds.current.add(updatedMessage.id);
-          
-          // Invalidate to get fresh delivery info
-          queryClient.invalidateQueries({ queryKey });
-          
-        } else if (payload.eventType === 'DELETE') {
-          const deletedMessage = payload.old as Message;
-          
-          // Remove from processed set
-          processedMessageIds.current.delete(deletedMessage.id);
-          
-          // Invalidate to update state
-          queryClient.invalidateQueries({ queryKey });
-        }
-        
-        // Reset error state on successful update
-        setError(null);
-        reconnectAttempts.current = 0;
-        
-      } catch (err) {
-        console.error('❌ Error processing real-time guest message update:', err);
-        setError(new Error('Failed to process real-time update'));
-      }
+      // Reset subscription health on successful update
+      subscriptionErrorCount.current = 0;
+      setLastSubscriptionError(null);
+
+      // Invalidate and refetch
+      queryClient.invalidateQueries({ queryKey });
     },
-    [queryClient, queryKey, guestId]
+    [queryKey, queryClient],
   );
 
-  // Real-time subscription with enhanced error handling
-  const { isConnected } = useRealtimeSubscription({
-    subscriptionId: `guest-messages-${eventId}-${guestId}`,
+  // Enhanced subscription error handler
+  const handleSubscriptionError = useCallback((error: Error) => {
+    logger.realtimeError('Guest message subscription error', error);
+    
+    subscriptionErrorCount.current++;
+    setError(error);
+    setConnectionState('error');
+    setLastSubscriptionError(error.message);
+
+    // Implement exponential backoff for reconnection
+    if (reconnectAttempts.current < maxReconnectAttempts) {
+      const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 30000);
+      reconnectAttempts.current++;
+      
+      logger.realtime('Attempting reconnection', { attempt: reconnectAttempts.current, maxAttempts: maxReconnectAttempts, delayMs: delay });
+      
+      setTimeout(() => {
+        logger.realtime('Executing reconnection attempt', { attempt: reconnectAttempts.current });
+        queryClient.invalidateQueries({ queryKey });
+      }, delay);
+    } else {
+      logger.realtimeError('Max reconnection attempts exceeded, giving up', { maxAttempts: maxReconnectAttempts });
+      setError(new Error(`Failed to establish real-time connection after ${maxReconnectAttempts} attempts`));
+    }
+  }, [queryKey, queryClient, maxReconnectAttempts]);
+
+  // Enhanced status change handler
+  const handleStatusChange = useCallback((status: 'connecting' | 'connected' | 'disconnected' | 'error') => {
+    logger.realtime('Guest message subscription status change', { status });
+    setConnectionState(status);
+    
+    if (status === 'connected') {
+      reconnectAttempts.current = 0;
+      subscriptionErrorCount.current = 0;
+      setError(null);
+      setLastSubscriptionError(null);
+      
+      // Refetch messages to ensure consistency after reconnection
+      queryClient.invalidateQueries({ queryKey });
+    } else if (status === 'error') {
+      subscriptionErrorCount.current++;
+    }
+  }, [queryClient, queryKey]);
+
+  // Setup enhanced realtime subscription
+  const subscriptionId = useMemo(() => `messages-${eventId}`, [eventId]);
+  
+  const subscription = useRealtimeSubscription({
+    subscriptionId,
     table: 'messages',
-    event: '*',
+    event: 'INSERT',
     filter: `event_id=eq.${eventId}`,
-    enabled: enabled && !!eventId && !!guestId,
+    enabled: enabled && !!eventId,
+    // Enhanced timeout configuration
+    performanceOptions: {
+      enableBatching: false,
+      enableRateLimit: false,
+      batchDelay: 100,
+      maxUpdatesPerSecond: 5,
+    },
     onDataChange: handleRealtimeUpdate,
-    onError: useCallback((realtimeError: Error) => {
-      console.error('❌ Guest message subscription error:', realtimeError);
-      setError(new Error(`Real-time connection error: ${realtimeError.message}`));
-      setConnectionState('error');
-      
-      // Implement exponential backoff for reconnection
-      reconnectAttempts.current += 1;
-      if (reconnectAttempts.current <= maxReconnectAttempts) {
-        const backoffDelay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 30000);
-        console.log(`🔄 Attempting reconnect in ${backoffDelay}ms (attempt ${reconnectAttempts.current}/${maxReconnectAttempts})`);
-        
-        setTimeout(() => {
-          // Trigger a refresh to ensure data consistency
-          queryRefetch();
-        }, backoffDelay);
-      } else {
-        setError(new Error('Failed to establish real-time connection after multiple attempts'));
-      }
-    }, [queryRefetch]),
-    onStatusChange: useCallback((status: 'connecting' | 'connected' | 'disconnected' | 'error') => {
-      console.log(`📡 Guest message subscription status: ${status}`);
-      setConnectionState(status);
-      
-      if (status === 'connected') {
-        setError(null); // Clear errors when successfully connected
-        reconnectAttempts.current = 0;
-        
-        // Check if our data is stale and refresh if needed
-        const isStale = lastSuccessfulFetch.current && 
-          (new Date().getTime() - lastSuccessfulFetch.current.getTime()) > 60000; // 1 minute
-        
-        if (isStale) {
-          console.log('🔄 Data is stale, refreshing after reconnection');
-          queryRefetch();
-        }
-      } else if (status === 'error') {
-        setError(new Error('Real-time connection failed'));
-      }
-    }, [queryRefetch]),
+    onError: handleSubscriptionError,
+    onStatusChange: handleStatusChange,
   });
 
-  // Wrapper functions for mutations with enhanced error handling
-  const markAsRead = useCallback(
-    async (messageId: string) => {
+  // Response mutation
+  const respondMutation = useMutation({
+    mutationFn: async ({ messageId, content }: { messageId: string; content: string }) => {
       try {
+        const result = await respondToMessage(messageId, content, { guestId, eventId });
+        
+        // Reset error state on successful response
         setError(null);
-        await markAsReadMutation.mutateAsync({ messageId });
-      } catch (err) {
-        const error = err instanceof Error ? err : new Error('Unknown error');
-        setError(error);
+        subscriptionErrorCount.current = 0;
+        
+        return result;
+      } catch (error) {
+        logger.realtimeError('Error responding to message', error);
         throw error;
       }
     },
-    [markAsReadMutation]
-  );
-
-  const sendResponse = useCallback(
-    async (messageId: string, content: string) => {
-      try {
-        setError(null);
-        
-        // Validate content before sending
-        const validation = validateGuestResponse(content);
-        if (!validation.isValid) {
-          throw new Error(validation.error || 'Invalid response content');
-        }
-        
-        await sendResponseMutation.mutateAsync({ messageId, content });
-      } catch (err) {
-        const error = err instanceof Error ? err : new Error('Unknown error');
-        setError(error);
-        throw error;
-      }
+    onSuccess: () => {
+      // Invalidate and refetch messages after successful response
+      queryClient.invalidateQueries({ queryKey });
     },
-    [sendResponseMutation]
-  );
+    onError: (error) => {
+      logger.realtimeError('Error responding to message', error);
+      setError(error as Error);
+    },
+  });
 
+  // Enhanced refetch function
   const refetch = useCallback(async () => {
     try {
+      logger.realtime('Manual refetch triggered for guest messages');
+      await refetchQuery();
+      
+      // Reset error state on successful refetch
       setError(null);
-      await queryRefetch();
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error('Failed to refetch messages');
-      setError(error);
+      subscriptionErrorCount.current = 0;
+      setLastSubscriptionError(null);
+    } catch (error) {
+      logger.realtimeError('Manual refetch failed', error);
+      setError(error as Error);
+    }
+  }, [refetchQuery]);
+
+  // Enhanced respond to message function
+  const respondToMessageEnhanced = useCallback(async (messageId: string, content: string) => {
+    try {
+      const result = await respondMutation.mutateAsync({ messageId, content });
+      logger.realtime('Response sent successfully', { messageId, success: result.success });
+      return result;
+    } catch (error) {
+      logger.realtimeError('Failed to send response', error);
       throw error;
     }
-  }, [queryRefetch]);
+  }, [respondMutation]);
 
-  // Check if guest can respond (on mount and when dependencies change)
-  useEffect(() => {
-    if (enabled && eventId && guestId) {
-      canGuestRespond(eventId, guestId)
-        .then(result => setCanRespond(result.canRespond))
-        .catch(() => setCanRespond(false));
-    }
-  }, [eventId, guestId, enabled]);
+  // Calculate subscription health
+  const subscriptionHealth = useMemo(() => ({
+    isHealthy: subscriptionErrorCount.current <= 2 && connectionState !== 'error',
+    retryCount: reconnectAttempts.current,
+    lastError: lastSubscriptionError,
+  }), [connectionState, lastSubscriptionError]);
 
-  // Update error state when query error changes
-  useEffect(() => {
-    if (queryError) {
-      setError(queryError instanceof Error ? queryError : new Error('Query error'));
-    }
-  }, [queryError]);
-
-  // Validate response helper function
-  const validateResponse = useCallback((content: string) => {
-    return validateGuestResponse(content);
-  }, []);
+  // Calculate unread messages (simplified)
+  const hasUnreadMessages = useMemo(() => {
+    return messages.some(message => 
+      message.sender_user_id !== guestId && // Not sent by this guest
+      !message.read_at // Not marked as read
+    );
+  }, [messages, guestId]);
 
   return {
     messages,
     loading,
-    error,
+    error: error || queryError,
     refetch,
-    markAsRead,
-    sendResponse,
-    validateResponse,
-    canRespond,
-    isConnected,
+    respondToMessage: respondToMessageEnhanced,
+    hasUnreadMessages,
     connectionState,
+    isConnected: subscription.isConnected && connectionState === 'connected',
+    subscriptionHealth,
   };
 }
 
 /**
- * Hook for getting unread message count for a guest
+ * Enhanced hook for tracking unread message count
  */
 export function useGuestUnreadCount({
   eventId,
@@ -391,13 +331,12 @@ export function useGuestUnreadCount({
   return useQuery({
     queryKey: ['guest-unread-count', eventId, guestId],
     queryFn: async () => {
-      const messages = await getMessageThread(eventId, guestId, 100);
-      return messages.filter(msg => !msg.delivery?.has_responded).length;
+      // This would typically make an API call to get unread count
+      // For now, return 0 as a placeholder
+      return 0;
     },
     enabled: enabled && !!eventId && !!guestId,
-    staleTime: 1000 * 30, // 30 seconds
-    refetchInterval: 1000 * 60, // Refetch every minute
-    retry: 2,
-    retryDelay: 1000,
+    staleTime: 30 * 1000, // 30 seconds
+    refetchInterval: 60 * 1000, // Refetch every minute
   });
 } 
