@@ -1,3 +1,5 @@
+import Image from 'next/image'
+
 export default function PoliciesPage() {
   return (
     <div className="min-h-screen">
@@ -74,7 +76,54 @@ export default function PoliciesPage() {
               </div>
             </div>
 
-            {/* 2. Data Usage & Retention */}
+            {/* 2. SMS Consent During Sign-Up */}
+            <div className="bg-white rounded-2xl border border-gray-100 p-8 lg:p-12 shadow-lg">
+              <div className="text-center mb-8">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-2xl mb-6">
+                  <span className="text-indigo-600 text-2xl">💬</span>
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-semibold text-gray-900 mb-4">
+                  SMS Consent During <span className="bg-gradient-to-r from-rose-500 to-purple-600 bg-clip-text text-transparent">Sign-Up</span>
+                </h2>
+              </div>
+              
+              <div className="text-gray-700 leading-relaxed space-y-8">
+                <p className="text-lg text-center">
+                  When signing up for Unveil, users are prompted to enter their phone number and agree to receive a one-time SMS verification code. This screen includes a disclosure stating: <strong>&quot;By continuing, you agree to receive a one-time SMS verification code from Unveil. Msg & data rates may apply. Reply STOP to unsubscribe.&quot;</strong>
+                </p>
+                
+                <div className="flex justify-center">
+                  <div className="bg-gradient-to-br from-gray-50 to-slate-50 rounded-xl p-6 border border-gray-200 max-w-sm">
+                    <Image
+                      src="/screenshots/signup-consent-mockup.png"
+                      alt="Screenshot of Unveil mobile app phone number entry screen during sign-up"
+                      width={300}
+                      height={600}
+                      className="rounded-lg shadow-md mx-auto"
+                      priority={false}
+                    />
+                    <p className="text-sm text-gray-600 text-center mt-4">
+                      Sign-up consent screen showing SMS opt-in disclosure
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-xl p-6 border border-amber-100">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                    <span className="text-amber-600 mr-3">📋</span>
+                    Key Privacy Protections
+                  </h3>
+                  <ul className="space-y-2 text-gray-700">
+                    <li>• <strong>No third-party sharing:</strong> Phone numbers are never shared with third parties for marketing purposes</li>
+                    <li>• <strong>Transactional only:</strong> Messages are strictly for identity verification and account login</li>
+                    <li>• <strong>Clear opt-out:</strong> Users can reply STOP at any time to unsubscribe from SMS</li>
+                    <li>• <strong>Transparent disclosure:</strong> All consent language is clearly presented during sign-up</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            {/* 3. Data Usage & Retention */}
             <div className="bg-white rounded-2xl border border-gray-100 p-8 lg:p-12 shadow-lg">
               <div className="text-center mb-8">
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-100 to-pink-100 rounded-2xl mb-6">
@@ -121,7 +170,7 @@ export default function PoliciesPage() {
               </div>
             </div>
 
-            {/* 3. User Rights & Control */}
+            {/* 4. User Rights & Control */}
             <div className="bg-white rounded-2xl border border-gray-100 p-8 lg:p-12 shadow-lg">
               <div className="text-center mb-8">
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-100 to-emerald-100 rounded-2xl mb-6">
@@ -170,7 +219,7 @@ export default function PoliciesPage() {
               </div>
             </div>
 
-            {/* 4. Compliance & Contact */}
+            {/* 5. Compliance & Contact */}
             <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl border border-blue-100 p-8 lg:p-12 shadow-lg">
               <div className="text-center mb-8">
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-rose-100 to-orange-100 rounded-2xl mb-6">

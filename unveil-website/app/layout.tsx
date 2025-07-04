@@ -87,7 +87,7 @@ function SimpleFooter() {
               <Link href="/how-it-works" className="hover:text-gray-700">How It Works</Link>
             </div>
             <p className="text-xs text-gray-400 pt-4">
-              © 2024 Unveil. Made with ♥ for couples everywhere.
+              © 2025 Unveil Labs, Inc. Made with ♥ for couples everywhere.
             </p>
           </div>
         </div>
