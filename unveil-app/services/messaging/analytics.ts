@@ -82,10 +82,11 @@ export interface MessageAnalytics {
 
 /**
  * Get comprehensive delivery statistics for an event with enhanced read tracking
+ * OPTIMIZED: Uses separate queries instead of complex JOINs for better performance
  */
 export async function getDeliveryStatsForEvent(eventId: string): Promise<DeliveryStats> {
   try {
-    // Get all scheduled messages for the event
+    // Step 1: Get scheduled message IDs (fast, simple query)
     const { data: messages, error: messagesError } = await supabase
       .from('scheduled_messages')
       .select('id')
@@ -111,8 +112,8 @@ export async function getDeliveryStatsForEvent(eventId: string): Promise<Deliver
     
     const messageIds = messages.map(m => m.id);
     
-    // Get delivery statistics with read tracking support
-          // FUTURE: Add 'read_at' column support in Phase 6 schema expansion
+    // Step 2: Get delivery statistics (separate, optimized query)
+    // Only select essential fields to reduce data transfer
     const { data: deliveries, error: deliveriesError } = await supabase
       .from('message_deliveries')
       .select('sms_status, email_status, push_status, has_responded, created_at, updated_at')
@@ -120,33 +121,48 @@ export async function getDeliveryStatsForEvent(eventId: string): Promise<Deliver
     
     if (deliveriesError) throw deliveriesError;
     
+    // Step 3: Compute statistics on client side (faster than complex DB aggregations)
     const totalSent = deliveries?.length || 0;
-    // Consider delivered if any delivery method succeeded
-    const totalDelivered = deliveries?.filter(d => 
-      d.sms_status === 'delivered' || d.email_status === 'delivered' || d.push_status === 'delivered'
-    ).length || 0;
-    // Consider failed if all delivery methods failed
-    const totalFailed = deliveries?.filter(d => 
-      d.sms_status === 'failed' && d.email_status === 'failed' && d.push_status === 'failed'
-    ).length || 0;
-    const totalResponses = deliveries?.filter(d => d.has_responded === true).length || 0;
     
-    // Enhanced: Calculate read statistics
-    // FUTURE: Use read_at column when Phase 6 read receipts are implemented
-    // For now, we'll use a heuristic: messages with responses are considered "read"
-    const totalRead = deliveries?.filter(d => {
-      // FUTURE: Use read_at column when available in Phase 6 schema
-      // if (d.read_at) return true;
-      // Fallback: if they responded, they must have read it
-      if (d.has_responded) return true;
-      // Additional heuristic: if updated_at is significantly after created_at, assume read
-      if (d.created_at && d.updated_at) {
-        const timeDiff = new Date(d.updated_at).getTime() - new Date(d.created_at).getTime();
-        return timeDiff > 60000; // More than 1 minute difference suggests engagement
+    // Use optimized counting logic
+    let totalDelivered = 0;
+    let totalFailed = 0;
+    let totalResponses = 0;
+    let totalRead = 0;
+    
+    if (deliveries) {
+      for (const delivery of deliveries) {
+        // Count delivered (any method succeeded)
+        if (delivery.sms_status === 'delivered' || 
+            delivery.email_status === 'delivered' || 
+            delivery.push_status === 'delivered') {
+          totalDelivered++;
+        }
+        
+        // Count failed (all methods failed)
+        if (delivery.sms_status === 'failed' && 
+            delivery.email_status === 'failed' && 
+            delivery.push_status === 'failed') {
+          totalFailed++;
+        }
+        
+        // Count responses
+        if (delivery.has_responded === true) {
+          totalResponses++;
+          totalRead++; // Responses imply reading
+        } else {
+          // Read heuristic: significant time between create/update suggests engagement
+          if (delivery.created_at && delivery.updated_at) {
+            const timeDiff = new Date(delivery.updated_at).getTime() - new Date(delivery.created_at).getTime();
+            if (timeDiff > 60000) { // More than 1 minute difference
+              totalRead++;
+            }
+          }
+        }
       }
-      return false;
-    }).length || 0;
+    }
     
+    // Calculate rates
     const deliveryRate = totalSent > 0 ? (totalDelivered / totalSent) * 100 : 0;
     const readRate = totalSent > 0 ? (totalRead / totalSent) * 100 : 0;
     const readRatio = totalDelivered > 0 ? (totalRead / totalDelivered) * 100 : 0;
@@ -679,6 +695,7 @@ export async function recordMessageResponse(
 
 /**
  * Calculate response rates for different message types
+ * OPTIMIZED: Uses separate queries instead of complex JOIN for better performance
  */
 export async function getResponseRatesByMessageType(eventId: string): Promise<Array<{
   messageType: string;
@@ -687,39 +704,63 @@ export async function getResponseRatesByMessageType(eventId: string): Promise<Ar
   responseRate: number;
 }>> {
   try {
-    const { data, error } = await supabase
+    // Step 1: Get scheduled messages (simple, fast query)
+    const { data: messages, error: messagesError } = await supabase
       .from('scheduled_messages')
-      .select(`
-        message_type,
-        message_deliveries (
-          has_responded
-        )
-      `)
+      .select('id, message_type')
       .eq('event_id', eventId)
       .eq('status', 'sent');
     
-    if (error) throw error;
+    if (messagesError) throw messagesError;
     
-    const stats = (data || []).reduce((acc, message) => {
+    if (!messages || messages.length === 0) {
+      return [];
+    }
+    
+    const messageIds = messages.map(m => m.id);
+    
+    // Step 2: Get delivery responses (separate, optimized query)
+    const { data: deliveries, error: deliveriesError } = await supabase
+      .from('message_deliveries')
+      .select('scheduled_message_id, has_responded')
+      .in('scheduled_message_id', messageIds);
+    
+    if (deliveriesError) throw deliveriesError;
+    
+    // Step 3: Merge results on client side (faster than complex DB aggregations)
+    const deliveryMap = new Map<string, { total: number; responses: number }>();
+    
+    // Initialize counts for all message types
+    for (const message of messages) {
       const messageType = message.message_type || 'unknown';
-      const deliveries = message.message_deliveries || [];
-      const responses = deliveries.filter(d => d.has_responded === true);
-      
-      if (!acc[messageType]) {
-        acc[messageType] = { totalSent: 0, totalResponses: 0 };
+      if (!deliveryMap.has(messageType)) {
+        deliveryMap.set(messageType, { total: 0, responses: 0 });
       }
-      
-      acc[messageType].totalSent += deliveries.length;
-      acc[messageType].totalResponses += responses.length;
-      
-      return acc;
-    }, {} as Record<string, { totalSent: number; totalResponses: number }>);
+    }
     
-    return Object.entries(stats).map(([messageType, data]) => ({
+    // Count deliveries and responses efficiently
+    if (deliveries) {
+      for (const delivery of deliveries) {
+        // Find the message type for this delivery
+        const message = messages.find(m => m.id === delivery.scheduled_message_id);
+        if (message) {
+          const messageType = message.message_type || 'unknown';
+          const stats = deliveryMap.get(messageType)!;
+          
+          stats.total++;
+          if (delivery.has_responded === true) {
+            stats.responses++;
+          }
+        }
+      }
+    }
+    
+    // Convert to final format
+    return Array.from(deliveryMap.entries()).map(([messageType, stats]) => ({
       messageType,
-      totalSent: data.totalSent,
-      totalResponses: data.totalResponses,
-      responseRate: data.totalSent > 0 ? (data.totalResponses / data.totalSent) * 100 : 0,
+      totalSent: stats.total,
+      totalResponses: stats.responses,
+      responseRate: stats.total > 0 ? (stats.responses / stats.total) * 100 : 0,
     }));
   } catch (error) {
     logger.databaseError('Error getting response rates by message type', error);

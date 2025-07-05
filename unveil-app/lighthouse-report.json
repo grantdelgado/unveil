@@ -1,0 +1,38 @@
+{
+  "http://localhost:3000/login": {
+    "accessibility": 0,
+    "performance": 0,
+    "bestPractices": 0,
+    "audits": {
+      "colorContrast": false,
+      "aria": false,
+      "focusable": false,
+      "largestContentfulPaint": 0,
+      "totalBlockingTime": 0
+    }
+  },
+  "http://localhost:3000/host/events/create": {
+    "accessibility": 0,
+    "performance": 0,
+    "bestPractices": 0,
+    "audits": {
+      "colorContrast": false,
+      "aria": false,
+      "focusable": false,
+      "largestContentfulPaint": 0,
+      "totalBlockingTime": 0
+    }
+  },
+  "http://localhost:3000/select-event": {
+    "accessibility": 0,
+    "performance": 0,
+    "bestPractices": 0,
+    "audits": {
+      "colorContrast": false,
+      "aria": false,
+      "focusable": false,
+      "largestContentfulPaint": 0,
+      "totalBlockingTime": 0
+    }
+  }
+}

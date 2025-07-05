@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const lighthouse = require('lighthouse');
+const { default: lighthouse } = require('lighthouse');
 const chromeLauncher = require('chrome-launcher');
 const fs = require('fs').promises;
 const path = require('path');

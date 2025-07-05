@@ -3,7 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { AuthSessionWatcher } from '@/components/features/auth/AuthSessionWatcher';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
-import { NavigationLayout } from '@/components/features/navigation';
+
 import { ReactQueryProvider } from '@/lib/react-query-client';
 import { APP_CONFIG } from '@/lib/constants';
 import { Suspense } from 'react';
@@ -124,7 +124,7 @@ export default function RootLayout({
             <PerformanceMonitor>
               <Suspense>
                 <AuthSessionWatcher>
-                  <NavigationLayout>{children}</NavigationLayout>
+                  {children}
                 </AuthSessionWatcher>
               </Suspense>
             </PerformanceMonitor>

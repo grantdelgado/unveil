@@ -1,5 +1,3 @@
-import Papa from 'papaparse';
-import * as XLSX from 'xlsx';
 import { z } from 'zod';
 import {
   isValidEmail,
@@ -85,111 +83,131 @@ export interface ColumnMappingType {
 /**
  * Parse CSV file
  */
-export const parseCSVFile = (file: File): Promise<ParsedFileResult> => {
-  return new Promise((resolve) => {
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      transformHeader: (header) => header.trim().toLowerCase(),
-      complete: (results) => {
-        if (results.errors.length > 0) {
+export const parseCSVFile = async (file: File): Promise<ParsedFileResult> => {
+  try {
+    // Dynamic import of papaparse
+    const Papa = await import('papaparse');
+    
+    return new Promise((resolve) => {
+      Papa.default.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        transformHeader: (header) => header.trim().toLowerCase(),
+        complete: (results) => {
+          if (results.errors.length > 0) {
+            resolve({
+              success: false,
+              error: `CSV parsing error: ${results.errors[0].message}`,
+            });
+            return;
+          }
+
+          const data = results.data as Record<string, string>[];
+          const headers = results.meta.fields || [];
+
+          resolve({
+            success: true,
+            data,
+            headers,
+          });
+        },
+        error: (error) => {
           resolve({
             success: false,
-            error: `CSV parsing error: ${results.errors[0].message}`,
+            error: `Failed to parse CSV: ${error.message}`,
           });
-          return;
-        }
-
-        const data = results.data as Record<string, string>[];
-        const headers = results.meta.fields || [];
-
-        resolve({
-          success: true,
-          data,
-          headers,
-        });
-      },
-      error: (error) => {
-        resolve({
-          success: false,
-          error: `Failed to parse CSV: ${error.message}`,
-        });
-      },
+        },
+      });
     });
-  });
+  } catch (error) {
+    return {
+      success: false,
+      error: `Failed to load CSV parser: ${error instanceof Error ? error.message : 'Unknown error'}`,
+    };
+  }
 };
 
 /**
  * Parse Excel file
  */
-export const parseExcelFile = (file: File): Promise<ParsedFileResult> => {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
+export const parseExcelFile = async (file: File): Promise<ParsedFileResult> => {
+  try {
+    // Dynamic import of xlsx
+    const XLSX = await import('xlsx');
+    
+    return new Promise((resolve) => {
+      const reader = new FileReader();
 
-    reader.onload = (e) => {
-      try {
-        const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: 'array' });
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target?.result as ArrayBuffer);
+          const workbook = XLSX.read(data, { type: 'array' });
 
-        // Use the first sheet
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
+          // Use the first sheet
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
 
-        // Convert to JSON with header row
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, {
-          header: 1,
-          defval: '',
-        }) as string[][];
+          // Convert to JSON with header row
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+            header: 1,
+            defval: '',
+          }) as string[][];
 
-        if (jsonData.length < 2) {
+          if (jsonData.length < 2) {
+            resolve({
+              success: false,
+              error:
+                'Excel file must have at least a header row and one data row',
+            });
+            return;
+          }
+
+          // Extract headers and normalize
+          const headers = jsonData[0].map((h) => String(h).trim().toLowerCase());
+
+          // Convert to object format
+          const parsedData = jsonData
+            .slice(1)
+            .map((row) => {
+              const obj: Record<string, string> = {};
+              headers.forEach((header, i) => {
+                obj[header] = String(row[i] || '').trim();
+              });
+              return obj;
+            })
+            .filter((row) => {
+              // Filter out completely empty rows
+              return Object.values(row).some((value) => value !== '');
+            });
+
+          resolve({
+            success: true,
+            data: parsedData,
+            headers,
+          });
+        } catch (error) {
           resolve({
             success: false,
-            error:
-              'Excel file must have at least a header row and one data row',
+            error: `Failed to parse Excel file: ${error instanceof Error ? error.message : 'Unknown error'}`,
           });
-          return;
         }
+      };
 
-        // Extract headers and normalize
-        const headers = jsonData[0].map((h) => String(h).trim().toLowerCase());
-
-        // Convert to object format
-        const parsedData = jsonData
-          .slice(1)
-          .map((row) => {
-            const obj: Record<string, string> = {};
-            headers.forEach((header, i) => {
-              obj[header] = String(row[i] || '').trim();
-            });
-            return obj;
-          })
-          .filter((row) => {
-            // Filter out completely empty rows
-            return Object.values(row).some((value) => value !== '');
-          });
-
-        resolve({
-          success: true,
-          data: parsedData,
-          headers,
-        });
-      } catch (error) {
+      reader.onerror = () => {
         resolve({
           success: false,
-          error: `Failed to parse Excel file: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          error: 'Failed to read file',
         });
-      }
-    };
+      };
 
-    reader.onerror = () => {
-      resolve({
-        success: false,
-        error: 'Failed to read file',
-      });
+      reader.readAsArrayBuffer(file);
+    });
+  } catch (error) {
+    return {
+      success: false,
+      error: `Failed to load Excel parser: ${error instanceof Error ? error.message : 'Unknown error'}`,
     };
-
-    reader.readAsArrayBuffer(file);
-  });
+  }
 };
 
 /**

@@ -16,7 +16,7 @@ export { useEventDetails, useEventInsights, useUserEventsSorted } from './events
 export { useEventMedia } from './media';
 export { useGuestMessages } from './messaging';
 export { useGuests } from './guests';
-export { useNavigation } from './navigation/useNavigation';
+// useNavigation hook removed
 export { useRealtimeSubscription } from './realtime';
 export { usePerformanceMonitor } from './performance';
 

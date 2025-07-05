@@ -1,7 +1,7 @@
 'use client';
 
 // External dependencies
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 
 // Internal utilities
 import { cn } from '@/lib/utils';
@@ -116,13 +116,29 @@ export function GuestManagement({
     }
   }, [handleBulkRSVPUpdate, selectedGuests, triggerHaptic]);
 
+  // Memoize expensive calculations
+  const pullToRefreshStyle = useMemo(() => ({
+    transform: pullToRefresh.isPulling ? `translateY(${Math.min(pullToRefresh.pullDistance, 100)}px)` : 'translateY(0)',
+    transition: pullToRefresh.isPulling ? 'none' : 'transform 200ms ease-out'
+  }), [pullToRefresh.isPulling, pullToRefresh.pullDistance]);
+
+  const guestCountText = useMemo(() => {
+    const count = filteredGuests.length;
+    const isFiltered = searchTerm || filterByRSVP !== 'all';
+    return `${count} guest${count !== 1 ? 's' : ''}${isFiltered ? ' (filtered)' : ''}`;
+  }, [filteredGuests.length, searchTerm, filterByRSVP]);
+
+  const isAllSelected = useMemo(() => 
+    selectedGuests.size === filteredGuests.length && filteredGuests.length > 0
+  , [selectedGuests.size, filteredGuests.length]);
+
   const selectAll = useCallback(() => {
-    if (selectedGuests.size === filteredGuests.length) {
+    if (isAllSelected) {
       setSelectedGuests(new Set());
     } else {
       setSelectedGuests(new Set(filteredGuests.map(guest => guest.id)));
     }
-  }, [selectedGuests.size, filteredGuests]);
+  }, [isAllSelected, filteredGuests]);
 
   const handleToggleGuestSelect = useCallback((guestId: string, selected: boolean) => {
     const newSelected = new Set(selectedGuests);
@@ -169,10 +185,7 @@ export function GuestManagement({
     <div 
       ref={containerRef}
       className="space-y-6 relative"
-      style={{
-        transform: pullToRefresh.isPulling ? `translateY(${Math.min(pullToRefresh.pullDistance, 100)}px)` : 'translateY(0)',
-        transition: pullToRefresh.isPulling ? 'none' : 'transform 200ms ease-out'
-      }}
+      style={pullToRefreshStyle}
     >
       {/* Pull-to-refresh indicator */}
       {(pullToRefresh.isPulling || pullToRefresh.isRefreshing) && (
@@ -300,13 +313,12 @@ export function GuestManagement({
           <div className="flex items-center gap-3">
             <input
               type="checkbox"
-              checked={selectedGuests.size === filteredGuests.length && filteredGuests.length > 0}
+              checked={isAllSelected}
               onChange={selectAll}
               className="h-4 w-4 text-[#FF6B6B] focus:ring-[#FF6B6B] border-gray-300 rounded"
             />
             <span className="text-sm font-medium text-gray-700">
-              {filteredGuests.length} guest{filteredGuests.length !== 1 ? 's' : ''}
-              {searchTerm || filterByRSVP !== 'all' ? ` (filtered)` : ''}
+              {guestCountText}
             </span>
           </div>
         </div>

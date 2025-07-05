@@ -13,7 +13,7 @@
 // Most frequently used lightweight components (specific imports)
 export { AuthSessionWatcher, LogoutButton, ProfileAvatar } from './auth';
 export { WelcomeBanner } from './events';
-export { BottomNavigation, NavigationLayout, RoleSwitcher } from './navigation';
+// Navigation components removed
 export { QuickActions } from './host-dashboard';
 export { EventSchedule } from './scheduling';
 
@@ -24,7 +24,7 @@ export * as GuestComponents from './guests';
 export * as HostDashboardComponents from './host-dashboard';
 export * as MediaComponents from './media';
 export * as MessagingComponents from './messaging';
-export * as NavigationComponents from './navigation';
+// Navigation components removed
 export * as SchedulingComponents from './scheduling';
 
 // Lazy-loaded exports for heavy components
@@ -39,6 +39,9 @@ export const GuestManagement = lazy(() =>
 )
 export const MessageComposer = lazy(() => 
   import('./messaging/host/MessageComposer').then(module => ({ default: module.MessageComposer }))
+)
+export const EnhancedMessageCenter = lazy(() => 
+  import('./messaging/host/EnhancedMessageCenter').then(module => ({ default: module.EnhancedMessageCenter }))
 )
 export const NotificationCenter = lazy(() => 
   import('./host-dashboard/NotificationCenter').then(module => ({ default: module.NotificationCenter }))

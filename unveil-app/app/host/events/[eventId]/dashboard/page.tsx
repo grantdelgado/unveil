@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/app/reference/supabase.types';
@@ -9,13 +9,15 @@ import {
   GuestStatusCard,
   QuickMessageActions,
   TabNavigation,
-  GuestManagement,
-  EnhancedMessageCenter,
   QuickActions,
   SMSTestPanel,
   type TabItem,
 } from '@/components/features/host-dashboard';
-import { GuestImportWizard } from '@/components/features/guests';
+import { 
+  GuestImportWizard,
+  GuestManagement,
+  EnhancedMessageCenter 
+} from '@/components/features';
 import {
   PageWrapper,
   CardContainer,
@@ -121,33 +123,9 @@ export default function EventDashboardPage() {
     fetchEventData();
   }, [eventId, router]);
 
-  // Listen for external tab change events (from bottom navigation)
-  useEffect(() => {
-    const handleTabChange = (event: CustomEvent) => {
-      if (event.detail?.tab && ['guests', 'messages'].includes(event.detail.tab)) {
-        setActiveTab(event.detail.tab);
-      }
-    };
-
-    ['navigationTabChange', 'dashboardTabChange'].forEach(eventType => {
-      window.addEventListener(eventType, handleTabChange as EventListener);
-    });
-
-    return () => {
-      ['navigationTabChange', 'dashboardTabChange'].forEach(eventType => {
-        window.removeEventListener(eventType, handleTabChange as EventListener);
-      });
-    };
-  }, []);
-
-  // Handle tab changes with event dispatch for bottom navigation sync
+  // Handle tab changes
   const handleTabChange = (newTab: string) => {
     setActiveTab(newTab);
-    
-    // Dispatch event for bottom navigation sync
-    window.dispatchEvent(new CustomEvent('dashboardTabChange', { 
-      detail: { tab: newTab } 
-    }));
   };
 
   // Handle data refresh after guest management actions
@@ -256,14 +234,25 @@ export default function EventDashboardPage() {
       {showGuestImport && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <GuestImportWizard
-              eventId={eventId}
-              onImportComplete={() => {
-                setShowGuestImport(false);
-                handleDataRefresh();
-              }}
-              onClose={() => setShowGuestImport(false)}
-            />
+            <Suspense 
+              fallback={
+                <CardContainer>
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                    <span className="ml-3 text-gray-600">Loading guest import...</span>
+                  </div>
+                </CardContainer>
+              }
+            >
+              <GuestImportWizard
+                eventId={eventId}
+                onImportComplete={() => {
+                  setShowGuestImport(false);
+                  handleDataRefresh();
+                }}
+                onClose={() => setShowGuestImport(false)}
+              />
+            </Suspense>
           </div>
         </div>
       )}
@@ -308,17 +297,35 @@ export default function EventDashboardPage() {
           {/* Tab Content */}
           <div className="py-6">
             {activeTab === 'guests' && (
-              <GuestManagement
-                eventId={eventId}
-                onGuestUpdated={handleDataRefresh}
-                onImportGuests={() => setShowGuestImport(true)}
-                onSendMessage={handleQuickMessage}
-              />
+              <Suspense 
+                fallback={
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                    <span className="ml-3 text-gray-600">Loading guest management...</span>
+                  </div>
+                }
+              >
+                <GuestManagement
+                  eventId={eventId}
+                  onGuestUpdated={handleDataRefresh}
+                  onImportGuests={() => setShowGuestImport(true)}
+                  onSendMessage={handleQuickMessage}
+                />
+              </Suspense>
             )}
 
             {activeTab === 'messages' && (
               <div className="space-y-6">
-                <EnhancedMessageCenter eventId={eventId} />
+                <Suspense 
+                  fallback={
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                      <span className="ml-3 text-gray-600">Loading message center...</span>
+                    </div>
+                  }
+                >
+                  <EnhancedMessageCenter eventId={eventId} />
+                </Suspense>
                 {/* Development mode SMS testing */}
                 {process.env.NODE_ENV === 'development' && (
                   <SMSTestPanel eventId={eventId} />

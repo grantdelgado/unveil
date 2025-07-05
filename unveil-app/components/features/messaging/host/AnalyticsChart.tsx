@@ -1,18 +1,22 @@
 'use client';
 
-import React from 'react';
-import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-} from 'recharts';
+import React, { useState, useEffect } from 'react';
+
+// Dynamic import interface for recharts
+/* eslint-disable @typescript-eslint/no-explicit-any */
+interface RechartsModule {
+  LineChart: React.ComponentType<any>;
+  Line: React.ComponentType<any>;
+  BarChart: React.ComponentType<any>;
+  Bar: React.ComponentType<any>;
+  XAxis: React.ComponentType<any>;
+  YAxis: React.ComponentType<any>;
+  CartesianGrid: React.ComponentType<any>;
+  Tooltip: React.ComponentType<any>;
+  ResponsiveContainer: React.ComponentType<any>;
+  Legend: React.ComponentType<any>;
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 export interface ChartDataPoint {
   [key: string]: string | number;
@@ -45,6 +49,37 @@ export function AnalyticsChart({
   showLegend = false,
   className = '',
 }: AnalyticsChartProps) {
+  const [rechartsModule, setRechartsModule] = useState<RechartsModule | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadRecharts = async () => {
+      try {
+        setIsLoading(true);
+        const rechartsImport = await import('recharts');
+        setRechartsModule({
+          LineChart: rechartsImport.LineChart,
+          Line: rechartsImport.Line,
+          BarChart: rechartsImport.BarChart,
+          Bar: rechartsImport.Bar,
+          XAxis: rechartsImport.XAxis,
+          YAxis: rechartsImport.YAxis,
+          CartesianGrid: rechartsImport.CartesianGrid,
+          Tooltip: rechartsImport.Tooltip,
+          ResponsiveContainer: rechartsImport.ResponsiveContainer,
+          Legend: rechartsImport.Legend,
+        });
+      } catch (error) {
+        console.error('Failed to load recharts:', error);
+        setLoadError('Failed to load chart library');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadRecharts();
+  }, []);
   // Default tooltip formatter
   const defaultTooltipFormatter = (value: number | string, name: string) => {
     if (name === yKey) {
@@ -96,6 +131,43 @@ export function AnalyticsChart({
     return value.toLocaleString();
   };
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className={`flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 ${className}`} style={{ height: `${height}px` }}>
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-gray-300 border-t-[#8b5cf6] rounded-full animate-spin mx-auto mb-2"></div>
+          <p className="text-sm text-gray-600 font-medium">Loading chart...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (loadError) {
+    return (
+      <div className={`flex items-center justify-center bg-red-50 rounded-lg border-2 border-dashed border-red-300 ${className}`} style={{ height: `${height}px` }}>
+        <div className="text-center">
+          <svg className="w-12 h-12 text-red-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p className="text-sm text-red-600 font-medium">Chart Unavailable</p>
+          <p className="text-xs text-red-500 mt-1">{loadError}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If recharts module hasn't loaded yet, show loading
+  if (!rechartsModule) {
+    return (
+      <div className={`flex items-center justify-center bg-gray-50 rounded-lg ${className}`} style={{ height: `${height}px` }}>
+        <div className="w-8 h-8 border-2 border-gray-300 border-t-[#8b5cf6] rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  // No data state
   if (!data || data.length === 0) {
     return (
       <div className={`flex items-center justify-center h-${height / 4} bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 ${className}`}>
@@ -125,6 +197,20 @@ export function AnalyticsChart({
     margin: { top: 5, right: 30, left: 20, bottom: 5 },
   };
 
+  // Destructure the dynamically loaded components
+  const {
+    LineChart,
+    Line,
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+    Legend,
+  } = rechartsModule;
+
   return (
     <div className={`w-full ${className}`} style={{ height: `${height}px` }}>
       <ResponsiveContainer width="100%" height="100%">
@@ -144,7 +230,7 @@ export function AnalyticsChart({
             />
             <Tooltip 
               formatter={tooltipFormatter || defaultTooltipFormatter}
-              labelFormatter={(label) => formatXAxisLabel(String(label))}
+              labelFormatter={(label: string | number) => formatXAxisLabel(String(label))}
               contentStyle={{
                 backgroundColor: 'white',
                 border: '1px solid #e5e7eb',
@@ -178,7 +264,7 @@ export function AnalyticsChart({
             />
             <Tooltip 
               formatter={tooltipFormatter || defaultTooltipFormatter}
-              labelFormatter={(label) => formatXAxisLabel(String(label))}
+              labelFormatter={(label: string | number) => formatXAxisLabel(String(label))}
               contentStyle={{
                 backgroundColor: 'white',
                 border: '1px solid #e5e7eb',
