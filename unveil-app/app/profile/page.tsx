@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { getCurrentUserProfile } from '@/services/auth';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -22,54 +23,114 @@ import {
 export default function ProfilePage() {
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [phone, setPhone] = useState('');
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [hasHostedEvents, setHasHostedEvents] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
 
   const router = useRouter();
 
   useEffect(() => {
     const fetchProfile = async () => {
       setIsLoading(true);
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser();
-      if (error || !user) {
-        setMessage('Something went wrong loading your profile');
+      
+      try {
+        // Use the getCurrentUserProfile service for consistent data loading
+        const { data: userProfile, error: profileError } = await getCurrentUserProfile();
+        
+        if (profileError || !userProfile) {
+          console.error('Failed to load user profile:', profileError);
+          setMessage('Failed to load your profile. Please try logging in again.');
+          setIsLoading(false);
+          return;
+        }
+
+        // Set profile data from the service
+        setUserId(userProfile.id);
+        setEmail(userProfile.email || '');
+        setDisplayName(userProfile.full_name || '');
+        setPhone(userProfile.phone || '');
+
+        // Check if user has hosted events
+        const { data: hostedEvents } = await supabase
+          .from('events')
+          .select('id')
+          .eq('host_user_id', userProfile.id);
+
+        setHasHostedEvents((hostedEvents?.length || 0) > 0);
+      } catch (err) {
+        console.error('Error loading profile:', err);
+        setMessage('An unexpected error occurred loading your profile.');
+      } finally {
         setIsLoading(false);
-        return;
       }
-      setEmail(user.email || '');
-      setDisplayName(user.user_metadata?.display_name || '');
-
-      // Check if user has hosted events
-      const { data: hostedEvents } = await supabase
-        .from('events')
-        .select('id')
-        .eq('host_user_id', user.id);
-
-      setHasHostedEvents((hostedEvents?.length || 0) > 0);
-      setIsLoading(false);
     };
+
     fetchProfile();
   }, []);
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!userId) {
+      setMessage('User profile not found. Please try logging in again.');
+      return;
+    }
+    
     setIsLoading(true);
     setMessage('');
-    // Update display name in user_metadata
-    const { error } = await supabase.auth.updateUser({
-      data: { display_name: displayName },
-    });
-    if (error) {
-      setMessage('Something went wrong. Please try again.');
-    } else {
+
+    try {
+      // Update profile in users table
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({
+          full_name: displayName.trim() || null,
+          email: email.trim() || null,
+        })
+        .eq('id', userId);
+
+      if (updateError) {
+        console.error('Failed to update profile:', updateError);
+        setMessage('Failed to save your information. Please try again.');
+        return;
+      }
+
+      // Also update auth user metadata for consistency
+      const { error: authUpdateError } = await supabase.auth.updateUser({
+        data: { 
+          display_name: displayName.trim(),
+          full_name: displayName.trim(),
+        },
+      });
+
+      if (authUpdateError) {
+        console.warn('Failed to update auth metadata:', authUpdateError);
+        // Don't fail the whole operation for this
+      }
+
       setMessage('Profile updated successfully');
+    } catch (err) {
+      console.error('Update profile error:', err);
+      setMessage('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
+
+  if (isLoading && !userId) {
+    return (
+      <PageWrapper>
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-500 mx-auto mb-4"></div>
+            <p className="text-stone-600">Loading your profile...</p>
+          </div>
+        </div>
+      </PageWrapper>
+    );
+  }
 
   return (
     <PageWrapper centered={false}>

@@ -1344,8 +1344,7 @@ export const markOnboardingCompleted = async (): Promise<{
     const { error: updateError } = await supabase
       .from('users')
       .update({ 
-        onboarding_completed: true,
-        intended_redirect: null // Clear any intended redirect
+        onboarding_completed: true
       })
       .eq('id', user.id);
 
@@ -1358,92 +1357,6 @@ export const markOnboardingCompleted = async (): Promise<{
     return { success: true };
   } catch (error) {
     logger.authError('Error marking onboarding completed', error);
-    return { success: false, error: 'Unexpected error occurred' };
-  }
-};
-
-/**
- * Sets an intended redirect URL for the user
- * 
- * Stores a URL that the user should be redirected to after authentication.
- * Useful for deep links and preserving user intent.
- * 
- * @param redirectUrl - The URL to redirect to after auth
- * @returns Promise resolving to object with:
- *   - success: Whether update was successful
- *   - error: Error message if operation failed
- * 
- * @example
- * ```typescript
- * // User clicks deep link to event while logged out
- * await setIntendedRedirect('/host/events/123/dashboard')
- * // After login, they'll be sent to that URL
- * ```
- */
-export const setIntendedRedirect = async (redirectUrl: string): Promise<{
-  success: boolean;
-  error?: string;
-}> => {
-  try {
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
-    if (authError || !user) {
-      return { success: false, error: 'No authenticated user found' };
-    }
-
-    const { error: updateError } = await supabase
-      .from('users')
-      .update({ intended_redirect: redirectUrl })
-      .eq('id', user.id);
-
-    if (updateError) {
-      logger.authError('Failed to set intended redirect', updateError);
-      return { success: false, error: 'Failed to update intended redirect' };
-    }
-
-    logger.auth('Intended redirect set', { userId: user.id, redirectUrl });
-    return { success: true };
-  } catch (error) {
-    logger.authError('Error setting intended redirect', error);
-    return { success: false, error: 'Unexpected error occurred' };
-  }
-};
-
-/**
- * Clears the intended redirect URL for the user
- * 
- * Removes any stored redirect URL. Should be called after successfully
- * redirecting the user to their intended destination.
- * 
- * @returns Promise resolving to object with:
- *   - success: Whether update was successful
- *   - error: Error message if operation failed
- */
-export const clearIntendedRedirect = async (): Promise<{
-  success: boolean;
-  error?: string;
-}> => {
-  try {
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
-    if (authError || !user) {
-      return { success: false, error: 'No authenticated user found' };
-    }
-
-    const { error: updateError } = await supabase
-      .from('users')
-      .update({ intended_redirect: null })
-      .eq('id', user.id);
-
-    if (updateError) {
-      logger.authError('Failed to clear intended redirect', updateError);
-      return { success: false, error: 'Failed to clear intended redirect' };
-    }
-
-    logger.auth('Intended redirect cleared', { userId: user.id });
-    return { success: true };
-  } catch (error) {
-    logger.authError('Error clearing intended redirect', error);
     return { success: false, error: 'Unexpected error occurred' };
   }
 };

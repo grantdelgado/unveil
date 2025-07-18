@@ -3,7 +3,7 @@ import {
   isValidEmail,
   isValidPhoneNumber,
   normalizePhoneNumber,
-} from './utils';
+} from './utils/validation';
 import type { EventGuestInsert } from './supabase';
 
 // Guest import validation schema - phone is now required, name is optional

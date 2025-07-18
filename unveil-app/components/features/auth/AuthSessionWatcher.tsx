@@ -11,22 +11,71 @@ interface AuthSessionWatcherProps {
   children?: React.ReactNode;
 }
 
+/**
+ * Enhanced AuthSessionWatcher with Phase 4 improvements:
+ * - Detects new vs returning users based on onboarding completion
+ * - Supports intended redirects for deep links
+ * - Improved session persistence and token refresh handling
+ * - Handles edge cases like incomplete onboarding
+ */
 export function AuthSessionWatcher({ children }: AuthSessionWatcherProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
+  // Determine routing based on user profile and onboarding status
+  const determineUserRoute = useCallback((userProfile: {
+    id: string;
+    onboarding_completed?: boolean;
+    full_name?: string | null;
+  }) => {
+    // Check onboarding completion
+    if (!userProfile.onboarding_completed) {
+      logAuth('User has not completed onboarding, routing to /setup', { 
+        userId: userProfile.id 
+      });
+      return '/setup';
+    }
+
+    // Check if user has essential profile information
+    if (!userProfile.full_name || userProfile.full_name.startsWith('User ')) {
+      logAuth('User missing essential profile info, routing to /setup', { 
+        userId: userProfile.id,
+        hasFullName: !!userProfile.full_name
+      });
+      return '/setup';
+    }
+
+    // For returning users with complete onboarding
+    logAuth('Returning user with complete onboarding, routing to /select-event', { 
+      userId: userProfile.id 
+    });
+    return '/select-event';
+  }, []);
 
   const handleAuthenticatedUser = useCallback(
     async (authUser: User) => {
       try {
         logAuth('Handling authenticated user', { userId: authUser.id });
 
-        // Fetch user profile using the auth service (handles RLS gracefully)
+        // Fetch user profile using the enhanced service
         const { data: userProfile, error: profileError } = await getCurrentUserProfile();
 
         if (profileError) {
           logAuthError('Failed to fetch user profile', profileError);
+
+          // Check for stale session error
+          if (profileError instanceof Error && profileError.message === 'STALE_SESSION') {
+            logAuth('Stale session detected, user signed out, redirecting to login');
+            setLoading(false);
+            setInitialized(true);
+            if (pathname !== '/login') {
+              router.push('/login');
+            }
+            return;
+          }
 
           // If profile doesn't exist, redirect to login to recreate it
           if (profileError && typeof profileError === 'object' && 'code' in profileError && profileError.code === 'PGRST116') {
@@ -43,19 +92,62 @@ export function AuthSessionWatcher({ children }: AuthSessionWatcherProps) {
         }
 
         if (userProfile) {
-          logAuth('User profile loaded', { userId: userProfile.id });
+          logAuth('User profile loaded', { 
+            userId: userProfile.id,
+            onboardingCompleted: userProfile.onboarding_completed
+          });
+
           setLoading(false);
           setInitialized(true);
 
-          // If on login page or root page and authenticated, redirect to select-event immediately
+          // Determine where the user should go
+          const targetRoute = determineUserRoute(userProfile);
+
+          // Handle current location vs target route
           if (pathname === '/login' || pathname === '/') {
-            logAuth(
-              'Authenticated user on login/root page, redirecting to select-event',
-            );
-            // Use replace instead of push to prevent back button issues
-            router.replace('/select-event');
+            if (!isRedirecting) {
+              setIsRedirecting(true);
+              logAuth('User on login/root page, redirecting', { 
+                from: pathname,
+                to: targetRoute 
+              });
+              
+              // Add small delay to prevent race conditions
+              setTimeout(() => {
+                router.replace(targetRoute);
+                setIsRedirecting(false);
+              }, 100);
+            }
+          } else if (pathname === '/setup' && userProfile.onboarding_completed) {
+            // User manually navigated to setup but already completed it
+            if (!isRedirecting) {
+              setIsRedirecting(true);
+              logAuth('User on setup page but onboarding already complete, redirecting', {
+                to: '/select-event'
+              });
+              setTimeout(() => {
+                router.replace('/select-event');
+                setIsRedirecting(false);
+              }, 100);
+            }
+          } else if (pathname === '/select-event' && !userProfile.onboarding_completed) {
+            // User on select-event but hasn't completed onboarding
+            if (!isRedirecting) {
+              setIsRedirecting(true);
+              logAuth('User on select-event but onboarding incomplete, redirecting', {
+                to: '/setup'
+              });
+              setTimeout(() => {
+                router.replace('/setup');
+                setIsRedirecting(false);
+              }, 100);
+            }
           } else {
-            logAuth('User authenticated and profile loaded', { pathname });
+            logAuth('User authenticated and on appropriate page', { 
+              pathname,
+              targetRoute,
+              onboardingCompleted: userProfile.onboarding_completed
+            });
           }
         } else {
           logAuth('No user profile data returned');
@@ -74,7 +166,7 @@ export function AuthSessionWatcher({ children }: AuthSessionWatcherProps) {
         }
       }
     },
-    [pathname, router],
+    [pathname, router, determineUserRoute],
   );
 
   const handleAuthStateChange = useCallback(
@@ -88,6 +180,7 @@ export function AuthSessionWatcher({ children }: AuthSessionWatcherProps) {
       logAuth('Auth state change', {
         event,
         userId: session?.user?.id || 'no session',
+        pathname,
       });
 
       try {
@@ -95,24 +188,37 @@ export function AuthSessionWatcher({ children }: AuthSessionWatcherProps) {
           // User is authenticated with valid Supabase session
           await handleAuthenticatedUser(session.user);
         } else {
-          // No Supabase session - but don't immediately redirect on SIGNED_OUT events
-          // as they might be temporary during token refresh
-          logAuth('No Supabase session found');
+          // No Supabase session
+          logAuth('No Supabase session found', { event });
 
-          // Only redirect if this is an initial session check or token expired
-          if (event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') {
+          // Different handling based on event type
+          if (event === 'INITIAL_SESSION') {
             setLoading(false);
             setInitialized(true);
 
-            // Only redirect to login if not already on login page
+            // Store intended redirect if user was trying to access a protected route
+            if (pathname !== '/login' && pathname !== '/') {
+              logAuth('Storing intended redirect for after login', { pathname });
+              // We'll handle this in the login page logic
+            }
+
+            // Redirect to login if not already there
             if (pathname !== '/login') {
-              logAuth('Redirecting to login from path', { pathname });
+              logAuth('No initial session, redirecting to login', { from: pathname });
               router.push('/login');
             } else {
               logAuth('Already on login page, no redirect needed');
             }
+          } else if (event === 'TOKEN_REFRESHED') {
+            // Token refresh failed, treat as session expired
+            setLoading(false);
+            setInitialized(true);
+            if (pathname !== '/login') {
+              logAuth('Token refresh failed, redirecting to login');
+              router.push('/login');
+            }
           } else if (event === 'SIGNED_OUT') {
-            // For SIGNED_OUT events, wait a moment to see if it's just a token refresh
+            // For SIGNED_OUT events, wait briefly to see if it's just a token refresh
             logAuth('User signed out, waiting for potential token refresh...');
             setTimeout(() => {
               if (!mounted.current) return;
@@ -125,6 +231,14 @@ export function AuthSessionWatcher({ children }: AuthSessionWatcherProps) {
                     logAuth('No session after timeout, redirecting to login');
                     setLoading(false);
                     setInitialized(true);
+                    router.push('/login');
+                  }
+                })
+                .catch((error) => {
+                  logAuthError('Error checking session after SIGNED_OUT', error);
+                  setLoading(false);
+                  setInitialized(true);
+                  if (pathname !== '/login') {
                     router.push('/login');
                   }
                 });
@@ -145,13 +259,16 @@ export function AuthSessionWatcher({ children }: AuthSessionWatcherProps) {
     [handleAuthenticatedUser, pathname, router],
   );
 
+  // Enhanced session management with better error handling
   useEffect(() => {
     const mounted = { current: true };
+    let retryCount = 0;
+    const maxRetries = 3;
 
-    // Get initial session
+    // Get initial session with retry logic
     const getInitialSession = async () => {
       try {
-        logAuth('Getting initial session...');
+        logAuth('Getting initial session...', { attempt: retryCount + 1 });
         const {
           data: { session },
           error,
@@ -159,21 +276,42 @@ export function AuthSessionWatcher({ children }: AuthSessionWatcherProps) {
 
         if (error) {
           logAuthError('Error getting initial session', error);
+          
+          // Retry on network errors
+          if (retryCount < maxRetries && error.message?.includes('network')) {
+            retryCount++;
+            logAuth('Retrying session fetch due to network error', { retryCount });
+            setTimeout(getInitialSession, 1000 * retryCount); // Exponential backoff
+            return;
+          }
+          
           setLoading(false);
           setInitialized(true);
           return;
         }
 
-        logAuth('Initial session result', { hasSession: !!session });
+        logAuth('Initial session result', { 
+          hasSession: !!session,
+          retryCount 
+        });
         await handleAuthStateChange('INITIAL_SESSION', session, mounted);
       } catch (error) {
         logAuthError('Error in getInitialSession', error);
+        
+        // Retry on unexpected errors
+        if (retryCount < maxRetries) {
+          retryCount++;
+          logAuth('Retrying session fetch due to unexpected error', { retryCount });
+          setTimeout(getInitialSession, 1000 * retryCount);
+          return;
+        }
+        
         setLoading(false);
         setInitialized(true);
       }
     };
 
-    // Set up auth state listener
+    // Set up auth state listener with improved error handling
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
@@ -183,18 +321,28 @@ export function AuthSessionWatcher({ children }: AuthSessionWatcherProps) {
     // Get initial session
     getInitialSession();
 
+    // Cleanup
     return () => {
       mounted.current = false;
       subscription.unsubscribe();
     };
   }, [handleAuthStateChange]);
 
+  // Enhanced loading component
   const loadingComponent = useMemo(
     () => (
       <div className="min-h-screen bg-app flex items-center justify-center">
         <div className="text-center">
           <div className="text-4xl mb-4">💍</div>
           <div className="text-lg text-gray-600">Loading...</div>
+          {/* Add a subtle animation for better UX */}
+          <div className="mt-4">
+            <div className="inline-flex items-center space-x-1">
+              <div className="w-2 h-2 bg-pink-300 rounded-full animate-pulse"></div>
+              <div className="w-2 h-2 bg-pink-400 rounded-full animate-pulse delay-75"></div>
+              <div className="w-2 h-2 bg-pink-500 rounded-full animate-pulse delay-150"></div>
+            </div>
+          </div>
         </div>
       </div>
     ),

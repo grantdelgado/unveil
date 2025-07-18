@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getCurrentUserProfile } from '@/services/auth';
+import { getCurrentUserProfile, markOnboardingCompleted } from '@/services/auth';
 import { supabase } from '@/lib/supabase';
 import type { User } from '@/lib/supabase/types';
 import {
@@ -40,6 +40,20 @@ export default function AccountSetupPage() {
         }
 
         setUserProfile(profile);
+
+        // Check if user has already completed onboarding
+        const hasCompletedSetup = profile.onboarding_completed || 
+                                 (profile.full_name && 
+                                  !profile.full_name.startsWith('User ') && 
+                                  profile.full_name.trim().length > 0);
+
+        if (hasCompletedSetup) {
+          console.log('✅ User has already completed setup, redirecting to events');
+          router.replace('/select-event');
+          return;
+        }
+
+        console.log('📝 User needs to complete setup, showing form');
 
         // Pre-fill form if user already has some data
         if (
@@ -92,7 +106,16 @@ export default function AccountSetupPage() {
         return;
       }
 
-      console.log('✅ Profile setup completed');
+      // Mark onboarding as completed
+      const { success: onboardingSuccess, error: onboardingError } = await markOnboardingCompleted();
+      
+      if (!onboardingSuccess) {
+        console.error('Failed to mark onboarding completed:', onboardingError);
+        // Don't block the user, but log the issue
+        console.warn('User setup completed but onboarding flag not set');
+      }
+
+      console.log('✅ Profile setup and onboarding completed');
 
       // Redirect to select-event page
       router.push('/select-event');
@@ -104,9 +127,25 @@ export default function AccountSetupPage() {
     }
   };
 
-  const handleSkip = () => {
-    // Allow users to skip setup and go directly to events
-    router.push('/select-event');
+  const handleSkip = async () => {
+    try {
+      // Mark onboarding as completed even when skipping
+      const { success: onboardingSuccess, error: onboardingError } = await markOnboardingCompleted();
+      
+      if (!onboardingSuccess) {
+        console.error('Failed to mark onboarding completed:', onboardingError);
+        // Still allow the user to proceed
+      }
+
+      console.log('✅ Onboarding completed (skipped setup)');
+      
+      // Allow users to skip setup and go directly to events
+      router.push('/select-event');
+    } catch (error) {
+      console.error('Error during skip:', error);
+      // Still proceed to prevent user from being stuck
+      router.push('/select-event');
+    }
   };
 
   if (!userProfile) {

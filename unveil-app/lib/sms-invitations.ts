@@ -1,4 +1,4 @@
-import { normalizePhoneNumber } from './utils';
+import { normalizePhoneNumber } from './utils/validation';
 
 // SMS invitation and notification utilities for phone-based guest management
 
