@@ -3,6 +3,45 @@
 
 BEGIN;
 
+-- Add missing columns to users table for 3-case auth flow
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS onboarding_completed BOOLEAN DEFAULT false;
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS intended_redirect TEXT;
+
+-- Fix the handle_new_user trigger to match current users table schema
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $$
+BEGIN
+  INSERT INTO public.users (
+    id, 
+    phone, 
+    email,
+    full_name,
+    onboarding_completed,
+    created_at,
+    updated_at
+  )
+  VALUES (
+    NEW.id,
+    COALESCE(NEW.raw_user_meta_data->>'phone', NEW.phone),
+    NEW.email,
+    COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.raw_user_meta_data->>'name'),
+    false, -- Default: setup not completed
+    NOW(),
+    NOW()
+  );
+  RETURN NEW;
+END;
+$$;
+
+-- Ensure the trigger exists and is properly configured
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
 -- 1. Recreate events table
 CREATE TABLE public.events (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -141,6 +180,11 @@ USING (
 
 CREATE POLICY "users_update_own" ON public.users FOR UPDATE TO authenticated
 USING (id = auth.uid());
+
+-- Missing INSERT policy - critical for new user registration
+DROP POLICY IF EXISTS "users_insert_own" ON public.users;
+CREATE POLICY "users_insert_own" ON public.users FOR INSERT TO authenticated
+WITH CHECK (id = auth.uid());
 
 -- Events policies
 CREATE POLICY "events_select_accessible" ON public.events FOR SELECT TO authenticated

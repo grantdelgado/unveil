@@ -45,10 +45,20 @@ const MIN_RETRY_INTERVAL = 60 * 1000; // 1 minute between attempts
 
 // Removed: handleDatabaseError function - now using unified DatabaseErrorHandler from lib/error-handling/database.ts
 
-// Phone number normalization utility
+// Phone number normalization utility - matches database normalize_phone_number function
 const normalizePhoneNumber = (phone: string): string => {
+  // Return empty string if input is null or empty (handle edge cases)
+  if (!phone || typeof phone !== 'string' || phone.trim().length === 0) {
+    return '';
+  }
+
   // Remove all non-digits
   const digits = phone.replace(/\D/g, '');
+
+  // Must have at least 10 digits for a valid US number
+  if (digits.length < 10) {
+    return '';
+  }
 
   // Convert to E.164 format (+1XXXXXXXXXX for US numbers)
   if (digits.length === 10) {
@@ -59,7 +69,7 @@ const normalizePhoneNumber = (phone: string): string => {
     return `+${digits.slice(0, 11)}`;
   }
 
-  // Default: assume US number and prepend +1
+  // Default: assume US number and prepend +1 to last 10 digits
   return `+1${digits.slice(-10)}`;
 };
 
@@ -284,6 +294,84 @@ export const signOut = async () => {
 };
 
 /**
+ * Clears any stale sessions that reference deleted users
+ * 
+ * Checks if the current auth session references a user that no longer
+ * exists in the users table. If so, signs out the user to prevent
+ * authentication errors.
+ * 
+ * @returns Promise resolving to object with:
+ *   - wasStale: Whether a stale session was detected and cleared
+ *   - error: Error object if operation failed
+ * 
+ * @example
+ * ```typescript
+ * // Call this on login page load
+ * const { wasStale } = await clearStaleSession()
+ * if (wasStale) {
+ *   console.log('Cleared stale session')
+ * }
+ * ```
+ */
+export const clearStaleSession = async (): Promise<{
+  wasStale: boolean;
+  error?: any;
+}> => {
+  try {
+    // Get current session if it exists
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError) {
+      logger.authError('Error checking session for staleness', sessionError);
+      return { wasStale: false, error: sessionError };
+    }
+    
+    if (!session?.user) {
+      // No session, nothing to clear
+      return { wasStale: false };
+    }
+    
+    logger.auth('Checking session validity', { userId: session.user.id });
+    
+    // Check if the auth user ID exists in our users table
+    const { data: isValid, error: validationError } = await supabase.rpc(
+      'is_valid_auth_session',
+      { auth_user_id: session.user.id }
+    );
+    
+    if (validationError) {
+      logger.authError('Error validating session', validationError);
+      return { wasStale: false, error: validationError };
+    }
+    
+    if (!isValid) {
+      // Session references a deleted user - clear it
+      logger.auth('Detected stale session, signing out', { 
+        userId: session.user.id,
+        phone: session.user.phone || session.user.user_metadata?.phone 
+      });
+      
+      const { error: signOutError } = await supabase.auth.signOut();
+      
+      if (signOutError) {
+        logger.authError('Error signing out stale session', signOutError);
+        return { wasStale: true, error: signOutError };
+      }
+      
+      return { wasStale: true };
+    }
+    
+    // Session is valid
+    logger.auth('Session is valid', { userId: session.user.id });
+    return { wasStale: false };
+    
+  } catch (error) {
+    logger.authError('Error in clearStaleSession', error);
+    return { wasStale: false, error };
+  }
+};
+
+/**
  * Sends an OTP (One-Time Password) to a phone number
  * 
  * Handles both development and production OTP flows:
@@ -326,6 +414,15 @@ export const sendOTP = async (
   try {
     // Normalize phone to E.164 format
     const normalizedPhone = normalizePhoneNumber(phone);
+
+    // Validate normalized phone number
+    if (!normalizedPhone || normalizedPhone.length < 12) {
+      return {
+        success: false,
+        isDev: false,
+        error: 'Please enter a valid 10-digit phone number',
+      };
+    }
 
     logger.auth('Sending OTP to phone', {
       originalPhone: phone,
@@ -373,25 +470,14 @@ export const sendOTP = async (
             userId: authData.user.id,
           });
 
-          // Handle user profile creation/lookup
-          const userResult = await handleUserCreation(
-            normalizedPhone,
-            authData.user.id,
-          );
-
-          if (!userResult.success) {
-            logger.authError('Failed to handle user profile', userResult.error);
-            return {
-              success: false,
-              isDev: true,
-              error: userResult.error || 'Failed to handle user profile',
-            };
-          }
+          // Dev authentication successful - do NOT create user here
+          // User creation/lookup happens in verifyOTP() for consistency
+          logger.dev('Dev phone authenticated, user creation will happen in verifyOTP');
 
           return {
             success: true,
             isDev: true,
-            isNewUser: userResult.isNewUser,
+            // Don't return isNewUser here since we haven't checked yet
           };
         }
 
@@ -457,36 +543,168 @@ export const sendOTP = async (
   }
 };
 
-// Verify OTP and complete authentication
 /**
- * Verifies an OTP (One-Time Password) for phone authentication
+ * Resend OTP to the same phone number
  * 
- * Validates the OTP token against the phone number and authenticates the user:
- * - Development: Uses password authentication for whitelisted phones
- * - Production: Verifies OTP token via Supabase Auth
+ * This is a specialized version of sendOTP for resending verification codes.
+ * It includes the same rate limiting and development mode handling as sendOTP.
  * 
- * Clears rate limiting on successful verification and ensures user profile exists.
+ * @param phone - Phone number to resend OTP to (any format, will be normalized)
+ * @returns Promise containing:
+ *   - success: Whether OTP was sent successfully
+ *   - isDev: Whether development mode was used
+ *   - error: Error message if operation failed
+ *   - retryAfter: Seconds to wait if rate limited
  * 
- * @param phone - Phone number in any format (will be normalized to E.164)
- * @param token - The OTP token to verify (6 digits for production, ignored for dev)
- * @returns Promise resolving to object with:
- *   - success: Whether OTP verification succeeded
- *   - isNewUser: Whether this is a newly created user
- *   - userId: The authenticated user's ID
- *   - error: Error message if verification failed
+ * @example
+ * ```typescript
+ * const result = await resendOTP('+1-555-123-4567')
+ * if (result.success) {
+ *   console.log('OTP resent successfully!')
+ * } else if (result.retryAfter) {
+ *   console.log(`Rate limited. Wait ${result.retryAfter} seconds.`)
+ * }
+ * ```
+ */
+export const resendOTP = async (
+  phone: string,
+): Promise<{
+  success: boolean;
+  isDev: boolean;
+  error?: string;
+  retryAfter?: number;
+}> => {
+  try {
+    // Normalize phone to E.164 format
+    const normalizedPhone = normalizePhoneNumber(phone);
+
+    logger.auth('Resending OTP to phone', {
+      originalPhone: phone,
+      normalizedPhone,
+    });
+
+    // Check rate limiting first and return specific error info
+    const rateLimitCheck = checkOTPRateLimit(normalizedPhone);
+    if (!rateLimitCheck.allowed) {
+      return {
+        success: false,
+        isDev: false,
+        error: rateLimitCheck.error,
+        retryAfter: rateLimitCheck.retryAfter,
+      };
+    }
+
+    // Use the existing sendOTP function for the actual sending
+    const result = await sendOTP(phone);
+    
+    // Add retryAfter info if needed for consistency
+    return {
+      ...result,
+      retryAfter: undefined, // No retry needed on success
+    };
+  } catch (error) {
+    logger.authError('OTP resend error', error);
+    return {
+      success: false,
+      isDev: false,
+      error: error instanceof Error ? error.message : 'Failed to resend OTP',
+    };
+  }
+};
+
+/**
+ * Enhanced OTP error types for better UI handling
+ */
+export enum OTPErrorType {
+  EXPIRED = 'expired',
+  INVALID = 'invalid', 
+  NETWORK = 'network',
+  RATE_LIMITED = 'rate_limited',
+  PHONE_ALREADY_USED = 'phone_already_used',
+  GENERAL = 'general'
+}
+
+export interface EnhancedOTPError {
+  type: OTPErrorType;
+  message: string;
+  retryAfter?: number;
+  shouldClearInput?: boolean;
+}
+
+/**
+ * Maps Supabase auth errors to our enhanced error types
+ */
+const mapSupabaseAuthError = (error: any): EnhancedOTPError => {
+  const errorMessage = error?.message?.toLowerCase() || '';
+  
+  // Check for specific Supabase auth error patterns
+  if (errorMessage.includes('expired') || errorMessage.includes('token expired')) {
+    return {
+      type: OTPErrorType.EXPIRED,
+      message: 'Verification code has expired. Please request a new one.',
+      shouldClearInput: true
+    };
+  }
+  
+  if (errorMessage.includes('invalid') || errorMessage.includes('wrong') || 
+      errorMessage.includes('incorrect') || error.status === 401) {
+    return {
+      type: OTPErrorType.INVALID,
+      message: 'Invalid verification code. Please check and try again.',
+      shouldClearInput: true
+    };
+  }
+  
+  if (errorMessage.includes('rate limit') || errorMessage.includes('too many')) {
+    return {
+      type: OTPErrorType.RATE_LIMITED,
+      message: 'Too many attempts. Please wait before trying again.',
+      retryAfter: 60
+    };
+  }
+  
+  if (errorMessage.includes('phone') && errorMessage.includes('already')) {
+    return {
+      type: OTPErrorType.PHONE_ALREADY_USED,
+      message: 'This phone number is already registered. Try signing in instead.'
+    };
+  }
+  
+  // Network/connection errors
+  if (error.name === 'TypeError' || errorMessage.includes('network') || 
+      errorMessage.includes('fetch') || errorMessage.includes('connection')) {
+    return {
+      type: OTPErrorType.NETWORK,
+      message: 'Connection error. Please check your internet and try again.'
+    };
+  }
+  
+  // Default fallback
+  return {
+    type: OTPErrorType.GENERAL,
+    message: error?.message || 'Verification failed. Please try again.',
+    shouldClearInput: false
+  };
+};
+
+/**
+ * Verifies an OTP code sent to a phone number
  * 
- * @throws {Error} Verification failed, expired token, or database error
+ * Enhanced version with comprehensive error handling for better UX.
+ * Handles expired codes, invalid OTP, network failures, and rate limiting.
+ * 
+ * @param phone - The phone number (any format, will be normalized to E.164)
+ * @param token - The 6-digit OTP code entered by the user
+ * @returns Promise resolving to authentication result with enhanced error info
  * 
  * @example
  * ```typescript
  * const result = await verifyOTP('+15551234567', '123456')
- * if (result.success) {
- *   console.log('User authenticated:', result.userId)
- *   if (result.isNewUser) {
- *     // Show onboarding flow
+ * if (!result.success) {
+ *   if (result.enhancedError?.shouldClearInput) {
+ *     // Clear the OTP input and show error
  *   }
- * } else {
- *   console.error('Verification failed:', result.error)
+ *   console.log(result.enhancedError?.type) // 'expired', 'invalid', etc.
  * }
  * ```
  * 
@@ -501,12 +719,50 @@ export const verifyOTP = async (
   isNewUser: boolean;
   userId?: string;
   error?: string;
+  enhancedError?: EnhancedOTPError;
 }> => {
   try {
     // Normalize phone to E.164 format
     const normalizedPhone = normalizePhoneNumber(phone);
 
-    logger.auth('Verifying OTP for phone', { normalizedPhone });
+    // Validate normalized phone number
+    if (!normalizedPhone || normalizedPhone.length < 12) {
+      const enhancedError: EnhancedOTPError = {
+        type: OTPErrorType.INVALID,
+        message: 'Invalid phone number format. Please try again.',
+        shouldClearInput: false
+      };
+      
+      return {
+        success: false,
+        isNewUser: false,
+        error: enhancedError.message,
+        enhancedError
+      };
+    }
+
+    logger.auth('Verifying OTP for phone', { 
+      normalizedPhone, 
+      tokenLength: token?.length,
+      timestamp: new Date().toISOString()
+    });
+
+    // Validate input parameters
+    if (!token || token.length !== 6 || !/^\d{6}$/.test(token)) {
+      const enhancedError: EnhancedOTPError = {
+        type: OTPErrorType.INVALID,
+        message: 'Please enter a valid 6-digit code.',
+        shouldClearInput: true
+      };
+      
+      logger.authError('Invalid OTP format', { tokenLength: token?.length });
+      return {
+        success: false,
+        isNewUser: false,
+        error: enhancedError.message,
+        enhancedError
+      };
+    }
 
     // Development phones should not reach this function - they authenticate directly in sendOTP
     if (isDevPhone(normalizedPhone)) {
@@ -517,34 +773,66 @@ export const verifyOTP = async (
         success: false,
         isNewUser: false,
         error: 'Development authentication error - please try again',
+        enhancedError: {
+          type: OTPErrorType.GENERAL,
+          message: 'Development authentication error - please try again'
+        }
       };
     }
 
-    // Verify OTP with Supabase
-    const { data: authData, error: otpError } = await supabase.auth.verifyOtp({
+    // Add timeout for the verification request
+    const verificationPromise = supabase.auth.verifyOtp({
       phone: normalizedPhone,
       token,
       type: 'sms',
     });
 
+    // 10-second timeout for OTP verification
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Request timeout')), 10000);
+    });
+
+    const { data: authData, error: otpError } = await Promise.race([
+      verificationPromise,
+      timeoutPromise
+    ]) as any;
+
     if (otpError) {
-      logger.authError('OTP verification failed', otpError);
+      const enhancedError = mapSupabaseAuthError(otpError);
+      
+      logger.authError('OTP verification failed', { 
+        error: otpError,
+        errorType: enhancedError.type,
+        phone: normalizedPhone.slice(-4) // Log only last 4 digits
+      });
+      
       return {
         success: false,
         isNewUser: false,
-        error: otpError.message,
+        error: enhancedError.message,
+        enhancedError
       };
     }
 
     if (!authData?.user) {
+      const enhancedError: EnhancedOTPError = {
+        type: OTPErrorType.GENERAL,
+        message: 'Authentication failed. Please try again.'
+      };
+      
+      logger.authError('No user data returned from OTP verification');
       return {
         success: false,
         isNewUser: false,
-        error: 'Authentication failed',
+        error: enhancedError.message,
+        enhancedError
       };
     }
 
-    logger.auth('OTP verified successfully', { userId: authData.user.id });
+    logger.auth('OTP verified successfully', { 
+      userId: authData.user.id,
+      timestamp: new Date().toISOString()
+    });
 
     // Clear rate limiting on successful verification
     clearOTPRateLimit(normalizedPhone);
@@ -552,35 +840,75 @@ export const verifyOTP = async (
     // Handle user profile creation/lookup
     const result = await handleUserCreation(normalizedPhone, authData.user.id);
 
+    if (!result.success) {
+      // Enhanced error logging for failed user creation
+      logger.authError('User creation/lookup failed after successful OTP verification', {
+        error: result.error,
+        userId: authData.user.id,
+        phone: normalizedPhone.slice(-4),
+        isNewUser: result.isNewUser,
+      });
+
+      // Return more user-friendly error messages
+      let userFriendlyError = result.error || 'Failed to complete registration';
+      if (result.error?.includes('Database error')) {
+        userFriendlyError = 'There was a problem setting up your account. Please try again.';
+      } else if (result.error?.includes('Permission denied')) {
+        userFriendlyError = 'Account setup failed. Please contact support if this continues.';
+      }
+
+      return {
+        success: false,
+        isNewUser: result.isNewUser,
+        error: userFriendlyError,
+        enhancedError: {
+          type: OTPErrorType.GENERAL,
+          message: userFriendlyError
+        }
+      };
+    }
+
+    logger.auth('User creation/lookup completed successfully', {
+      userId: result.userId,
+      isNewUser: result.isNewUser,
+      phone: normalizedPhone.slice(-4),
+    });
+
     // Add isNewUser flag to the response
     return {
       ...result,
       isNewUser: result.isNewUser,
     };
   } catch (error) {
-    logger.authError('OTP verification error', error);
+    const enhancedError = mapSupabaseAuthError(error);
+    
+    logger.authError('OTP verification error', { 
+      error,
+      errorType: enhancedError.type,
+      timestamp: new Date().toISOString()
+    });
+    
     return {
       success: false,
       isNewUser: false,
-      error: error instanceof Error ? error.message : 'OTP verification failed',
+      error: enhancedError.message,
+      enhancedError
     };
   }
 };
 
 /**
- * Internal helper function for user creation and lookup logic
+ * Handle user creation and setup completion check
  * 
- * Handles the database operations for user authentication:
- * - Checks if user with phone number already exists
- * - Creates new user profile if needed
- * - Ensures auth.uid() matches user record
+ * Implements the 3-case authentication flow:
+ * CASE 1: Phone exists + setup complete → Direct to dashboard
+ * CASE 2: Phone exists + setup incomplete → Redirect to /setup
+ * CASE 3: Phone doesn't exist → Trigger creates user + redirect to /setup
  * 
  * @private
  * @param normalizedPhone - Phone number in E.164 format
  * @param userId - The authenticated user ID from Supabase Auth
  * @returns Promise resolving to authentication result
- * 
- * @internal This function is not exported and is used internally by verifyOTP
  */
 const handleUserCreation = async (
   normalizedPhone: string,
@@ -592,91 +920,163 @@ const handleUserCreation = async (
   error?: string;
 }> => {
   try {
-    // Step 1: Check if user with this phone already exists
-    const { data: existingUser, error: lookupError } = await supabase
-      .from('users')
-      .select('id, phone, full_name, email, created_at')
-      .eq('phone', normalizedPhone)
-      .single();
+    logger.auth('Starting 3-case authentication flow', { 
+      userId, 
+      normalizedPhone: `${normalizedPhone.slice(0, 2)}***${normalizedPhone.slice(-4)}` 
+    });
 
-    if (lookupError && lookupError.code !== 'PGRST116') {
-      // PGRST116 = no rows returned, which is expected for new users
-      logger.authError('User lookup failed', lookupError);
+    // Look up user by phone number using secure function
+    const { data: existingUsers, error: lookupError } = await supabase.rpc(
+      'lookup_user_by_phone',
+      { user_phone: normalizedPhone }
+    );
+
+    if (lookupError) {
+      logger.authError('User lookup by phone failed', lookupError);
       return {
         success: false,
         isNewUser: false,
-        error: 'Failed to check existing user',
+        error: 'Database error during user lookup',
       };
     }
 
+    const existingUser = existingUsers && existingUsers.length > 0 ? existingUsers[0] : null;
+
+    // CASE 1 & 2: Phone exists in system
     if (existingUser) {
-      // Step 2a: Returning user - verify session ID matches
-      if (existingUser.id === userId) {
-        logger.auth('Returning user with matching session ID', {
-          userId: existingUser.id,
+      logger.auth('Found existing user by phone', {
+        existingUserId: existingUser.id,
+        sessionUserId: userId,
+        hasFullName: !!existingUser.full_name,
+        onboardingCompleted: existingUser.onboarding_completed,
+      });
+
+      // Update auth mapping if session ID is different (normal for phone OTP)
+      if (existingUser.id !== userId) {
+        logger.auth('Updating auth mapping for existing user', {
+          oldUserId: existingUser.id,
+          newUserId: userId,
         });
+
+        try {
+          await supabase.rpc('update_user_auth_id', {
+            old_user_id: existingUser.id,
+            new_user_id: userId,
+            user_phone: normalizedPhone
+          });
+          logger.auth('Auth mapping updated successfully');
+        } catch (updateError) {
+          logger.authError('Auth mapping failed, but continuing', updateError);
+          // Continue anyway - user can still authenticate
+        }
+      }
+
+      // Check setup completion: either onboarding_completed flag OR valid full_name
+      const hasCompletedSetup = existingUser.onboarding_completed || 
+                               (existingUser.full_name && 
+                                !existingUser.full_name.startsWith('User ') && 
+                                existingUser.full_name.trim().length > 0);
+
+      if (hasCompletedSetup) {
+        // CASE 1: Phone exists + setup complete → Direct to dashboard
+        logger.auth('CASE 1: Existing user with complete setup → dashboard', {
+          userId,
+          fullName: existingUser.full_name,
+          onboardingCompleted: existingUser.onboarding_completed,
+        });
+        
         return {
           success: true,
-          isNewUser: false,
+          isNewUser: false, // Returning user, go to dashboard
           userId: userId,
         };
       } else {
-        // This should not happen with proper OTP flow, but handle gracefully
-        logger.auth('Existing user found but auth.uid() mismatch', {
-          existingUserId: existingUser.id,
-          sessionUserId: userId,
-          phone: normalizedPhone,
+        // CASE 2: Phone exists + setup incomplete → Redirect to /setup
+        logger.auth('CASE 2: Existing user with incomplete setup → /setup', {
+          userId,
+          fullName: existingUser.full_name,
+          onboardingCompleted: existingUser.onboarding_completed,
         });
-
-        // In this case, the existing user profile takes precedence
-        // The auth.uid() will be the new session ID
+        
         return {
           success: true,
-          isNewUser: false,
+          isNewUser: true, // Setup incomplete, go to /setup
           userId: userId,
         };
       }
     }
 
-    // Step 2b: New user - create profile in users table
-    logger.auth('Creating new user profile for phone', { normalizedPhone });
+    // CASE 3: Phone doesn't exist → Database trigger creates user + redirect to /setup
+    logger.auth('CASE 3: Phone not found, trigger will create user → /setup', { 
+      userId, 
+      normalizedPhone: `${normalizedPhone.slice(0, 2)}***${normalizedPhone.slice(-4)}` 
+    });
 
-    const newUserData: UserInsert = {
-      id: userId, // Use the authenticated session user ID
-      phone: normalizedPhone,
-      full_name: `User ${normalizedPhone.slice(-4)}`, // Placeholder name
-      email: null,
-      avatar_url: null,
-    };
+    // Check for orphaned auth user first (exists in auth.users but not public.users)
+    try {
+      const { data: orphanedProfileResult, error: orphanedError } = await supabase.rpc(
+        'create_profile_for_orphaned_auth_user',
+        { auth_user_id: userId }
+      );
 
-    const { data: newUser, error: createError } = await supabase
+      if (!orphanedError && orphanedProfileResult) {
+        logger.auth('Created profile for orphaned auth user', {
+          userId,
+          phone: orphanedProfileResult.phone,
+        });
+
+        return {
+          success: true,
+          isNewUser: true, // Send to setup even if orphaned
+          userId: userId,
+        };
+      }
+    } catch (error) {
+      logger.auth('Orphaned user check failed, trigger will handle creation', { 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+    }
+
+    // For CASE 3, the database trigger should have already created the user profile
+    // when signInWithOtp() created the auth.users record. Let's verify it exists.
+    logger.auth('Verifying trigger created user profile', { userId });
+
+    // Give the trigger a moment to complete
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Verify the user profile was created by the trigger
+    const { data: newUserProfile, error: verifyError } = await supabase
       .from('users')
-      .insert(newUserData)
-      .select('id, phone, full_name')
+      .select('id, phone, full_name, onboarding_completed')
+      .eq('id', userId)
       .single();
 
-    if (createError) {
-      logger.authError('User creation failed', createError);
+    if (verifyError || !newUserProfile) {
+      logger.authError('Trigger failed to create user profile', verifyError);
       return {
         success: false,
         isNewUser: true,
-        error: `Failed to create user profile: ${createError.message}`,
+        error: 'Failed to create user profile - please try again',
       };
     }
 
-    logger.auth('New user created', { userId: newUser.id });
+    logger.auth('CASE 3: Trigger created user successfully → /setup', { 
+      userId: newUserProfile.id,
+      phone: `${normalizedPhone.slice(0, 2)}***${normalizedPhone.slice(-4)}`,
+    });
 
     return {
       success: true,
-      isNewUser: true,
+      isNewUser: true, // New user, go to /setup
       userId: userId,
     };
+
   } catch (error) {
-    logger.authError('User creation error', error);
+    logger.authError('Unexpected error in handleUserCreation', error);
     return {
       success: false,
       isNewUser: false,
-      error: error instanceof Error ? error.message : 'User creation failed',
+      error: error instanceof Error ? error.message : 'Authentication failed',
     };
   }
 };
@@ -720,12 +1120,58 @@ export const getCurrentUserProfile = async () => {
     try {
       const { data: profile, error: profileError } = await supabase
         .from('users')
-        .select('id, phone, full_name, avatar_url, email, created_at, updated_at')
+        .select('id, phone, full_name, avatar_url, email, created_at, updated_at, onboarding_completed, intended_redirect')
         .eq('id', user.id)
         .single();
 
       if (profileError) {
-        // If RLS blocks access, create a fallback profile from auth user data
+        logger.auth('User profile query failed', {
+          error: profileError?.message || 'Unknown profile error',
+          code: profileError?.code || 'PROFILE_QUERY_FAILED',
+          userId: user.id,
+        });
+
+        // Check if this is a "user not found" error - indicates deleted/orphaned user
+        if (profileError.code === 'PGRST116') {
+          logger.auth('User profile not found - potential orphaned auth user', {
+            userId: user.id,
+            phone: user.phone || user.user_metadata?.phone,
+          });
+
+          // Try to create profile for orphaned auth user
+          try {
+            const { data: orphanedResult, error: orphanedError } = await supabase.rpc(
+              'create_profile_for_orphaned_auth_user',
+              { auth_user_id: user.id }
+            );
+
+            if (!orphanedError && orphanedResult) {
+              logger.auth('Successfully created profile for orphaned auth user in getCurrentUserProfile', {
+                userId: user.id,
+                phone: orphanedResult.phone,
+                fullName: orphanedResult.full_name,
+              });
+
+              // Return the newly created profile
+              return { data: orphanedResult, error: null };
+            } else {
+              logger.authError('Failed to create profile for orphaned auth user', orphanedError);
+            }
+          } catch (orphanedError) {
+            logger.authError('Error creating profile for orphaned auth user', orphanedError);
+          }
+
+          // If orphaned user creation failed, this is likely a stale session
+          logger.auth('Orphaned user creation failed - likely stale session, signing out');
+          await supabase.auth.signOut();
+          
+          return {
+            data: null,
+            error: new Error('STALE_SESSION'),
+          };
+        }
+        
+        // For other profile errors (RLS, etc.), create fallback profile
         logger.auth('User profile query blocked by RLS, using auth fallback', {
           error: profileError?.message || 'Unknown profile error',
           code: profileError?.code || 'PROFILE_QUERY_FAILED',
@@ -739,6 +1185,8 @@ export const getCurrentUserProfile = async () => {
           email: user.email || null,
           created_at: user.created_at,
           updated_at: user.updated_at || user.created_at,
+          onboarding_completed: false, // Default for fallback
+          intended_redirect: null,
         };
 
         return { data: fallbackProfile, error: null };
@@ -760,6 +1208,8 @@ export const getCurrentUserProfile = async () => {
         email: user.email || null,
         created_at: user.created_at,
         updated_at: user.updated_at || user.created_at,
+        onboarding_completed: false, // Default for fallback
+        intended_redirect: null,
       };
 
       return { data: fallbackProfile, error: null };
@@ -860,4 +1310,140 @@ export const OTP_RATE_LIMITING = {
   MIN_RETRY_INTERVAL_MS: MIN_RETRY_INTERVAL,
   // Helper to get current rate limit status
   getRateLimitStatus: (phone: string) => otpRateLimits.get(phone) || null,
+};
+
+/**
+ * Marks the current user's onboarding as completed
+ * 
+ * Updates the user's profile to indicate they have finished the setup process.
+ * Should be called when user completes the /setup flow.
+ * 
+ * @returns Promise resolving to object with:
+ *   - success: Whether update was successful
+ *   - error: Error message if operation failed
+ * 
+ * @example
+ * ```typescript
+ * const { success, error } = await markOnboardingCompleted()
+ * if (success) {
+ *   router.push('/select-event')
+ * }
+ * ```
+ */
+export const markOnboardingCompleted = async (): Promise<{
+  success: boolean;
+  error?: string;
+}> => {
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      return { success: false, error: 'No authenticated user found' };
+    }
+
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({ 
+        onboarding_completed: true,
+        intended_redirect: null // Clear any intended redirect
+      })
+      .eq('id', user.id);
+
+    if (updateError) {
+      logger.authError('Failed to mark onboarding completed', updateError);
+      return { success: false, error: 'Failed to update onboarding status' };
+    }
+
+    logger.auth('Onboarding marked as completed', { userId: user.id });
+    return { success: true };
+  } catch (error) {
+    logger.authError('Error marking onboarding completed', error);
+    return { success: false, error: 'Unexpected error occurred' };
+  }
+};
+
+/**
+ * Sets an intended redirect URL for the user
+ * 
+ * Stores a URL that the user should be redirected to after authentication.
+ * Useful for deep links and preserving user intent.
+ * 
+ * @param redirectUrl - The URL to redirect to after auth
+ * @returns Promise resolving to object with:
+ *   - success: Whether update was successful
+ *   - error: Error message if operation failed
+ * 
+ * @example
+ * ```typescript
+ * // User clicks deep link to event while logged out
+ * await setIntendedRedirect('/host/events/123/dashboard')
+ * // After login, they'll be sent to that URL
+ * ```
+ */
+export const setIntendedRedirect = async (redirectUrl: string): Promise<{
+  success: boolean;
+  error?: string;
+}> => {
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      return { success: false, error: 'No authenticated user found' };
+    }
+
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({ intended_redirect: redirectUrl })
+      .eq('id', user.id);
+
+    if (updateError) {
+      logger.authError('Failed to set intended redirect', updateError);
+      return { success: false, error: 'Failed to update intended redirect' };
+    }
+
+    logger.auth('Intended redirect set', { userId: user.id, redirectUrl });
+    return { success: true };
+  } catch (error) {
+    logger.authError('Error setting intended redirect', error);
+    return { success: false, error: 'Unexpected error occurred' };
+  }
+};
+
+/**
+ * Clears the intended redirect URL for the user
+ * 
+ * Removes any stored redirect URL. Should be called after successfully
+ * redirecting the user to their intended destination.
+ * 
+ * @returns Promise resolving to object with:
+ *   - success: Whether update was successful
+ *   - error: Error message if operation failed
+ */
+export const clearIntendedRedirect = async (): Promise<{
+  success: boolean;
+  error?: string;
+}> => {
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      return { success: false, error: 'No authenticated user found' };
+    }
+
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({ intended_redirect: null })
+      .eq('id', user.id);
+
+    if (updateError) {
+      logger.authError('Failed to clear intended redirect', updateError);
+      return { success: false, error: 'Failed to clear intended redirect' };
+    }
+
+    logger.auth('Intended redirect cleared', { userId: user.id });
+    return { success: true };
+  } catch (error) {
+    logger.authError('Error clearing intended redirect', error);
+    return { success: false, error: 'Unexpected error occurred' };
+  }
 };

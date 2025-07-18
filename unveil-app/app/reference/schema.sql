@@ -21,6 +21,8 @@ CREATE TABLE users (
     full_name text,
     avatar_url text,
     email text,
+    onboarding_completed boolean DEFAULT false,
+    intended_redirect text,
     created_at timestamptz DEFAULT now(),
     updated_at timestamptz DEFAULT now()
 );
