@@ -3,13 +3,12 @@ import { logger } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
   try {
-    // Verify the request is authorized (cron secret OR development mode)
+    // Verify the request is authorized with cron secret
     const authHeader = request.headers.get('authorization');
     const cronSecret = process.env.CRON_SECRET;
-    const isDevelopment = process.env.NODE_ENV === 'development';
 
-    // Allow access if it's development mode or has valid cron secret
-    if (!isDevelopment && cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    // Require valid cron secret for all environments
+    if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

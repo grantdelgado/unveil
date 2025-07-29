@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { queryKeys, cacheConfig } from '@/lib/react-query-client'
-import { sendMessage } from '@/services/messaging'
+import { useMessages } from '@/hooks/useMessages'
 import type { Database } from '@/app/reference/supabase.types'
 
 type Message = Database['public']['Tables']['messages']['Row']

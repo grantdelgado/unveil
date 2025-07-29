@@ -10,7 +10,6 @@ import {
   QuickMessageActions,
   TabNavigation,
   QuickActions,
-  SMSTestPanel,
   type TabItem,
 } from '@/components/features/host-dashboard';
 import { 
@@ -26,7 +25,6 @@ import {
   PrimaryButton,
   SecondaryButton,
   BackButton,
-  DevModeBox,
   SkeletonLoader
 } from '@/components/ui';
 
@@ -326,19 +324,11 @@ export default function EventDashboardPage() {
                 >
                   <EnhancedMessageCenter eventId={eventId} />
                 </Suspense>
-                {/* Development mode SMS testing */}
-                {process.env.NODE_ENV === 'development' && (
-                  <SMSTestPanel eventId={eventId} />
-                )}
+                
               </div>
             )}
           </div>
         </CardContainer>
-
-        {/* Development Mode Info */}
-        <DevModeBox>
-          <p><strong>Host Dashboard:</strong> {event?.title} | Tab: {activeTab} | Guests: {guestCount}</p>
-        </DevModeBox>
       </div>
     </PageWrapper>
   );

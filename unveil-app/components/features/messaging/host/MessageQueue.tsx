@@ -6,7 +6,7 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { cn } from '@/lib/utils';
 import { Calendar, Filter, RefreshCw, Clock, CheckCircle2, AlertCircle, X } from 'lucide-react';
-import { getScheduledMessages, type ScheduledMessageFilters } from '@/services/messaging/scheduled';
+// Note: Scheduled messages now handled via useMessages domain hook
 import { ScheduledMessageCard } from './ScheduledMessageCard';
 import type { Tables } from '@/app/reference/supabase.types';
 

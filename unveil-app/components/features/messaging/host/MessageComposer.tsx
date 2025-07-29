@@ -6,7 +6,7 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { FieldLabel } from '@/components/ui/Typography';
 import { cn } from '@/lib/utils';
 import { useHapticFeedback } from '@/hooks/common';
-import { sendMessageToEvent, type SendMessageRequest } from '@/services/messaging';
+// Note: Message sending now handled by parent component via domain hooks
 import type { Database } from '@/app/reference/supabase.types';
 import type { MessageTemplate } from './MessageTemplates';
 import type { RecipientFilter } from './RecipientPresets';

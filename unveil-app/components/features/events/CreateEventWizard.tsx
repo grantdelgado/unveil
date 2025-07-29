@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
-import { uploadFile, getPublicUrl } from '@/services/storage';
+// Note: Media functionality handled via domain hooks
 import type { Database } from '@/app/reference/supabase.types';
 import {
   PageWrapper,
@@ -12,8 +12,7 @@ import {
   SubTitle,
   SectionTitle,
   PrimaryButton,
-  SecondaryButton,
-  DevModeBox
+  SecondaryButton
 } from '@/components/ui';
 
 import { EventBasicsStep } from './EventBasicsStep';
@@ -424,15 +423,6 @@ export default function CreateEventWizard() {
             ← Back to Dashboard
           </SecondaryButton>
         </div>
-
-        {/* Development Mode */}
-        <DevModeBox>
-          <p><strong>Current Step:</strong> {currentStep} ({currentStepConfig.step}/{totalSteps})</p>
-          <p><strong>Completed Steps:</strong> {Array.from(completedSteps).join(', ')}</p>
-          <p><strong>Form Valid:</strong> {Object.keys(errors).length === 0 ? 'Yes' : 'No'}</p>
-          <p><strong>Has Image:</strong> {headerImage ? 'Yes' : 'No'}</p>
-          <p><strong>Guest Method:</strong> {guestImportMethod}</p>
-        </DevModeBox>
       </div>
     </PageWrapper>
   );

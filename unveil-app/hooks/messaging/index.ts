@@ -1,12 +1,6 @@
 export { useMessages } from './useMessages';
 
-// Cached versions with React Query
-export {
-  useEventMessagesCached,
-  useMessageStatsCached,
-  useSendMessage,
-  useMessageRealtime,
-} from './useMessagesCached';
+// Note: Cached versions removed - use useMessages domain hook instead
 
 export { 
   useScheduledMessages, 
@@ -14,25 +8,8 @@ export {
   useNextScheduledMessage 
 } from './useScheduledMessages';
 
-// Phase 3 - Guest Tagging hooks
-export { useGuestTags } from './useGuestTags';
+// Note: Guest tagging removed - simplified in useMessages domain hook
 
-// Phase 4 - Analytics hooks
-export {
-  useDeliveryStats,
-  useEngagementMetrics,
-  useRSVPCorrelation,
-  useEventAnalytics,
-  useResponseRatesByMessageType,
-  useRealtimeAnalytics,
-  useAnalyticsDashboard,
-  useAnalyticsWithDateRange,
-  useAnalyticsComparison,
-  type DeliveryStats,
-  type EngagementMetrics,
-  type RSVPCorrelation,
-  type MessageAnalytics,
-} from './useMessageAnalytics';
+// Note: Analytics hooks removed - simplified in useMessages domain hook
 
-// Phase 5 - Guest messaging hooks
-export { useGuestMessages, useGuestUnreadCount } from './useGuestMessages';
+// Note: Guest messaging removed - simplified in useMessages domain hook

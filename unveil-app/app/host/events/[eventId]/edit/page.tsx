@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useDropzone } from 'react-dropzone';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabase/client';
-import { uploadFile, getPublicUrl, deleteFile } from '@/services/storage';
+// Note: Media functionality now handled via domain hooks
 import { cn, formatEventDate } from '@/lib/utils';
 import type { Database } from '@/app/reference/supabase.types';
 import {
@@ -19,7 +19,6 @@ import {
   PrimaryButton,
   BackButton,
   MicroCopy,
-  DevModeBox,
   LoadingSpinner
 } from '@/components/ui';
 
@@ -242,11 +241,9 @@ export default function EditEventPage() {
         const fileName = `${userId}/${Date.now()}.${fileExt}`;
 
         try {
-          const { data: uploadData, error: uploadError } = await uploadFile(
-            'event-images',
-            fileName,
-            headerImage,
-          );
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('event-images')
+            .upload(fileName, headerImage);
 
           setImageUploadProgress(50);
 
@@ -269,7 +266,9 @@ export default function EditEventPage() {
           }
 
           // Get public URL
-          const { data: urlData } = getPublicUrl('event-images', fileName);
+          const { data: urlData } = supabase.storage
+            .from('event-images')
+            .getPublicUrl(fileName);
           headerImageUrl = urlData.publicUrl;
           setImageUploadProgress(80);
 
@@ -283,7 +282,9 @@ export default function EditEventPage() {
                 .split('/')
                 .slice(-2)
                 .join('/');
-              await deleteFile('event-images', oldPath);
+              await supabase.storage
+                .from('event-images')
+                .remove([oldPath]);
             } catch (deleteError) {
               console.warn('Failed to delete old image:', deleteError);
             }
@@ -305,7 +306,9 @@ export default function EditEventPage() {
             .split('/')
             .slice(-2)
             .join('/');
-          await deleteFile('event-images', oldPath);
+          await supabase.storage
+            .from('event-images')
+            .remove([oldPath]);
           headerImageUrl = null;
         } catch (deleteError) {
           console.warn('Failed to delete image:', deleteError);
@@ -725,20 +728,6 @@ export default function EditEventPage() {
         </CardContainer>
 
 
-
-        {/* Development Mode */}
-        <DevModeBox>
-          <p><strong>Event Edit State:</strong></p>
-          <p>Event ID: {eventId}</p>
-          <p>Original Event: {originalEvent?.title || 'N/A'}</p>
-          <p>Current Title: {formData.title || '(empty)'}</p>
-          <p>Has Current Image: {currentImageUrl ? 'yes' : 'no'}</p>
-          <p>Has New Image: {headerImage ? 'yes' : 'no'}</p>
-          <p>Should Delete Image: {shouldDeleteImage ? 'yes' : 'no'}</p>
-          <p>Loading: {isLoading ? 'true' : 'false'}</p>
-          <p>Image Upload Progress: {imageUploadProgress}%</p>
-          <p>Errors: {Object.keys(errors).length > 0 ? Object.keys(errors).join(', ') : 'none'}</p>
-        </DevModeBox>
       </div>
     </PageWrapper>
   );

@@ -11,8 +11,7 @@ import {
   FieldLabel,
   TextInput,
   PrimaryButton,
-  LoadingSpinner,
-  DevModeBox
+  LoadingSpinner
 } from '@/components/ui';
 
 function ResetPasswordForm() {
@@ -90,14 +89,6 @@ function ResetPasswordForm() {
             )}
           </form>
         </div>
-
-        <DevModeBox>
-          <p><strong>Reset Password State:</strong></p>
-          <p>Access Token: {searchParams.get('access_token') ? 'present' : 'missing'}</p>
-          <p>Loading: {isLoading ? 'true' : 'false'}</p>
-          <p>Message: {message || 'none'}</p>
-          <p>Password Length: {password.length} characters</p>
-        </DevModeBox>
       </CardContainer>
     </PageWrapper>
   );

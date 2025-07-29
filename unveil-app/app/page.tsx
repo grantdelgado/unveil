@@ -9,8 +9,7 @@ import {
   CardContainer,
   PageTitle,
   SubTitle,
-  PrimaryButton,
-  DevModeBox
+  PrimaryButton
 } from '@/components/ui';
 
 export default function HomePage() {
@@ -18,7 +17,6 @@ export default function HomePage() {
 
   useEffect(() => {
     // Check session and redirect if authenticated
-    // This runs after AuthSessionWatcher has initialized
     const checkAndRedirect = async () => {
       const {
         data: { session },
@@ -31,10 +29,7 @@ export default function HomePage() {
       // If not authenticated, stay on this page to show landing content
     };
 
-    // Small delay to let AuthSessionWatcher finish initializing
-    const timeoutId = setTimeout(checkAndRedirect, 100);
-    
-    return () => clearTimeout(timeoutId);
+    checkAndRedirect();
   }, [router]);
 
   return (
@@ -66,13 +61,6 @@ export default function HomePage() {
               </PrimaryButton>
             </Link>
           </div>
-
-          <DevModeBox>
-            <p><strong>Landing Page State:</strong></p>
-            <p>Session Check: Redirects authenticated users to /select-event</p>
-            <p>CTA: Directs to /login for unauthenticated users</p>
-            <p>Component: Using PageWrapper and CardContainer</p>
-          </DevModeBox>
         </CardContainer>
       </div>
     </PageWrapper>

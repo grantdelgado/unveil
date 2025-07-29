@@ -15,8 +15,7 @@ import {
   PrimaryButton,
   SecondaryButton,
   BackButton,
-  MicroCopy,
-  DevModeBox
+  MicroCopy
 } from '@/components/ui';
 
 export default function ProfilePage() {
@@ -199,16 +198,6 @@ export default function ProfilePage() {
             </div>
           </div>
         </CardContainer>
-
-        {/* Development Mode */}
-        <DevModeBox>
-          <p><strong>Profile State:</strong></p>
-          <p>Email: {email || 'N/A'}</p>
-          <p>Display Name: {displayName || '(empty)'}</p>
-          <p>Has Hosted Events: {hasHostedEvents ? 'yes' : 'no'}</p>
-          <p>Loading: {isLoading ? 'true' : 'false'}</p>
-          {message && <p className="text-blue-600">Message: {message}</p>}
-        </DevModeBox>
       </div>
     </PageWrapper>
   );

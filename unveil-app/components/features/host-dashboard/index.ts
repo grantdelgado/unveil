@@ -19,5 +19,4 @@ export {
 export { EventAnalytics } from './EventAnalytics';
 export { QuickActions } from './QuickActions';
 export { NotificationCenter } from './NotificationCenter';
-export { SMSTestPanel } from './SMSTestPanel';
 export { SMSAnnouncementModal } from './SMSAnnouncementModal';

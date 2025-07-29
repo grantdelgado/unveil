@@ -3,7 +3,7 @@
  * 
  * WARNING: Wildcard exports can significantly bloat your bundle.
  * RECOMMENDED: Import components directly:
- * - import { AuthSessionWatcher } from '@/components/features/auth'
+ * - import { LogoutButton } from '@/components/features/auth'
  * - import { GuestManagement } from '@/components/features/host-dashboard'
  * - import { GuestMessaging } from '@/components/features/messaging/guest'
  * 
@@ -11,7 +11,7 @@
  */
 
 // Most frequently used lightweight components (specific imports)
-export { AuthSessionWatcher, LogoutButton, ProfileAvatar } from './auth';
+export { LogoutButton, ProfileAvatar } from './auth';
 export { WelcomeBanner } from './events';
 // Navigation components removed
 export { QuickActions } from './host-dashboard';

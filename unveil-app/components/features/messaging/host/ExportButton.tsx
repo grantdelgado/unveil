@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Download, FileSpreadsheet, Loader2 } from 'lucide-react';
-import { MessageAnalytics } from '@/services/messaging/analytics';
+// Note: Analytics functionality simplified - use useMessages hook for data
 
 export interface ExportButtonProps {
   analytics: MessageAnalytics | null;

@@ -7,7 +7,7 @@ import { FieldLabel } from '@/components/ui/Typography';
 import { cn } from '@/lib/utils';
 import { useHapticFeedback } from '@/hooks/common';
 import { Calendar, Clock, Users, Send, Plus } from 'lucide-react';
-import { createScheduledMessage, type CreateScheduledMessageData } from '@/services/messaging/scheduled';
+// Note: Message scheduling now handled via useMessages domain hook
 import type { Database } from '@/app/reference/supabase.types';
 
 type MessageType = Database['public']['Enums']['message_type_enum'];

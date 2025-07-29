@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { queryKeys, cacheConfig } from '@/lib/react-query-client'
-import { uploadEventMedia } from '@/services/storage'
+import { useMedia } from '@/hooks/useMedia'
 import type { Database } from '@/app/reference/supabase.types'
 
 type Media = Database['public']['Tables']['media']['Row']

@@ -27,7 +27,6 @@ export {
 export { BackButton } from './BackButton';
 
 // Utility Components
-export { DevModeBox } from './DevModeBox';
 export { LogoContainer } from './LogoContainer';
 export { LoadingSpinner, LoadingPage } from './LoadingSpinner';
 

@@ -17,7 +17,7 @@ vi.mock('@/lib/supabase/client', () => {
 })
 
 // Import services after mocking
-import { subscribeToEventMessages } from '@/services/messaging'
+// Note: Real-time messaging now handled via useMessages domain hook
 import { supabase } from '@/lib/supabase/client'
 
 // Get mock references with proper typing

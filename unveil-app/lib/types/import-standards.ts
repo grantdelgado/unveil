@@ -22,7 +22,7 @@ export const IMPORT_CONVENTIONS = {
     '@/components', // UI components
     '@/hooks', // Custom hooks
     '@/lib', // Library utilities
-    '@/services', // Business logic services
+    '@/hooks', // Domain hooks (Phase 2+ refactor)
     '@/types', // Type definitions
   ],
 
@@ -60,12 +60,10 @@ export const STANDARD_IMPORT_PATTERNS = {
   HOOK_TYPES:
     "import type { AuthHookResult, EventDetailsHookResult } from '@/lib/types'",
 
-  // Services (prefer specific imports)
-  AUTH_SERVICE: "import { sendOTP, verifyOTP, signOut } from '@/services/auth'",
-  EVENTS_SERVICE:
-    "import { createEvent, getEventDetails, updateEvent } from '@/services/events'",
-  MEDIA_SERVICE:
-    "import { uploadMedia, getEventMedia, deleteMedia } from '@/services/media'",
+  // Domain Hooks (Phase 2+ refactor)
+  AUTH_HOOK: "import { useAuth } from '@/hooks/useAuth'",
+  EVENTS_HOOK: "import { useEvents } from '@/hooks/useEvents'",
+  MEDIA_HOOK: "import { useMedia } from '@/hooks/useMedia'",
 
   // UI Components (prefer specific imports)
   UI_COMPONENTS:
@@ -121,7 +119,7 @@ export const IMPORT_GROUPS: ImportGroup[] = [
   {
     name: 'internal-services',
     order: 6,
-    patterns: ['@/services', '@/services/*'],
+    patterns: ['@/hooks/use*', '@/lib/supabase'],
     description: 'Business logic services',
   },
   {
@@ -157,7 +155,7 @@ export const IMPORT_RECOMMENDATIONS = {
     "import { useState, useCallback } from 'react'",
     "import { useRouter } from 'next/navigation'",
     "import type { AuthError } from '@/lib/types'",
-    "import { sendOTP, verifyOTP } from '@/services/auth'",
+    "import { useAuth } from '@/hooks/useAuth'",
     "import { validatePhoneNumber } from '@/lib/validations'",
     "import { logAuth, logAuthError } from '@/lib/logger'",
     "import { Button, Input } from '@/components/ui'",
@@ -170,17 +168,17 @@ export const IMPORT_RECOMMENDATIONS = {
     "import type { Event, EventGuest, EventDetailsHookResult } from '@/lib/types'",
     "import { useEventDetails } from '@/hooks/events'",
     "import { useAuth } from '@/hooks/auth'",
-    "import { createEvent, updateEvent } from '@/services/events'",
+    "import { useEvents } from '@/hooks/useEvents'",
     "import { logError } from '@/lib/logger'",
     "import { Button, Input, LoadingSpinner } from '@/components/ui'",
   ],
 
-  // Service files
-  SERVICE_FILE: [
+  // Domain Hook files
+  HOOK_FILE: [
     "import { supabase } from '@/lib/supabase/client'",
     "import type { Event, EventInsert, EventUpdate } from '@/lib/types'",
-    "import { handleDatabaseError } from '@/lib/error-handling'",
-    "import { logDatabaseError } from '@/lib/logger'",
+    "import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'",
+    "import { logError } from '@/lib/logger'",
   ],
 
   // Hook files
@@ -215,7 +213,7 @@ export const IMPORT_VALIDATION_RULES: ImportValidationRule[] = [
     name: 'no-barrel-imports-for-large-modules',
     pattern: /import\s+.*\s+from\s+['"]@\/services['"]$/,
     message:
-      'Prefer specific imports over barrel exports for better tree-shaking: import { specificFunction } from "@/services/specificService"',
+      'Prefer domain hooks over direct service calls: import { useEvents } from "@/hooks/useEvents"',
     severity: 'warning',
   },
   {

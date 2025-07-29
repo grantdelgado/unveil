@@ -3,8 +3,8 @@ import { supabase } from '@/lib/supabase/client';
 import type { EventWithHost, EventGuestWithUser } from '@/lib/supabase/types';
 import { DatabaseErrorHandler } from '@/lib/error-handling/database';
 import { logGenericError } from '@/lib/logger';
-import { getUserById } from '@/services/users';
-import { getEventById } from '@/services/events';
+// Note: getUserById functionality moved to useAuth hook
+import { useEvents } from '@/hooks/useEvents';
 
 interface EventDetailsHookResult {
   event: EventWithHost | null;

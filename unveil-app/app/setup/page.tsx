@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getCurrentUserProfile } from '@/services/auth';
+// Note: Auth functionality handled via useAuth hook
+import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 import type { User } from '@/lib/supabase/types';
 import {
@@ -16,8 +17,7 @@ import {
   SecondaryButton,
   BackButton,
   MicroCopy,
-  LoadingSpinner,
-  DevModeBox
+  LoadingSpinner
 } from '@/components/ui';
 
 export default function AccountSetupPage() {
@@ -28,18 +28,21 @@ export default function AccountSetupPage() {
   const [userProfile, setUserProfile] = useState<User | null>(null);
   const router = useRouter();
 
+  // Simplified: Using useAuth hook instead
+  const { user, loading: authLoading } = useAuth();
+
   useEffect(() => {
     const loadUserProfile = async () => {
       try {
-        const { data: profile, error } = await getCurrentUserProfile();
+        const profile = user;
 
-        if (error || !profile) {
-          console.error('Failed to load user profile:', error);
+        if (!profile && !authLoading) {
+          console.error('No user profile found');
           router.push('/login');
           return;
         }
 
-        setUserProfile(profile);
+        setUserProfile(profile); // Direct assignment - types handled by useAuth
 
         // Pre-fill form if user already has some data
         if (
@@ -58,7 +61,7 @@ export default function AccountSetupPage() {
     };
 
     loadUserProfile();
-  }, [router]);
+  }, [user, authLoading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,12 +80,13 @@ export default function AccountSetupPage() {
         return;
       }
 
-      // Update user profile
+      // Update user profile and mark onboarding as completed
       const { error: updateError } = await supabase
         .from('users')
         .update({
           full_name: fullName.trim(),
           email: email.trim() || null,
+          onboarding_completed: true, // Mark setup as complete
         })
         .eq('id', userProfile.id);
 
@@ -104,9 +108,34 @@ export default function AccountSetupPage() {
     }
   };
 
-  const handleSkip = () => {
-    // Allow users to skip setup and go directly to events
-    router.push('/select-event');
+  const handleSkip = async () => {
+    // Mark minimal setup as complete but don't require full name
+    try {
+      if (!userProfile?.id) {
+        setError('User profile not found. Please try logging in again.');
+        return;
+      }
+
+      // Mark onboarding as completed even if skipping
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({
+          onboarding_completed: true,
+        })
+        .eq('id', userProfile.id);
+
+      if (updateError) {
+        console.error('Failed to complete setup:', updateError);
+        setError('Failed to complete setup. Please try again.');
+        return;
+      }
+
+      console.log('✅ Setup skipped but marked as completed');
+      router.push('/select-event');
+    } catch (err) {
+      console.error('Skip setup error:', err);
+      setError('An unexpected error occurred. Please try again.');
+    }
   };
 
   if (!userProfile) {
@@ -206,13 +235,6 @@ export default function AccountSetupPage() {
             </MicroCopy>
           </div>
         </div>
-
-        <DevModeBox>
-          <p><strong>User Profile ID:</strong> {userProfile.id}</p>
-          <p><strong>Pre-filled Name:</strong> {userProfile.full_name || 'None'}</p>
-          <p><strong>Pre-filled Email:</strong> {userProfile.email || 'None'}</p>
-          <p><strong>Phone:</strong> {userProfile.phone}</p>
-        </DevModeBox>
       </CardContainer>
     </PageWrapper>
   );

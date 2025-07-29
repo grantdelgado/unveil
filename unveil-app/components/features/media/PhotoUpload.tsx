@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { Camera, Upload, X, Image as ImageIcon, Video } from 'lucide-react';
 import Image from 'next/image';
-import { uploadEventMedia } from '@/services/storage';
+// Note: Media upload functionality now uses domain hooks
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils/cn';
 

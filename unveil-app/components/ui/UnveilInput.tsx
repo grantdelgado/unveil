@@ -137,6 +137,8 @@ export const TextInput: React.FC<BaseInputProps> = ({
             'w-full py-3 px-4 border rounded-lg text-base transition-all duration-200',
             'placeholder-gray-400 focus:outline-none focus:ring-2',
             'disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-50',
+            // Dark text for better visibility
+            'text-gray-900',
             // Prevent iOS zoom on input focus
             'text-[16px] md:text-base min-h-[44px]',
             // Validation-based styling
@@ -282,6 +284,8 @@ export const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({
             'w-full py-3 px-4 border rounded-lg transition-all duration-200',
             'placeholder-gray-400 focus:outline-none focus:ring-2',
             'disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-50',
+            // Dark text for better visibility
+            'text-gray-900',
             // Prevent iOS zoom and ensure touch-friendly size
             'text-[16px] md:text-base min-h-[44px]',
             // Validation-based styling
@@ -445,6 +449,8 @@ export const OTPInput: React.FC<OTPInputProps> = ({
             'w-full py-4 px-4 border rounded-lg text-center font-mono tracking-widest transition-all duration-200',
             'placeholder-gray-400 focus:outline-none focus:ring-2',
             'disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-50',
+            // Dark text for better visibility
+            'text-gray-900',
             // Prevent iOS zoom and ensure touch-friendly size
             'text-[18px] md:text-lg min-h-[52px]',
             // Validation-based styling

@@ -6,7 +6,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { getScheduledMessages, type ScheduledMessageFilters } from '@/services/messaging/scheduled';
+import { useMessages } from '@/hooks/useMessages';
 import type { Tables } from '@/app/reference/supabase.types';
 
 type ScheduledMessage = Tables<'scheduled_messages'>;

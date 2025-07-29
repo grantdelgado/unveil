@@ -1,17 +1,5 @@
-// Core client
+// Core client - use this in hooks for direct Supabase access
 export { supabase } from './client';
 
-// Types
+// Types - always available for type imports
 export * from './types';
-
-// Auth helpers
-export * from './auth';
-
-// Storage helpers
-export * from './storage';
-
-// Domain-specific helpers
-export * from './events';
-export * from './guests';
-export * from './messaging';
-export * from './media';

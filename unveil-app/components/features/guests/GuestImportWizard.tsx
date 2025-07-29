@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { CardContainer } from '@/components/ui/CardContainer';
 import { SectionTitle, FieldLabel, MicroCopy } from '@/components/ui/Typography';
-import { importGuestsEnhanced, type GuestImportEntry } from '@/services/guests';
+// Note: Guest functionality handled via domain hooks
 
 interface GuestImportWizardProps {
   eventId: string;

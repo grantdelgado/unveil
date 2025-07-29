@@ -13,7 +13,7 @@ import { useCallback, useEffect } from 'react';
 import { useScheduledMessagesQuery } from './scheduled/useScheduledMessagesQuery';
 import { useScheduledMessagesCache } from './scheduled/useScheduledMessagesCache';
 import { useScheduledMessagesRealtime } from './scheduled/useScheduledMessagesRealtime';
-import type { ScheduledMessageFilters } from '@/services/messaging/scheduled';
+// Note: ScheduledMessageFilters type moved to useMessages hook
 import type { Tables } from '@/app/reference/supabase.types';
 
 type ScheduledMessage = Tables<'scheduled_messages'>;

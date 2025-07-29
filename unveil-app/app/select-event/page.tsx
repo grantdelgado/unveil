@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 
 // Internal hooks (specific imports for better tree-shaking)
 import { useUserEventsSorted, useEventInsights } from '@/hooks/events';
-import { useAuth } from '@/hooks/auth';
+import { useAuth } from '@/hooks/useAuth';
 import { usePullToRefresh } from '@/hooks/common/usePullToRefresh';
 
 // Internal components (specific imports)

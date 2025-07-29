@@ -30,15 +30,16 @@ const nextConfig: NextConfig = {
     return config;
   },
   // PWA and mobile optimizations
-  experimental: {
-    turbo: {
-      rules: {
-        '*.svg': {
-          loaders: ['@svgr/webpack'],
-          as: '*.js',
-        },
+  turbopack: {
+    rules: {
+      '*.svg': {
+        loaders: ['@svgr/webpack'],
+        as: '*.js',
       },
     },
+  },
+  experimental: {
+    clientTraceMetadata: ['appDir', 'turbopack'],
   },
   // Mobile-first performance
   generateEtags: false,

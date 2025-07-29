@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import { AuthSessionWatcher } from '@/components/features/auth/AuthSessionWatcher';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 
 import { ReactQueryProvider } from '@/lib/react-query-client';
@@ -123,9 +122,7 @@ export default function RootLayout({
           <ErrorBoundary>
             <PerformanceMonitor>
               <Suspense>
-                <AuthSessionWatcher>
-                  {children}
-                </AuthSessionWatcher>
+                {children}
               </Suspense>
             </PerformanceMonitor>
           </ErrorBoundary>

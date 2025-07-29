@@ -4,7 +4,7 @@ import {
   type Event,
   type EventGuestWithEvent,
 } from '@/lib/supabase/types';
-// import { getGuestEvents } from '@/services/events'
+// Note: Guest events functionality now handled via useEvents domain hook
 import { logError, type AppError } from '@/lib/error-handling';
 import { withErrorHandling } from '@/lib/error-handling';
 

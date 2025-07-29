@@ -13,7 +13,7 @@ import {
   ArrowRight,
   Zap
 } from 'lucide-react';
-import { MessageAnalytics, TopPerformingMessage } from '@/services/messaging/analytics';
+// Note: Analytics data now comes from useMessages hook
 
 export interface DeliveryMetricsProps {
   analytics: MessageAnalytics | null;

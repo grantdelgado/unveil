@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { type MessageWithSender, type PublicUserProfile } from '@/lib/supabase/types';
-import { sendMessage as sendMessageService } from '@/services/messaging';
+// Note: sendMessage functionality moved to domain hook
 import { useEventSubscription } from '@/hooks/realtime';
 import { logError, type AppError } from '@/lib/error-handling';
 import { withErrorHandling } from '@/lib/error-handling';

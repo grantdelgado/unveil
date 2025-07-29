@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { TagSelector } from './TagSelector';
-import { useGuestTags } from '@/hooks/messaging/useGuestTags';
+// Note: Guest tags functionality simplified - using useGuests hook instead
 import { Filter, Settings } from 'lucide-react';
 import type { Tables } from '@/app/reference/supabase.types';
 

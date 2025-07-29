@@ -18,7 +18,7 @@ import {
   Hash,
   Settings
 } from 'lucide-react';
-import { useGuestTags } from '@/hooks/messaging/useGuestTags';
+// Note: Guest tags functionality simplified - using useGuests hook instead
 import type { Tables } from '@/app/reference/supabase.types';
 
 type EventGuest = Tables<'event_guests'>;

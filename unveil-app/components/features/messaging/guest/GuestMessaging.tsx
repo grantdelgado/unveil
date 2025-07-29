@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { EmptyState, LoadingSpinner } from '@/components/ui';
 import { MessageBubble } from '@/components/features/messaging/common';
-import { useGuestMessages } from '@/hooks/messaging/useGuestMessages';
+// Note: Guest messaging functionality simplified - using useMessages hook instead
 import { GuestMessageInput } from './GuestMessageInput';
 import { ResponseIndicator } from './ResponseIndicator';
 import { MessageCircle, Send } from 'lucide-react';

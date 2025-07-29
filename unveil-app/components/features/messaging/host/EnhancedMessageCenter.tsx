@@ -11,7 +11,7 @@
 'use client';
 
 import React from 'react';
-import { MessageCenterContainer } from './MessageCenter';
+import { MessageCenter } from './MessageCenter';
 
 interface EnhancedMessageCenterProps {
   eventId: string;
@@ -29,5 +29,5 @@ interface EnhancedMessageCenterProps {
  * The external API remains unchanged for backward compatibility.
  */
 export function EnhancedMessageCenter({ eventId, className }: EnhancedMessageCenterProps) {
-  return <MessageCenterContainer eventId={eventId} className={className} />;
+  return <MessageCenter eventId={eventId} className={className} />;
 } 

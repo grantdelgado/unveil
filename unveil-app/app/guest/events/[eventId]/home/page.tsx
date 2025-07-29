@@ -18,7 +18,6 @@ import {
   SecondaryButton,
   BackButton,
   MicroCopy,
-  DevModeBox,
   SkeletonLoader
 } from '@/components/ui';
 import { ErrorBoundary, MessagingErrorFallback } from '@/components/ui/ErrorBoundary';
@@ -459,20 +458,6 @@ export default function GuestEventHomePage() {
             )}
           </div>
         </div>
-
-                 {/* Development Mode */}
-         <DevModeBox>
-           <p><strong>Guest Event Home State:</strong></p>
-           <p>Event ID: {eventId}</p>
-           <p>Current User: {currentUserId || 'N/A'}</p>
-           <p>Event Title: {event?.title || 'N/A'}</p>
-           <p>RSVP Status: {guestInfo?.rsvp_status || 'none'}</p>
-           <p>Is Scrolled: {isScrolled ? 'true' : 'false'}</p>
-           <p>Show Message Modal: {showMessageModal ? 'true' : 'false'}</p>
-           <p>Show Schedule Modal: {showScheduleModal ? 'true' : 'false'}</p>
-           <p>Loading: {loading ? 'true' : 'false'}</p>
-           {error && <p className="text-red-600">Error: {typeof error === 'string' ? error : 'An error occurred'}</p>}
-         </DevModeBox>
       </div>
 
       {/* Direct Message Modal */}

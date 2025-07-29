@@ -163,3 +163,97 @@ export const validateProfileUpdate = (data: unknown) =>
 export const validateLogin = (data: unknown) => loginSchema.safeParse(data);
 export const validateResetPassword = (data: unknown) =>
   resetPasswordSchema.safeParse(data);
+
+/**
+ * Validation utilities for Unveil app
+ */
+
+/**
+ * Validates phone number format
+ * Accepts various formats and normalizes to E.164
+ */
+export function validatePhoneNumber(phone: string): { 
+  isValid: boolean; 
+  normalized?: string; 
+  error?: string 
+} {
+  if (!phone || typeof phone !== 'string') {
+    return { isValid: false, error: 'Phone number is required' };
+  }
+
+  // Remove all non-digit characters
+  const digits = phone.replace(/\D/g, '');
+
+  // Check for development numbers
+  if (digits.startsWith('555000000')) {
+    return { 
+      isValid: true, 
+      normalized: `+1${digits}`,
+      error: undefined 
+    };
+  }
+
+  // US phone number validation (10 digits)
+  if (digits.length === 10) {
+    return { 
+      isValid: true, 
+      normalized: `+1${digits}`,
+      error: undefined 
+    };
+  }
+
+  // E.164 format (11 digits starting with 1)
+  if (digits.length === 11 && digits.startsWith('1')) {
+    return { 
+      isValid: true, 
+      normalized: `+${digits}`,
+      error: undefined 
+    };
+  }
+
+  return { 
+    isValid: false, 
+    error: 'Please enter a valid US phone number (10 digits)' 
+  };
+}
+
+/**
+ * Validates email format
+ */
+export function validateEmail(email: string): {
+  isValid: boolean;
+  error?: string;
+} {
+  if (!email || typeof email !== 'string') {
+    return { isValid: false, error: 'Email is required' };
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return { isValid: false, error: 'Please enter a valid email address' };
+  }
+
+  return { isValid: true };
+}
+
+/**
+ * Validates event title
+ */
+export function validateEventTitle(title: string): {
+  isValid: boolean;
+  error?: string;
+} {
+  if (!title || typeof title !== 'string') {
+    return { isValid: false, error: 'Event title is required' };
+  }
+
+  if (title.trim().length < 3) {
+    return { isValid: false, error: 'Event title must be at least 3 characters' };
+  }
+
+  if (title.length > 100) {
+    return { isValid: false, error: 'Event title must be less than 100 characters' };
+  }
+
+  return { isValid: true };
+}

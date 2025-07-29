@@ -7,8 +7,7 @@ import {
   PageTitle,
   SectionTitle,
   PrimaryButton,
-  SecondaryButton,
-  DevModeBox
+  SecondaryButton
 } from '@/components/ui';
 
 export default function GuestHome() {
@@ -38,12 +37,6 @@ export default function GuestHome() {
           </div>
         </div>
 
-        <DevModeBox>
-          <p><strong>Guest Home State:</strong></p>
-          <p>Simple landing page for guest functionality</p>
-          <p>Shows RSVP and media upload options</p>
-          <p>Ready for future functionality integration</p>
-        </DevModeBox>
       </CardContainer>
     </PageWrapper>
   );

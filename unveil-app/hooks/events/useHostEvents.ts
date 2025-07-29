@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { type Event } from '@/lib/supabase/types';
-import { getHostEvents } from '@/services/events';
+import { useEvents } from '@/hooks/useEvents';
 import { logError, type AppError } from '@/lib/error-handling';
 import { withErrorHandling } from '@/lib/error-handling';
 
