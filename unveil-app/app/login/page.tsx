@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 
 import { logAuth, logAuthError } from '@/lib/logger';
 import { validatePhoneNumber } from '@/lib/validations';
@@ -31,7 +30,6 @@ export default function LoginPage() {
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const router = useRouter();
   const { handlePostAuthRedirect } = usePostAuthRedirect();
 
   const handlePhoneSubmit = async (e: React.FormEvent) => {

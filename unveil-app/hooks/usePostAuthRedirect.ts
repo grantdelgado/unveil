@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { logAuth, logAuthError } from '@/lib/logger';
+import { supabase } from '@/lib/supabase/client';
 
 interface PostAuthRedirectOptions {
   phone: string;
@@ -31,20 +32,43 @@ export function usePostAuthRedirect(): UsePostAuthRedirectReturn {
     try {
       logAuth('Starting post-auth redirect flow', { phone, userId });
 
-      // Check if user exists in users table using Supabase MCP
-      const response = await fetch('/api/auth/check-user', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId, phone }),
-      });
+      // Check if user exists in users table (direct query for better performance)
+      const { data: existingUser, error: fetchError } = await supabase
+        .from('users')
+        .select('id, onboarding_completed')
+        .eq('id', userId)
+        .single();
 
-      if (!response.ok) {
-        throw new Error(`Failed to check user: ${response.statusText}`);
+      let userExists = false;
+      let onboardingCompleted = false;
+      let userCreated = false;
+
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        // PGRST116 = No rows found (expected for new users)
+        throw new Error(`Failed to fetch user: ${fetchError.message}`);
       }
 
-      const { userExists, onboardingCompleted, userCreated } = await response.json();
+      if (existingUser) {
+        userExists = true;
+        onboardingCompleted = existingUser.onboarding_completed;
+      } else {
+        // Create new user
+        const { error: insertError } = await supabase
+          .from('users')
+          .insert({
+            id: userId,
+            phone: phone,
+            onboarding_completed: false,
+          });
+
+        if (insertError) {
+          throw new Error(`Failed to create user: ${insertError.message}`);
+        }
+
+        userExists = true;
+        onboardingCompleted = false;
+        userCreated = true;
+      }
 
       logAuth('User check complete', { 
         userExists, 

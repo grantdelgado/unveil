@@ -6,6 +6,7 @@ import Image from 'next/image';
 // Note: Media upload functionality now uses domain hooks
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils/cn';
+import { uploadEventMedia } from '@/lib/services/media';
 
 interface PhotoUploadProps {
   eventId: string;
@@ -180,7 +181,7 @@ export default function PhotoUpload({
           const result = await uploadEventMedia(eventId, processedFile, userId);
 
           if (result.error) {
-            throw new Error(result.error.message);
+            throw new Error(result.error instanceof Error ? result.error.message : 'Upload failed');
           }
 
           // Update progress to complete
@@ -192,7 +193,7 @@ export default function PhotoUpload({
             ),
           );
 
-          onUploadComplete?.(result.data?.id || '');
+          onUploadComplete?.(result.data?.mediaRecord?.id || '');
         } catch (error) {
           const errorMessage =
             error instanceof Error ? error.message : 'Upload failed';

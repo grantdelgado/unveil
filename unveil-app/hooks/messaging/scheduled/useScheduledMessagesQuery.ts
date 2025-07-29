@@ -8,6 +8,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMessages } from '@/hooks/useMessages';
 import type { Tables } from '@/app/reference/supabase.types';
+import type { ScheduledMessageFilters } from '@/lib/types/messaging';
+import { getScheduledMessages } from '@/lib/services/messaging';
 
 type ScheduledMessage = Tables<'scheduled_messages'>;
 
@@ -59,7 +61,12 @@ export function useScheduledMessagesQuery({
         ...filters
       };
       
-      return await getScheduledMessages(messageFilters);
+      const result = await getScheduledMessages(messageFilters);
+      if (!result.success) {
+        throw new Error(result.error instanceof Error ? result.error.message : 'Failed to fetch scheduled messages');
+      }
+      
+      return result.data || [];
     },
     enabled: !!eventId && enabled,
     staleTime: 30000, // 30 seconds - optimized for frequent updates

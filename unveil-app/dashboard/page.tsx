@@ -45,10 +45,7 @@ export default function DashboardPage() {
         </Button>
       </div>
 
-      <EventDashboard
-        eventId={sampleEventId}
-        eventTitle="Wedding Celebration"
-      />
+      <EventDashboard />
 
       {/* Development info */}
       <div className="absolute bottom-4 left-4 bg-white border rounded-lg p-3 text-xs text-gray-500 shadow-sm">

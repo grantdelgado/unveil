@@ -4,6 +4,7 @@ import { type EventGuestWithUser } from '@/lib/supabase/types';
 import { useGuests as useGuestsDomain } from '@/hooks/useGuests';
 import { logError, type AppError } from '@/lib/error-handling';
 import { withErrorHandling } from '@/lib/error-handling';
+import { getEventGuests } from '@/lib/services/events';
 
 interface UseGuestsReturn {
   guests: EventGuestWithUser[];
@@ -47,13 +48,14 @@ export function useGuests(eventId: string | null): UseGuestsReturn {
 
       if (result.error) {
         // Handle permission errors gracefully
-        if (result.error.message?.includes('permission')) {
+        const errorMessage = result.error instanceof Error ? result.error.message : String(result.error);
+        if (errorMessage?.includes('permission')) {
           console.warn('⚠️ No permission to access guests for this event');
           setGuests([]);
           setLoading(false);
           return;
         }
-        throw new Error(result.error.message || 'Failed to fetch guests');
+        throw new Error(errorMessage || 'Failed to fetch guests');
       }
 
       setGuests(result.data || []);

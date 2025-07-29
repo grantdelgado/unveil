@@ -5,6 +5,7 @@ import { DatabaseErrorHandler } from '@/lib/error-handling/database';
 import { logGenericError } from '@/lib/logger';
 // Note: getUserById functionality moved to useAuth hook
 import { useEvents } from '@/hooks/useEvents';
+import { getEventById } from '@/lib/services/events';
 
 interface EventDetailsHookResult {
   event: EventWithHost | null;
@@ -37,12 +38,12 @@ export function useEventDetails(
         throw new Error('Failed to fetch event');
       }
 
-      // Handle different return type structures
-      if ('error' in eventResult && eventResult.error) {
-        throw new Error(eventResult.error.message || 'Failed to fetch event');
+      // Handle service return format
+      if (!eventResult.success && eventResult.error) {
+        throw new Error(eventResult.error instanceof Error ? eventResult.error.message : 'Failed to fetch event');
       }
 
-      if ('data' in eventResult && eventResult.data) {
+      if (eventResult.success && eventResult.data) {
         setEvent(eventResult.data);
       }
 

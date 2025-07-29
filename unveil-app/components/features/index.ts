@@ -40,8 +40,8 @@ export const GuestManagement = lazy(() =>
 export const MessageComposer = lazy(() => 
   import('./messaging/host/MessageComposer').then(module => ({ default: module.MessageComposer }))
 )
-export const EnhancedMessageCenter = lazy(() => 
-  import('./messaging/host/EnhancedMessageCenter').then(module => ({ default: module.EnhancedMessageCenter }))
+export const MessageCenter = lazy(() => 
+  import('./messaging/host/MessageCenter').then(module => ({ default: module.MessageCenter }))
 )
 export const NotificationCenter = lazy(() => 
   import('./host-dashboard/NotificationCenter').then(module => ({ default: module.NotificationCenter }))
@@ -63,10 +63,4 @@ export const GuestMessaging = lazy(() =>
   import('./messaging/guest/GuestMessaging').then(module => ({ default: module.GuestMessaging }))
 )
 
-// Development Components (only load in development)
-export const RealtimeDebugger = lazy(() => 
-  import('../dev/RealtimeDebugger').then(module => ({ default: module.RealtimeDebugger }))
-)
-export const TestUserCreator = lazy(() => 
-  import('../dev/TestUserCreator').then(module => ({ default: module.TestUserCreator }))
-)
+// Development Components (removed - not needed for production)

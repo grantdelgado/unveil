@@ -5,6 +5,7 @@ import { type MessageWithSender, type PublicUserProfile } from '@/lib/supabase/t
 import { useEventSubscription } from '@/hooks/realtime';
 import { logError, type AppError } from '@/lib/error-handling';
 import { withErrorHandling } from '@/lib/error-handling';
+import { sendMessageToEvent } from '@/lib/services/messaging';
 
 interface UseMessagesReturn {
   messages: MessageWithSender[];
@@ -123,7 +124,20 @@ export function useMessages(eventId: string | null): UseMessagesReturn {
       message_type?: 'direct' | 'announcement' | 'channel';
     }) => {
       const wrappedSend = withErrorHandling(async () => {
-        await sendMessageService(messageData);
+        // Transform parameters to match SendMessageRequest interface
+        const requestData = {
+          eventId: messageData.event_id,
+          content: messageData.content,
+          messageType: messageData.message_type || 'direct',
+          recipientFilter: { type: 'all' as const }, // Default to all recipients
+          sendVia: {
+            sms: true,
+            email: false,
+            push: false
+          }
+        };
+        
+        await sendMessageToEvent(requestData);
         return { success: true, error: null };
       }, 'useMessages.sendMessage');
 

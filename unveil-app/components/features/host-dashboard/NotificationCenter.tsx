@@ -28,7 +28,7 @@ interface NotificationItem {
 function NotificationCenterComponent({ eventId }: NotificationCenterProps) {
   // Use our refactored hooks instead of direct queries
   const { guests } = useGuests(eventId);
-  const { media } = useEventMedia(eventId);
+  const { data: media } = useEventMedia({ eventId });
   const { messages } = useMessages(eventId);
 
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -115,7 +115,12 @@ function NotificationCenterComponent({ eventId }: NotificationCenterProps) {
     });
 
     // Process media uploads - using hook data
-    media?.forEach((mediaItem) => {
+    media?.forEach((mediaItem: { 
+      id: string; 
+      created_at: string | null; 
+      media_type: string;
+      uploader?: { full_name: string | null } 
+    }) => {
       if (mediaItem.created_at && mediaItem.created_at > dayAgo.toISOString()) {
         const uploaderName = mediaItem.uploader?.full_name || 'A guest';
         notificationItems.push({

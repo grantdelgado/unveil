@@ -34,15 +34,36 @@ export default function AccountSetupPage() {
   useEffect(() => {
     const loadUserProfile = async () => {
       try {
-        const profile = user;
+        // Wait for auth to finish loading
+        if (authLoading) return;
 
-        if (!profile && !authLoading) {
-          console.error('No user profile found');
+        // Redirect if not authenticated
+        if (!user?.id) {
+          console.error('No authenticated user found');
           router.push('/login');
           return;
         }
 
-        setUserProfile(profile); // Direct assignment - types handled by useAuth
+        // Fetch user profile from users table using Supabase Auth user ID
+        const { data: profile, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (error) {
+          console.error('Error fetching user profile:', error);
+          router.push('/login');
+          return;
+        }
+
+        if (!profile) {
+          console.error('No user profile found in users table');
+          router.push('/login');
+          return;
+        }
+
+        setUserProfile(profile);
 
         // Pre-fill form if user already has some data
         if (

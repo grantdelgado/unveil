@@ -257,3 +257,51 @@ export function validateEventTitle(title: string): {
 
   return { isValid: true };
 }
+
+/**
+ * Validates message content
+ */
+export function validateMessageContent(content: string): {
+  isValid: boolean;
+  error?: string;
+} {
+  if (!content || typeof content !== 'string') {
+    return { isValid: false, error: 'Message content is required' };
+  }
+
+  if (content.trim().length === 0) {
+    return { isValid: false, error: 'Message cannot be empty' };
+  }
+
+  if (content.length > 1000) {
+    return { isValid: false, error: 'Message must be less than 1000 characters' };
+  }
+
+  return { isValid: true };
+}
+
+/**
+ * Validates guest CSV data
+ */
+export function validateGuestCSV(csvData: Record<string, unknown>[]): {
+  isValid: boolean;
+  errors: string[];
+  validGuests: Record<string, unknown>[];
+} {
+  const errors: string[] = [];
+  const validGuests: Record<string, unknown>[] = [];
+
+  csvData.forEach((row, index) => {
+    if (!row.guest_name && !row.guest_email) {
+      errors.push(`Row ${index + 1}: Guest name or email is required`);
+    } else {
+      validGuests.push(row);
+    }
+  });
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+    validGuests,
+  };
+}

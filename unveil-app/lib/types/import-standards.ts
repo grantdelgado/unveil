@@ -174,7 +174,7 @@ export const IMPORT_RECOMMENDATIONS = {
   ],
 
   // Domain Hook files
-  HOOK_FILE: [
+  DOMAIN_HOOK_FILE: [
     "import { supabase } from '@/lib/supabase/client'",
     "import type { Event, EventInsert, EventUpdate } from '@/lib/types'",
     "import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'",

@@ -13,6 +13,7 @@ import { useCallback, useEffect } from 'react';
 import { useScheduledMessagesQuery } from './scheduled/useScheduledMessagesQuery';
 import { useScheduledMessagesCache } from './scheduled/useScheduledMessagesCache';
 import { useScheduledMessagesRealtime } from './scheduled/useScheduledMessagesRealtime';
+import type { ScheduledMessageFilters } from '@/lib/types/messaging';
 // Note: ScheduledMessageFilters type moved to useMessages hook
 import type { Tables } from '@/app/reference/supabase.types';
 
@@ -125,7 +126,7 @@ export function useScheduledMessageCounts(eventId: string) {
 export function useNextScheduledMessage(eventId: string) {
   const { messages, loading } = useScheduledMessages({ 
     eventId, 
-    filters: { status: ['scheduled'] },
+    filters: { eventId, status: 'pending' }, // Fix: include required eventId
     autoRefresh: true 
   });
 

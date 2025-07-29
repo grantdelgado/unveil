@@ -5,73 +5,43 @@
  * Import directly from module files when possible to avoid bundling unused code.
  */
 
-// Domain-specific error types - PREFER: import from './errors' directly
-export type {
-  DatabaseError,
-  AuthError,
-  MediaError,
-  FormValidationError,
-  RealtimeError,
-  SMSError,
-  APIError,
-  DomainErrorUnion,
-} from './errors';
+// Re-export all types for easy importing
+export type { Database, Tables, TablesInsert, TablesUpdate } from '@/app/reference/supabase.types';
 
-// Error creator functions - commonly used
+// Base types
+export * from './forms';
+export * from './errors';
+export * from './hooks';
+export * from './analytics';
+
+// Messaging types
+export * from './messaging';
+
+// Service functions - add these exports to resolve import errors
+export { 
+  sendMessageToEvent,
+  getScheduledMessages,
+  createScheduledMessage,
+  sendMessageService
+} from '@/lib/services/messaging';
+
 export {
-  createAuthError,
-  createDatabaseError,
-  createMediaError,
-  createRealtimeError,
-  createFormValidationError,
-  createSMSError,
-  createAPIError,
-  isAuthError,
-  isDatabaseError,
-  isMediaError,
-  isRealtimeError,
-} from './errors';
+  getEventById,
+  getHostEvents,
+  getEventGuests  
+} from '@/lib/services/events';
 
-// Enhanced hook return types - PREFER: import from './hooks' directly
-export type {
-  AuthHookResult,
-  EventDetailsHookResult,
-  EventListHookResult,
-  GuestHookResult,
-  MediaHookResult,
-  MessagingHookResult,
-  LoadingState,
-  PaginationState,
-  MutationResult,
-} from './hooks';
+export {
+  uploadEventMedia,
+  sendMessage
+} from '@/lib/services/media';
 
-// Form validation types - PREFER: import from './forms' directly
-export type {
-  FormState,
-  ValidationRule as FieldValidation,
-  FormSubmissionResult as FormSubmission,
-  CustomValidator as AsyncValidator,
-} from './forms';
+// Hook exports
+export { useGuestMessages } from '@/hooks/messaging/useGuestMessages';
+export { useGuestTags } from '@/hooks/messaging/useGuestTags';
 
-// Most commonly used Supabase types - PREFER: import from '@/lib/supabase/types' directly
-export type {
-  User,
-  Event,
-  EventGuest,
-  Message,
-  Media,
-  PublicUserProfile as UserProfile,
-  EventInsert,
-  EventUpdate,
-  MessageInsert,
-  MessageUpdate,
-  MediaInsert,
-  MediaUpdate,
-} from '@/lib/supabase/types';
-
-// Most commonly used error types - PREFER: import from '@/lib/error-handling' directly
-export type {
-  AppError,
-  ValidationError,
-  NetworkError,
-} from '@/lib/error-handling';
+// Realtime subscriptions
+export { 
+  subscribeToEventMessages,
+  subscribeToEventMedia
+} from '@/lib/realtime/subscriptions';

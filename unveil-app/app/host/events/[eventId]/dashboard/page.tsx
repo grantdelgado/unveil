@@ -7,7 +7,6 @@ import type { Database } from '@/app/reference/supabase.types';
 import {
   EventHeader,
   GuestStatusCard,
-  QuickMessageActions,
   TabNavigation,
   QuickActions,
   type TabItem,
@@ -15,7 +14,7 @@ import {
 import { 
   GuestImportWizard,
   GuestManagement,
-  EnhancedMessageCenter 
+  MessageCenter 
 } from '@/components/features';
 import {
   PageWrapper,
@@ -277,11 +276,7 @@ export default function EventDashboardPage() {
             eventId={eventId} 
             onManageClick={() => handleTabChange('guests')} 
           />
-          <QuickMessageActions 
-            eventId={eventId}
-            onSendMessage={handleQuickMessage}
-            onComposeClick={() => handleTabChange('messages')}
-          />
+
         </div>
 
         {/* Main Content with Tab Navigation */}
@@ -322,7 +317,7 @@ export default function EventDashboardPage() {
                     </div>
                   }
                 >
-                  <EnhancedMessageCenter eventId={eventId} />
+                  <MessageCenter eventId={eventId} />
                 </Suspense>
                 
               </div>

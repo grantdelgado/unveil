@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { queryKeys, cacheConfig } from '@/lib/react-query-client'
 import { useMessages } from '@/hooks/useMessages'
 import type { Database } from '@/app/reference/supabase.types'
+import { sendMessage } from '@/lib/services/media'
 
 type Message = Database['public']['Tables']['messages']['Row']
 type User = Database['public']['Tables']['users']['Row']
@@ -65,10 +66,9 @@ export function useSendMessage({ onSuccess, onError }: UseSendMessageOptions = {
       userId: string 
     }) => {
       const result = await sendMessage({
-        event_id: eventId,
+        eventId: eventId, // Fix: use eventId instead of event_id
         content,
-        sender_user_id: userId,
-        message_type: 'direct'
+        messageType: 'direct' // Fix: use messageType instead of message_type
       })
       
       if (!result) {
@@ -76,7 +76,7 @@ export function useSendMessage({ onSuccess, onError }: UseSendMessageOptions = {
       }
       
       if (result.error) {
-        throw new Error(result.error.message)
+        throw new Error(result.error instanceof Error ? result.error.message : 'Send message failed')
       }
 
       return result.data

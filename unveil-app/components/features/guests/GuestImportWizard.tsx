@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { CardContainer } from '@/components/ui/CardContainer';
 import { SectionTitle, FieldLabel, MicroCopy } from '@/components/ui/Typography';
+import type { GuestImportData } from '@/lib/guest-import';
+import { useGuests } from '@/hooks/useGuests';
 // Note: Guest functionality handled via domain hooks
 
 interface GuestImportWizardProps {
@@ -13,8 +15,8 @@ interface GuestImportWizardProps {
   onImportComplete: () => void;
 }
 
-// Using GuestImportEntry from service layer
-type GuestEntry = GuestImportEntry;
+// Using GuestImportData from guest import service
+type GuestEntry = GuestImportData;
 
 export function GuestImportWizard({
   eventId,
@@ -27,9 +29,10 @@ export function GuestImportWizard({
   const [guests, setGuests] = useState<GuestEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { importGuests } = useGuests();
 
   const handleAddManualGuest = () => {
-    setGuests([...guests, { fullName: '', phone: '', role: 'guest' }]);
+    setGuests([...guests, { guest_name: '', phone: '' }]);
   };
 
   const handleUpdateGuest = (
@@ -53,23 +56,22 @@ export function GuestImportWizard({
     setError(null);
 
     try {
-      // Use the service layer for guest import
-      const result = await importGuestsEnhanced(eventId, guests);
+      // Transform guest data to EventGuestInsert format
+      const guestsToImport = guests.map(guest => ({
+        event_id: eventId,
+        phone: guest.phone,
+        guest_name: guest.guest_name || null,
+        guest_email: guest.guest_email || null,
+        notes: guest.notes || null,
+        rsvp_status: guest.rsvp_status || 'pending',
+        guest_tags: guest.guest_tags || null,
+        role: 'guest',
+      }));
 
-      if (result.error) {
-        throw result.error;
-      }
-
-      if (result.data) {
-        const { imported, errors } = result.data;
-        
-        if (errors.length > 0) {
-          console.warn('Some guests failed to import:', errors);
-          setError(`Imported ${imported} guests. ${errors.length} failed: ${errors.join(', ')}`);
-        } else {
-          console.log(`Successfully imported ${imported} guests`);
-        }
-      }
+      // Import guests using the hook
+      const result = await importGuests(eventId, guestsToImport);
+      
+      console.log(`Successfully imported ${result.length} guests`);
 
       onImportComplete();
     } catch (err) {
@@ -79,10 +81,10 @@ export function GuestImportWizard({
     } finally {
       setLoading(false);
     }
-  }, [guests, eventId, onImportComplete]);
+  }, [guests, eventId, onImportComplete, importGuests]);
 
   const validateGuest = (guest: GuestEntry): boolean => {
-    return guest.fullName.trim().length > 0 && guest.phone.trim().length > 0;
+    return guest.phone.trim().length > 0 && (guest.guest_name || '').trim().length > 0;
   };
 
   const validGuests = guests.filter(validateGuest);
@@ -166,9 +168,9 @@ export function GuestImportWizard({
                     <input
                       id={`guest-${index}-name`}
                       type="text"
-                      value={guest.fullName}
+                      value={guest.guest_name || ''}
                       onChange={(e) =>
-                        handleUpdateGuest(index, 'fullName', e.target.value)
+                        handleUpdateGuest(index, 'guest_name', e.target.value)
                       }
                       placeholder="John Doe"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
@@ -198,31 +200,16 @@ export function GuestImportWizard({
                     <input
                       id={`guest-${index}-email`}
                       type="email"
-                      value={guest.email || ''}
+                      value={guest.guest_email || ''}
                       onChange={(e) =>
-                        handleUpdateGuest(index, 'email', e.target.value)
+                        handleUpdateGuest(index, 'guest_email', e.target.value)
                       }
                       placeholder="john@example.com"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     />
                   </div>
 
-                  <div>
-                    <FieldLabel htmlFor={`guest-${index}-role`}>
-                      Role
-                    </FieldLabel>
-                    <select
-                      id={`guest-${index}-role`}
-                      value={guest.role || 'guest'}
-                      onChange={(e) =>
-                        handleUpdateGuest(index, 'role', e.target.value)
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    >
-                      <option value="guest">Guest</option>
-                      <option value="host">Host</option>
-                    </select>
-                  </div>
+
                 </div>
 
                 <div className="mb-4">
@@ -292,7 +279,7 @@ export function GuestImportWizard({
                 <li>Full Name (required)</li>
                 <li>Phone Number (required)</li>
                 <li>Email (optional)</li>
-                <li>Role (guest/host, optional)</li>
+
                 <li>Notes (optional)</li>
               </ul>
             </div>

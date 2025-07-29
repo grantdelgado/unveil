@@ -3,6 +3,7 @@ import { type Event } from '@/lib/supabase/types';
 import { useEvents } from '@/hooks/useEvents';
 import { logError, type AppError } from '@/lib/error-handling';
 import { withErrorHandling } from '@/lib/error-handling';
+import { getHostEvents } from '@/lib/services/events';
 
 interface UseHostEventsReturn {
   hostedEvents: Event[];
@@ -30,11 +31,11 @@ export function useHostEvents(userId: string | null): UseHostEventsReturn {
       // Fetch hosted events
       const hostResult = await getHostEvents(userId);
 
-      if (hostResult?.error) {
-        throw new Error(hostResult.error.message);
+      if (!hostResult.success && hostResult.error) {
+        throw new Error(hostResult.error instanceof Error ? hostResult.error.message : 'Failed to fetch hosted events');
       }
 
-      setHostedEvents(hostResult?.data || []);
+      setHostedEvents(hostResult.success ? hostResult.data || [] : []);
       setLoading(false);
     }, 'useHostEvents.fetchHostedEvents');
 

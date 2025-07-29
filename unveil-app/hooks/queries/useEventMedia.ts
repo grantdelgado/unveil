@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { queryKeys, cacheConfig } from '@/lib/react-query-client'
 import { useMedia } from '@/hooks/useMedia'
 import type { Database } from '@/app/reference/supabase.types'
+import { uploadEventMedia } from '@/lib/services/media'
 
 type Media = Database['public']['Tables']['media']['Row']
 
@@ -59,16 +60,16 @@ export function useUploadMedia({ onSuccess, onError }: UseUploadMediaOptions = {
       const result = await uploadEventMedia(eventId, file, userId)
       
       if (result.error) {
-        throw new Error(result.error.message)
+        throw new Error(result.error instanceof Error ? result.error.message : 'Upload failed')
       }
 
       return result.data
     },
     
     onSuccess: (data) => {
-      if (!data || !('mediaRecord' in data) || !data.mediaRecord) return
+      if (!data || typeof data !== 'object' || !('mediaRecord' in data) || !data.mediaRecord) return
       
-      const mediaRecord = data.mediaRecord
+      const mediaRecord = data.mediaRecord as { id: string; event_id: string; [key: string]: any }
       
       // Invalidate and refetch event media queries
       queryClient.invalidateQueries({
@@ -78,8 +79,8 @@ export function useUploadMedia({ onSuccess, onError }: UseUploadMediaOptions = {
       // Optimistically add the new media to existing cache
       const eventMediaKey = queryKeys.eventMedia(mediaRecord.event_id)
       queryClient.setQueryData(eventMediaKey, (oldData: Media[] | undefined) => {
-        if (!oldData) return [mediaRecord]
-        return [mediaRecord, ...oldData]
+        if (!oldData) return [mediaRecord as Media]
+        return [mediaRecord as Media, ...oldData]
       })
 
       onSuccess?.(mediaRecord.id)

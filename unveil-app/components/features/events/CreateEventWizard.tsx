@@ -53,7 +53,6 @@ export default function CreateEventWizard() {
   
   // Wizard state
   const [currentStep, setCurrentStep] = useState<WizardStep>('basics');
-  const [completedSteps, setCompletedSteps] = useState<Set<WizardStep>>(new Set());
   
   // Form data
   const [formData, setFormData] = useState<EventFormData>({
@@ -137,11 +136,10 @@ export default function CreateEventWizard() {
   // Navigate between steps
   const goToStep = useCallback((step: WizardStep) => {
     if (validateCurrentStep()) {
-      setCompletedSteps(prev => new Set([...prev, currentStep]));
       setCurrentStep(step);
       setFormMessage('');
     }
-  }, [currentStep, validateCurrentStep]);
+  }, [validateCurrentStep]);
 
   const goToNextStep = useCallback(() => {
     const stepOrder: WizardStep[] = ['basics', 'image', 'guests', 'review'];
@@ -186,17 +184,17 @@ export default function CreateEventWizard() {
         const fileName = `${userId}/${Date.now()}.${fileExt}`;
         
         try {
-          const { data: uploadData, error: uploadError } = await uploadFile(
-            'event-images',
-            fileName,
-            headerImage,
-          );
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('event-images')
+            .upload(fileName, headerImage);
           
           if (uploadError || !uploadData) {
             throw new Error(uploadError?.message || 'Upload failed');
           }
           
-          const { data: urlData } = getPublicUrl('event-images', fileName);
+          const { data: urlData } = supabase.storage
+            .from('event-images')
+            .getPublicUrl(fileName);
           headerImageUrl = urlData.publicUrl;
         } catch (uploadError) {
           setFormMessage(`Failed to upload image: ${uploadError instanceof Error ? uploadError.message : 'Unknown error'}`);

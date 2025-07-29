@@ -1,0 +1,79 @@
+components/features/messaging/host/MessageCenter.tsx(49,9): error TS2322: Type '{ [key: string]: unknown; type: string; }' is not assignable to type '{ type: "all" | "tags" | "rsvp_status" | "individual"; rsvpStatuses?: string[] | undefined; tags?: string[] | undefined; guestIds?: string[] | undefined; }'.
+  Types of property 'type' are incompatible.
+    Type 'string' is not assignable to type '"all" | "tags" | "rsvp_status" | "individual"'.
+components/features/messaging/host/MessageCenter.tsx(134,13): error TS2322: Type '{ [key: string]: unknown; type: string; }' is not assignable to type 'RecipientFilter'.
+components/features/messaging/host/MessageCenter.tsx(135,13): error TS2322: Type '(filter: { type: string; [key: string]: unknown; }) => void' is not assignable to type '(filter: RecipientFilter, advancedFilter?: AdvancedRecipientFilter | undefined) => void'.
+  Types of parameters 'filter' and 'filter' are incompatible.
+    Type 'string' is not assignable to type '{ [key: string]: unknown; type: string; }'.
+      Type 'string' is not assignable to type '{ [key: string]: unknown; type: string; }'.
+components/features/messaging/host/MessageCenter.tsx(139,29): error TS2322: Type '(template: string) => void' is not assignable to type '(template: MessageTemplate) => void'.
+  Types of parameters 'template' and 'template' are incompatible.
+    Type 'MessageTemplate' is not assignable to type 'string'.
+components/features/messaging/host/MessageCenter.tsx(144,13): error TS2322: Type '{ created_at: string | null; event_id: string; guest_email: string | null; guest_name: string | null; guest_tags: string[] | null; id: string; invited_at: string | null; notes: string | null; ... 7 more ...; user_id: string | null; }[]' is not assignable to type 'Guest[]'.
+  Type '{ created_at: string | null; event_id: string; guest_email: string | null; guest_name: string | null; guest_tags: string[] | null; id: string; invited_at: string | null; notes: string | null; ... 7 more ...; user_id: string | null; }' is not assignable to type 'Guest'.
+    Property 'users' is missing in type '{ created_at: string | null; event_id: string; guest_email: string | null; guest_name: string | null; guest_tags: string[] | null; id: string; invited_at: string | null; notes: string | null; ... 7 more ...; user_id: string | null; }' but required in type '{ users: { avatar_url: string | null; created_at: string | null; email: string | null; full_name: string | null; id: string; intended_redirect: string | null; onboarding_completed: boolean; phone: string; updated_at: string | null; } | null; }'.
+components/features/messaging/host/MessageCenter.tsx(145,13): error TS2322: Type 'string | null' is not assignable to type 'MessageTemplate | null | undefined'.
+  Type 'string' is not assignable to type 'MessageTemplate'.
+components/features/messaging/host/MessageCenter.tsx(146,13): error TS2322: Type '{ [key: string]: unknown; type: string; }' is not assignable to type 'RecipientFilter | undefined'.
+components/features/messaging/host/MessageCenter.tsx(147,13): error TS2322: Type '(content: string) => Promise<void>' is not assignable to type '() => void'.
+  Target signature provides too few arguments. Expected 1 or more, but got 0.
+components/features/messaging/host/MessageCenter.tsx(158,13): error TS2322: Type '{ content: string; created_at: string | null; event_id: string; id: string; message_type: "direct" | "announcement" | "channel" | null; sender_user_id: string | null; }[]' is not assignable to type 'Message[]'.
+  Type '{ content: string; created_at: string | null; event_id: string; id: string; message_type: "direct" | "announcement" | "channel" | null; sender_user_id: string | null; }' is not assignable to type 'Message'.
+    Property 'sender' is missing in type '{ content: string; created_at: string | null; event_id: string; id: string; message_type: "direct" | "announcement" | "channel" | null; sender_user_id: string | null; }' but required in type '{ sender: { avatar_url: string | null; created_at: string | null; email: string | null; full_name: string | null; id: string; intended_redirect: string | null; onboarding_completed: boolean; phone: string; updated_at: string | null; } | null; }'.
+components/features/messaging/host/MessageCenter.tsx(159,13): error TS2322: Type '(messageContent: string) => void' is not assignable to type '(message: Message) => void'.
+  Types of parameters 'messageContent' and 'message' are incompatible.
+    Type 'Message' is not assignable to type 'string'.
+components/features/messaging/host/MessageComposer.tsx(105,9): error TS2322: Type 'string' is not assignable to type 'import("/Users/grantdelgado/Unveil/unveil-app/lib/types/messaging").RecipientFilter'.
+  Type 'string' is not assignable to type 'RecipientFilter'.
+components/features/messaging/host/MessageQueue.tsx(54,9): error TS2322: Type '("sent" | "failed" | "scheduled" | "sending" | "cancelled")[]' is not assignable to type '"pending" | "sent" | "failed" | undefined'.
+components/features/messaging/host/MessageQueue.tsx(58,19): error TS2345: Argument of type '{ success: boolean; data: { content: string; created_at: string | null; event_id: string; failure_count: number | null; id: string; message_type: "direct" | "announcement" | "channel" | null; ... 14 more ...; updated_at: string | null; }[]; error?: undefined; } | { ...; }' is not assignable to parameter of type 'SetStateAction<{ content: string; created_at: string | null; event_id: string; failure_count: number | null; id: string; message_type: "direct" | "announcement" | "channel" | null; recipient_count: number | null; ... 13 more ...; updated_at: string | null; }[]>'.
+  Type '{ success: boolean; data: { content: string; created_at: string | null; event_id: string; failure_count: number | null; id: string; message_type: Database["public"]["Enums"]["message_type_enum"] | null; ... 14 more ...; updated_at: string | null; }[]; error?: undefined; }' is not assignable to type 'SetStateAction<{ content: string; created_at: string | null; event_id: string; failure_count: number | null; id: string; message_type: "direct" | "announcement" | "channel" | null; recipient_count: number | null; ... 13 more ...; updated_at: string | null; }[]>'.
+components/features/messaging/host/MessageScheduler.tsx(138,9): error TS2322: Type 'Date' is not assignable to type 'string'.
+components/features/messaging/host/RecipientPresets.tsx(148,11): error TS2554: Expected 1 arguments, but got 2.
+dashboard/page.tsx(49,9): error TS2322: Type '{ eventId: string; eventTitle: string; }' is not assignable to type 'IntrinsicAttributes'.
+  Property 'eventId' does not exist on type 'IntrinsicAttributes'.
+hooks/events/useEventDetails.ts(43,43): error TS2339: Property 'message' does not exist on type '{}'.
+hooks/events/useEventDetails.ts(47,18): error TS2345: Argument of type '{ allow_open_signup: boolean; created_at: string | null; description: string | null; event_date: string; header_image_url: string | null; host_user_id: string; id: string; is_public: boolean | null; location: string | null; title: string; updated_at: string | null; host_user: { ...; }; }' is not assignable to parameter of type 'SetStateAction<EventWithHost | null>'.
+  Property 'host' is missing in type '{ allow_open_signup: boolean; created_at: string | null; description: string | null; event_date: string; header_image_url: string | null; host_user_id: string; id: string; is_public: boolean | null; location: string | null; title: string; updated_at: string | null; host_user: { ...; }; }' but required in type 'EventWithHost'.
+hooks/events/useHostEvents.ts(35,42): error TS2339: Property 'message' does not exist on type '{}'.
+hooks/guests/useGuestData.ts(150,11): error TS2322: Type '{ id: string; event_id: string; user_id: string | null; guest_name: string | null; guest_email: string | null; phone: string; rsvp_status: "attending" | "declined" | "maybe" | "pending"; ... 9 more ...; users: { ...; } | null; }[]' is not assignable to type 'OptimizedGuest[]'.
+  Type '{ id: string; event_id: string; user_id: string | null; guest_name: string | null; guest_email: string | null; phone: string; rsvp_status: OptimizedGuest["rsvp_status"]; notes: string | null; ... 8 more ...; users: { ...; } | null; }' is not assignable to type 'OptimizedGuest'.
+    Types of property 'users' are incompatible.
+      Type '{ id: string; full_name: string | null; phone: string; email: string | null; avatar_url: string | null; created_at: string | null; updated_at: string | null; } | null' is not assignable to type '{ id: string; full_name: string | null; phone: string; email: string | null; avatar_url: string | null; created_at: string | null; updated_at: string | null; intended_redirect: string | null; onboarding_completed: boolean; } | null'.
+        Type '{ id: string; full_name: string | null; phone: string; email: string | null; avatar_url: string | null; created_at: string | null; updated_at: string | null; }' is missing the following properties from type '{ id: string; full_name: string | null; phone: string; email: string | null; avatar_url: string | null; created_at: string | null; updated_at: string | null; intended_redirect: string | null; onboarding_completed: boolean; }': intended_redirect, onboarding_completed
+hooks/guests/useGuests.ts(51,26): error TS2339: Property 'message' does not exist on type '{}'.
+hooks/guests/useGuests.ts(57,38): error TS2339: Property 'message' does not exist on type '{}'.
+hooks/messaging/scheduled/useScheduledMessagesQuery.ts(83,5): error TS2322: Type 'never[] | { success: boolean; data: { content: string; created_at: string | null; event_id: string; failure_count: number | null; id: string; message_type: "direct" | "announcement" | "channel" | null; ... 14 more ...; updated_at: string | null; }[]; error?: undefined; } | { ...; }' is not assignable to type '{ content: string; created_at: string | null; event_id: string; failure_count: number | null; id: string; message_type: "direct" | "announcement" | "channel" | null; recipient_count: number | null; ... 13 more ...; updated_at: string | null; }[]'.
+  Type '{ success: boolean; data: { content: string; created_at: string | null; event_id: string; failure_count: number | null; id: string; message_type: "direct" | "announcement" | "channel" | null; ... 14 more ...; updated_at: string | null; }[]; error?: undefined; }' is missing the following properties from type '{ content: string; created_at: string | null; event_id: string; failure_count: number | null; id: string; message_type: "direct" | "announcement" | "channel" | null; recipient_count: number | null; ... 13 more ...; updated_at: string | null; }[]': length, pop, push, concat, and 35 more.
+hooks/messaging/useMessages.ts(126,15): error TS2304: Cannot find name 'sendMessageService'.
+hooks/messaging/useScheduledMessages.ts(23,13): error TS2552: Cannot find name 'ScheduledMessageFilters'. Did you mean 'ScheduledMessage'?
+hooks/queries/useEventMedia.ts(59,28): error TS2304: Cannot find name 'uploadEventMedia'.
+hooks/queries/useEventMessages.ts(67,28): error TS2304: Cannot find name 'sendMessage'.
+lib/index.ts(12,3): error TS2305: Module '"./utils"' has no exported member 'generateUniqueId'.
+lib/index.ts(13,3): error TS2305: Module '"./utils"' has no exported member 'debounce'.
+lib/index.ts(22,3): error TS2305: Module '"./validations"' has no exported member 'validateGuestCSV'.
+lib/index.ts(23,3): error TS2724: '"./validations"' has no exported member named 'validateMessageContent'. Did you mean 'validateMessageCreate'?
+lib/services/media.ts(54,8): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: { content: string; created_at?: string | null | undefined; event_id: string; id?: string | undefined; message_type?: "direct" | "announcement" | "channel" | null | undefined; sender_user_id?: string | ... 1 more ... | undefined; }, options?: { ...; } | undefined): PostgrestFilterBuilder<...>', gave the following error.
+    Type 'string' is not assignable to type '"direct" | "announcement" | "channel" | null | undefined'.
+  Overload 2 of 2, '(values: { content: string; created_at?: string | null | undefined; event_id: string; id?: string | undefined; message_type?: "direct" | "announcement" | "channel" | null | undefined; sender_user_id?: string | ... 1 more ... | undefined; }[], options?: { ...; } | undefined): PostgrestFilterBuilder<...>', gave the following error.
+    Object literal may only specify known properties, and 'event_id' does not exist in type '{ content: string; created_at?: string | null | undefined; event_id: string; id?: string | undefined; message_type?: "direct" | "announcement" | "channel" | null | undefined; sender_user_id?: string | ... 1 more ... | undefined; }[]'.
+src/test/realtime/integration-simple.test.ts(40,28): error TS2304: Cannot find name 'subscribeToEventMessages'.
+src/test/realtime/integration-simple.test.ts(61,7): error TS2304: Cannot find name 'subscribeToEventMessages'.
+src/test/realtime/integration-simple.test.ts(90,7): error TS2304: Cannot find name 'subscribeToEventMessages'.
+src/test/realtime/integration-simple.test.ts(94,7): error TS2304: Cannot find name 'subscribeToEventMessages'.
+src/test/realtime/integration-simple.test.ts(104,54): error TS2307: Cannot find module '@/lib/supabase/media' or its corresponding type declarations.
+src/test/realtime/integration-simple.test.ts(131,28): error TS2304: Cannot find name 'subscribeToEventMessages'.
+src/test/realtime/integration-simple.test.ts(144,28): error TS2304: Cannot find name 'subscribeToEventMessages'.
+src/test/realtime/integration-simple.test.ts(157,7): error TS2304: Cannot find name 'subscribeToEventMessages'.
+src/test/realtime/integration-simple.test.ts(175,7): error TS2304: Cannot find name 'subscribeToEventMessages'.
+src/test/realtime/integration-simple.test.ts(193,7): error TS2304: Cannot find name 'subscribeToEventMessages'.
+src/test/realtime/integration-simple.test.ts(217,9): error TS2304: Cannot find name 'subscribeToEventMessages'.
+src/test/realtime/integration-simple.test.ts(237,7): error TS2304: Cannot find name 'subscribeToEventMessages'.
+src/test/realtime/integration-simple.test.ts(260,9): error TS2304: Cannot find name 'subscribeToEventMessages'.
+src/test/realtime/integration-simple.test.ts(265,9): error TS2304: Cannot find name 'subscribeToEventMessages'.
+src/test/realtime/integration-simple.test.ts(276,7): error TS2304: Cannot find name 'subscribeToEventMessages'.
+src/test/realtime/integration-simple.test.ts(288,9): error TS2304: Cannot find name 'subscribeToEventMessages'.
+src/test/realtime/integration-simple.test.ts(306,7): error TS2304: Cannot find name 'subscribeToEventMessages'.
+src/test/realtime/integration-simple.test.ts(320,7): error TS2304: Cannot find name 'subscribeToEventMessages'.
+src/test/realtime/integration-simple.test.ts(321,7): error TS2304: Cannot find name 'subscribeToEventMessages'.

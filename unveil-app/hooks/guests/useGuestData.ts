@@ -33,6 +33,8 @@ type OptimizedGuest = {
     avatar_url: string | null;
     created_at: string | null;
     updated_at: string | null;
+    intended_redirect: string | null;
+    onboarding_completed: boolean;
   } | null;
 };
 
@@ -171,6 +173,8 @@ export function useGuestData({
         avatar_url: guest.users.avatar_url,
         created_at: guest.users.created_at,
         updated_at: guest.users.updated_at,
+        intended_redirect: null, // Property doesn't exist in current schema
+        onboarding_completed: false, // Property doesn't exist in current schema
       } : null,
     }));
 

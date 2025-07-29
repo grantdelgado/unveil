@@ -1,1 +1,2 @@
-// Note: Legacy media hooks removed - use useMedia domain hook instead
+// Media hooks exports
+export { useEventMedia } from '../queries/useEventMedia';
