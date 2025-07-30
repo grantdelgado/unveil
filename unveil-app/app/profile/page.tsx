@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   PageWrapper,
   CardContainer,
@@ -15,60 +16,165 @@ import {
   PrimaryButton,
   SecondaryButton,
   BackButton,
-  MicroCopy
+  MicroCopy,
+  LoadingSpinner
 } from '@/components/ui';
 
+interface UserProfile {
+  id: string;
+  email: string | null;
+  full_name: string | null;
+  phone: string;
+  avatar_url: string | null;
+}
+
 export default function ProfilePage() {
-  const [email, setEmail] = useState('');
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [displayName, setDisplayName] = useState('');
   const [message, setMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [hasHostedEvents, setHasHostedEvents] = useState(false);
 
   const router = useRouter();
 
   useEffect(() => {
     const fetchProfile = async () => {
-      setIsLoading(true);
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser();
-      if (error || !user) {
-        setMessage('Something went wrong loading your profile');
+      try {
+        setIsLoading(true);
+        
+        // Get current auth user
+        const {
+          data: { user },
+          error: authError,
+        } = await supabase.auth.getUser();
+        
+        if (authError || !user) {
+          setMessage('Unable to load your profile. Please sign in again.');
+          setIsLoading(false);
+          return;
+        }
+
+        // Fetch user profile from users table
+        const { data: profile, error: profileError } = await supabase
+          .from('users')
+          .select('id, email, full_name, phone, avatar_url')
+          .eq('id', user.id)
+          .single();
+
+        if (profileError) {
+          console.error('Profile fetch error:', profileError);
+          setMessage('Unable to load profile data. Please try again.');
+          setIsLoading(false);
+          return;
+        }
+
+        if (profile) {
+          setUserProfile(profile);
+          setDisplayName(profile.full_name || '');
+        }
+
+        // Check if user has hosted events
+        const { data: hostedEvents } = await supabase
+          .from('events')
+          .select('id')
+          .eq('host_user_id', user.id);
+
+        setHasHostedEvents((hostedEvents?.length || 0) > 0);
+      } catch (error) {
+        console.error('Unexpected error fetching profile:', error);
+        setMessage('Something went wrong loading your profile. Please try again.');
+      } finally {
         setIsLoading(false);
-        return;
       }
-      setEmail(user.email || '');
-      setDisplayName(user.user_metadata?.display_name || '');
-
-      // Check if user has hosted events
-      const { data: hostedEvents } = await supabase
-        .from('events')
-        .select('id')
-        .eq('host_user_id', user.id);
-
-      setHasHostedEvents((hostedEvents?.length || 0) > 0);
-      setIsLoading(false);
     };
+    
     fetchProfile();
   }, []);
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setMessage('');
-    // Update display name in user_metadata
-    const { error } = await supabase.auth.updateUser({
-      data: { display_name: displayName },
-    });
-    if (error) {
-      setMessage('Something went wrong. Please try again.');
-    } else {
-      setMessage('Profile updated successfully');
+    
+    if (!userProfile) {
+      setMessage('Profile not loaded. Please refresh the page.');
+      return;
     }
-    setIsLoading(false);
+    
+    setIsSaving(true);
+    setMessage('');
+    
+    try {
+      // Update the users table
+      const { error: dbError } = await supabase
+        .from('users')
+        .update({ full_name: displayName })
+        .eq('id', userProfile.id);
+
+      if (dbError) {
+        console.error('Database update error:', dbError);
+        setMessage('Unable to save changes. Please try again.');
+        setIsSaving(false);
+        return;
+      }
+
+      // Also update auth metadata for consistency
+      await supabase.auth.updateUser({
+        data: { full_name: displayName },
+      });
+
+      // Update local state
+      setUserProfile(prev => prev ? { ...prev, full_name: displayName } : null);
+      setMessage('Profile updated successfully!');
+      
+    } catch (error) {
+      console.error('Unexpected error updating profile:', error);
+      setMessage('Something went wrong. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <PageWrapper centered={true}>
+        <div className="flex flex-col items-center justify-center space-y-4">
+          <LoadingSpinner size="large" />
+          <p className="text-muted-foreground">Loading your profile...</p>
+        </div>
+      </PageWrapper>
+    );
+  }
+
+  // Show error state if no profile loaded
+  if (!userProfile) {
+    return (
+      <PageWrapper centered={true}>
+        <CardContainer maxWidth="md">
+          <div className="text-center space-y-4">
+            <div className="text-red-600">
+              <svg className="mx-auto h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.314 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <PageTitle>Profile Not Found</PageTitle>
+            <SubTitle>We couldn&apos;t load your profile information.</SubTitle>
+            {message && (
+              <p className="text-sm text-red-600">{message}</p>
+            )}
+            <div className="space-y-2">
+              <PrimaryButton onClick={() => window.location.reload()}>
+                Try Again
+              </PrimaryButton>
+              <SecondaryButton onClick={() => router.push('/select-event')}>
+                Back to Events
+              </SecondaryButton>
+            </div>
+          </div>
+        </CardContainer>
+      </PageWrapper>
+    );
+  }
 
   return (
     <PageWrapper centered={false}>
@@ -79,6 +185,7 @@ export default function ProfilePage() {
             <BackButton 
               href="/select-event"
               variant="subtle"
+              className="text-gray-900 hover:text-gray-700"
             >
               Back to Events
             </BackButton>
@@ -90,10 +197,20 @@ export default function ProfilePage() {
           <div className="space-y-8">
             <div className="text-center space-y-4">
               <div className="w-20 h-20 bg-gradient-to-r from-rose-400 to-purple-500 rounded-full flex items-center justify-center mx-auto">
-                <svg width="32" height="32" fill="white" viewBox="0 0 24 24">
-                  <circle cx="12" cy="8" r="4" />
-                  <ellipse cx="12" cy="17" rx="7" ry="4" />
-                </svg>
+                {userProfile.avatar_url ? (
+                  <Image 
+                    src={userProfile.avatar_url} 
+                    alt="Profile" 
+                    width={80}
+                    height={80}
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                ) : (
+                  <svg width="32" height="32" fill="white" viewBox="0 0 24 24">
+                    <circle cx="12" cy="8" r="4" />
+                    <ellipse cx="12" cy="17" rx="7" ry="4" />
+                  </svg>
+                )}
               </div>
               <div className="space-y-2">
                 <PageTitle>Your Profile</PageTitle>
@@ -107,7 +224,18 @@ export default function ProfilePage() {
                 <TextInput
                   type="email"
                   id="email"
-                  value={email}
+                  value={userProfile.email || 'Not provided'}
+                  disabled
+                  className="bg-gray-50 text-gray-500"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <FieldLabel htmlFor="phone">Phone Number</FieldLabel>
+                <TextInput
+                  type="tel"
+                  id="phone"
+                  value={userProfile.phone}
                   disabled
                   className="bg-gray-50 text-gray-500"
                 />
@@ -120,22 +248,22 @@ export default function ProfilePage() {
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   placeholder="Enter your display name"
-                  disabled={isLoading}
+                  disabled={isSaving}
                 />
               </div>
 
               <PrimaryButton
                 type="submit"
-                disabled={isLoading}
-                loading={isLoading}
+                disabled={isSaving || !displayName.trim()}
+                loading={isSaving}
               >
-                {isLoading ? 'Saving...' : 'Save Changes'}
+                {isSaving ? 'Saving...' : 'Save Changes'}
               </PrimaryButton>
 
               {message && (
                 <div
                   className={`p-4 rounded-lg text-center text-sm ${
-                    message.includes('wrong')
+                    message.includes('wrong') || message.includes('Unable')
                       ? 'bg-red-50 text-red-700 border border-red-100'
                       : 'bg-green-50 text-green-700 border border-green-100'
                   }`}
