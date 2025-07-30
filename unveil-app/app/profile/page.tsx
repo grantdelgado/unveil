@@ -139,7 +139,7 @@ export default function ProfilePage() {
     return (
       <PageWrapper centered={true}>
         <div className="flex flex-col items-center justify-center space-y-4">
-          <LoadingSpinner size="large" />
+          <LoadingSpinner size="lg" />
           <p className="text-muted-foreground">Loading your profile...</p>
         </div>
       </PageWrapper>
