@@ -45,6 +45,7 @@ export function usePostAuthRedirect(): UsePostAuthRedirectReturn {
 
       if (fetchError && fetchError.code !== 'PGRST116') {
         // PGRST116 = No rows found (expected for new users)
+        logAuthError('Failed to fetch user during post-auth redirect', fetchError);
         throw new Error(`Failed to fetch user: ${fetchError.message}`);
       }
 

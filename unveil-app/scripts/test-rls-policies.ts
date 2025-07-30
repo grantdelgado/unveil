@@ -167,7 +167,7 @@ class RLSTestSuite {
     // Test 1: Host can view all guests for their event
     await this.switchUser(hostUser.email);
     const hostGuestAccess = await supabase
-      .from('event_participants')
+      .from('event_guests')
       .select('*')
       .eq('event_id', testEvent.id);
 
@@ -178,7 +178,7 @@ class RLSTestSuite {
     // Test 2: Guest can view other guests in the same event
     await this.switchUser(guestUser.email);
     const guestGuestAccess = await supabase
-      .from('event_participants')
+      .from('event_guests')
       .select('*')
       .eq('event_id', testEvent.id);
 
@@ -191,7 +191,7 @@ class RLSTestSuite {
     // Test 3: Unauthorized user cannot view guest list
     await this.switchUser(unauthorizedUser.email);
     const unauthorizedGuestAccess = await supabase
-      .from('event_participants')
+      .from('event_guests')
       .select('*')
       .eq('event_id', testEvent.id);
 
@@ -387,7 +387,7 @@ class RLSTestSuite {
 
     // Clean up in reverse order due to foreign key constraints
     for (const testGuest of this.testGuests) {
-      await supabase.from('event_participants').delete().eq('id', testGuest.id);
+      await supabase.from('event_guests').delete().eq('id', testGuest.id);
     }
 
     for (const testEvent of this.testEvents) {
@@ -454,10 +454,12 @@ class RLSTestSuite {
     userId: string,
   ): Promise<TestGuest> {
     const { data, error } = await supabase
-      .from('event_participants')
+      .from('event_guests')
       .insert({
         event_id: eventId,
         user_id: userId,
+        guest_name: 'Test Guest',
+        phone: '+1234567890',
         role: 'guest',
         rsvp_status: 'pending',
       })

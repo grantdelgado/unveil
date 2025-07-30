@@ -1,14 +1,14 @@
-'use client';
-
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase/client';
+import { logError, type AppError } from '@/lib/error-handling';
+import { withErrorHandling } from '@/lib/error-handling';
 import type { Database } from '@/app/reference/supabase.types';
 
 // Type definitions based on MCP schema
 type GetUserEventsReturn =
   Database['public']['Functions']['get_user_events']['Returns'][0];
 
-interface SortedUserEvent {
+interface UserEvent {
   event_id: string;
   title: string;
   event_date: string;
@@ -18,20 +18,24 @@ interface SortedUserEvent {
   is_primary_host: boolean;
 }
 
-interface UseUserEventsSortedReturn {
-  events: SortedUserEvent[];
+interface UseUserEventsReturn {
+  events: UserEvent[];
   loading: boolean;
-  error: string | null;
+  error: AppError | null;
   refetch: () => Promise<void>;
 }
 
-export function useUserEventsSorted(): UseUserEventsSortedReturn {
-  const [events, setEvents] = useState<SortedUserEvent[]>([]);
+/**
+ * Modern replacement for useUserEventsSorted
+ * Follows current architecture patterns with proper error handling
+ */
+export function useUserEvents(): UseUserEventsReturn {
+  const [events, setEvents] = useState<UserEvent[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<AppError | null>(null);
 
-  const fetchAndSortEvents = useCallback(async () => {
-    try {
+  const fetchUserEvents = useCallback(async () => {
+    const wrappedFetch = withErrorHandling(async () => {
       setLoading(true);
       setError(null);
 
@@ -42,9 +46,7 @@ export function useUserEventsSorted(): UseUserEventsSortedReturn {
       } = await supabase.auth.getUser();
 
       if (userError || !user) {
-        setError('Authentication required');
-        setLoading(false);
-        return;
+        throw new Error('Authentication required');
       }
 
       // Fetch events using the RLS function
@@ -52,10 +54,7 @@ export function useUserEventsSorted(): UseUserEventsSortedReturn {
         await supabase.rpc('get_user_events');
 
       if (eventsError) {
-        console.error('Error fetching events:', eventsError);
-        setError('Failed to load your events. Please try again.');
-        setLoading(false);
-        return;
+        throw new Error(eventsError.message || 'Failed to load your events');
       }
 
       // Sort events: Host events first, then guest events by date (ascending)
@@ -82,7 +81,7 @@ export function useUserEventsSorted(): UseUserEventsSortedReturn {
             new Date(a.event_date).getTime() - new Date(b.event_date).getTime()
           );
         },
-      ).map((event: GetUserEventsReturn): SortedUserEvent => ({
+      ).map((event: GetUserEventsReturn): UserEvent => ({
         event_id: event.id, // Map database 'id' to frontend 'event_id'
         title: event.title,
         event_date: event.event_date,
@@ -94,20 +93,23 @@ export function useUserEventsSorted(): UseUserEventsSortedReturn {
 
       setEvents(sortedEvents);
       setLoading(false);
-    } catch (err) {
-      console.error('Unexpected error:', err);
-      setError('An unexpected error occurred. Please try again.');
+    }, 'useUserEvents.fetchUserEvents');
+
+    const result = await wrappedFetch();
+    if (result?.error) {
+      setError(result.error);
+      logError(result.error, 'useUserEvents.fetchUserEvents');
       setLoading(false);
     }
   }, []);
 
   const refetch = useCallback(async () => {
-    await fetchAndSortEvents();
-  }, [fetchAndSortEvents]);
+    await fetchUserEvents();
+  }, [fetchUserEvents]);
 
   useEffect(() => {
-    fetchAndSortEvents();
-  }, [fetchAndSortEvents]);
+    fetchUserEvents();
+  }, [fetchUserEvents]);
 
   return {
     events,
@@ -115,4 +117,4 @@ export function useUserEventsSorted(): UseUserEventsSortedReturn {
     error,
     refetch,
   };
-}
+} 

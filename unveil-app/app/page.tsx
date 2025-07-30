@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import Link from 'next/link';
@@ -9,28 +9,64 @@ import {
   CardContainer,
   PageTitle,
   SubTitle,
-  PrimaryButton
+  PrimaryButton,
+  LoadingSpinner
 } from '@/components/ui';
 
 export default function HomePage() {
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Check session and redirect if authenticated
     const checkAndRedirect = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      
-      if (session) {
-        // User is authenticated, redirect to select-event
-        router.replace('/select-event');
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        
+        if (session?.user) {
+          // User is authenticated, now check onboarding status
+          const { data: userProfile, error } = await supabase
+            .from('users')
+            .select('id, onboarding_completed')
+            .eq('id', session.user.id)
+            .single();
+
+          if (error) {
+            console.error('Error fetching user profile:', error);
+            // If user doesn't exist in our users table, redirect to setup
+            router.replace('/setup');
+            return;
+          }
+
+          if (userProfile.onboarding_completed) {
+            // User has completed onboarding, redirect to select-event
+            router.replace('/select-event');
+          } else {
+            // User hasn't completed onboarding, redirect to setup
+            router.replace('/setup');
+          }
+        }
+        // If not authenticated, stay on this page to show landing content
+      } catch (error) {
+        console.error('Error checking auth status:', error);
+      } finally {
+        setLoading(false);
       }
-      // If not authenticated, stay on this page to show landing content
     };
 
     checkAndRedirect();
   }, [router]);
+
+  // Show loading spinner while checking auth status
+  if (loading) {
+    return (
+      <PageWrapper>
+        <LoadingSpinner size="lg" text="Loading..." />
+      </PageWrapper>
+    );
+  }
 
   return (
     <PageWrapper centered={false}>

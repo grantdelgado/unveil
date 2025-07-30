@@ -51,29 +51,45 @@ export default function AccountSetupPage() {
           .eq('id', user.id)
           .single();
 
-        if (error) {
+        if (error && error.code !== 'PGRST116') {
+          // PGRST116 = No rows found (expected for new users)
           console.error('Error fetching user profile:', error);
           router.push('/login');
           return;
         }
 
         if (!profile) {
-          console.error('No user profile found in users table');
-          router.push('/login');
-          return;
-        }
+          // User doesn't exist in our users table, create them
+          const { data: newProfile, error: createError } = await supabase
+            .from('users')
+            .insert({
+              id: user.id,
+              phone: user.phone || user.user_metadata?.phone,
+              onboarding_completed: false,
+            })
+            .select('*')
+            .single();
 
-        setUserProfile(profile);
+          if (createError) {
+            console.error('Error creating user profile:', createError);
+            setError('Failed to create user profile. Please try again.');
+            return;
+          }
 
-        // Pre-fill form if user already has some data
-        if (
-          profile.full_name &&
-          profile.full_name !== `User ${profile.phone?.slice(-4)}`
-        ) {
-          setFullName(profile.full_name);
-        }
-        if (profile.email) {
-          setEmail(profile.email);
+          setUserProfile(newProfile);
+        } else {
+          setUserProfile(profile);
+          
+          // Pre-fill form if user already has some data
+          if (
+            profile.full_name &&
+            profile.full_name !== `User ${profile.phone?.slice(-4)}`
+          ) {
+            setFullName(profile.full_name);
+          }
+          if (profile.email) {
+            setEmail(profile.email);
+          }
         }
       } catch (err) {
         console.error('Error loading profile:', err);

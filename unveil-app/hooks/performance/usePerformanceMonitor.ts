@@ -208,7 +208,12 @@ export const performanceUtils = {
       fid?: number // First Input Delay
       cls?: number // Cumulative Layout Shift
     }>((resolve) => {
-      const vitals: any = {}
+      const vitals: {
+        fcp?: number
+        lcp?: number
+        fid?: number
+        cls?: number
+      } = {}
 
       // First Contentful Paint
       new PerformanceObserver((list) => {
@@ -230,8 +235,10 @@ export const performanceUtils = {
       // First Input Delay
       new PerformanceObserver((list) => {
         const entries = list.getEntries()
-        entries.forEach((entry: any) => {
-          vitals.fid = entry.processingStart - entry.startTime
+        entries.forEach((entry: PerformanceEntry & { processingStart?: number }) => {
+          if (entry.processingStart) {
+            vitals.fid = entry.processingStart - entry.startTime
+          }
         })
       }).observe({ entryTypes: ['first-input'] })
 
@@ -239,8 +246,8 @@ export const performanceUtils = {
       let clsScore = 0
       new PerformanceObserver((list) => {
         const entries = list.getEntries()
-        entries.forEach((entry: any) => {
-          if (!entry.hadRecentInput) {
+        entries.forEach((entry: PerformanceEntry & { hadRecentInput?: boolean; value?: number }) => {
+          if (!entry.hadRecentInput && entry.value) {
             clsScore += entry.value
           }
         })

@@ -36,7 +36,7 @@ class MCPSchemaMonitor {
   private expectedTables = [
     'users',
     'events',
-    'event_participants',
+            'event_guests',
     'media',
     'messages',
   ];

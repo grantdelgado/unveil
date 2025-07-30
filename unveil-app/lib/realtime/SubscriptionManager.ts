@@ -140,7 +140,7 @@ export class SubscriptionManager {
             filter: config.filter,
           },
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (payload: any) => {
+          (payload: RealtimePostgresChangesPayload<any>) => {
             if (config.callback) {
               try {
                 // Update activity timestamp

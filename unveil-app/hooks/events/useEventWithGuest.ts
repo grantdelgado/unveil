@@ -1,53 +1,56 @@
 import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import type { EventWithHost, EventGuestWithUser } from '@/lib/supabase/types';
-import { DatabaseErrorHandler } from '@/lib/error-handling/database';
-import { logGenericError } from '@/lib/logger';
-// Note: getUserById functionality moved to useAuth hook
-import { useEvents } from '@/hooks/useEvents';
+import { logError, type AppError } from '@/lib/error-handling';
+import { withErrorHandling } from '@/lib/error-handling';
 import { getEventById } from '@/lib/services/events';
 
-interface EventDetailsHookResult {
+interface UseEventWithGuestReturn {
   event: EventWithHost | null;
   guestInfo: EventGuestWithUser | null;
   loading: boolean;
-  error: Error | null;
+  error: AppError | null;
   updateRSVP: (status: string) => Promise<{ success: boolean; error?: string }>;
+  refetch: () => Promise<void>;
 }
 
-export function useEventDetails(
+/**
+ * Modern replacement for useEventDetails
+ * Follows current architecture patterns with proper error handling and React Query integration
+ */
+export function useEventWithGuest(
   eventId: string | null,
   userId: string | null,
-): EventDetailsHookResult {
+): UseEventWithGuestReturn {
   const [event, setEvent] = useState<EventWithHost | null>(null);
   const [guestInfo, setGuestInfo] = useState<EventGuestWithUser | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const [error, setError] = useState<AppError | null>(null);
 
   const fetchEventData = useCallback(async () => {
-    if (!eventId || !userId) return;
+    if (!eventId || !userId) {
+      setEvent(null);
+      setGuestInfo(null);
+      setLoading(false);
+      return;
+    }
 
-    setLoading(true);
-    setError(null);
+    const wrappedFetch = withErrorHandling(async () => {
+      setLoading(true);
+      setError(null);
 
-    try {
-      // Fetch event data using service function that handles RLS gracefully
+      // Fetch event data using the service function
       const eventResult = await getEventById(eventId);
       
-      if (!eventResult) {
-        throw new Error('Failed to fetch event');
-      }
-
-      // Handle service return format
-      if (!eventResult.success && eventResult.error) {
+      if (!eventResult.success) {
         throw new Error(eventResult.error instanceof Error ? eventResult.error.message : 'Failed to fetch event');
       }
 
-      if (eventResult.success && eventResult.data) {
+      if (eventResult.data) {
         setEvent(eventResult.data);
       }
 
-      // Fetch guest information
+      // Fetch guest information with proper RLS handling
       const { data: guestData, error: guestError } = await supabase
         .from('event_guests')
         .select(`
@@ -56,18 +59,21 @@ export function useEventDetails(
         `)
         .eq('event_id', eventId)
         .eq('user_id', userId)
-        .single();
+        .maybeSingle(); // Use maybeSingle to handle case where guest doesn't exist
 
-      if (guestError && guestError.code !== 'PGRST116') {
-        logGenericError('Failed to fetch guest info', guestError);
+      if (guestError) {
+        logError(guestError, 'useEventWithGuest.fetchGuestInfo');
+        // Don't throw for guest errors - user might not be in guest list
       } else if (guestData) {
         setGuestInfo(guestData);
       }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch event details';
-      setError(new Error(errorMessage));
-      logGenericError('Error fetching event details', err);
-    } finally {
+
+      setLoading(false);
+    }, 'useEventWithGuest.fetchEventData');
+
+    const result = await wrappedFetch();
+    if (result?.error) {
+      setError(result.error);
       setLoading(false);
     }
   }, [eventId, userId]);
@@ -77,7 +83,7 @@ export function useEventDetails(
       return { success: false, error: 'Missing event or user ID' };
     }
 
-    try {
+    const wrappedUpdate = withErrorHandling(async () => {
       const { error: updateError } = await supabase
         .from('event_guests')
         .update({ rsvp_status: status })
@@ -85,28 +91,32 @@ export function useEventDetails(
         .eq('user_id', userId);
 
       if (updateError) {
-        DatabaseErrorHandler.handle(updateError, 'guests', {
-          table: 'event_guests',
-          operation: 'UPDATE',
-        });
+        throw new Error(updateError.message);
       }
 
       // Refresh guest info
       await fetchEventData();
       
       return { success: true };
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to update RSVP';
-      return { success: false, error: errorMessage };
+    }, 'useEventWithGuest.updateRSVP');
+
+    const result = await wrappedUpdate();
+    
+    if (result?.error) {
+      return { success: false, error: result.error.message };
     }
+    
+    return { success: true };
   }, [eventId, userId, fetchEventData]);
+
+  const refetch = useCallback(async () => {
+    await fetchEventData();
+  }, [fetchEventData]);
 
   // Trigger fetch when dependencies change
   useEffect(() => {
-    if (eventId && userId) {
-      fetchEventData();
-    }
-  }, [eventId, userId, fetchEventData]);
+    fetchEventData();
+  }, [fetchEventData]);
 
   return {
     event,
@@ -114,5 +124,6 @@ export function useEventDetails(
     loading,
     error,
     updateRSVP,
+    refetch,
   };
-}
+} 

@@ -94,9 +94,4 @@ export async function createScheduledMessage(messageData: CreateScheduledMessage
     console.error('Error creating scheduled message:', error);
     return { success: false, error };
   }
-}
-
-// Send message service for hooks
-export async function sendMessageService(messageData: SendMessageRequest) {
-  return sendMessageToEvent(messageData);
 } 

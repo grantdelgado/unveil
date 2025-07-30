@@ -69,7 +69,7 @@ export function useUploadMedia({ onSuccess, onError }: UseUploadMediaOptions = {
     onSuccess: (data) => {
       if (!data || typeof data !== 'object' || !('mediaRecord' in data) || !data.mediaRecord) return
       
-      const mediaRecord = data.mediaRecord as { id: string; event_id: string; [key: string]: any }
+      const mediaRecord = data.mediaRecord as { id: string; event_id: string; [key: string]: unknown }
       
       // Invalidate and refetch event media queries
       queryClient.invalidateQueries({

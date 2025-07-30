@@ -22,7 +22,9 @@ CREATE TABLE users (
     avatar_url text,
     email text,
     created_at timestamptz DEFAULT now(),
-    updated_at timestamptz DEFAULT now()
+    updated_at timestamptz DEFAULT now(),
+    onboarding_completed boolean DEFAULT false,
+    intended_redirect text
 );
 
 -- Events table for hosting events

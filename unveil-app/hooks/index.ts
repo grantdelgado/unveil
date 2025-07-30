@@ -1,44 +1,38 @@
 /**
  * Hooks Barrel - OPTIMIZED FOR TREE-SHAKING
  * 
- * WARNING: Wildcard exports can prevent proper tree-shaking.
- * RECOMMENDED: Import directly from specific hook files:
+ * WARNING: Wildcard exports can significantly bloat your bundle.
+ * RECOMMENDED: Import hooks directly:
  * - import { useAuth } from '@/hooks/useAuth'
- * - import { useEvents } from '@/hooks/useEvents'
- * - import { useGuests } from '@/hooks/useGuests'
- * - import { useMessages } from '@/hooks/useMessages'
- * - import { useMedia } from '@/hooks/useMedia'
- * - import { useDebounce } from '@/hooks/common/useDebounce'
+ * - import { useUserEvents } from '@/hooks/events'
+ * - import { useGuests } from '@/hooks/guests'
  * 
- * Use this barrel only for frequently co-used hooks.
+ * Use this barrel only when importing multiple hooks from the same domain.
  */
 
-// Re-export all hooks for easy importing
-export * from './useAuth';
-export * from './useEvents';
-export * from './useGuests';
-export * from './useMessages';
-export * from './useMedia';
-export * from './usePostAuthRedirect';
+// Core hooks (standalone files)
+export { useAuth } from './useAuth';
+export { usePostAuthRedirect } from './usePostAuthRedirect';
 
-// Legacy hooks (will be deprecated after component migration)
-export { useEventDetails, useEventInsights, useUserEventsSorted } from './events';
-// useEventMedia removed - simplified in useMedia domain hook
-// useGuestMessages removed - simplified in useMessages domain hook
-// useNavigation hook removed
-export { useRealtimeSubscription } from './realtime';
-export { usePerformanceMonitor } from './performance';
+// Domain hooks (organized)
+// export * from './auth'; // Auth hooks moved to useAuth.ts
+export * from './events';
+export * from './guests';
+// export * from './media'; // Media hooks not yet implemented
+// export * from './messaging'; // Messaging hooks not yet implemented
 
-// Most frequently used common hooks
-export { useDebounce, usePagination, useHapticFeedback, usePullToRefresh } from './common';
+// Common utilities
+export * from './common';
 
-// Domain-specific hook collections (use for multiple hooks from same domain)
-// Legacy hook collections removed - use domain hooks directly
-// export * as AuthHooks from './auth';
-export * as EventHooks from './events';
-// export * as MediaHooks from './media';
-// export * as MessagingHooks from './messaging';
-export * as GuestHooks from './guests';
-export * as RealtimeHooks from './realtime';
-export * as PerformanceHooks from './performance';
-export * as CommonHooks from './common';
+// Performance monitoring
+export * from './performance';
+
+// Query hooks (top-level for specific use cases)
+// export * from './queries'; // Queries moved to specific domain folders
+
+// Legacy hooks removed:
+// - useEventDetails, useEventInsights, useUserEventsSorted (replaced by modern alternatives)
+// - useMedia, useMessages (moved to domain-specific folders)
+
+// Additional utility hooks can be added here as needed
+// Keep exports minimal and focused to maintain tree-shaking benefits

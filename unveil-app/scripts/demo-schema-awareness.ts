@@ -189,7 +189,7 @@ function demoRelationshipTypes() {
     },
   };
 
-  // 2️⃣ Participant → Event relationship (event_participants.event_id → events.id)
+  // 2️⃣ Guest → Event relationship (event_guests.event_id → events.id)
   const participantWithEvent: EventParticipant & { event: Event | null } = {
     id: 'participant-uuid',
     event_id: 'event-uuid',

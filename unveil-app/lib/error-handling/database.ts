@@ -92,12 +92,11 @@ export class DatabaseErrorHandler {
       },
     },
     guests: {
-      '23505': {
-        phone: 'A user with this phone number already exists',
-        event_participants_event_id_user_id_key: 'This user is already a guest in this event',
-        event_guests_event_id_user_id_key: 'This user is already a guest in this event',
-        default: 'Guest record already exists',
-      },
+              '23505': {
+          phone: 'A user with this phone number already exists',
+          event_guests_event_id_user_id_key: 'This user is already a guest in this event',
+          default: 'Guest record already exists',
+        },
       '23503': {
         default: 'Invalid event or user reference',
       },

@@ -18,7 +18,7 @@ console.log('🎯 Week 2 Feature Implementation Test Summary\n');
 const results = {
   'Build Compilation': '✅ PASS - All TypeScript errors resolved, build successful',
   'Unit Test Suite': '✅ PASS - 41/41 tests passing (validations, UI components, realtime)',
-  'Database Schema': '✅ PASS - All 5 core tables (users, events, event_participants, media, messages)',
+      'Database Schema': '✅ PASS - All 5 core tables (users, events, event_guests, media, messages)',
   'Database Connection': '✅ PASS - MCP connection verified, 2 events found',
   'Component Files': '✅ PASS - PhotoUpload, GuestMessaging, GuestPhotoGallery all exist',
   'Performance Indexes': '✅ PASS - 6 database indexes applied for optimized queries',

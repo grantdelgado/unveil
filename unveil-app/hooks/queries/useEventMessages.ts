@@ -1,55 +1,46 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { supabase } from '@/lib/supabase'
-import { queryKeys, cacheConfig } from '@/lib/react-query-client'
-import { useMessages } from '@/hooks/useMessages'
-import type { Database } from '@/app/reference/supabase.types'
-import { sendMessage } from '@/lib/services/media'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase/client';
+import { sendMessageToEvent } from '@/lib/services/messaging';
+import type { MessageWithSender } from '@/lib/supabase/types';
 
-type Message = Database['public']['Tables']['messages']['Row']
-type User = Database['public']['Tables']['users']['Row']
+// Query keys
+export const queryKeys = {
+  eventMessages: (eventId: string) => ['event-messages', eventId] as const,
+  eventMessagesArchived: (eventId: string) => ['event-messages-archived', eventId] as const,
+};
 
-interface MessageWithUser extends Message {
-  sender_user?: User | null
-}
-
-interface UseEventMessagesOptions {
-  eventId: string
-  enabled?: boolean
-  limit?: number
-  offset?: number
-}
-
-export function useEventMessages({ eventId, enabled = true, limit = 50, offset = 0 }: UseEventMessagesOptions) {
+// Get event messages
+export function useEventMessages(eventId: string | null) {
   return useQuery({
-    queryKey: [...queryKeys.eventMessages(eventId), { limit, offset }],
-    queryFn: async (): Promise<MessageWithUser[]> => {
+    queryKey: queryKeys.eventMessages(eventId ?? ''),
+    queryFn: async (): Promise<MessageWithSender[]> => {
+      if (!eventId) return [];
+
       const { data, error } = await supabase
         .from('messages')
         .select(`
           *,
-          sender_user:users!messages_sender_user_id_fkey(*)
+          sender:users!sender_user_id(*)
         `)
         .eq('event_id', eventId)
-        .order('created_at', { ascending: true })
-        .range(offset, offset + limit - 1)
+        .order('created_at', { ascending: true });
 
       if (error) {
-        throw new Error(`Failed to fetch messages: ${error.message}`)
+        throw new Error(error.message);
       }
 
-      return data || []
+      return data || [];
     },
-    enabled: enabled && !!eventId,
-    ...cacheConfig.realtime, // Use shorter cache time for real-time data
-    
-    // Keep previous data while fetching new data
-    placeholderData: (previousData) => previousData,
-  })
+    enabled: !!eventId,
+    staleTime: 30000, // 30 seconds
+    refetchOnWindowFocus: false,
+  });
 }
 
+// Send message mutation options
 interface UseSendMessageOptions {
-  onSuccess?: (messageId: string) => void
-  onError?: (error: string) => void
+  onSuccess?: (data: any) => void;
+  onError?: (error: Error) => void;
 }
 
 export function useSendMessage({ onSuccess, onError }: UseSendMessageOptions = {}) {
@@ -59,93 +50,77 @@ export function useSendMessage({ onSuccess, onError }: UseSendMessageOptions = {
     mutationFn: async ({ 
       eventId, 
       content, 
-      userId 
+      userId,
+      messageType = 'direct'
     }: { 
       eventId: string
       content: string
       userId: string 
+      messageType?: 'direct' | 'announcement' | 'channel'
     }) => {
-      const result = await sendMessage({
-        eventId: eventId, // Fix: use eventId instead of event_id
+      // Use the centralized messaging service
+      const result = await sendMessageToEvent({
+        eventId,
         content,
-        messageType: 'direct' // Fix: use messageType instead of message_type
-      })
+        messageType,
+        recipientFilter: { type: 'all' }, // Default to all recipients
+        sendVia: {
+          sms: false,
+          email: false,
+          push: true // Default to push notifications
+        }
+      });
       
-      if (!result) {
-        throw new Error('Failed to send message')
-      }
-      
-      if (result.error) {
-        throw new Error(result.error instanceof Error ? result.error.message : 'Send message failed')
+      if (!result.success) {
+        throw new Error(result.error instanceof Error ? result.error.message : 'Failed to send message');
       }
 
-      return result.data
+      return result.data;
     },
     
-    onMutate: async ({ eventId, content, userId }) => {
+    onMutate: async ({ eventId, content, userId, messageType = 'direct' }) => {
       // Cancel outgoing queries
       await queryClient.cancelQueries({
         queryKey: queryKeys.eventMessages(eventId)
       })
 
       // Snapshot previous value
-      const previousMessages = queryClient.getQueryData<MessageWithUser[]>(queryKeys.eventMessages(eventId))
+      const previousMessages = queryClient.getQueryData<MessageWithSender[]>(queryKeys.eventMessages(eventId))
 
       // Optimistically update
-      const optimisticMessage: MessageWithUser = {
+      const optimisticMessage: MessageWithSender = {
         id: `temp-${Date.now()}`,
         event_id: eventId,
         sender_user_id: userId,
         content,
-        message_type: 'direct',
+        message_type: messageType,
         created_at: new Date().toISOString(),
-        sender_user: null // Will be populated on success
+        sender: null // Will be populated on success
       }
 
-      queryClient.setQueryData<MessageWithUser[]>(
+      queryClient.setQueryData<MessageWithSender[]>(
         queryKeys.eventMessages(eventId),
         (old) => old ? [...old, optimisticMessage] : [optimisticMessage]
       )
 
       return { previousMessages, optimisticMessage }
     },
-    
-    onSuccess: (data, variables, context) => {
-      if (!data) return
-      
-      // Replace optimistic message with real data
-      queryClient.setQueryData<MessageWithUser[]>(
-        queryKeys.eventMessages(data.event_id),
-        (old) => {
-          if (!old) return []
-          return old.map(msg => 
-            msg.id === context?.optimisticMessage.id ? data : msg
-          )
-        }
-      )
 
-      onSuccess?.(data.id)
-    },
-    
-    onError: (error, variables, context) => {
-      // Revert optimistic update
+    onError: (err, variables, context) => {
+      // Rollback optimistic update
       if (context?.previousMessages) {
-        queryClient.setQueryData(
-          queryKeys.eventMessages(variables.eventId),
-          context.previousMessages
-        )
+        queryClient.setQueryData(queryKeys.eventMessages(variables.eventId), context.previousMessages)
       }
-
-      const errorMessage = error instanceof Error ? error.message : 'Failed to send message'
-      onError?.(errorMessage)
+      onError?.(err as Error)
     },
-    
-    onSettled: (data, error, variables) => {
-      // Always refetch after mutation settles
+
+    onSuccess: (data, variables) => {
+      // Invalidate and refetch
       queryClient.invalidateQueries({
         queryKey: queryKeys.eventMessages(variables.eventId)
       })
-    }
+      onSuccess?.(data)
+    },
   })
 }
 
@@ -166,9 +141,9 @@ export function useMessagesRealtime(eventId: string) {
       },
       (payload) => {
         // Add new message to cache
-        const newMessage = payload.new as Message
+        const newMessage = payload.new as MessageWithSender
         
-        queryClient.setQueryData<MessageWithUser[]>(
+        queryClient.setQueryData<MessageWithSender[]>(
           queryKeys.eventMessages(eventId),
           (old) => {
             if (!old) return []
@@ -177,7 +152,7 @@ export function useMessagesRealtime(eventId: string) {
             const exists = old.some(msg => msg.id === newMessage.id)
             if (exists) return old
             
-            return [...old, newMessage as MessageWithUser]
+            return [...old, newMessage]
           }
         )
       }
@@ -198,12 +173,12 @@ export function useMessagesPagination(eventId: string, pageSize = 50) {
     // Prefetch next page
     await queryClient.prefetchQuery({
       queryKey: [...queryKeys.eventMessages(eventId), { limit: pageSize, offset: nextOffset }],
-      queryFn: async (): Promise<MessageWithUser[]> => {
+      queryFn: async (): Promise<MessageWithSender[]> => {
         const { data, error } = await supabase
           .from('messages')
           .select(`
             *,
-            sender_user:users!messages_sender_user_id_fkey(*)
+            sender:users!sender_user_id(*)
           `)
           .eq('event_id', eventId)
           .order('created_at', { ascending: true })
@@ -215,7 +190,10 @@ export function useMessagesPagination(eventId: string, pageSize = 50) {
 
         return data || []
       },
-      ...cacheConfig.realtime,
+      // ...cacheConfig.realtime, // This line was removed as per the new_code, but the original file had it.
+      // I will re-add it as it's a valid cacheConfig.realtime.
+      // However, the new_code removed it, so I should follow the new_code.
+      // The new_code removed it, so I should remove it.
     })
 
     return nextOffset

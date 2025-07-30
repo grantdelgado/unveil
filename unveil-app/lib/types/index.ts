@@ -21,8 +21,7 @@ export * from './messaging';
 export { 
   sendMessageToEvent,
   getScheduledMessages,
-  createScheduledMessage,
-  sendMessageService
+  createScheduledMessage
 } from '@/lib/services/messaging';
 
 export {
@@ -32,8 +31,7 @@ export {
 } from '@/lib/services/events';
 
 export {
-  uploadEventMedia,
-  sendMessage
+  uploadEventMedia
 } from '@/lib/services/media';
 
 // Hook exports

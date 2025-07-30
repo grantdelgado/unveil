@@ -48,25 +48,5 @@ export async function uploadEventMedia(eventId: string, file: File, userId: stri
   }
 }
 
-// Send message (for query hooks)
-export async function sendMessage(messageData: { eventId: string; content: string; messageType?: string }) {
-  try {
-    const { data, error } = await supabase
-      .from('messages')
-      .insert({
-        event_id: messageData.eventId,
-        content: messageData.content,
-        message_type: (messageData.messageType || 'direct') as 'direct' | 'announcement' | 'channel',
-        sender_user_id: (await supabase.auth.getUser()).data.user?.id,
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    return { success: true, data };
-  } catch (error) {
-    console.error('Error sending message:', error);
-    return { success: false, error };
-  }
-} 
+// Note: Message sending functionality moved to lib/services/messaging.ts
+// Use sendMessageToEvent() from messaging service for all message operations 

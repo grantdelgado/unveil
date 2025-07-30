@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
-import { useEventDetails } from '@/hooks/events';
+import { useEventWithGuest } from '@/hooks/events';
 import { GuestPhotoGallery } from '@/components/features/media';
 import { GuestMessaging } from '@/components/features/messaging';
 import { EventSchedule } from '@/components/features/scheduling';
@@ -65,7 +65,7 @@ export default function GuestEventHomePage() {
 
   // Use the custom hook to fetch event and guest data
   const { event, guestInfo, loading, error, updateRSVP } =
-    useEventDetails(eventId, currentUserId);
+    useEventWithGuest(eventId, currentUserId);
 
   const handleRSVPUpdate = async (status: string) => {
     const result = await updateRSVP(status);

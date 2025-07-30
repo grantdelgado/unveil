@@ -1,58 +1,56 @@
-// Layout Components
-export { PageWrapper } from './PageWrapper';
-export { CardContainer } from './CardContainer';
-
-// Typography Components
-export { 
-  PageTitle, 
-  SubTitle, 
-  SectionTitle, 
-  FieldLabel, 
-  MicroCopy 
-} from './Typography';
-
-// Form Components
-export { 
-  TextInput, 
-  PhoneNumberInput, 
-  OTPInput 
-} from './UnveilInput';
-
-// Button Components
-export { 
-  PrimaryButton, 
-  SecondaryButton, 
-  IconButton 
-} from './UnveilButton';
-export { BackButton } from './BackButton';
-
-// Utility Components
-export { LogoContainer } from './LogoContainer';
-export { LoadingSpinner, LoadingPage } from './LoadingSpinner';
-
-// Legacy Components (keeping for backward compatibility)
+// Core UI Components
 export { Button } from './Button';
 export { Input } from './Input';
-export { ErrorBoundary } from './ErrorBoundary';
+export { LoadingSpinner } from './LoadingSpinner';
+export { ErrorBoundary, MessagingErrorFallback } from './ErrorBoundary';
+export { BackButton } from './BackButton';
+export { CardContainer } from './CardContainer';
+export { EmptyState } from './EmptyState';
 export { LazyWrapper } from './LazyWrapper';
+export { LogoContainer } from './LogoContainer';
 export { OptimizedImage } from './OptimizedImage';
+export { PageWrapper } from './PageWrapper';
 export { Pagination } from './Pagination';
-
-// Additional Legacy Exports (extended functionality)
-export { LoadingCard } from './LoadingSpinner';
-export { DefaultErrorFallback, CardErrorFallback, MessagingErrorFallback } from './ErrorBoundary';
+export { PullToRefreshIndicator } from './PullToRefreshIndicator';
+export { StorageErrorFallback } from './StorageErrorFallback';
+// Typography components (individual exports)
 export { 
-  withLazyWrapper, 
-  DashboardLoading, 
-  GalleryLoading, 
-  FormLoading, 
-  MessagingLoading 
-} from './LazyWrapper';
-export { GalleryImage, AvatarImage, HeroImage } from './OptimizedImage';
-export { SimplePagination, LoadMoreButton } from './Pagination';
+  PageTitle,
+  SubTitle, 
+  SectionTitle,
+  FieldLabel,
+  MicroCopy
+} from './Typography';
 
-// Empty State & Loading Components
-export { default as EmptyState, SkeletonLoader } from './EmptyState';
+// Button components
+export { 
+  PrimaryButton,
+  SecondaryButton,
+  IconButton
+} from './UnveilButton';
 
-// Hooks
+// Loading components
+export { SkeletonLoader } from './EmptyState';
+
+// Backward compatibility exports (if needed)
+export {
+  PrimaryButton as UnveilButton,  // If code expects UnveilButton
+} from './UnveilButton';
+
+// Create a Typography namespace object (if needed)
+import * as TypographyComponents from './Typography';
+export const Typography = TypographyComponents;
+
+// Legacy Input (deprecated - use focused inputs instead)
+export { TextInput as UnveilTextInput, PhoneNumberInput as UnveilPhoneInput, OTPInput as UnveilOTPInput } from './UnveilInput';
+
+// Also export with standard names for compatibility
+export { PhoneNumberInput, TextInput, OTPInput } from './UnveilInput';
+
+// Modern focused input components (recommended)
+export * from './inputs';
+
+// Toast functionality
 export { useToast } from './useToast';
+
+// Note: Typography, Button, and Loading components are exported above

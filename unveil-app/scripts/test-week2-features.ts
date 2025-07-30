@@ -208,7 +208,7 @@ async function testUserProfiles() {
 async function testEventGuests() {
   try {
     const { data, error } = await supabase
-      .from('event_participants')
+      .from('event_guests')
       .select('*')
       .limit(5);
     

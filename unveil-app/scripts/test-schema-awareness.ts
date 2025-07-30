@@ -230,11 +230,11 @@ function testRelationshipAwareness() {
     // events.host_user_id → users.id
     eventToHost: 'events.host_user_id → users.id',
 
-    // event_participants.event_id → events.id
-    participantToEvent: 'event_participants.event_id → events.id',
-
-    // event_participants.user_id → users.id
-    participantToUser: 'event_participants.user_id → users.id',
+        // event_guests.event_id → events.id
+    participantToEvent: 'event_guests.event_id → events.id',
+    
+    // event_guests.user_id → users.id
+    participantToUser: 'event_guests.user_id → users.id',
 
     // media.event_id → events.id
     mediaToEvent: 'media.event_id → events.id',
@@ -285,7 +285,7 @@ async function runSchemaAwarenessTests() {
     console.log('');
     console.log('🔥 TRY THIS NOW:');
     console.log('   1. Open any TypeScript file in your app');
-    console.log('   2. Type: supabase.from("event_participants").');
+    console.log('   2. Type: supabase.from("event_guests").');
     console.log('   3. You should see ALL live columns autocomplete!');
     console.log('   4. Type: role: " and see exact enum values');
     console.log('');

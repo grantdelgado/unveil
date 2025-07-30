@@ -8,7 +8,7 @@ import { formatEventDate } from '@/lib/utils/date';
 import { cn } from '@/lib/utils';
 
 // Internal hooks (specific imports for better tree-shaking)
-import { useUserEventsSorted, useEventInsights } from '@/hooks/events';
+import { useUserEvents, useEventAnalytics } from '@/hooks/events';
 import { useAuth } from '@/hooks/useAuth';
 import { usePullToRefresh } from '@/hooks/common/usePullToRefresh';
 
@@ -17,19 +17,19 @@ import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import { PageWrapper, SkeletonLoader } from '@/components/ui';
 
 export default function SelectEventPage() {
-  const { events, loading, error, refetch } = useUserEventsSorted();
+  const { events, loading, error, refetch } = useUserEvents();
   const { user } = useAuth();
-  const { insights, fetchInsights } = useEventInsights();
+  const { analytics, fetchAnalytics } = useEventAnalytics();
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Pull-to-refresh functionality
   const pullToRefresh = usePullToRefresh({
     onRefresh: async () => {
       await refetch();
-      // Also refresh insights
+      // Also refresh analytics
       if (events && events.length > 0) {
         const eventIds = events.map(e => e.event_id);
-        await fetchInsights(eventIds);
+        await fetchAnalytics(eventIds);
       }
     },
     threshold: 80,
@@ -37,13 +37,13 @@ export default function SelectEventPage() {
     hapticFeedback: true,
   });
 
-  // Fetch insights when events are loaded
+  // Fetch analytics when events are loaded
   useEffect(() => {
     if (events && events.length > 0) {
       const eventIds = events.map(e => e.event_id);
-      fetchInsights(eventIds);
+      fetchAnalytics(eventIds);
     }
-  }, [events, fetchInsights]);
+  }, [events, fetchAnalytics]);
 
   // Bind pull-to-refresh to container
   useEffect(() => {
@@ -77,7 +77,7 @@ export default function SelectEventPage() {
           <div className="text-center space-y-4">
             <h1 className="text-2xl font-bold text-gray-900">Error Loading Events</h1>
             <p className="text-gray-600">
-              {error}
+              {error?.message || 'An unexpected error occurred'}
             </p>
             <button 
               onClick={refetch}
@@ -165,7 +165,7 @@ export default function SelectEventPage() {
                 <div className="space-y-3">
                   {hostEvents.map((event) => {
                     const formattedDate = formatEventDate(event.event_date);
-                    const eventInsights = insights[event.event_id];
+                    const eventInsights = analytics[event.event_id];
                     
                     return (
                       <button
