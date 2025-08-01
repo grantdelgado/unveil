@@ -26,6 +26,7 @@ export default function SelectEventPage() {
   
   // Track which event cards are expanded to show analytics
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
+  const [hoverTimerId, setHoverTimerId] = useState<NodeJS.Timeout | null>(null);
 
   // Pull-to-refresh functionality
   const pullToRefresh = usePullToRefresh({
@@ -41,12 +42,39 @@ export default function SelectEventPage() {
     hapticFeedback: true,
   });
 
-  // Only fetch analytics for expanded event (selective loading for performance)
+  // 🚀 PERFORMANCE: Debounced analytics loading to prevent cascade requests
   useEffect(() => {
+    const abortController = new AbortController();
+    
     if (expandedEventId) {
-      fetchAnalytics([expandedEventId]);
+      // Clear any existing timer
+      if (hoverTimerId) {
+        clearTimeout(hoverTimerId);
+        setHoverTimerId(null);
+      }
+      
+      // Debounce analytics loading by 500ms to prevent rapid-fire requests
+      const timerId = setTimeout(() => {
+        fetchAnalytics([expandedEventId], abortController.signal);
+      }, 500);
+      
+      setHoverTimerId(timerId);
     }
+    
+    return () => {
+      abortController.abort();
+    };
   }, [expandedEventId, fetchAnalytics]);
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      if (hoverTimerId) {
+        clearTimeout(hoverTimerId);
+        setHoverTimerId(null);
+      }
+    };
+  }, [hoverTimerId]);
 
   // Bind pull-to-refresh to container
   useEffect(() => {
@@ -182,9 +210,16 @@ export default function SelectEventPage() {
                         key={event.event_id}
                         className="relative"
                         onMouseEnter={() => {
-                          // Trigger analytics loading on hover for better UX
-                          if (!isExpanded && !eventInsights) {
+                          // 🚀 PERFORMANCE: Only trigger analytics loading if not already loaded or loading
+                          if (!isExpanded && !eventInsights && !analytics[event.event_id]) {
                             setExpandedEventId(event.event_id);
+                          }
+                        }}
+                        onMouseLeave={() => {
+                          // Clear hover timer if user moves away quickly
+                          if (hoverTimerId) {
+                            clearTimeout(hoverTimerId);
+                            setHoverTimerId(null);
                           }
                         }}
                       >

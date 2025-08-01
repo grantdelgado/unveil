@@ -6,12 +6,12 @@ import { supabase } from '@/lib/supabase/client';
 import Link from 'next/link';
 import {
   PageWrapper,
-  CardContainer,
   PageTitle,
   SubTitle,
   PrimaryButton,
   LoadingSpinner
 } from '@/components/ui';
+import { UnveilHeader, AuthCard } from '@/components/shared';
 
 export default function HomePage() {
   const router = useRouter();
@@ -70,34 +70,35 @@ export default function HomePage() {
 
   return (
     <PageWrapper centered={false}>
-      <div className="max-w-2xl mx-auto text-center">
-        <CardContainer maxWidth="lg" className="bg-gradient-to-br from-white via-rose-50/30 to-purple-50/30 border-rose-200/30">
-          <div className="space-y-8">
-            {/* Brand Logo/Wordmark */}
-            <div className="space-y-4">
-              <h1 className="text-5xl font-semibold text-gray-800 tracking-tight">
-                unveil
-              </h1>
-              <div className="w-24 h-px bg-gradient-to-r from-transparent via-rose-300 to-transparent mx-auto"></div>
-            </div>
+      <div className="flex flex-col justify-start items-center min-h-[100dvh] pt-16 sm:pt-20 md:pt-24 px-4 sm:px-6 lg:px-8">
+        <div className="w-full max-w-2xl text-center space-y-8 sm:space-y-10 md:space-y-12">
+          {/* Prominent Brand Header */}
+          <UnveilHeader 
+            size="lg" 
+            showTagline={true}
+            className="mb-6 sm:mb-8"
+          />
 
-            {/* Brand Message */}
-            <div className="space-y-4">
-              <PageTitle className="text-xl">Focus on presence, not logistics</PageTitle>
-              <SubTitle className="max-w-lg mx-auto">
-                Streamline wedding communication and preserve shared memories in one
-                elegant space.
-              </SubTitle>
-            </div>
+          {/* Enhanced Brand Message */}
+          <div className="space-y-4 sm:space-y-6">
+            <SubTitle className="max-w-2xl mx-auto text-lg sm:text-xl md:text-2xl leading-relaxed text-gray-600 font-light">
+              Streamline wedding communication and preserve shared memories in one
+              elegant space.
+            </SubTitle>
+          </div>
 
-            {/* CTA */}
+          {/* Prominent CTA */}
+          <div className="pt-4 sm:pt-6">
             <Link href="/login">
-              <PrimaryButton className="px-8 py-4 text-lg font-medium shadow-md hover:shadow-lg">
+              <PrimaryButton 
+                className="px-8 py-4 sm:px-10 sm:py-5 text-lg sm:text-xl font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 w-full sm:w-auto min-w-[200px]"
+                fullWidth={false}
+              >
                 Get Started
               </PrimaryButton>
             </Link>
           </div>
-        </CardContainer>
+        </div>
       </div>
     </PageWrapper>
   );

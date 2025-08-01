@@ -383,19 +383,20 @@ export function trackSupabaseSubscription(subscriptionId: string) {
 export function initializeDevelopmentAlerts() {
   if (process.env.NODE_ENV !== 'development') return;
 
-  console.log('🚨 Performance Alert System initialized');
-  console.log('📊 Monitoring bundle sizes, subscriptions, and render performance...');
+  // Only log if UNVEIL_DEBUG is enabled
+  if (process.env.UNVEIL_DEBUG === 'true') {
+    console.log('🚨 Performance Alert System initialized');
+    console.log('📊 Monitoring bundle sizes, subscriptions, and render performance...');
+    console.table(PERFORMANCE_ALERTS);
+  }
 
   // Start bundle monitoring
   monitorBundleSize();
 
-  // Log current thresholds
-  console.table(PERFORMANCE_ALERTS);
-
   // Periodic memory check (less frequent to reduce noise)
   setInterval(() => {
     developmentAlerts.checkMemoryUsage();
-  }, 3 * 60 * 1000); // Every 3 minutes (reduced from 1 minute)
+  }, 5 * 60 * 1000); // Every 5 minutes (reduced further)
 }
 
 /**

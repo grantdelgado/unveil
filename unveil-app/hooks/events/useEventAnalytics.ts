@@ -24,7 +24,7 @@ interface UseEventAnalyticsReturn {
   analytics: Record<string, EventAnalytics>;
   loading: boolean;
   error: AppError | null;
-  fetchAnalytics: (eventIds: string[]) => Promise<void>;
+  fetchAnalytics: (eventIds: string[], signal?: AbortSignal) => Promise<void>;
   clearAnalytics: () => void;
 }
 
@@ -37,7 +37,7 @@ export function useEventAnalytics(): UseEventAnalyticsReturn {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<AppError | null>(null);
 
-  const fetchAnalytics = useCallback(async (eventIds: string[]) => {
+  const fetchAnalytics = useCallback(async (eventIds: string[], signal?: AbortSignal) => {
     // Filter out invalid event IDs
     const validEventIds = eventIds.filter(id => id && id.trim() !== '');
     
@@ -45,11 +45,19 @@ export function useEventAnalytics(): UseEventAnalyticsReturn {
       return;
     }
 
+    // 🚀 PERFORMANCE: Check if analytics already exist to avoid duplicate requests
+    const missingEventIds = validEventIds.filter(id => !analytics[id]);
+    if (missingEventIds.length === 0) {
+      return;
+    }
+
     const wrappedFetch = withErrorHandling(async () => {
       setLoading(true);
       setError(null);
 
-      // Fetch guest data for all events with proper relationship syntax
+      if (signal?.aborted) return;
+
+      // 🚀 PERFORMANCE: Only fetch analytics for events we don't already have
       const { data: guestsData, error: guestsError } = await supabase
         .from('event_guests')
         .select(`
@@ -79,8 +87,10 @@ export function useEventAnalytics(): UseEventAnalyticsReturn {
             updated_at
           )
         `)
-        .in('event_id', validEventIds)
+        .in('event_id', missingEventIds)
         .order('updated_at', { ascending: false });
+
+      if (signal?.aborted) return;
 
       if (guestsError) {
         throw new Error(guestsError.message || 'Failed to fetch guest analytics');
@@ -89,7 +99,9 @@ export function useEventAnalytics(): UseEventAnalyticsReturn {
       // Process analytics for each event using centralized filtering service
       const newAnalytics: Record<string, EventAnalytics> = {};
 
-      for (const eventId of validEventIds) {
+      for (const eventId of missingEventIds) {
+        if (signal?.aborted) return;
+        
         const eventGuests = (guestsData?.filter(g => g.event_id === eventId) || []) as GuestWithUser[];
         
         // Use centralized filtering service for status counts
@@ -115,17 +127,19 @@ export function useEventAnalytics(): UseEventAnalyticsReturn {
         };
       }
 
-      setAnalytics(prev => ({ ...prev, ...newAnalytics }));
-      setLoading(false);
+      if (!signal?.aborted) {
+        setAnalytics(prev => ({ ...prev, ...newAnalytics }));
+        setLoading(false);
+      }
     }, 'useEventAnalytics.fetchAnalytics');
 
     const result = await wrappedFetch();
-    if (result?.error) {
+    if (result?.error && !signal?.aborted) {
       setError(result.error);
       logError(result.error, 'useEventAnalytics.fetchAnalytics');
       setLoading(false);
     }
-  }, []);
+  }, [analytics]);
 
   const clearAnalytics = useCallback(() => {
     setAnalytics({});

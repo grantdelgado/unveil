@@ -1,7 +1,7 @@
 import React from 'react';
 import { PrimaryButton, SecondaryButton } from '@/components/ui';
-import { OTPInput } from '@/components/ui/UnveilInput';
 import { FieldLabel, MicroCopy } from '@/components/ui/Typography';
+import { ModernOTPInput } from './ModernOTPInput';
 
 interface OTPStepProps {
   otp: string;
@@ -31,7 +31,7 @@ export const OTPStep: React.FC<OTPStepProps> = ({
           <FieldLabel htmlFor="otp" required>
             Verification Code
           </FieldLabel>
-          <OTPInput
+          <ModernOTPInput
             id="otp"
             value={otp}
             onChange={onOtpChange}

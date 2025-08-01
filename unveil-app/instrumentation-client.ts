@@ -3,8 +3,8 @@ import * as Sentry from '@sentry/nextjs';
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
 
-  // Reduce sample rate in development for better performance
-  tracesSampleRate: process.env.NODE_ENV === 'production' ? 1 : 0.1,
+  // 🚀 PERFORMANCE: Significantly reduce sample rate in development to minimize overhead
+  tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.8 : 0.01,
 
   // Disable debug logging to reduce console noise
   debug: false,

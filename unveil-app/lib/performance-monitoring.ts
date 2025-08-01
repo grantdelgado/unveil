@@ -183,5 +183,8 @@ export function initializePerformanceMonitoring() {
     Sentry.captureException(event.reason);
   });
 
+  // Only log in debug mode to reduce console noise
+if (process.env.UNVEIL_DEBUG === 'true') {
   logger.system('Performance monitoring initialized');
+}
 } 

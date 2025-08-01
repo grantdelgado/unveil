@@ -5,3 +5,4 @@ export { default as LogoutButton } from './LogoutButton';
 // Login Step Components
 export { PhoneStep } from './PhoneStep';
 export { OTPStep } from './OTPStep';
+export { ModernOTPInput } from './ModernOTPInput';

@@ -22,7 +22,8 @@ const inter = localFont({
   ],
   variable: '--font-inter',
   display: 'swap',
-  preload: true,
+  preload: false, // Let Next.js handle preloading more intelligently
+  fallback: ['Inter', 'system-ui', 'sans-serif'],
 });
 
 export const metadata: Metadata = {

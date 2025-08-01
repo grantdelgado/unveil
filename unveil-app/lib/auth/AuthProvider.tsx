@@ -53,7 +53,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      logger.auth(`Auth state changed: ${event}`, { userId: session?.user?.id || null });
+      // Only log auth state changes in debug mode to reduce console noise
+if (process.env.UNVEIL_DEBUG === 'true') {
+  logger.auth(`Auth state changed: ${event}`, { userId: session?.user?.id || null });
+}
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);

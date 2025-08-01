@@ -15,9 +15,12 @@ export const PageWrapper: React.FC<PageWrapperProps> = ({
   return (
     <div
       className={cn(
-        'min-h-screen bg-[#FAFAFA]',
+        'min-h-[100dvh] bg-[#FAFAFA]',
         centered && 'flex items-center justify-center',
-        'p-4 md:p-6',
+        // Enhanced responsive padding with iPhone optimizations
+        'p-3 xs:p-4 sm:p-6 md:p-8',
+        // iPhone 12/13/14 specific width handling (390px)
+        'max-w-[390px] mx-auto sm:max-w-none',
         className,
       )}
     >

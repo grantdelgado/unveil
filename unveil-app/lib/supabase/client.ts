@@ -45,17 +45,38 @@ export const supabase = createClient<Database>(
         'log_level': process.env.NODE_ENV === 'development' ? 'debug' : 'info',
       },
     },
-    // Global request timeout
+    // Global request timeout with better error handling
     global: {
       headers: {
         'X-Client-Info': 'unveil-wedding-app',
         'X-Client-Version': '2.0.0',
       },
-      // Add global timeout for regular requests
+      // 🚀 PERFORMANCE: Optimized timeout handling for better UX
       fetch: (url, options = {}) => {
+        // Create custom timeout signal that doesn't interfere with user aborts
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => {
+          controller.abort();
+        }, 10000); // Reduced to 10 seconds for faster failure feedback
+        
+        // Combine user signal with timeout signal
+        if (options.signal) {
+          if (options.signal.aborted) {
+            clearTimeout(timeoutId);
+            controller.abort();
+          } else {
+            options.signal.addEventListener('abort', () => {
+              clearTimeout(timeoutId);
+              controller.abort();
+            });
+          }
+        }
+        
         return fetch(url, {
           ...options,
-          signal: AbortSignal.timeout(15000), // 15 second timeout for API calls
+          signal: controller.signal,
+        }).finally(() => {
+          clearTimeout(timeoutId);
         });
       },
     },

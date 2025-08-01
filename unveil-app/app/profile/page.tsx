@@ -39,15 +39,21 @@ export default function ProfilePage() {
   const router = useRouter();
 
   useEffect(() => {
+    const abortController = new AbortController();
+    const signal = abortController.signal;
+
     const fetchProfile = async () => {
       try {
         setIsLoading(true);
+        setMessage('');
         
-        // Get current auth user
+        // Get current auth user with timeout
         const {
           data: { user },
           error: authError,
         } = await supabase.auth.getUser();
+        
+        if (signal.aborted) return;
         
         if (authError || !user) {
           setMessage('Unable to load your profile. Please sign in again.');
@@ -55,41 +61,65 @@ export default function ProfilePage() {
           return;
         }
 
-        // Fetch user profile from users table
-        const { data: profile, error: profileError } = await supabase
-          .from('users')
-          .select('id, email, full_name, phone, avatar_url')
-          .eq('id', user.id)
-          .single();
+        // 🚀 PERFORMANCE: Parallel queries instead of sequential
+        const [profileResult, eventsResult] = await Promise.allSettled([
+          // Fetch user profile from users table
+          supabase
+            .from('users')
+            .select('id, email, full_name, phone, avatar_url')
+            .eq('id', user.id)
+            .single(),
+          
+          // Check if user has hosted events
+          supabase
+            .from('events')
+            .select('id')
+            .eq('host_user_id', user.id)
+        ]);
 
-        if (profileError) {
-          console.error('Profile fetch error:', profileError);
+        if (signal.aborted) return;
+
+        // Handle profile result
+        if (profileResult.status === 'fulfilled' && !profileResult.value.error) {
+          const profile = profileResult.value.data;
+          if (profile) {
+            setUserProfile(profile);
+            setDisplayName(profile.full_name || '');
+          }
+        } else {
+          const error = profileResult.status === 'fulfilled' 
+            ? profileResult.value.error 
+            : profileResult.reason;
+          console.error('Profile fetch error:', error);
           setMessage('Unable to load profile data. Please try again.');
           setIsLoading(false);
           return;
         }
 
-        if (profile) {
-          setUserProfile(profile);
-          setDisplayName(profile.full_name || '');
+        // Handle events result
+        if (eventsResult.status === 'fulfilled' && !eventsResult.value.error) {
+          const hostedEvents = eventsResult.value.data;
+          setHasHostedEvents((hostedEvents?.length || 0) > 0);
         }
+        // Events error is non-critical, don't block profile loading
 
-        // Check if user has hosted events
-        const { data: hostedEvents } = await supabase
-          .from('events')
-          .select('id')
-          .eq('host_user_id', user.id);
-
-        setHasHostedEvents((hostedEvents?.length || 0) > 0);
       } catch (error) {
+        if (signal.aborted) return;
         console.error('Unexpected error fetching profile:', error);
         setMessage('Something went wrong loading your profile. Please try again.');
       } finally {
-        setIsLoading(false);
+        if (!signal.aborted) {
+          setIsLoading(false);
+        }
       }
     };
     
     fetchProfile();
+
+    // 🧹 CLEANUP: Abort requests when component unmounts or navigates away
+    return () => {
+      abortController.abort();
+    };
   }, []);
 
   const handleUpdate = async (e: React.FormEvent) => {
