@@ -86,16 +86,29 @@ export default function SelectEventPage() {
   if (loading) {
     return (
       <PageWrapper>
-        <div className="max-w-md mx-auto space-y-6 pt-8">
-          <div className="flex justify-between items-start mb-6">
-            <div className="flex-1">
-              <div className="h-8 w-32 bg-gray-200 rounded animate-pulse mb-2"></div>
-              <div className="h-4 w-48 bg-gray-200 rounded animate-pulse"></div>
+        <div className="min-h-screen flex flex-col">
+          {/* TOP SECTION - Loading state */}
+          <div className="max-w-md mx-auto px-4 pt-6 w-full">
+            <div className="flex justify-between items-start">
+              <div className="flex-1">
+                <div className="h-8 w-32 bg-gray-200 rounded animate-pulse mb-2"></div>
+                <div className="h-4 w-48 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+              <div className="w-12 h-12 bg-gray-200 rounded-full animate-pulse"></div>
             </div>
-            <div className="w-12 h-12 bg-gray-200 rounded-full animate-pulse"></div>
           </div>
           
-          <SkeletonLoader variant="card" count={3} />
+          {/* MIDDLE SECTION - Loading content */}
+          <div className="flex-1 max-w-md mx-auto px-4 py-8 w-full">
+            <SkeletonLoader variant="card" count={3} />
+          </div>
+          
+          {/* BOTTOM SECTION - Placeholder */}
+          <div className="mt-auto max-w-md mx-auto w-full">
+            <div className="text-center text-sm text-gray-400 pb-6 px-4">
+              Loading...
+            </div>
+          </div>
         </div>
       </PageWrapper>
     );
@@ -104,18 +117,42 @@ export default function SelectEventPage() {
   if (error) {
     return (
       <PageWrapper>
-        <div className="max-w-md mx-auto px-4 py-6">
-          <div className="text-center space-y-4">
-            <h1 className="text-2xl font-bold text-gray-900">Error Loading Events</h1>
-            <p className="text-gray-600">
-              {error?.message || 'An unexpected error occurred'}
-            </p>
-            <button 
-              onClick={refetch}
-              className="px-6 py-3 bg-rose-500 text-white rounded-xl font-semibold hover:bg-rose-600 transition-colors"
-            >
-              Try Again
-            </button>
+        <div className="min-h-screen flex flex-col">
+          {/* TOP SECTION - Error header */}
+          <div className="max-w-md mx-auto px-4 pt-6 w-full">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">Error Loading Events</h1>
+              <p className="text-lg text-gray-600">Something went wrong</p>
+            </div>
+          </div>
+          
+          {/* MIDDLE SECTION - Error content */}
+          <div className="flex-1 max-w-md mx-auto px-4 py-8 w-full flex items-center justify-center">
+            <div className="text-center space-y-4">
+              <div className="text-6xl">⚠️</div>
+              <p className="text-gray-600">
+                {error?.message || 'An unexpected error occurred'}
+              </p>
+              <button 
+                onClick={refetch}
+                className="px-6 py-3 bg-rose-500 text-white rounded-xl font-semibold hover:bg-rose-600 transition-colors"
+              >
+                Try Again
+              </button>
+            </div>
+          </div>
+          
+          {/* BOTTOM SECTION - Support */}
+          <div className="mt-auto max-w-md mx-auto w-full">
+            <div className="text-center text-sm text-gray-600 pb-6 px-4">
+              Need help? Contact us at{' '}
+              <a 
+                href="mailto:support@unveil.app" 
+                className="text-rose-500 hover:text-rose-600 transition-colors"
+              >
+                support@unveil.app
+              </a>
+            </div>
           </div>
         </div>
       </PageWrapper>
@@ -151,7 +188,7 @@ export default function SelectEventPage() {
     <PageWrapper>
       <div
         ref={containerRef}
-        className="h-full overflow-auto"
+        className="min-h-screen flex flex-col overflow-auto"
         style={{ 
           // Ensure smooth scrolling on iOS
           WebkitOverflowScrolling: 'touch',
@@ -167,8 +204,8 @@ export default function SelectEventPage() {
           refreshProgress={pullToRefresh.refreshProgress}
         />
 
-        <div className="max-w-md mx-auto px-4 py-6 space-y-8">
-          {/* Header */}
+        {/* TOP SECTION - Fixed near top */}
+        <div className="max-w-md mx-auto px-4 pt-6 w-full">
           <div className="flex justify-between items-start">
             <div className="flex-1">
               <h1 className="text-4xl font-bold text-rose-500 mb-2">
@@ -188,7 +225,10 @@ export default function SelectEventPage() {
               </svg>
             </button>
           </div>
+        </div>
 
+        {/* MIDDLE SECTION - Main content area */}
+        <div className="flex-1 max-w-md mx-auto px-4 py-8 w-full space-y-8">
           {/* Events List */}
           <div className="space-y-8">
             {/* Host Events */}
@@ -362,18 +402,18 @@ export default function SelectEventPage() {
               <p><strong>User Role:</strong> Authenticated</p>
             </div>
           </div>
+        </div>
 
-          {/* Footer */}
-          <div className="text-center">
-            <p className="text-sm text-gray-600">
-              Need help? Contact us at{' '}
-              <a 
-                href="mailto:support@unveil.app" 
-                className="text-rose-500 hover:text-rose-600 transition-colors"
-              >
-                support@unveil.app
-              </a>
-            </p>
+        {/* BOTTOM SECTION - Fixed to bottom */}
+        <div className="mt-auto max-w-md mx-auto w-full">
+          <div className="text-center text-sm text-gray-600 pb-6 px-4">
+            Need help? Contact us at{' '}
+            <a 
+              href="mailto:support@unveil.app" 
+              className="text-rose-500 hover:text-rose-600 transition-colors"
+            >
+              support@unveil.app
+            </a>
           </div>
         </div>
       </div>
