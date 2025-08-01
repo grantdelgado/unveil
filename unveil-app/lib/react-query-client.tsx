@@ -30,8 +30,8 @@ export function ReactQueryProvider({ children }: { children: ReactNode }) {
             // Retry delay with exponential backoff
             retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
             
-            // Refetch on window focus for real-time data
-            refetchOnWindowFocus: true,
+            // Disable refetch on window focus to reduce unnecessary API calls
+            refetchOnWindowFocus: false,
             
             // Don't refetch on reconnect for cached data
             refetchOnReconnect: 'always',

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
+import localFont from 'next/font/local';
 import './globals.css';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 
@@ -8,9 +8,20 @@ import { APP_CONFIG } from '@/lib/constants';
 import { Suspense } from 'react';
 import { PerformanceMonitor } from '@/components/monitoring/PerformanceMonitor';
 
-const inter = Inter({
+const inter = localFont({
+  src: [
+    {
+      path: '../public/fonts/inter-variable.woff2',
+      style: 'normal',
+    },
+    {
+      path: '../public/fonts/inter-variable-italic.woff2',
+      style: 'italic',
+    },
+  ],
   variable: '--font-inter',
-  subsets: ['latin'],
+  display: 'swap',
+  preload: true,
 });
 
 export const metadata: Metadata = {
@@ -114,7 +125,6 @@ export default function RootLayout({
         <meta name="theme-color" content="#ff89a6" />
         
         {/* Preload critical resources */}
-        <link rel="dns-prefetch" href="//fonts.googleapis.com" />
         <link rel="dns-prefetch" href="//wvhtbqvnamerdkkjknuv.supabase.co" />
       </head>
       <body className={`${inter.variable} antialiased font-sans touch-manipulation`}>
