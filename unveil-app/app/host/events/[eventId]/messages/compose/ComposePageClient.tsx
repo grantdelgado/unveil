@@ -10,7 +10,7 @@ interface ComposePageClientProps {
 }
 
 export function ComposePageClient({ eventId }: ComposePageClientProps) {
-  const { guests, loading, error } = useGuests(eventId);
+  const { guests, loading, error } = useGuests({ eventId });
 
   return (
     <ErrorBoundary fallback={MessagingErrorFallback}>

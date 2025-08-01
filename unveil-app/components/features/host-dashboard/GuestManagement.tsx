@@ -8,7 +8,12 @@ import { cn } from '@/lib/utils';
 
 // Internal hooks (specific imports for better tree-shaking)
 import { useHapticFeedback, usePullToRefresh } from '@/hooks/common';
-import { useGuestData } from '@/hooks/guests/useGuestData';
+import { 
+  useGuests, 
+  useGuestFiltering, 
+  useGuestStatusCounts, 
+  useGuestMutations 
+} from '@/hooks/guests';
 
 // Internal components (specific imports)
 import { SecondaryButton, CardContainer } from '@/components/ui';
@@ -31,21 +36,16 @@ export function GuestManagement({
 }: GuestManagementProps) {
   const [selectedGuests, setSelectedGuests] = useState<Set<string>>(new Set());
   
-  // Use extracted hook for guest data management
-  const {
-    loading,
-    filteredGuests,
-    statusCounts,
-    searchTerm,
-    setSearchTerm,
-    filterByRSVP,
-    setFilterByRSVP,
+  // Use focused hooks for better performance and maintainability
+  const { guests, loading, fetchData } = useGuests({ eventId });
+  const { searchTerm, setSearchTerm, filterByRSVP, setFilterByRSVP, filteredGuests } = useGuestFiltering(guests);
+  const { statusCounts } = useGuestStatusCounts(guests);
+  const { 
     handleRSVPUpdate: baseHandleRSVPUpdate,
     handleRemoveGuest: baseHandleRemoveGuest,
     handleMarkAllPendingAsAttending: baseHandleMarkAllPendingAsAttending,
     handleBulkRSVPUpdate,
-    fetchData,
-  } = useGuestData({ eventId, onGuestUpdated });
+  } = useGuestMutations({ eventId, onGuestUpdated });
 
   // Interaction enhancements
   const { triggerHaptic } = useHapticFeedback();

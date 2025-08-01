@@ -1,12 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo, Suspense, lazy } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import { useEventWithGuest } from '@/hooks/events';
-import { GuestPhotoGallery } from '@/components/features/media';
+// Lazy load heavy components for better performance
+const LazyGuestPhotoGallery = lazy(() => import('@/components/features/media/GuestPhotoGallery'));
 import { GuestMessaging } from '@/components/features/messaging';
 import { EventSchedule } from '@/components/features/scheduling';
+import { throttle } from '@/lib/utils/throttle';
 import {
   PageWrapper,
   CardContainer,
@@ -52,16 +54,19 @@ export default function GuestEventHomePage() {
     getSession();
   }, [router]);
 
-  // Scroll listener for sticky header effect
-  useEffect(() => {
-    const handleScroll = () => {
+  // Throttled scroll listener for sticky header effect (performance optimization)
+  const throttledScrollHandler = useMemo(
+    () => throttle(() => {
       const scrollTop = window.scrollY;
       setIsScrolled(scrollTop > 50);
-    };
+    }, 16), // 16ms = ~60fps for smooth performance
+    []
+  );
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  useEffect(() => {
+    window.addEventListener('scroll', throttledScrollHandler);
+    return () => window.removeEventListener('scroll', throttledScrollHandler);
+  }, [throttledScrollHandler]);
 
   // Use the custom hook to fetch event and guest data
   const { event, guestInfo, loading, error, updateRSVP } =
@@ -369,10 +374,21 @@ export default function GuestEventHomePage() {
             </CardContainer>
 
             {/* Photo Gallery */}
-            <GuestPhotoGallery
-              eventId={eventId}
-              currentUserId={currentUserId}
-            />
+            <Suspense 
+              fallback={
+                <CardContainer>
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                    <span className="ml-3 text-gray-600">Loading photo gallery...</span>
+                  </div>
+                </CardContainer>
+              }
+            >
+              <LazyGuestPhotoGallery
+                eventId={eventId}
+                currentUserId={currentUserId}
+              />
+            </Suspense>
 
             {/* Messaging */}
             <GuestMessaging 

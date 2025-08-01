@@ -2,6 +2,7 @@
 
 import * as Sentry from '@sentry/nextjs';
 import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function GlobalError({
   error,
@@ -10,6 +11,8 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const router = useRouter();
+  
   useEffect(() => {
     // Log the error to Sentry
     Sentry.captureException(error);
@@ -50,7 +53,7 @@ export default function GlobalError({
         </button>
         
         <button
-          onClick={() => window.location.href = '/'}
+          onClick={() => router.push('/')}
           className="w-full mt-2 bg-stone-200 text-stone-700 py-2 px-4 rounded-md hover:bg-stone-300 transition-colors"
         >
           Go home

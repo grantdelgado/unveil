@@ -4,3 +4,5 @@ export {
   type UseRealtimeSubscriptionOptions,
   type UseRealtimeSubscriptionReturn,
 } from './useRealtimeSubscription';
+
+export { useOptimizedRealtimeSubscription } from './useOptimizedRealtimeSubscription';

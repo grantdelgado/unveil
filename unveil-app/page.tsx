@@ -2,7 +2,7 @@
 
 import { AuthForm } from '@/components/features/AuthForm';
 import { LoadingSpinner } from '@/components/ui';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/lib/auth/AuthProvider';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 

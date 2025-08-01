@@ -27,7 +27,7 @@ interface NotificationItem {
 
 function NotificationCenterComponent({ eventId }: NotificationCenterProps) {
   // Use our refactored hooks instead of direct queries
-  const { guests } = useGuests(eventId);
+  const { guests } = useGuests({ eventId });
   const { data: media } = useEventMedia({ eventId });
   const { messages } = useMessages(eventId);
 

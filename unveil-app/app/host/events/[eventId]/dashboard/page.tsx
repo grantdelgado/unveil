@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, Suspense, lazy } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/app/reference/supabase.types';
@@ -11,11 +11,10 @@ import {
   QuickActions,
   type TabItem,
 } from '@/components/features/host-dashboard';
-import { 
-  GuestImportWizard,
-  GuestManagement,
-  MessageCenter 
-} from '@/components/features';
+// Lazy load heavy components for better performance
+const LazyGuestImportWizard = lazy(() => import('@/components/features/guests/GuestImportWizard').then(m => ({ default: m.GuestImportWizard })));
+const LazyGuestManagement = lazy(() => import('@/components/features/host-dashboard/GuestManagement').then(m => ({ default: m.GuestManagement })));
+const LazyMessageCenter = lazy(() => import('@/components/features/messaging/host/MessageCenter').then(m => ({ default: m.MessageCenter })));
 import {
   PageWrapper,
   CardContainer,
@@ -75,13 +74,22 @@ export default function EventDashboardPage() {
           return;
         }
 
-        // Get event details
-        const { data: eventData, error: eventError } = await supabase
-          .from('events')
-          .select('*')
-          .eq('id', eventId)
-          .eq('host_user_id', user.id)
-          .single();
+        // Parallelize event and guest data queries for better performance
+        const [
+          { data: eventData, error: eventError },
+          { data: guestData, error: guestError }
+        ] = await Promise.all([
+          supabase
+            .from('events')
+            .select('*')
+            .eq('id', eventId)
+            .eq('host_user_id', user.id)
+            .single(),
+          supabase
+            .from('event_guests')
+            .select('id')
+            .eq('event_id', eventId)
+        ]);
 
         if (eventError) {
           console.error('Event fetch error:', eventError);
@@ -95,20 +103,12 @@ export default function EventDashboardPage() {
           return;
         }
 
-        setEvent(eventData);
-
-        // Get guest count
-        const { data: guestData, error: guestError } =
-          await supabase
-            .from('event_guests')
-            .select('id')
-            .eq('event_id', eventId);
-
         if (guestError) {
           console.error('Guest count error:', guestError);
-        } else {
-          setGuestCount(guestData?.length || 0);
         }
+
+        setEvent(eventData);
+        setGuestCount(guestData?.length || 0);
       } catch (err) {
         console.error('Unexpected error:', err);
         setError('An unexpected error occurred');
@@ -241,7 +241,7 @@ export default function EventDashboardPage() {
                 </CardContainer>
               }
             >
-              <GuestImportWizard
+              <LazyGuestImportWizard
                 eventId={eventId}
                 onImportComplete={() => {
                   setShowGuestImport(false);
@@ -298,7 +298,7 @@ export default function EventDashboardPage() {
                   </div>
                 }
               >
-                <GuestManagement
+                <LazyGuestManagement
                   eventId={eventId}
                   onGuestUpdated={handleDataRefresh}
                   onImportGuests={() => setShowGuestImport(true)}
@@ -317,7 +317,7 @@ export default function EventDashboardPage() {
                     </div>
                   }
                 >
-                  <MessageCenter eventId={eventId} />
+                  <LazyMessageCenter eventId={eventId} />
                 </Suspense>
                 
               </div>

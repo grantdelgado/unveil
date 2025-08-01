@@ -7,14 +7,14 @@ import { useDebounce } from '@/hooks/common';
 import type { Database } from '@/app/reference/supabase.types';
 
 // Optimized guest type - compatible with existing components  
-type OptimizedGuest = {
+export type OptimizedGuest = {
   id: string;
   event_id: string;
   user_id: string | null;
   guest_name: string | null;
   guest_email: string | null;
   phone: string;
-  rsvp_status: 'attending' | 'declined' | 'maybe' | 'pending';
+  rsvp_status: string | null;
   notes: string | null;
   guest_tags: string[] | null;
   role: string;

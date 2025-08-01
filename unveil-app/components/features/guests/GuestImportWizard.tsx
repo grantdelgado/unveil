@@ -6,7 +6,7 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { CardContainer } from '@/components/ui/CardContainer';
 import { SectionTitle, FieldLabel, MicroCopy } from '@/components/ui/Typography';
 import type { GuestImportData } from '@/lib/guest-import';
-import { useGuests } from '@/hooks/useGuests';
+import { useGuests } from '@/hooks/useGuests'; // Legacy hook for import functionality
 // Note: Guest functionality handled via domain hooks
 
 interface GuestImportWizardProps {

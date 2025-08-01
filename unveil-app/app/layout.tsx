@@ -7,6 +7,7 @@ import { ReactQueryProvider } from '@/lib/react-query-client';
 import { APP_CONFIG } from '@/lib/constants';
 import { Suspense } from 'react';
 import { PerformanceMonitor } from '@/components/monitoring/PerformanceMonitor';
+import { AuthProvider } from '@/lib/auth/AuthProvider';
 
 const inter = localFont({
   src: [
@@ -129,13 +130,15 @@ export default function RootLayout({
       </head>
       <body className={`${inter.variable} antialiased font-sans touch-manipulation`}>
         <ReactQueryProvider>
-          <ErrorBoundary>
-            <PerformanceMonitor>
-              <Suspense>
-                {children}
-              </Suspense>
-            </PerformanceMonitor>
-          </ErrorBoundary>
+          <AuthProvider>
+            <ErrorBoundary>
+              <PerformanceMonitor>
+                <Suspense>
+                  {children}
+                </Suspense>
+              </PerformanceMonitor>
+            </ErrorBoundary>
+          </AuthProvider>
         </ReactQueryProvider>
       </body>
     </html>

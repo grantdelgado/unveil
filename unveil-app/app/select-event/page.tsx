@@ -2,6 +2,7 @@
 
 // External dependencies
 import React, { useRef, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 // Internal utilities
 import { formatEventDate } from '@/lib/utils/date';
@@ -9,7 +10,7 @@ import { cn } from '@/lib/utils';
 
 // Internal hooks (specific imports for better tree-shaking)
 import { useUserEvents, useEventAnalytics } from '@/hooks/events';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/lib/auth/AuthProvider';
 import { usePullToRefresh } from '@/hooks/common/usePullToRefresh';
 
 // Internal components (specific imports)
@@ -21,6 +22,7 @@ export default function SelectEventPage() {
   const { user } = useAuth();
   const { analytics, fetchAnalytics } = useEventAnalytics();
   const containerRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
   
   // Track which event cards are expanded to show analytics
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
@@ -100,11 +102,11 @@ export default function SelectEventPage() {
     const path = event.user_role === 'host' 
       ? `/host/events/${event.event_id}/dashboard`
       : `/guest/events/${event.event_id}/home`;
-    window.location.href = path;
+    router.push(path);
   };
 
   const handleProfile = () => {
-    window.location.href = '/profile';
+    router.push('/profile');
   };
 
   // Group events by user role for better organization

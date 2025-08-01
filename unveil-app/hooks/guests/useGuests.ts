@@ -1,110 +1,157 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/lib/supabase/client';
-import { type EventGuestWithUser } from '@/lib/supabase/types';
-import { useGuests as useGuestsDomain } from '@/hooks/useGuests';
-import { logError, type AppError } from '@/lib/error-handling';
-import { withErrorHandling } from '@/lib/error-handling';
-import { getEventGuests } from '@/lib/services/events';
+import { logger } from '@/lib/logger';
+import type { OptimizedGuest } from '@/hooks/guests/useGuestData';
 
-interface UseGuestsReturn {
-  guests: EventGuestWithUser[];
-  loading: boolean;
-  error: AppError | null;
-  linkGuest: (
-    eventId: string,
-    phone: string,
-  ) => Promise<{ success: boolean; error: string | null }>;
-  refetch: () => Promise<void>;
+interface UseGuestsOptions {
+  eventId: string;
+  pageSize?: number;
+  enablePagination?: boolean;
 }
 
-export function useGuests(eventId: string | null): UseGuestsReturn {
-  const [guests, setGuests] = useState<EventGuestWithUser[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<AppError | null>(null);
+interface UseGuestsReturn {
+  guests: OptimizedGuest[];
+  loading: boolean;
+  error: Error | null;
+  fetchData: () => Promise<void>;
+  currentPage: number;
+  totalCount: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+  nextPage: () => Promise<void>;
+  previousPage: () => Promise<void>;
+  goToPage: (page: number) => Promise<void>;
+}
 
-  const fetchGuests = useCallback(async () => {
-    if (!eventId) {
-      setGuests([]);
-      setLoading(false);
-      return;
+/**
+ * Focused hook for guest data fetching and pagination
+ * Split from useGuestData for better performance and maintainability
+ */
+export function useGuests({ 
+  eventId, 
+  pageSize = 50, 
+  enablePagination = true 
+}: UseGuestsOptions): UseGuestsReturn {
+  const [guests, setGuests] = useState<OptimizedGuest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+
+  // Optimized guest data fetching
+  const fetchGuestsOptimized = useCallback(async (page: number = 1): Promise<{
+    data: OptimizedGuest[];
+    count: number;
+  }> => {
+    const startIndex = enablePagination ? (page - 1) * pageSize : 0;
+    const endIndex = enablePagination ? startIndex + pageSize - 1 : undefined;
+
+    let query = supabase
+      .from('event_guests')
+      .select(`
+        id,
+        event_id,
+        user_id,
+        guest_name,
+        guest_email,
+        phone,
+        rsvp_status,
+        notes,
+        guest_tags,
+        role,
+        invited_at,
+        phone_number_verified,
+        sms_opt_out,
+        preferred_communication,
+        created_at,
+        updated_at,
+        users!user_id(
+          id,
+          full_name,
+          phone,
+          email,
+          avatar_url,
+          created_at,
+          updated_at,
+          intended_redirect,
+          onboarding_completed
+        )
+      `, { count: 'exact' })
+      .eq('event_id', eventId);
+
+    if (enablePagination && endIndex !== undefined) {
+      query = query.range(startIndex, endIndex);
     }
 
+    const { data, error, count } = await query;
+
+    if (error) {
+      logger.databaseError('Error fetching guests', error);
+      throw error;
+    }
+
+    return {
+      data: data || [],
+      count: count || 0
+    };
+  }, [eventId, pageSize, enablePagination]);
+
+  // Main data fetching function
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-
-      // Check authentication
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
-        console.warn('⚠️ No authenticated user for guests');
-        setGuests([]);
-        setLoading(false);
-        return;
-      }
-
-      const result = await getEventGuests(eventId);
-
-      if (result.error) {
-        // Handle permission errors gracefully
-        const errorMessage = result.error instanceof Error ? result.error.message : String(result.error);
-        if (errorMessage?.includes('permission')) {
-          console.warn('⚠️ No permission to access guests for this event');
-          setGuests([]);
-          setLoading(false);
-          return;
-        }
-        throw new Error(errorMessage || 'Failed to fetch guests');
-      }
-
-      setGuests(result.data || []);
-      setLoading(false);
-    } catch (err) {
-      console.warn('⚠️ useGuests fetchGuests error:', err);
-      setGuests([]);
+      
+      const result = await fetchGuestsOptimized(currentPage);
+      setGuests(result.data);
+      setTotalCount(result.count);
+    } catch (fetchError) {
+      setError(fetchError as Error);
+      logger.error('Failed to fetch guests', fetchError);
+    } finally {
       setLoading(false);
     }
-  }, [eventId]);
+  }, [fetchGuestsOptimized, currentPage]);
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const linkGuest = useCallback(
-    async (_eventId: string, _phone: string) => {
-      const wrappedLink = withErrorHandling(async () => {
-        // Since we don't have linkGuestToUser in the simplified schema,
-        // this is a placeholder for future implementation
-        console.log(
-          'Link guest functionality not implemented in simplified schema',
-        );
+  // Pagination helpers
+  const totalPages = Math.ceil(totalCount / pageSize);
+  const hasNextPage = enablePagination && currentPage < totalPages;
+  const hasPreviousPage = enablePagination && currentPage > 1;
 
-        // Refresh guests list
-        await fetchGuests();
-        return { success: true, error: null };
-      }, 'useGuests.linkGuest');
+  const nextPage = useCallback(async () => {
+    if (hasNextPage) {
+      setCurrentPage(prev => prev + 1);
+    }
+  }, [hasNextPage]);
 
-      const result = await wrappedLink();
-      if (result?.error) {
-        logError(result.error, 'useGuests.linkGuest');
-        return { success: false, error: result.error.message };
-      }
-      return { success: true, error: null };
-    },
-    [fetchGuests],
-  );
+  const previousPage = useCallback(async () => {
+    if (hasPreviousPage) {
+      setCurrentPage(prev => prev - 1);
+    }
+  }, [hasPreviousPage]);
 
-  const refetch = useCallback(async () => {
-    await fetchGuests();
-  }, [fetchGuests]);
+  const goToPage = useCallback(async (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  }, [totalPages]);
 
+  // Fetch data when page changes
   useEffect(() => {
-    fetchGuests();
-  }, [fetchGuests]);
+    fetchData();
+  }, [fetchData]);
 
   return {
     guests,
     loading,
     error,
-    linkGuest,
-    refetch,
+    fetchData,
+    currentPage,
+    totalCount,
+    hasNextPage,
+    hasPreviousPage,
+    nextPage,
+    previousPage,
+    goToPage,
   };
 }

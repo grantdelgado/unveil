@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-// Note: Auth functionality handled via useAuth hook
-import { useAuth } from '@/hooks/useAuth';
+// Note: Auth functionality handled via centralized useAuth hook
+import { useAuth } from '@/lib/auth/AuthProvider';
 import { supabase } from '@/lib/supabase';
 import type { User } from '@/lib/supabase/types';
 import {
