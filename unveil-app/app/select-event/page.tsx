@@ -64,7 +64,7 @@ export default function SelectEventPage() {
     return () => {
       abortController.abort();
     };
-  }, [expandedEventId, fetchAnalytics]);
+  }, [expandedEventId, fetchAnalytics, hoverTimerId]);
 
   // Cleanup timers on unmount
   useEffect(() => {

@@ -6,12 +6,11 @@ import { supabase } from '@/lib/supabase/client';
 import Link from 'next/link';
 import {
   PageWrapper,
-  PageTitle,
   SubTitle,
   PrimaryButton,
   LoadingSpinner
 } from '@/components/ui';
-import { UnveilHeader, AuthCard } from '@/components/shared';
+import { UnveilHeader } from '@/components/shared';
 
 export default function HomePage() {
   const router = useRouter();

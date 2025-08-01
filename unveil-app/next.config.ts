@@ -41,10 +41,7 @@ const nextConfig: NextConfig = {
   experimental: {
     clientTraceMetadata: ['appDir', 'turbopack'],
   },
-  // Reduce console noise in development
-  logging: {
-    level: process.env.NODE_ENV === 'development' ? 'warn' : 'info',
-  },
+
   // Mobile-first performance
   generateEtags: false,
   poweredByHeader: false,

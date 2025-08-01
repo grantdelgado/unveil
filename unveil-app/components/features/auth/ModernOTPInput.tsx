@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState, useCallback, KeyboardEvent, ClipboardEvent } from 'react';
 import { cn } from '@/lib/utils';
-import { getFieldValidationClass, ValidationResult } from '@/lib/utils/validation';
+import { ValidationResult } from '@/lib/utils/validation';
 import { ValidationIcon, ValidationMessage } from '@/components/ui/inputs/InputValidation';
 
 interface ModernOTPInputProps {
@@ -45,7 +45,6 @@ export const ModernOTPInput: React.FC<ModernOTPInputProps> = ({
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   
   const validationResult = validation || internalValidation;
-  const validationClass = getFieldValidationClass(validationResult);
   
   // Initialize refs array
   useEffect(() => {
@@ -182,7 +181,9 @@ export const ModernOTPInput: React.FC<ModernOTPInputProps> = ({
           {Array.from({ length }, (_, index) => (
             <input
               key={index}
-              ref={(el) => (inputRefs.current[index] = el)}
+              ref={(el) => {
+                inputRefs.current[index] = el;
+              }}
               id={`${inputId}-${index}`}
               type="text"
               inputMode="numeric"
@@ -233,20 +234,16 @@ export const ModernOTPInput: React.FC<ModernOTPInputProps> = ({
 
       {/* Error message */}
       {error && (
-        <ValidationMessage 
-          message={error} 
-          type="error"
-          id={`${inputId}-feedback`}
-        />
+        <div id={`${inputId}-feedback`}>
+          <ValidationMessage error={error} />
+        </div>
       )}
 
       {/* Validation message */}
       {validationResult && !error && (
-        <ValidationMessage 
-          message={validationResult.message || ''} 
-          type={validationResult.isValid ? 'success' : 'error'}
-          id={`${inputId}-feedback`}
-        />
+        <div id={`${inputId}-feedback`}>
+          <ValidationMessage result={validationResult} />
+        </div>
       )}
 
       {/* Help text */}
