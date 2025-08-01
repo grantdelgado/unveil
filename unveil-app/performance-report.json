@@ -1,0 +1,21 @@
+{
+  "timestamp": "2025-08-01T17:30:36.835Z",
+  "thresholds": {
+    "BUNDLE_SIZE_WARNING": 358400,
+    "BUNDLE_SIZE_ERROR": 512000,
+    "SHARED_BUNDLE_LIMIT": 256000,
+    "TOTAL_SIZE_LIMIT": 2097152
+  },
+  "targets": {
+    "/host/events/[eventId]/dashboard": 307200,
+    "/guest/events/[eventId]/home": 256000,
+    "/select-event": 307200
+  },
+  "errors": [],
+  "warnings": [],
+  "summary": {
+    "totalErrors": 0,
+    "totalWarnings": 0,
+    "passed": true
+  }
+}
