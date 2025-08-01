@@ -36,7 +36,13 @@ export function GuestManagement({
 }: GuestManagementProps) {
   const [selectedGuests, setSelectedGuests] = useState<Set<string>>(new Set());
   
-  // Use focused hooks for better performance and maintainability
+  // 🚀 PERFORMANCE OPTIMIZATION: Focused hook architecture
+  // Split monolithic useGuestData into focused, single-responsibility hooks:
+  // - Reduces unnecessary re-renders (memoized computations)
+  // - Better maintainability and testing
+  // - Optimized dependency arrays prevent cascade re-renders
+  // - Follows single responsibility principle for better performance
+  // Week 3: Replaced heavy useGuestData hook with focused alternatives
   const { guests, loading, fetchData } = useGuests({ eventId });
   const { searchTerm, setSearchTerm, filterByRSVP, setFilterByRSVP, filteredGuests } = useGuestFiltering(guests);
   const { statusCounts } = useGuestStatusCounts(guests);

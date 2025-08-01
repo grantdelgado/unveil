@@ -21,8 +21,17 @@ interface AuthProviderProps {
 }
 
 /**
- * Centralized auth provider that manages a single Supabase auth subscription
- * Eliminates multiple auth subscriptions for better performance
+ * 🚀 PERFORMANCE OPTIMIZATION: Centralized auth provider
+ * 
+ * Centralized auth provider that manages a single Supabase auth subscription:
+ * - Eliminates multiple auth subscriptions across components
+ * - Prevents auth state duplication and race conditions
+ * - Reduces memory usage and subscription overhead
+ * - Provides consistent auth state throughout the app
+ * - Better error handling with centralized auth logic
+ * 
+ * Week 3: Replaced individual useAuth hooks with single provider context
+ * Impact: Eliminated N auth subscriptions → 1 centralized subscription
  */
 export function AuthProvider({ children }: AuthProviderProps) {
   const [session, setSession] = useState<Session | null>(null);
