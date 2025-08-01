@@ -1,136 +1,157 @@
-# 📚 Unveil Documentation
+# 📚 Unveil Documentation Center
 
-> **Comprehensive documentation for the Unveil wedding event management platform**
+**Comprehensive documentation for the Unveil wedding planning application.**
 
-Welcome to the centralized documentation hub for Unveil. This folder contains all essential documentation for developers, product managers, designers, and operations teams working on the platform.
+Welcome to the centralized documentation hub for Unveil, a modern wedding planning app built with Next.js, Supabase, and TypeScript. This documentation is organized for easy navigation and covers all aspects of the project from high-level planning to detailed implementation.
 
----
+## 🗂️ Documentation Structure
 
-## 🎯 Quick Navigation
+```
+docs/
+├── README.md                    # This file - main documentation index
+├── project/                     # 📋 Project-level documentation
+├── architecture/                # 🏗️ System architecture and design
+├── development/                 # 👨‍💻 Developer guides and procedures
+└── archive/                     # 📚 Historical documentation
+```
 
-| **Role** | **Start Here** | **Key Documents** |
-|----------|----------------|-------------------|
-| **📈 Product/Business** | [System Overview](./SYSTEM_OVERVIEW.md) | MVP Features, Release Checklist |
-| **🔧 Engineers** | [Architecture](./ARCHITECTURE.md) | Development Guide, Security |
-| **🎨 Designers** | [Design System](./DESIGN_SYSTEM.md) | UI patterns and brand guidelines |
-| **⚙️ DevOps** | [Deployment](./DEPLOYMENT.md) | Production environment setup |
+## 🚀 Quick Start
 
----
+### For New Developers
+1. **Start here:** `project/SYSTEM_OVERVIEW.md` - Get the big picture
+2. **Setup:** `development/DEVELOPMENT_GUIDE.md` - Environment and workflow
+3. **Architecture:** `architecture/ARCHITECTURE.md` - System design
+4. **Performance:** `../performance/README.md` - Performance optimization
 
-## 📋 Documentation Index
+### For Project Managers
+1. **Features:** `project/MVP_FEATURES.md` - Core functionality specifications
+2. **Releases:** `project/RELEASE_CHECKLIST.md` - Deployment procedures
+3. **Status:** `project/REFACTORING_SUMMARY.md` - Recent improvements
 
-### 🎯 **Strategic & Product**
-- **[SYSTEM_OVERVIEW.md](./SYSTEM_OVERVIEW.md)** — High-level platform overview, tech stack, and current status
-- **[MVP_FEATURES.md](./MVP_FEATURES.md)** — Defines current MVP scope, included/excluded features, and roadmap
-- **[RELEASE_CHECKLIST.md](./RELEASE_CHECKLIST.md)** — Comprehensive production deployment checklist and QA verification
+### For Technical Leads
+1. **Architecture:** `architecture/` - System design and patterns
+2. **Security:** `architecture/SECURITY.md` - Security implementation
+3. **Performance:** `../performance/documentation/` - Optimization documentation
 
-### 🏗️ **Technical Architecture**  
-- **[ARCHITECTURE.md](./ARCHITECTURE.md)** — Complete technical architecture, database schema, and design patterns
-- **[DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md)** — Development workflow, coding standards, and team guidelines
-- **[SECURITY.md](./SECURITY.md)** — Security implementation, RLS policies, and best practices
+## 📋 Project Documentation
+**High-level project planning and specifications**
 
-### 🎨 **Design & User Experience**
-- **[DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md)** — Complete design system documentation with components and patterns
+| Document | Purpose | Last Updated |
+|----------|---------|--------------|
+| [`MVP_FEATURES.md`](./project/MVP_FEATURES.md) | Core feature requirements and specifications | Current |
+| [`SYSTEM_OVERVIEW.md`](./project/SYSTEM_OVERVIEW.md) | High-level system architecture overview | Current |
+| [`REFACTORING_SUMMARY.md`](./project/REFACTORING_SUMMARY.md) | Major code improvements and migrations | Current |
+| [`RELEASE_CHECKLIST.md`](./project/RELEASE_CHECKLIST.md) | Production deployment procedures | Current |
 
-### ⚙️ **Operations & Deployment**
-- **[DEPLOYMENT.md](./DEPLOYMENT.md)** — Production environment setup and deployment procedures
+**📋 [View Project Documentation Index](./project/index.md)**
 
----
+## 🏗️ Architecture Documentation
+**System design, patterns, and technical specifications**
 
-## 🏆 Current Status
+| Document | Purpose | Last Updated |
+|----------|---------|--------------|
+| [`ARCHITECTURE.md`](./architecture/ARCHITECTURE.md) | Core system architecture and design decisions | Current |
+| [`DESIGN_SYSTEM.md`](./architecture/DESIGN_SYSTEM.md) | UI/UX design system and component library | Current |
+| [`SECURITY.md`](./architecture/SECURITY.md) | Security architecture and implementation | Current |
 
-**Version**: v1.0.0 Production Ready  
-**Documentation Health**: ✅ Excellent  
-**Last Updated**: January 2025  
-**Total Documents**: 8 core documents + archived legacy content
+**🏗️ [View Architecture Documentation Index](./architecture/index.md)**
 
-### 📊 Documentation Coverage
-- ✅ **Architecture & Technical** — Complete with detailed guides
-- ✅ **Development Workflow** — Comprehensive standards and processes  
-- ✅ **Security & Operations** — Production-ready security and deployment guides
-- ✅ **Product & Features** — Clear MVP definition and scope
-- ✅ **Design System** — Complete UI and UX documentation
+## 👨‍💻 Development Documentation
+**Developer guides, deployment, and implementation details**
 
----
+| Document | Purpose | Last Updated |
+|----------|---------|--------------|
+| [`DEVELOPMENT_GUIDE.md`](./development/DEVELOPMENT_GUIDE.md) | Setup, workflow, and development standards | Current |
+| [`DEPLOYMENT.md`](./development/DEPLOYMENT.md) | Production deployment and infrastructure | Current |
+| [`AUTH_FLOW_REPORT.md`](./development/AUTH_FLOW_REPORT.md) | Authentication system implementation | Current |
 
-## 🔍 Finding What You Need
+**👨‍💻 [View Development Documentation Index](./development/index.md)**
 
-### **New Team Members**
-1. Start with [System Overview](./SYSTEM_OVERVIEW.md) to understand the platform
-2. Review [MVP Features](./MVP_FEATURES.md) to understand current scope  
-3. Read [Development Guide](./DEVELOPMENT_GUIDE.md) for workflow and standards
-4. Study [Architecture](./ARCHITECTURE.md) for technical deep-dive
+## ⚡ Performance Documentation
+**Performance optimization, monitoring, and advanced frameworks**
 
-### **Feature Development**
-1. Check [MVP Features](./MVP_FEATURES.md) to understand current scope
-2. Review [Architecture](./ARCHITECTURE.md) for technical patterns
-3. Follow [Development Guide](./DEVELOPMENT_GUIDE.md) for coding standards
-4. Reference [Design System](./DESIGN_SYSTEM.md) for UI consistency
+Performance documentation is maintained in a separate, comprehensive system:
 
-### **Production Deployment**
-1. Follow [Release Checklist](./RELEASE_CHECKLIST.md) step-by-step
-2. Reference [Deployment](./DEPLOYMENT.md) for environment setup
-3. Review [Security](./SECURITY.md) for security verification
-4. Use [Architecture](./ARCHITECTURE.md) for technical troubleshooting
+| Documentation | Location | Purpose |
+|---------------|----------|---------|
+| **Performance Center** | [`../performance/README.md`](../performance/README.md) | Main performance overview and quick start |
+| **Optimization Guides** | [`../performance/documentation/`](../performance/documentation/) | Detailed performance guides and analysis |
+| **Monitoring System** | [`../performance/monitoring/`](../performance/monitoring/) | Real-time performance alerts and tracking |
+| **Advanced Frameworks** | [`../performance/frameworks/`](../performance/frameworks/) | Service worker, virtualization, and optimization tools |
 
-### **Design & UX Work**
-1. Study [Design System](./DESIGN_SYSTEM.md) for complete design patterns
-2. Review [System Overview](./SYSTEM_OVERVIEW.md) for platform context
-3. Check [MVP Features](./MVP_FEATURES.md) for current feature scope
+**⚡ [View Performance Documentation Center](../performance/README.md)**
 
----
+## 📚 Historical Documentation
+**Archived documentation from previous project phases**
 
-## 📁 Archive
+The archive contains comprehensive historical documentation organized by category, including legacy architecture decisions, completed refactoring projects, and evolutionary project planning.
 
-The **[_archive/](./_archive/)** folder contains historical documentation that has been consolidated or superseded by the current documents. This includes:
+**📚 [View Archive Index](./archive/index.md)**
 
-- Legacy project-docs folder structure
-- Historical planning documents and completion reports  
-- Outdated audit and refactor plans
-- Development cleanup reports
+## 🎯 Current Project Status
 
-*Archive content is preserved for reference but should not be used for current development.*
+### **Core Features**
+- ✅ **Event Management** - Complete event creation and management system
+- ✅ **Guest RSVP System** - Comprehensive guest management with phone-first auth
+- ✅ **Photo Sharing** - Real-time photo uploads and gallery features
+- ✅ **Messaging System** - Host announcements and guest communication
+- ✅ **Mobile-First Design** - Responsive, native app-like experience
 
----
+### **Technical Implementation**
+- ✅ **Next.js 15** - App Router with server-side rendering
+- ✅ **Supabase Backend** - Real-time database with Row Level Security
+- ✅ **TypeScript** - Full type safety across the application
+- ✅ **Performance Optimized** - Bundle sizes under 320KB, 100x faster navigation
+- ✅ **Production Ready** - Comprehensive testing and deployment procedures
 
-## 🔄 Documentation Maintenance
+### **Performance Achievements**
+- 🎯 **Bundle Sizes:** Host Dashboard 314KB, Guest Home 305KB, Select Event 294KB
+- ⚡ **Navigation:** 100x faster with client-side routing (3s → 30ms)
+- 📱 **Mobile Performance:** 90% smoother scrolling with optimized events
+- 🔄 **Real-time Features:** Optimized subscriptions and data synchronization
+- 🚨 **Performance Monitoring:** Automated alerts and regression prevention
 
-### **Update Frequency**
-- **Weekly**: Update MVP Features and Development Guide as needed
-- **Per Release**: Update Release Checklist status and System Overview metrics
-- **Monthly**: Review all documents for accuracy and relevance
-- **Quarterly**: Audit archive folder and remove truly obsolete content
+## 🔗 External Resources
 
-### **Contribution Guidelines**
-1. **Keep it Current** — Update documents when making related code changes
-2. **One Source of Truth** — Avoid duplicating information across documents
-3. **Clear Naming** — Use descriptive filenames in UPPER_CASE for visibility
-4. **Link Appropriately** — Cross-reference related documents with clear links
-5. **Update This Index** — Add new documents to the main README table
+### **Technology Documentation**
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Supabase Documentation](https://supabase.com/docs)
+- [TypeScript Handbook](https://www.typescriptlang.org/docs/)
 
-### **Quality Standards**
-- **Audience-First**: Write for specific reader needs (engineers, product, etc.)
-- **Action-Oriented**: Focus on what readers need to accomplish
-- **Scannable Format**: Use headers, lists, and tables for easy navigation
-- **Context-Rich**: Provide business and technical rationale for decisions
+### **Deployment & Infrastructure**
+- [Vercel Deployment Guide](https://vercel.com/docs)
+- [Supabase Project Dashboard](https://supabase.com/dashboard)
 
----
+### **Development Tools**
+- [React Query Documentation](https://tanstack.com/query/latest)
+- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
 
-## 📞 Support
+## 📝 Documentation Guidelines
 
-### **Documentation Issues**
-- Missing information? Create an issue or update the relevant doc
-- Outdated content? Submit a PR with corrections
-- New documentation needed? Follow the naming conventions and update this index
+### **Updating Documentation**
+1. Keep documentation current with code changes
+2. Update the relevant index files when adding new documents
+3. Follow the established directory structure
+4. Use clear, descriptive document titles and sections
 
-### **Quick References**
-- **Architecture Questions**: See [ARCHITECTURE.md](./ARCHITECTURE.md)
-- **Development Setup**: See [DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md)  
-- **Deployment Issues**: See [DEPLOYMENT.md](./DEPLOYMENT.md)
-- **Security Concerns**: See [SECURITY.md](./SECURITY.md)
+### **Creating New Documentation**
+1. Determine the appropriate category (project, architecture, development)
+2. Add the document to the correct directory
+3. Update the relevant index.md file
+4. Reference from this main README if it's a major document
 
----
+### **Archive Policy**
+- Archive documentation when it becomes outdated
+- Maintain historical context for major refactoring decisions
+- Keep active documentation focused and current
 
-*This documentation represents the canonical source of truth for the Unveil platform. All content has been audited, consolidated, and organized for maximum clarity and usefulness.*
+## 🏆 Documentation Achievements
 
-**Last Updated**: January 2025 | **Status**: Production Ready | **Docs Health**: ✅ Excellent 
+**The Unveil documentation system provides:**
+- 📁 **Organized Structure** - Clear categorization and easy navigation
+- 🔍 **Comprehensive Coverage** - From high-level planning to implementation details
+- ⚡ **Performance Focus** - Dedicated performance optimization documentation
+- 📚 **Historical Context** - Preserved project evolution and decision history
+- 🎯 **Developer Friendly** - Quick start guides and practical examples
+
+**Ready for efficient development, onboarding, and project management!**

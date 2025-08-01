@@ -32,12 +32,41 @@ This directory contains comprehensive performance documentation for the Unveil a
 - Week 4 optimization framework preparation
 - Architecture improvements and code quality enhancements
 
+### `PERFORMANCE_AUDIT_REPORT.md` - Original Performance Audit
+**Comprehensive performance audit and optimization roadmap:**
+- Client-side performance analysis
+- Network and API layer optimization
+- Supabase backend performance review
+- Infrastructure and build optimization
+- Actionable recommendations with implementation priority
+
+### `PERFORMANCE_UPDATE.md` - Optimization Progress Tracking
+**Weekly performance optimization progress documentation:**
+- Week 1-3 implementation summaries
+- Bundle size improvements and metrics
+- Performance feature implementations
+- Before/after comparison data
+
+### `PERFORMANCE_WEEK3_REPORT.md` - Week 3 Performance Review
+**Detailed Week 3 performance review and optimization plan:**
+- Comprehensive performance trace analysis
+- Supabase performance optimization recommendations
+- Bundle splitting effectiveness review
+- Prioritized optimization roadmap for Week 3 implementation
+
 ## 📊 Quick Reference
 
 ### Current Performance Status
 - **Host Dashboard:** 314KB (target <300KB)
 - **Guest Home:** 305KB (target <250KB)  
 - **Select Event:** 294KB (✅ under 300KB target)
+
+### Performance Documentation Timeline
+- **Original Audit:** `PERFORMANCE_AUDIT_REPORT.md` - Foundation audit and roadmap
+- **Weekly Progress:** `PERFORMANCE_UPDATE.md` - Week 1-3 implementation tracking
+- **Week 3 Review:** `PERFORMANCE_WEEK3_REPORT.md` - Comprehensive analysis and plan
+- **Week 4 Completion:** `WEEK4_COMPLETION_SUMMARY.md` - Final implementation results
+- **Layout Analysis:** `LAYOUT_ANALYSIS.md` - Shared layout optimization review
 
 ### Key Optimizations Applied
 - 100x faster navigation (client-side routing)
@@ -57,3 +86,4 @@ This directory contains comprehensive performance documentation for the Unveil a
 - See `../monitoring/` for development alert system
 - See `../frameworks/` for Week 4+ optimization frameworks
 - See `../scripts/` for automated validation tools
+- See `../../docs/` for main project documentation
