@@ -20,7 +20,8 @@ export const PERFORMANCE_ALERTS = {
   MAX_SUBSCRIPTIONS_PER_PAGE: 2,
   MAX_COMPONENT_RENDER_TIME: 16,   // 16ms for 60fps
   MAX_RE_RENDERS_PER_MINUTE: 30,
-  MEMORY_WARNING_MB: 50,
+  MEMORY_WARNING_MB: process.env.NODE_ENV === 'production' ? 75 : 150, // More realistic thresholds
+  MEMORY_ERROR_MB: process.env.NODE_ENV === 'production' ? 100 : 200,   // Error threshold for severe leaks
 } as const;
 
 interface PerformanceAlert {
@@ -38,6 +39,8 @@ class DevelopmentAlerts {
   private subscriptionCounts = new Map<string, number>();
   private renderCounts = new Map<string, number>();
   private lastRenderCountReset = Date.now();
+  private memoryHistory: { timestamp: number; used: number }[] = [];
+  private lastMemoryAlert = 0;
 
   static getInstance(): DevelopmentAlerts {
     if (!DevelopmentAlerts.instance) {
@@ -195,7 +198,7 @@ class DevelopmentAlerts {
   }
 
   /**
-   * Check memory usage (Chrome only)
+   * Check memory usage with trend analysis (Chrome only)
    */
   checkMemoryUsage() {
     if (typeof window !== 'undefined' && 'performance' in window) {
@@ -210,25 +213,75 @@ class DevelopmentAlerts {
         
         if (performance.memory) {
           const usedMB = performance.memory.usedJSHeapSize / (1024 * 1024);
+          const now = Date.now();
+          
+          // Track memory usage history for trend analysis
+          this.memoryHistory.push({ timestamp: now, used: usedMB });
+          
+          // Keep only last 10 minutes of history
+          this.memoryHistory = this.memoryHistory.filter(
+            entry => now - entry.timestamp < 10 * 60 * 1000
+          );
 
-          if (usedMB > PERFORMANCE_ALERTS.MEMORY_WARNING_MB) {
-            this.addAlert({
-              type: 'warning',
-              category: 'memory',
-              message: `High memory usage detected`,
-              details: {
-                used: `${usedMB.toFixed(1)}MB`,
-                limit: `${PERFORMANCE_ALERTS.MEMORY_WARNING_MB}MB`,
-                total: `${(performance.memory.totalJSHeapSize / (1024 * 1024)).toFixed(1)}MB`,
-                recommendation: 'Check for memory leaks or large object allocations',
-              },
-            });
+          // Only alert if memory exceeds threshold AND we haven't alerted recently
+          const timeSinceLastAlert = now - this.lastMemoryAlert;
+          const shouldCheckAlert = timeSinceLastAlert > 5 * 60 * 1000; // 5 minute cooldown
+
+          if (shouldCheckAlert) {
+            // Check for severe memory issues (error threshold)
+            if (usedMB > PERFORMANCE_ALERTS.MEMORY_ERROR_MB) {
+              this.addAlert({
+                type: 'error',
+                category: 'memory',
+                message: `Critical memory usage detected`,
+                details: {
+                  used: `${usedMB.toFixed(1)}MB`,
+                  limit: `${PERFORMANCE_ALERTS.MEMORY_ERROR_MB}MB`,
+                  total: `${(performance.memory.totalJSHeapSize / (1024 * 1024)).toFixed(1)}MB`,
+                  recommendation: 'Memory leak likely - check component cleanup and subscriptions',
+                },
+              });
+              this.lastMemoryAlert = now;
+            }
+            // Check for potential memory leaks (trending upward)
+            else if (this.isMemoryTrendingUp() && usedMB > PERFORMANCE_ALERTS.MEMORY_WARNING_MB) {
+              this.addAlert({
+                type: 'warning',
+                category: 'memory',
+                message: `Memory usage trending upward`,
+                details: {
+                  used: `${usedMB.toFixed(1)}MB`,
+                  limit: `${PERFORMANCE_ALERTS.MEMORY_WARNING_MB}MB`,
+                  total: `${(performance.memory.totalJSHeapSize / (1024 * 1024)).toFixed(1)}MB`,
+                  trend: 'increasing',
+                  recommendation: 'Monitor for potential memory leaks - check subscriptions and intervals',
+                },
+              });
+              this.lastMemoryAlert = now;
+            }
           }
         }
       } catch {
         // Memory API not available - ignore silently
       }
     }
+  }
+
+  /**
+   * Analyze memory trend to detect potential leaks
+   */
+  private isMemoryTrendingUp(): boolean {
+    if (this.memoryHistory.length < 3) return false;
+    
+    const recent = this.memoryHistory.slice(-3);
+    const isIncreasing = recent.every((entry, index) => {
+      if (index === 0) return true;
+      return entry.used > recent[index - 1].used;
+    });
+    
+    // Consider it trending up if memory increased by >20MB in recent samples
+    const increase = recent[recent.length - 1].used - recent[0].used;
+    return isIncreasing && increase > 20;
   }
 
   /**
@@ -270,11 +323,11 @@ export function usePerformanceAlert(componentName: string) {
     }
   });
 
-  // Check memory usage occasionally
+  // Check memory usage less frequently to reduce noise
   React.useEffect(() => {
     const interval = setInterval(() => {
       developmentAlerts.checkMemoryUsage();
-    }, 30000); // Every 30 seconds
+    }, 2 * 60 * 1000); // Every 2 minutes (reduced from 30s)
 
     return () => clearInterval(interval);
   }, []);
@@ -339,10 +392,10 @@ export function initializeDevelopmentAlerts() {
   // Log current thresholds
   console.table(PERFORMANCE_ALERTS);
 
-  // Periodic memory check
+  // Periodic memory check (less frequent to reduce noise)
   setInterval(() => {
     developmentAlerts.checkMemoryUsage();
-  }, 60000); // Every minute
+  }, 3 * 60 * 1000); // Every 3 minutes (reduced from 1 minute)
 }
 
 /**
