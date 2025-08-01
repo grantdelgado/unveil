@@ -155,23 +155,26 @@ export function usePullToRefresh({
 
     containerRef.current = element
 
-    // Add new listeners
+    // Add new listeners with optimized passive options
     if (element) {
-      element.addEventListener('touchstart', handleTouchStart, false)
-      element.addEventListener('touchmove', handleTouchMove, false)
-      element.addEventListener('touchend', handleTouchEnd, true)
+      // touchstart can be passive since it never calls preventDefault()
+      element.addEventListener('touchstart', handleTouchStart, { passive: true })
+      // touchmove must be non-passive since it conditionally calls preventDefault()
+      element.addEventListener('touchmove', handleTouchMove, { passive: false })
+      // touchend can be passive since it never calls preventDefault()
+      element.addEventListener('touchend', handleTouchEnd, { passive: true })
     }
   }, [handleTouchStart, handleTouchMove, handleTouchEnd])
 
   // Cleanup on unmount
   useEffect(() => {
-          return () => {
-        if (containerRef.current) {
-          containerRef.current.removeEventListener('touchstart', handleTouchStart)
-          containerRef.current.removeEventListener('touchmove', handleTouchMove)
-          containerRef.current.removeEventListener('touchend', handleTouchEnd)
-        }
+    return () => {
+      if (containerRef.current) {
+        containerRef.current.removeEventListener('touchstart', handleTouchStart)
+        containerRef.current.removeEventListener('touchmove', handleTouchMove)
+        containerRef.current.removeEventListener('touchend', handleTouchEnd)
       }
+    }
   }, [handleTouchStart, handleTouchMove, handleTouchEnd])
 
   // Calculate refresh progress (0 to 1)
