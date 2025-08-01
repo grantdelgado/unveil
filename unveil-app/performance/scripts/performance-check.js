@@ -281,7 +281,7 @@ class PerformanceChecker {
    * Generate performance report
    */
   async generateReport() {
-    const reportPath = path.join(process.cwd(), 'performance-report.json');
+    const reportPath = path.join(process.cwd(), 'performance', 'reports', 'performance-report.json');
     
     const report = {
       timestamp: new Date().toISOString(),
