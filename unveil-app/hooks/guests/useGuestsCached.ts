@@ -3,6 +3,7 @@ import { useCallback, useMemo } from 'react'
 import { RealtimePostgresChangesPayload } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { smartInvalidation } from '@/lib/queryUtils'
 import { useRealtimeSubscription } from '@/hooks/realtime'
 import { useDebounce } from '@/hooks/common'
 import type { Database } from '@/app/reference/supabase.types'
@@ -134,10 +135,14 @@ export function useUpdateGuestRSVP() {
 
       return { previousGuests }
     },
-    onSuccess: ({ eventId }) => {
+    onSuccess: async ({ eventId }) => {
       logger.api('Guest RSVP updated successfully')
-      // Invalidate to ensure we have latest data
-      queryClient.invalidateQueries({ queryKey: guestQueryKeys.eventGuests(eventId) })
+      // Use centralized smart invalidation for better performance
+      await smartInvalidation({
+        queryClient,
+        mutationType: 'rsvp',
+        eventId
+      })
     },
     onError: (error, { eventId }, context) => {
       logger.error('Failed to update guest RSVP', error)
@@ -198,9 +203,14 @@ export function useBulkUpdateGuestRSVP() {
       await Promise.all(operations)
       return { guestIds, newStatus, eventId }
     },
-    onSuccess: ({ eventId }) => {
+    onSuccess: async ({ eventId }) => {
       logger.api('Bulk guest RSVP update successful')
-      queryClient.invalidateQueries({ queryKey: guestQueryKeys.eventGuests(eventId) })
+      // Use centralized smart invalidation for bulk operations
+      await smartInvalidation({
+        queryClient,
+        mutationType: 'rsvp',
+        eventId
+      })
     },
     onError: (error) => {
       logger.error('Failed to bulk update guest RSVPs', error)

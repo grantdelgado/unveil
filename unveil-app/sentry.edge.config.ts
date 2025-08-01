@@ -3,9 +3,12 @@ import * as Sentry from '@sentry/nextjs';
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
   
-  // Adjust this value in production, or use tracesSampler for greater control
-  tracesSampleRate: 1,
+  // Reduced trace sampling for edge runtime performance
+  tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
 
-  // Setting this option to true will print useful information to the console while you're setting up Sentry.
-  debug: false,
+  // Optimize for bundle size by disabling debug in production
+  debug: process.env.NODE_ENV === 'development',
+  
+  // Minimal integrations to reduce bundle size (edge runtime compatible)
+  integrations: [],
 }); 

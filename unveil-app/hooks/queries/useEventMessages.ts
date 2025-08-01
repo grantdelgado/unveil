@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase/client';
 import { sendMessageToEvent } from '@/lib/services/messaging';
 import type { MessageWithSender } from '@/lib/supabase/types';
+import { smartInvalidation } from '@/lib/queryUtils';
 
 // Query keys
 export const queryKeys = {
@@ -114,10 +115,12 @@ export function useSendMessage({ onSuccess, onError }: UseSendMessageOptions = {
       onError?.(err as Error)
     },
 
-    onSuccess: (data, variables) => {
-      // Invalidate and refetch
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.eventMessages(variables.eventId)
+    onSuccess: async (data, variables) => {
+      // Use centralized smart invalidation for messaging
+      await smartInvalidation({
+        queryClient,
+        mutationType: 'message',
+        eventId: variables.eventId
       })
       onSuccess?.(data)
     },

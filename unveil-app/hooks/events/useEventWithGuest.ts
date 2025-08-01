@@ -1,9 +1,11 @@
 import { useState, useCallback, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase/client';
 import type { EventWithHost, EventGuestWithUser } from '@/lib/supabase/types';
 import { logError, type AppError } from '@/lib/error-handling';
 import { withErrorHandling } from '@/lib/error-handling';
 import { getEventById } from '@/lib/services/events';
+import { smartInvalidation } from '@/lib/queryUtils';
 
 interface UseEventWithGuestReturn {
   event: EventWithHost | null;
@@ -26,6 +28,7 @@ export function useEventWithGuest(
   const [guestInfo, setGuestInfo] = useState<EventGuestWithUser | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<AppError | null>(null);
+  const queryClient = useQueryClient();
 
   const fetchEventData = useCallback(async () => {
     if (!eventId || !userId) {
@@ -96,6 +99,14 @@ export function useEventWithGuest(
 
       // Refresh guest info
       await fetchEventData();
+      
+      // Use centralized smart invalidation for RSVP updates
+      await smartInvalidation({
+        queryClient,
+        mutationType: 'rsvp',
+        eventId,
+        userId
+      });
       
       return { success: true };
     }, 'useEventWithGuest.updateRSVP');

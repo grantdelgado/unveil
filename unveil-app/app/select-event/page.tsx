@@ -1,7 +1,7 @@
 'use client';
 
 // External dependencies
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 
 // Internal utilities
 import { formatEventDate } from '@/lib/utils/date';
@@ -21,15 +21,17 @@ export default function SelectEventPage() {
   const { user } = useAuth();
   const { analytics, fetchAnalytics } = useEventAnalytics();
   const containerRef = useRef<HTMLDivElement>(null);
+  
+  // Track which event cards are expanded to show analytics
+  const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
 
   // Pull-to-refresh functionality
   const pullToRefresh = usePullToRefresh({
     onRefresh: async () => {
       await refetch();
-      // Also refresh analytics
-      if (events && events.length > 0) {
-        const eventIds = events.map(e => e.event_id);
-        await fetchAnalytics(eventIds);
+      // Only refresh analytics for expanded event
+      if (expandedEventId) {
+        await fetchAnalytics([expandedEventId]);
       }
     },
     threshold: 80,
@@ -37,13 +39,12 @@ export default function SelectEventPage() {
     hapticFeedback: true,
   });
 
-  // Fetch analytics when events are loaded
+  // Only fetch analytics for expanded event (selective loading for performance)
   useEffect(() => {
-    if (events && events.length > 0) {
-      const eventIds = events.map(e => e.event_id);
-      fetchAnalytics(eventIds);
+    if (expandedEventId) {
+      fetchAnalytics([expandedEventId]);
     }
-  }, [events, fetchAnalytics]);
+  }, [expandedEventId, fetchAnalytics]);
 
   // Bind pull-to-refresh to container
   useEffect(() => {
@@ -166,53 +167,74 @@ export default function SelectEventPage() {
                   {hostEvents.map((event) => {
                     const formattedDate = formatEventDate(event.event_date);
                     const eventInsights = analytics[event.event_id];
+                    const isExpanded = expandedEventId === event.event_id;
                     
                     return (
-                      <button
+                      <div 
                         key={event.event_id}
-                        onClick={() => handleEventSelect(event)}
-                        className={cn(
-                          'w-full p-5 bg-white border border-gray-200 rounded-xl shadow-sm',
-                          'transition-all duration-200 hover:shadow-md hover:border-rose-300',
-                          'focus:outline-none focus:ring-2 focus:ring-rose-300 focus:ring-offset-2',
-                          'active:scale-[0.98]',
-                          'group'
-                        )}
+                        className="relative"
+                        onMouseEnter={() => {
+                          // Trigger analytics loading on hover for better UX
+                          if (!isExpanded && !eventInsights) {
+                            setExpandedEventId(event.event_id);
+                          }
+                        }}
                       >
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1 text-left">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                              {event.title}
-                            </h3>
-                            {event.location && (
-                              <p className="text-gray-600 italic mb-2">
-                                {event.location}
-                              </p>
-                            )}
-                            <div className="flex items-center gap-2 text-gray-600">
-                              <span>📅</span>
-                              <span className="font-medium">{formattedDate}</span>
+                        <button
+                          onClick={() => handleEventSelect(event)}
+                          className={cn(
+                            'w-full p-5 bg-white border border-gray-200 rounded-xl shadow-sm',
+                            'transition-all duration-200 hover:shadow-md hover:border-rose-300',
+                            'focus:outline-none focus:ring-2 focus:ring-rose-300 focus:ring-offset-2',
+                            'active:scale-[0.98]',
+                            'group'
+                          )}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1 text-left">
+                              <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                                {event.title}
+                              </h3>
+                              {event.location && (
+                                <p className="text-gray-600 italic mb-2">
+                                  {event.location}
+                                </p>
+                              )}
+                              <div className="flex items-center gap-2 text-gray-600">
+                                <span>📅</span>
+                                <span className="font-medium">{formattedDate}</span>
+                              </div>
+                              
+                              {/* Host insights preview - only show when loaded */}
+                              {eventInsights && eventInsights.totalGuests > 0 && (
+                                <div className="mt-3 pt-3 border-t border-gray-100">
+                                  <div className="flex items-center gap-4 text-sm text-gray-600">
+                                    <span>👥 {eventInsights.totalGuests} guests</span>
+                                    <span>✅ {eventInsights.attendingCount} attending</span>
+                                    <span>📊 {Math.round(eventInsights.responseRate)}% responded</span>
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {/* Loading indicator for analytics */}
+                              {isExpanded && !eventInsights && (
+                                <div className="mt-3 pt-3 border-t border-gray-100">
+                                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                                    <div className="w-4 h-4 border-2 border-gray-300 border-t-rose-500 rounded-full animate-spin"></div>
+                                    <span>Loading insights...</span>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                             
-                            {/* Host insights preview */}
-                            {eventInsights && eventInsights.totalGuests > 0 && (
-                              <div className="mt-3 pt-3 border-t border-gray-100">
-                                <div className="flex items-center gap-4 text-sm text-gray-600">
-                                  <span>👥 {eventInsights.totalGuests} guests</span>
-                                  <span>✅ {eventInsights.attendingCount} attending</span>
-                                  <span>📊 {Math.round(eventInsights.responseRate)}% responded</span>
-                                </div>
-                              </div>
-                            )}
+                            <div className="text-gray-400 group-hover:text-rose-500 transition-colors ml-4">
+                              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                              </svg>
+                            </div>
                           </div>
-                          
-                          <div className="text-gray-400 group-hover:text-rose-500 transition-colors ml-4">
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
-                          </div>
-                        </div>
-                      </button>
+                        </button>
+                      </div>
                     );
                   })}
                 </div>

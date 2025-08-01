@@ -49,8 +49,11 @@ Sentry.init({
     return event;
   },
   
-  // Server-side integrations
+  // Minimal server-side integrations for performance
   integrations: [
-    // Add additional server-side integrations as needed
+    // Only essential integrations to reduce memory usage
   ],
+  
+  // Optimize for server performance
+  sendDefaultPii: false,
 }); 
