@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { initializePerformanceMonitoring } from '@/lib/performance-monitoring';
-import { initializeDevelopmentAlerts, PerformanceAlertOverlay } from '@/performance/monitoring/developmentAlerts';
+import { initializeDevelopmentAlerts } from '@/performance/monitoring/developmentAlerts';
 
 interface PerformanceMonitorProps {
   children: React.ReactNode;
@@ -23,8 +23,8 @@ export function PerformanceMonitor({ children }: PerformanceMonitorProps) {
   return (
     <>
       {children}
-      {/* Development-only performance alert overlay */}
-      <PerformanceAlertOverlay />
+      {/* Development-only performance alert overlay - temporarily disabled due to infinite loop */}
+      {/* <PerformanceAlertOverlay /> */}
     </>
   );
 } 

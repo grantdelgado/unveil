@@ -411,7 +411,13 @@ export function PerformanceAlertOverlay() {
 
     const interval = setInterval(() => {
       const currentAlerts = developmentAlerts.getAlerts();
-      setAlerts(currentAlerts);
+      setAlerts(prev => {
+        // Only update if alerts actually changed
+        if (JSON.stringify(prev) !== JSON.stringify(currentAlerts)) {
+          return currentAlerts;
+        }
+        return prev;
+      });
       setShowOverlay(currentAlerts.length > 0);
     }, 5000);
 
