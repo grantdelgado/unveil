@@ -190,7 +190,12 @@ export default function CreateEventWizard() {
       );
       
       if (!result.success) {
-        setFormMessage(result.error?.message || 'Failed to create event. Please try again.');
+        // Display prominent user-facing error message
+        const errorMessage = result.error?.code === 'HOST_GUEST_ERROR' 
+          ? 'Something went wrong while creating your event. Please try again or contact support if the issue persists.'
+          : result.error?.message || 'Something went wrong while creating your event. Please try again or contact support if the issue persists.';
+        
+        setFormMessage(errorMessage);
         setIsLoading(false);
         return;
       }
@@ -205,7 +210,7 @@ export default function CreateEventWizard() {
       
     } catch (error) {
       console.error('Unexpected error during event creation:', error);
-      setFormMessage('An unexpected error occurred. Please try again.');
+      setFormMessage('Something went wrong while creating your event. Please try again or contact support if the issue persists.');
       setIsLoading(false);
     }
   }, [formData, headerImage, validateCurrentStep, router]);

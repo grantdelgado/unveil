@@ -373,6 +373,12 @@ export class EventCreationService {
 
       if (!hostGuestResult.success) {
         // Rollback: Delete the created event
+        logger.warn('Event rollback triggered due to guest insert failure', {
+          eventId: newEvent.id,
+          userId,
+          error: hostGuestResult.error
+        });
+        
         await this.rollbackEventCreation(newEvent.id);
         return {
           success: false,
