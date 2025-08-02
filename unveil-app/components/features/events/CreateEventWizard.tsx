@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import { EventCreationService } from '@/lib/services/eventCreation';
@@ -74,6 +74,9 @@ export default function CreateEventWizard() {
   const [errors, setErrors] = useState<EventFormErrors>({});
   const [isLoading, setIsLoading] = useState(false);
   const [formMessage, setFormMessage] = useState('');
+  
+  // Double-submission protection
+  const submissionInProgressRef = useRef(false);
 
   // Update form data
   const updateFormData = useCallback((field: keyof EventFormData, value: string | boolean) => {
@@ -160,6 +163,14 @@ export default function CreateEventWizard() {
   const handleCreateEvent = useCallback(async () => {
     if (!validateCurrentStep()) return;
     
+    // Prevent double-submission with immediate check
+    if (submissionInProgressRef.current) {
+      console.log('Event creation already in progress, ignoring duplicate submission');
+      return;
+    }
+    
+    // Immediately mark submission as in progress
+    submissionInProgressRef.current = true;
     setIsLoading(true);
     setFormMessage('');
     
@@ -197,6 +208,7 @@ export default function CreateEventWizard() {
         
         setFormMessage(errorMessage);
         setIsLoading(false);
+        submissionInProgressRef.current = false; // Reset for retry
         return;
       }
       
@@ -208,10 +220,13 @@ export default function CreateEventWizard() {
         router.push(`/host/events/${result.data!.event_id}/dashboard`);
       }, 1500);
       
+      // Note: submissionInProgressRef reset not needed here since user is redirected
+      
     } catch (error) {
       console.error('Unexpected error during event creation:', error);
       setFormMessage('Something went wrong while creating your event. Please try again or contact support if the issue persists.');
       setIsLoading(false);
+      submissionInProgressRef.current = false; // Reset for retry
     }
   }, [formData, headerImage, validateCurrentStep, router]);
 
