@@ -8,8 +8,7 @@ export { useUserEvents } from './useUserEvents';
 export { useEventAnalytics } from './useEventAnalytics';
 
 // Event creation and management
-export { useEventCreation } from './useEventCreation';
-export type { EventFormData, EventFormErrors, UseEventCreationReturn } from './useEventCreation';
+// Moved to EventCreationService in lib/services/eventCreation.ts
 
 // Legacy hooks removed:
 // - useEventDetails (replaced by useEventWithGuest)

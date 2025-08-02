@@ -78,6 +78,59 @@ export const guestCreateSchema = z.object({
   guest_tags: z.array(z.string()).optional(),
 });
 
+// Guest import schemas for CSV and bulk operations
+export const guestImportSchema = z.object({
+  guest_name: z
+    .string()
+    .min(1, 'Guest name is required')
+    .max(100, 'Guest name must be less than 100 characters')
+    .trim(),
+  phone: z
+    .string()
+    .min(1, 'Phone number is required')
+    .max(20, 'Phone number must be less than 20 characters')
+    .regex(/^[\+]?[1-9][\d]{0,15}$/, 'Invalid phone number format')
+    .transform(val => val.replace(/[\s\-\(\)]/g, '')), // Clean phone number
+  guest_email: z
+    .string()
+    .email('Invalid email format')
+    .optional()
+    .or(z.literal('')),
+  role: z
+    .enum(['guest', 'host', 'admin'])
+    .default('guest'),
+  notes: z
+    .string()
+    .max(1000, 'Notes must be less than 1000 characters')
+    .trim()
+    .optional()
+    .or(z.literal('')),
+  guest_tags: z
+    .array(z.string().trim().min(1))
+    .max(10, 'Maximum 10 tags allowed per guest')
+    .optional(),
+});
+
+export const guestImportBatchSchema = z.object({
+  guests: z
+    .array(guestImportSchema)
+    .min(1, 'At least one guest is required')
+    .max(500, 'Maximum 500 guests per import'),
+  event_id: z
+    .string()
+    .uuid('Invalid event ID format'),
+});
+
+// CSV file validation schema
+export const csvHeaderSchema = z.object({
+  name: z.literal('name'),
+  phone: z.literal('phone'),
+  email: z.literal('email').optional(),
+  role: z.literal('role').optional(),
+  notes: z.literal('notes').optional(),
+  tags: z.literal('tags').optional(),
+});
+
 // Message schemas
 export const messageCreateSchema = z.object({
   content: z
@@ -139,6 +192,9 @@ export type EventCreateInput = z.infer<typeof eventCreateSchema>;
 export type EventUpdateInput = z.infer<typeof eventUpdateSchema>;
 export type RsvpUpdateInput = z.infer<typeof rsvpUpdateSchema>;
 export type GuestCreateInput = z.infer<typeof guestCreateSchema>;
+export type GuestImportInput = z.infer<typeof guestImportSchema>;
+export type GuestImportBatchInput = z.infer<typeof guestImportBatchSchema>;
+export type CSVHeaderInput = z.infer<typeof csvHeaderSchema>;
 export type MessageCreateInput = z.infer<typeof messageCreateSchema>;
 export type MediaUploadInput = z.infer<typeof mediaUploadSchema>;
 export type ProfileUpdateInput = z.infer<typeof profileUpdateSchema>;
@@ -163,6 +219,12 @@ export const validateProfileUpdate = (data: unknown) =>
 export const validateLogin = (data: unknown) => loginSchema.safeParse(data);
 export const validateResetPassword = (data: unknown) =>
   resetPasswordSchema.safeParse(data);
+export const validateGuestImport = (data: unknown) =>
+  guestImportSchema.safeParse(data);
+export const validateGuestImportBatch = (data: unknown) =>
+  guestImportBatchSchema.safeParse(data);
+export const validateCSVHeader = (data: unknown) =>
+  csvHeaderSchema.safeParse(data);
 
 /**
  * Validation utilities for Unveil app

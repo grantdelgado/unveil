@@ -3,8 +3,8 @@
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
-// Note: Media functionality handled via domain hooks
-import type { Database } from '@/app/reference/supabase.types';
+import { EventCreationService } from '@/lib/services/eventCreation';
+import type { EventCreationInput } from '@/lib/services/eventCreation';
 import {
   PageWrapper,
   CardContainer,
@@ -19,8 +19,6 @@ import { EventBasicsStep } from './EventBasicsStep';
 import { EventImageStep } from './EventImageStep';
 import { GuestImportStep } from './GuestImportStep';
 import { EventReviewStep } from './EventReviewStep';
-
-type EventInsert = Database['public']['Tables']['events']['Insert'];
 
 export interface EventFormData {
   title: string;
@@ -158,7 +156,7 @@ export default function CreateEventWizard() {
     }
   }, [currentStep]);
 
-  // Create event
+  // Create event using centralized service
   const handleCreateEvent = useCallback(async () => {
     if (!validateCurrentStep()) return;
     
@@ -166,7 +164,7 @@ export default function CreateEventWizard() {
     setFormMessage('');
     
     try {
-      // Get current user
+      // Get current user session
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError || !session?.user?.id) {
@@ -175,102 +173,38 @@ export default function CreateEventWizard() {
         return;
       }
       
-      const userId = session.user.id;
-      let headerImageUrl: string | null = null;
-      
-      // Upload image if provided
-      if (headerImage) {
-        const fileExt = headerImage.name.split('.').pop();
-        const fileName = `${userId}/${Date.now()}.${fileExt}`;
-        
-        try {
-          const { data: uploadData, error: uploadError } = await supabase.storage
-            .from('event-images')
-            .upload(fileName, headerImage);
-          
-          if (uploadError || !uploadData) {
-            throw new Error(uploadError?.message || 'Upload failed');
-          }
-          
-          const { data: urlData } = supabase.storage
-            .from('event-images')
-            .getPublicUrl(fileName);
-          headerImageUrl = urlData.publicUrl;
-        } catch (uploadError) {
-          setFormMessage(`Failed to upload image: ${uploadError instanceof Error ? uploadError.message : 'Unknown error'}`);
-          setIsLoading(false);
-          return;
-        }
-      }
-      
-      // Create event
-      const eventData: EventInsert = {
-        title: formData.title.trim(),
+      // Prepare event creation input
+      const eventInput: EventCreationInput = {
+        title: formData.title,
         event_date: formData.event_date,
-        location: formData.location.trim() || null,
-        description: formData.description.trim() || null,
-        header_image_url: headerImageUrl,
-        host_user_id: userId,
+        location: formData.location || undefined,
+        description: formData.description || undefined,
         is_public: formData.is_public,
+        header_image: headerImage || undefined,
       };
       
-      const { data: newEvent, error: insertError } = await supabase
-        .from('events')
-        .insert(eventData)
-        .select('id, title, host_user_id, created_at')
-        .single();
-        
-      if (insertError) {
-        if (insertError.code === '23505') {
-          setFormMessage('An event with this name already exists. Please choose a different name.');
-        } else if (insertError.code === '23503') {
-          setFormMessage('User validation failed. Please log out and log back in.');
-        } else {
-          setFormMessage(`Failed to create event: ${insertError.message}`);
-        }
+      // Call centralized service
+      const result = await EventCreationService.createEventWithHost(
+        eventInput, 
+        session.user.id
+      );
+      
+      if (!result.success) {
+        setFormMessage(result.error?.message || 'Failed to create event. Please try again.');
         setIsLoading(false);
         return;
       }
       
-      if (!newEvent) {
-        setFormMessage('Event creation completed but no data returned.');
-        setIsLoading(false);
-        return;
-      }
-      
-      // Create host guest entry with profile data
-      const { data: hostProfile } = await supabase
-        .from('users')
-        .select('full_name')
-        .eq('id', userId)
-        .single();
-
-      const { error: guestError } = await supabase
-        .from('event_guests')
-        .insert({
-          event_id: newEvent.id,
-          user_id: userId,
-          phone: 'Host Profile', // Hosts don't need SMS typically
-          guest_name: hostProfile?.full_name || 'Host',
-          role: 'host',
-          rsvp_status: 'attending',
-          preferred_communication: 'email',
-          sms_opt_out: true, // Hosts opt out of SMS by default
-        });
-        
-      if (guestError) {
-        console.warn('Failed to create host guest entry:', guestError);
-      }
-      
+      // Success!
       setFormMessage('Wedding hub created successfully!');
       
       // Navigate to event dashboard
       setTimeout(() => {
-        router.push(`/host/events/${newEvent.id}/dashboard`);
+        router.push(`/host/events/${result.data!.event_id}/dashboard`);
       }, 1500);
       
     } catch (error) {
-      console.error('Unexpected error:', error);
+      console.error('Unexpected error during event creation:', error);
       setFormMessage('An unexpected error occurred. Please try again.');
       setIsLoading(false);
     }
@@ -347,6 +281,7 @@ export default function CreateEventWizard() {
                 onMethodChange={setGuestImportMethod}
                 onGuestCountChange={setGuestCount}
                 disabled={isLoading}
+                eventId={undefined} // No import during wizard - guests added after event creation
               />
             )}
 
