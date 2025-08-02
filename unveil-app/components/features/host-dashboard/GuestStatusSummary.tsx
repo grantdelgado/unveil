@@ -149,6 +149,7 @@ export const GuestStatusSummary = memo<GuestStatusSummaryProps>(({
   const [loading, setLoading] = useState(true);
   const [recentActivity, setRecentActivity] = useState<RSVPActivity[]>([]);
   const [showActivity, setShowActivity] = useState(false);
+  const [realtimeConnected, setRealtimeConnected] = useState(true);
 
   const fetchStatusCounts = useCallback(async () => {
     try {
@@ -226,12 +227,36 @@ export const GuestStatusSummary = memo<GuestStatusSummaryProps>(({
     }, [fetchStatusCounts]),
     onError: useCallback((error: Error) => {
       logger.realtimeError('Guest status summary subscription error', error);
+      setRealtimeConnected(false);
+    }, []),
+    onStatusChange: useCallback((status: string) => {
+      setRealtimeConnected(status === 'connected');
+      if (status === 'connected') {
+        logger.realtime('Guest status summary realtime connected');
+      } else {
+        logger.realtime(`Guest status summary realtime status: ${status}`);
+      }
     }, [])
   });
 
   useEffect(() => {
     fetchStatusCounts();
   }, [fetchStatusCounts]);
+
+  // Polling fallback when realtime is not connected
+  useEffect(() => {
+    if (!realtimeConnected) {
+      logger.realtime('Starting polling fallback for guest status updates');
+      const pollInterval = setInterval(() => {
+        fetchStatusCounts();
+      }, 10000); // Poll every 10 seconds when realtime is down
+
+      return () => {
+        logger.realtime('Stopping polling fallback for guest status updates');
+        clearInterval(pollInterval);
+      };
+    }
+  }, [realtimeConnected, fetchStatusCounts]);
 
   const getCountForStatus = (key: string): number => {
     if (key === 'all') return statusCounts.total;
@@ -274,7 +299,15 @@ export const GuestStatusSummary = memo<GuestStatusSummaryProps>(({
           <RSVPProgressChart statusCounts={statusCounts} />
           
           <div className="flex-1">
-            <h3 className="font-semibold text-gray-900 mb-2">RSVP Progress</h3>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-semibold text-gray-900">RSVP Progress</h3>
+              {!realtimeConnected && (
+                <div className="flex items-center gap-1 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
+                  <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
+                  <span>Polling mode</span>
+                </div>
+              )}
+            </div>
             <div className="space-y-1">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Responses</span>

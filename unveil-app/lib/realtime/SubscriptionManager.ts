@@ -181,7 +181,8 @@ export class SubscriptionManager {
       // Enhanced subscription with timeout handling
       new Promise<void>((resolve, reject) => {
         const timeout = setTimeout(() => {
-          logger.error(`⏰ Subscription timeout: ${subscriptionId} (${config.timeoutMs || this.DEFAULT_TIMEOUT}ms)`);
+          // Use warn instead of error to reduce console noise in development
+          logger.warn(`⏰ Subscription timeout: ${subscriptionId} (${config.timeoutMs || this.DEFAULT_TIMEOUT}ms) - retrying connection`);
           
           // Handle timeout based on config
           if (config.retryOnTimeout !== false) {
@@ -234,7 +235,7 @@ export class SubscriptionManager {
               new Error(`Channel error: ${status}`),
             );
           } else if (status === 'TIMED_OUT') {
-            logger.error(`⏰ Subscription timeout: ${subscriptionId}`);
+            logger.warn(`⏰ Subscription timeout: ${subscriptionId} - connection issue detected`);
             this.handleSubscriptionTimeout(subscriptionId);
           } else if (status === 'CLOSED') {
             logger.realtime(`🔌 Subscription closed: ${subscriptionId}`);
