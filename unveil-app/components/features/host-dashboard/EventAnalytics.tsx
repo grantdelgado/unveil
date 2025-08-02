@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
+import React, { useState, useEffect, useCallback, memo } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import type { Database } from '@/app/reference/supabase.types';
@@ -11,6 +11,12 @@ import { SectionTitle, MicroCopy } from '@/components/ui/Typography';
 type Guest = Database['public']['Tables']['event_guests']['Row'];
 type Message = Database['public']['Tables']['messages']['Row'];
 type Media = Database['public']['Tables']['media']['Row'];
+
+interface ActivityItem {
+  type: 'message' | 'media';
+  content: string;
+  timestamp: string | null;
+}
 
 interface EventAnalyticsProps {
   eventId: string;
@@ -70,7 +76,18 @@ function EventAnalyticsComponent({ eventId }: EventAnalyticsProps) {
   }, [fetchAnalyticsData]);
 
   // Asynchronous analytics calculations to prevent blocking main thread
-  const [analytics, setAnalytics] = useState({
+  const [analytics, setAnalytics] = useState<{
+    rsvpStats: { total: number; attending: number; declined: number; maybe: number; pending: number };
+    engagementStats: { 
+      totalMessages: number; 
+      totalMedia: number;
+      announcements: number; 
+      directMessages: number;
+      images: number;
+      videos: number;
+    };
+    recentActivity: ActivityItem[];
+  }>({
     rsvpStats: { total: 0, attending: 0, declined: 0, maybe: 0, pending: 0 },
     engagementStats: { 
       totalMessages: 0, 
@@ -128,7 +145,7 @@ function EventAnalyticsComponent({ eventId }: EventAnalyticsProps) {
         }, 0);
       });
 
-      const recentActivity = await new Promise<any[]>((resolve) => {
+      const recentActivity = await new Promise<ActivityItem[]>((resolve) => {
         setTimeout(() => {
           const activity = [
             ...messages.slice(0, 5).map((m) => ({
