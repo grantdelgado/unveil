@@ -7,10 +7,8 @@ import { EventCreationService } from '@/lib/services/eventCreation';
 import type { 
   GuestImportInput, 
   GuestImportResult, 
-  CSVParseResult,
-  GuestImportError 
+  CSVParseResult
 } from '@/lib/services/eventCreation';
-import { validateGuestImport } from '@/lib/validations';
 import { cn } from '@/lib/utils';
 
 interface GuestImportStepProps {
@@ -70,6 +68,7 @@ export function GuestImportStep({
       setCsvFile(file);
       parseCSVFile(file);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -274,7 +273,7 @@ export function GuestImportStep({
               name,phone,email,role,notes,tags
             </div>
             <p className="text-xs text-gray-500 mt-2">
-              Example: "John Doe,+1234567890,john@example.com,guest,Best man,groomsmen;vip"
+              Example: &quot;John Doe,+1234567890,john@example.com,guest,Best man,groomsmen;vip&quot;
             </p>
           </div>
 

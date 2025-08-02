@@ -66,14 +66,16 @@ export interface GuestImportError {
   error_message: string;
 }
 
+export interface CSVParseError {
+  row: number;
+  message: string;
+  data?: unknown;
+}
+
 export interface CSVParseResult {
   success: boolean;
   data?: GuestImportInput[];
-  errors?: {
-    row: number;
-    message: string;
-    data?: any;
-  }[];
+  errors?: CSVParseError[];
 }
 
 /**
@@ -126,7 +128,7 @@ export class EventCreationService {
             }
           };
         }
-        headerImageUrl = imageResult.url;
+        headerImageUrl = imageResult.url || null;
       }
 
       // Step 3: Attempt atomic event creation with host guest
@@ -285,7 +287,8 @@ export class EventCreationService {
     };
 
     // Try to call database function (if it exists)
-    const { data, error } = await supabase.rpc('create_event_with_host_atomic', {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any).rpc('create_event_with_host_atomic', {
       event_data: eventData
     });
 
@@ -293,14 +296,17 @@ export class EventCreationService {
       throw error;
     }
 
-    if (data && data.success) {
+    // Type the response from our custom function
+    const atomicResult = data as { success: boolean; event_id?: string; created_at?: string; error_message?: string };
+
+    if (atomicResult && atomicResult.success) {
       return {
         success: true,
         data: {
-          event_id: data.event_id,
+          event_id: atomicResult.event_id!,
           title: eventData.title,
           host_user_id: userId,
-          created_at: data.created_at,
+          created_at: atomicResult.created_at!,
           header_image_url: headerImageUrl || undefined
         }
       };
@@ -385,7 +391,7 @@ export class EventCreationService {
           event_id: newEvent.id,
           title: newEvent.title,
           host_user_id: newEvent.host_user_id,
-          created_at: newEvent.created_at,
+          created_at: newEvent.created_at || new Date().toISOString(),
           header_image_url: headerImageUrl || undefined
         }
       };
@@ -416,8 +422,8 @@ export class EventCreationService {
       }
 
       return {
-        full_name: hostProfile.full_name,
-        phone: hostProfile.phone
+        full_name: hostProfile.full_name || undefined,
+        phone: hostProfile.phone!
       };
     } catch (error) {
       logger.error('Failed to fetch host profile', { error, userId });
@@ -499,7 +505,7 @@ export class EventCreationService {
   /**
    * Map database insert errors to user-friendly messages
    */
-  private static mapEventInsertError(error: any): string {
+  private static mapEventInsertError(error: { code?: string; message?: string }): string {
     switch (error.code) {
       case '23505':
         return 'An event with this name already exists. Please choose a different name.';
@@ -618,7 +624,6 @@ export class EventCreationService {
       // Expected header: name, phone, email (optional), role (optional), notes (optional)
       const headers = lines[0].toLowerCase().split(',').map(h => h.trim());
       const requiredHeaders = ['name', 'phone'];
-      const optionalHeaders = ['email', 'role', 'notes', 'tags'];
       
       // Validate headers
       const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
@@ -633,7 +638,7 @@ export class EventCreationService {
       }
 
       const guests: GuestImportInput[] = [];
-      const errors: { row: number; message: string; data?: any }[] = [];
+      const errors: CSVParseError[] = [];
 
       // Parse data rows
       for (let i = 1; i < lines.length; i++) {
@@ -850,7 +855,7 @@ export class EventCreationService {
           sms_opt_out: false
         }));
 
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('event_guests')
           .insert(guestInserts)
           .select('id');
@@ -908,7 +913,7 @@ export class EventCreationService {
   /**
    * Map guest insert errors to user-friendly messages
    */
-  private static mapGuestInsertError(error: any): string {
+  private static mapGuestInsertError(error: { code?: string; message?: string }): string {
     switch (error.code) {
       case '23505':
         return 'A guest with this phone number already exists for this event';
