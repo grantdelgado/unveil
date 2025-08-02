@@ -9,7 +9,7 @@ import { formatEventDate } from '@/lib/utils/date';
 import { cn } from '@/lib/utils';
 
 // Internal hooks (specific imports for better tree-shaking)
-import { useUserEvents, useEventAnalytics } from '@/hooks/events';
+import { useUserEvents } from '@/hooks/events';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { usePullToRefresh } from '@/hooks/common/usePullToRefresh';
 
@@ -20,61 +20,18 @@ import { PageWrapper, SkeletonLoader } from '@/components/ui';
 export default function SelectEventPage() {
   const { events, loading, error, refetch } = useUserEvents();
   const { user } = useAuth();
-  const { analytics, fetchAnalytics } = useEventAnalytics();
   const containerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  
-  // Track which event cards are expanded to show analytics
-  const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
-  const [hoverTimerId, setHoverTimerId] = useState<NodeJS.Timeout | null>(null);
 
   // Pull-to-refresh functionality
   const pullToRefresh = usePullToRefresh({
     onRefresh: async () => {
       await refetch();
-      // Only refresh analytics for expanded event
-      if (expandedEventId) {
-        await fetchAnalytics([expandedEventId]);
-      }
     },
     threshold: 80,
     disabled: loading,
     hapticFeedback: true,
   });
-
-  // 🚀 PERFORMANCE: Debounced analytics loading to prevent cascade requests
-  useEffect(() => {
-    const abortController = new AbortController();
-    
-    if (expandedEventId) {
-      // Clear any existing timer
-      if (hoverTimerId) {
-        clearTimeout(hoverTimerId);
-        setHoverTimerId(null);
-      }
-      
-      // Debounce analytics loading by 500ms to prevent rapid-fire requests
-      const timerId = setTimeout(() => {
-        fetchAnalytics([expandedEventId], abortController.signal);
-      }, 500);
-      
-      setHoverTimerId(timerId);
-    }
-    
-    return () => {
-      abortController.abort();
-    };
-  }, [expandedEventId, fetchAnalytics, hoverTimerId]);
-
-  // Cleanup timers on unmount
-  useEffect(() => {
-    return () => {
-      if (hoverTimerId) {
-        clearTimeout(hoverTimerId);
-        setHoverTimerId(null);
-      }
-    };
-  }, [hoverTimerId]);
 
   // Bind pull-to-refresh to container
   useEffect(() => {
@@ -242,27 +199,9 @@ export default function SelectEventPage() {
                 <div className="space-y-3">
                   {hostEvents.map((event) => {
                     const formattedDate = formatEventDate(event.event_date);
-                    const eventInsights = analytics[event.event_id];
-                    const isExpanded = expandedEventId === event.event_id;
                     
                     return (
-                      <div 
-                        key={event.event_id}
-                        className="relative"
-                        onMouseEnter={() => {
-                          // 🚀 PERFORMANCE: Only trigger analytics loading if not already loaded or loading
-                          if (!isExpanded && !eventInsights && !analytics[event.event_id]) {
-                            setExpandedEventId(event.event_id);
-                          }
-                        }}
-                        onMouseLeave={() => {
-                          // Clear hover timer if user moves away quickly
-                          if (hoverTimerId) {
-                            clearTimeout(hoverTimerId);
-                            setHoverTimerId(null);
-                          }
-                        }}
-                      >
+                      <div key={event.event_id} className="relative">
                         <button
                           onClick={() => handleEventSelect(event)}
                           className={cn(
@@ -287,27 +226,6 @@ export default function SelectEventPage() {
                                 <span>📅</span>
                                 <span className="font-medium">{formattedDate}</span>
                               </div>
-                              
-                              {/* Host insights preview - only show when loaded */}
-                              {eventInsights && eventInsights.totalGuests > 0 && (
-                                <div className="mt-3 pt-3 border-t border-gray-100">
-                                  <div className="flex items-center gap-4 text-sm text-gray-600">
-                                    <span>👥 {eventInsights.totalGuests} guests</span>
-                                    <span>✅ {eventInsights.attendingCount} attending</span>
-                                    <span>📊 {Math.round(eventInsights.responseRate)}% responded</span>
-                                  </div>
-                                </div>
-                              )}
-                              
-                              {/* Loading indicator for analytics */}
-                              {isExpanded && !eventInsights && (
-                                <div className="mt-3 pt-3 border-t border-gray-100">
-                                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                                    <div className="w-4 h-4 border-2 border-gray-300 border-t-rose-500 rounded-full animate-spin"></div>
-                                    <span>Loading insights...</span>
-                                  </div>
-                                </div>
-                              )}
                             </div>
                             
                             <div className="text-gray-400 group-hover:text-rose-500 transition-colors ml-4">

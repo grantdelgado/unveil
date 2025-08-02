@@ -69,59 +69,96 @@ function EventAnalyticsComponent({ eventId }: EventAnalyticsProps) {
     fetchAnalyticsData();
   }, [fetchAnalyticsData]);
 
-  // Memoized analytics calculations for performance
-  const analytics = useMemo(() => {
-    // RSVP Statistics - single pass through guests for efficiency
-    const rsvpStats = guests.reduce(
-      (acc, guest) => {
-        const status = guest.rsvp_status || 'pending';
-        acc.total++;
-        acc[status as keyof typeof acc] = (acc[status as keyof typeof acc] || 0) + 1;
-        return acc;
-      },
-      { total: 0, attending: 0, declined: 0, maybe: 0, pending: 0 }
-    );
+  // Asynchronous analytics calculations to prevent blocking main thread
+  const [analytics, setAnalytics] = useState({
+    rsvpStats: { total: 0, attending: 0, declined: 0, maybe: 0, pending: 0 },
+    engagementStats: { 
+      totalMessages: 0, 
+      totalMedia: 0,
+      announcements: 0, 
+      directMessages: 0,
+      images: 0,
+      videos: 0,
+    },
+    recentActivity: [],
+  });
 
-    // Engagement Statistics - single pass through arrays
-    const engagementStats = messages.reduce(
-      (acc, message) => {
-        acc.totalMessages++;
-        if (message.message_type === 'announcement') acc.announcements++;
-        if (message.message_type === 'direct') acc.directMessages++;
-        return acc;
-      },
-      { 
-        totalMessages: 0, 
-        totalMedia: media.length,
-        announcements: 0, 
-        directMessages: 0,
-        images: media.filter(m => m.media_type === 'image').length,
-        videos: media.filter(m => m.media_type === 'video').length,
-      }
-    );
+  // Break down heavy calculations into smaller, async chunks
+  useEffect(() => {
+    const calculateAnalytics = async () => {
+      // Use setTimeout to break computation into chunks
+      const rsvpStats = await new Promise<typeof analytics.rsvpStats>((resolve) => {
+        setTimeout(() => {
+          const stats = guests.reduce(
+            (acc, guest) => {
+              const status = guest.rsvp_status || 'pending';
+              acc.total++;
+              acc[status as keyof typeof acc] = (acc[status as keyof typeof acc] || 0) + 1;
+              return acc;
+            },
+            { total: 0, attending: 0, declined: 0, maybe: 0, pending: 0 }
+          );
+          resolve(stats);
+        }, 0);
+      });
 
-    // Recent Activity - optimized with single sort
-    const recentActivity = [
-      ...messages.slice(0, 5).map((m) => ({
-        type: 'message' as const,
-        content: `New ${m.message_type}: ${m.content?.substring(0, 50) || ''}...`,
-        timestamp: m.created_at,
-      })),
-      ...media.slice(0, 5).map((m) => ({
-        type: 'media' as const,
-        content: `New ${m.media_type} uploaded${m.caption ? `: ${m.caption.substring(0, 30)}...` : ''}`,
-        timestamp: m.created_at,
-      })),
-    ]
-      .filter((activity) => activity.timestamp)
-      .sort((a, b) => new Date(b.timestamp!).getTime() - new Date(a.timestamp!).getTime())
-      .slice(0, 10);
+      const engagementStats = await new Promise<typeof analytics.engagementStats>((resolve) => {
+        setTimeout(() => {
+          // Pre-filter media to avoid multiple filters
+          const imageCount = media.filter(m => m.media_type === 'image').length;
+          const videoCount = media.filter(m => m.media_type === 'video').length;
+          
+          const messageStats = messages.reduce(
+            (acc, message) => {
+              acc.totalMessages++;
+              if (message.message_type === 'announcement') acc.announcements++;
+              if (message.message_type === 'direct') acc.directMessages++;
+              return acc;
+            },
+            { 
+              totalMessages: 0, 
+              totalMedia: media.length,
+              announcements: 0, 
+              directMessages: 0,
+              images: imageCount,
+              videos: videoCount,
+            }
+          );
+          resolve(messageStats);
+        }, 0);
+      });
 
-    return {
-      rsvpStats,
-      engagementStats,
-      recentActivity,
+      const recentActivity = await new Promise<any[]>((resolve) => {
+        setTimeout(() => {
+          const activity = [
+            ...messages.slice(0, 5).map((m) => ({
+              type: 'message' as const,
+              content: `New ${m.message_type}: ${m.content?.substring(0, 50) || ''}...`,
+              timestamp: m.created_at,
+            })),
+            ...media.slice(0, 5).map((m) => ({
+              type: 'media' as const,
+              content: `New ${m.media_type} uploaded${m.caption ? `: ${m.caption.substring(0, 30)}...` : ''}`,
+              timestamp: m.created_at,
+            })),
+          ]
+            .filter((activity) => activity.timestamp)
+            .sort((a, b) => new Date(b.timestamp!).getTime() - new Date(a.timestamp!).getTime())
+            .slice(0, 10);
+          resolve(activity);
+        }, 0);
+      });
+
+      setAnalytics({
+        rsvpStats,
+        engagementStats,
+        recentActivity,
+      });
     };
+
+    if (guests.length > 0 || messages.length > 0 || media.length > 0) {
+      calculateAnalytics();
+    }
   }, [guests, messages, media]);
 
   if (loading) {

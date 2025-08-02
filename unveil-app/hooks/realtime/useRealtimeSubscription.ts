@@ -237,54 +237,67 @@ export function useRealtimeSubscription({
       return;
     }
 
-    logger.realtime(`🔗 Setting up ${enablePooling ? 'pooled' : 'direct'} subscription: ${subscriptionId}`, {
-      pooling: enablePooling,
-      eventId,
-      batching: enableBatching,
-      rateLimit: enableRateLimit,
-      batchDelay,
-      maxUpdatesPerSecond,
-    });
+    // Debounce subscription creation in development to handle React Strict Mode
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    const setupDelay = isDevelopment ? 100 : 0; // Small delay in development only
 
-    // Mark subscription as active
-    subscriptionActiveRef.current = true;
-
-    try {
-      const config: SubscriptionConfig = {
-        table,
-        event,
-        schema,
-        filter,
-        callback: stableOnDataChange || (() => {}),
-        onError: stableOnError,
-        onStatusChange: stableOnStatusChange,
-      };
-
-      if (enablePooling) {
-        // Use pooled subscription for better performance
-        const poolCleanup = SubscriptionPool.getInstance().addToPool(
-          componentId,
-          table,
-          config,
-          eventId,
-          stableOnDataChange
-        );
-        cleanupRef.current = poolCleanup;
-        logger.realtime(`✅ Pooled subscription setup complete: ${subscriptionId}`);
-      } else {
-        // Use direct subscription (original behavior)
-        const unsubscribe = getSubscriptionManager().subscribe(subscriptionId, config);
-        cleanupRef.current = unsubscribe;
-        logger.realtime(`✅ Direct subscription setup complete: ${subscriptionId}`);
+    const setupTimer = setTimeout(() => {
+      if (!mountedRef.current || subscriptionActiveRef.current) {
+        return; // Component unmounted or subscription already active
       }
-    } catch (error) {
-      logger.error(`❌ Failed to setup subscription: ${subscriptionId}`, error);
-      subscriptionActiveRef.current = false;
-      stableOnError?.(error instanceof Error ? error : new Error('Subscription setup failed'));
-    }
+
+      logger.realtime(`🔗 Setting up ${enablePooling ? 'pooled' : 'direct'} subscription: ${subscriptionId}`, {
+        pooling: enablePooling,
+        eventId,
+        batching: enableBatching,
+        rateLimit: enableRateLimit,
+        batchDelay,
+        maxUpdatesPerSecond,
+      });
+
+      // Mark subscription as active
+      subscriptionActiveRef.current = true;
+
+      try {
+        const config: SubscriptionConfig = {
+          table,
+          event,
+          schema,
+          filter,
+          callback: stableOnDataChange || (() => {}),
+          onError: stableOnError,
+          onStatusChange: stableOnStatusChange,
+        };
+
+        if (enablePooling) {
+          // Use pooled subscription for better performance
+          const poolCleanup = SubscriptionPool.getInstance().addToPool(
+            componentId,
+            table,
+            config,
+            eventId,
+            stableOnDataChange
+          );
+          cleanupRef.current = poolCleanup;
+          logger.realtime(`✅ Pooled subscription setup complete: ${subscriptionId}`);
+        } else {
+          // Use direct subscription (original behavior)
+          const unsubscribe = getSubscriptionManager().subscribe(subscriptionId, config);
+          cleanupRef.current = unsubscribe;
+          logger.realtime(`✅ Direct subscription setup complete: ${subscriptionId}`);
+        }
+      } catch (error) {
+        logger.error(`❌ Failed to setup subscription: ${subscriptionId}`, error);
+        subscriptionActiveRef.current = false;
+        stableOnError?.(error instanceof Error ? error : new Error('Subscription setup failed'));
+      }
+    }, setupDelay);
 
     // Cleanup function
     return () => {
+      // Clear setup timer if still pending
+      clearTimeout(setupTimer);
+      
       if (!mountedRef.current) return;
 
       logger.realtime(`🧹 Cleaning up ${enablePooling ? 'pooled' : 'direct'} subscription: ${subscriptionId}`);
