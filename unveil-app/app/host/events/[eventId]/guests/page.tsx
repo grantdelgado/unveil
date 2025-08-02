@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, Suspense, lazy } from 'react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/app/reference/supabase.types';
 import {
@@ -12,25 +12,24 @@ import {
 } from '@/components/ui';
 
 // Lazy load heavy components
-const LazyMessageCenter = lazy(() => import('@/components/features/messaging/host/MessageCenter').then(m => ({ default: m.MessageCenter })));
+const LazyGuestImportWizard = lazy(() => import('@/components/features/guests/GuestImportWizard').then(m => ({ default: m.GuestImportWizard })));
+const LazyGuestManagement = lazy(() => import('@/components/features/host-dashboard/GuestManagement').then(m => ({ default: m.GuestManagement })));
 
 type Event = Database['public']['Tables']['events']['Row'];
 
-export default function EventMessagesPage() {
+export default function EventGuestsPage() {
   const params = useParams();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const eventId = params.eventId as string;
-  
-  // Get pre-selected message type from URL params
-  const messageType = searchParams.get('type');
 
   // Core state
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showGuestImport, setShowGuestImport] = useState(false);
+  const [, setGuestCount] = useState(0);
 
-  // Fetch event data
+  // Fetch event data and guest count
   useEffect(() => {
     if (!eventId) return;
 
@@ -48,12 +47,21 @@ export default function EventMessagesPage() {
           return;
         }
 
-        const { data: eventData, error: eventError } = await supabase
-          .from('events')
-          .select('*')
-          .eq('id', eventId)
-          .eq('host_user_id', user.id)
-          .single();
+        const [
+          { data: eventData, error: eventError },
+          { data: guestData, error: guestError }
+        ] = await Promise.all([
+          supabase
+            .from('events')
+            .select('*')
+            .eq('id', eventId)
+            .eq('host_user_id', user.id)
+            .single(),
+          supabase
+            .from('event_guests')
+            .select('id')
+            .eq('event_id', eventId)
+        ]);
 
         if (eventError) {
           console.error('Event fetch error:', eventError);
@@ -67,7 +75,12 @@ export default function EventMessagesPage() {
           return;
         }
 
+        if (guestError) {
+          console.error('Guest count error:', guestError);
+        }
+
         setEvent(eventData);
+        setGuestCount(guestData?.length || 0);
       } catch (err) {
         console.error('Unexpected error:', err);
         setError('An unexpected error occurred');
@@ -78,6 +91,16 @@ export default function EventMessagesPage() {
 
     fetchEventData();
   }, [eventId, router]);
+
+  // Handle data refresh after guest management actions
+  const handleDataRefresh = async () => {
+    const { data: guestData } = await supabase
+      .from('event_guests')
+      .select('id')
+      .eq('event_id', eventId);
+
+    setGuestCount(guestData?.length || 0);
+  };
 
   // Loading state
   if (loading) {
@@ -124,6 +147,33 @@ export default function EventMessagesPage() {
 
   return (
     <PageWrapper centered={false}>
+      {/* Guest Import Modal */}
+      {showGuestImport && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <Suspense 
+              fallback={
+                <CardContainer>
+                  <div className="flex items-center justify-center py-8">
+                    <LoadingSpinner size="lg" />
+                    <span className="ml-3 text-gray-600">Loading guest import...</span>
+                  </div>
+                </CardContainer>
+              }
+            >
+              <LazyGuestImportWizard
+                eventId={eventId}
+                onImportComplete={() => {
+                  setShowGuestImport(false);
+                  handleDataRefresh();
+                }}
+                onClose={() => setShowGuestImport(false)}
+              />
+            </Suspense>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Navigation */}
         <div className="mb-6">
@@ -137,29 +187,31 @@ export default function EventMessagesPage() {
 
         {/* Page Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Messages</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Guest Management</h1>
           <p className="text-gray-600">
-            Send announcements, reminders, and updates to guests for <span className="font-medium text-gray-800">{event.title}</span>
+            Manage RSVPs, send invitations, and organize guests for <span className="font-medium text-gray-800">{event.title}</span>
           </p>
-          {messageType && (
-            <div className="mt-3 inline-flex items-center gap-2 px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">
-              <span>📧</span>
-              Pre-selected: {messageType === 'reminder' ? 'RSVP Reminder' : 'Message'}
-            </div>
-          )}
         </div>
 
-        {/* Message Center Interface */}
+        {/* Guest Management Interface */}
         <CardContainer>
           <Suspense 
             fallback={
               <div className="flex items-center justify-center py-8">
                 <LoadingSpinner size="lg" />
-                <span className="ml-3 text-gray-600">Loading message center...</span>
+                <span className="ml-3 text-gray-600">Loading guest management...</span>
               </div>
             }
           >
-            <LazyMessageCenter eventId={eventId} />
+            <LazyGuestManagement
+              eventId={eventId}
+              onGuestUpdated={handleDataRefresh}
+              onImportGuests={() => setShowGuestImport(true)}
+              onSendMessage={(messageType) => {
+                // Navigate to messages page with pre-selected type
+                router.push(`/host/events/${eventId}/messages?type=${messageType}`);
+              }}
+            />
           </Suspense>
         </CardContainer>
       </div>

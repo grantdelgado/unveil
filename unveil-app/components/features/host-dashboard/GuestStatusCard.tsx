@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { CardContainer } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
+import { cn } from '@/lib/utils';
 
 interface GuestStatusData {
   attending: number;
@@ -26,6 +27,7 @@ export function GuestStatusCard({ eventId, onManageClick }: GuestStatusCardProps
     total: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [showDetails, setShowDetails] = useState(false);
 
   useEffect(() => {
     const fetchGuestStatus = async () => {
@@ -96,10 +98,25 @@ export function GuestStatusCard({ eventId, onManageClick }: GuestStatusCardProps
           </button>
         </div>
 
-        {/* RSVP Status Summary */}
+        {/* Quick Summary */}
         <div className="space-y-3">
+          {/* Topline Metrics */}
+          <div className="text-sm text-gray-600">
+            <span className="font-medium text-green-700">{statusData.attending} Attending</span>
+            <span className="mx-2">•</span>
+            <span className="font-medium text-red-700">{statusData.declined} Declined</span>
+            <span className="mx-2">•</span>
+            <span className="font-medium text-gray-600">{statusData.pending} No Response</span>
+            {statusData.maybe > 0 && (
+              <>
+                <span className="mx-2">•</span>
+                <span className="font-medium text-yellow-700">{statusData.maybe} Maybe</span>
+              </>
+            )}
+          </div>
+
           {/* Progress Bar */}
-          <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+          <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
             <div className="h-full flex">
               {statusData.total > 0 && (
                 <>
@@ -126,54 +143,67 @@ export function GuestStatusCard({ eventId, onManageClick }: GuestStatusCardProps
             </div>
           </div>
 
-          {/* Status Breakdown */}
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div className="flex items-center justify-between p-2 bg-green-50 rounded-lg">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span className="text-gray-700">Attending</span>
+          {/* View Details Toggle */}
+          {statusData.total > 0 && (
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-medium text-gray-700">
+                {Math.round((statusData.attending / statusData.total) * 100)}% confirmed attendance
               </div>
-              <span className="font-medium text-green-700">{statusData.attending}</span>
+              <button
+                onClick={() => setShowDetails(!showDetails)}
+                className="text-sm text-purple-600 hover:text-purple-700 font-medium transition-colors duration-200"
+              >
+                {showDetails ? 'Hide Details' : 'View Details'}
+              </button>
             </div>
-            
-            <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                <span className="text-gray-700">Pending</span>
+          )}
+
+          {/* Detailed Breakdown - Progressive Disclosure */}
+          {showDetails && statusData.total > 0 && (
+            <div className={cn(
+              "grid grid-cols-2 gap-3 text-sm transition-all duration-200 ease-in-out",
+              "animate-in slide-in-from-top-2"
+            )}>
+              <div className="flex items-center justify-between p-2 bg-green-50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span className="text-gray-700">Attending</span>
+                </div>
+                <span className="font-medium text-green-700">{statusData.attending}</span>
               </div>
-              <span className="font-medium text-gray-600">{statusData.pending}</span>
+              
+              <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                  <span className="text-gray-700">Pending</span>
+                </div>
+                <span className="font-medium text-gray-600">{statusData.pending}</span>
+              </div>
+              
+              {statusData.maybe > 0 && (
+                <div className="flex items-center justify-between p-2 bg-yellow-50 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                    <span className="text-gray-700">Maybe</span>
+                  </div>
+                  <span className="font-medium text-yellow-700">{statusData.maybe}</span>
+                </div>
+              )}
+              
+              {statusData.declined > 0 && (
+                <div className="flex items-center justify-between p-2 bg-red-50 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                    <span className="text-gray-700">Declined</span>
+                  </div>
+                  <span className="font-medium text-red-700">{statusData.declined}</span>
+                </div>
+              )}
             </div>
-            
-            {statusData.maybe > 0 && (
-              <div className="flex items-center justify-between p-2 bg-yellow-50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                  <span className="text-gray-700">Maybe</span>
-                </div>
-                <span className="font-medium text-yellow-700">{statusData.maybe}</span>
-              </div>
-            )}
-            
-            {statusData.declined > 0 && (
-              <div className="flex items-center justify-between p-2 bg-red-50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                  <span className="text-gray-700">Declined</span>
-                </div>
-                <span className="font-medium text-red-700">{statusData.declined}</span>
-              </div>
-            )}
-          </div>
+          )}
         </div>
 
-        {/* Quick Stats */}
-        {statusData.total > 0 && (
-          <div className="text-center py-2 bg-gray-50 rounded-lg">
-            <span className="text-sm font-medium text-gray-700">
-              {Math.round((statusData.attending / statusData.total) * 100)}% confirmed attendance
-            </span>
-          </div>
-        )}
+        {/* Removed duplicate quick stats section - now integrated above */}
 
         {/* Empty State */}
         {statusData.total === 0 && (

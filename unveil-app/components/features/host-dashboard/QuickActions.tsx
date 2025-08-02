@@ -63,19 +63,7 @@ export function QuickActions({ eventId }: QuickActionsProps) {
     fetchQuickStats();
   }, [eventId]);
 
-  const handleSendReminder = async () => {
-    // Simple RSVP reminder functionality
-    try {
-      // This could be enhanced to send actual reminders
-      console.log('Sending RSVP reminders...');
-
-      // For now, just show a success message
-      alert('RSVP reminders sent successfully!');
-    } catch (error) {
-      console.error('Error sending reminders:', error);
-      alert('Failed to send reminders. Please try again.');
-    }
-  };
+  // Removed handleSendReminder - messaging consolidated to Messages tab
 
   if (loading) {
     return (
@@ -116,35 +104,25 @@ export function QuickActions({ eventId }: QuickActionsProps) {
             </div>
           </div>
 
-          {/* Action Buttons */}
+          {/* Essential Actions Only */}
           <div className="space-y-2">
-            {stats.pendingRSVPs > 0 && (
-              <SecondaryButton
-                onClick={handleSendReminder}
-                className="w-full"
-              >
-                📧 Send RSVP Reminder ({stats.pendingRSVPs})
-              </SecondaryButton>
-            )}
-
-            <SecondaryButton
-              className="w-full"
-              onClick={() =>
-                window.open(
-                  `/host/events/${eventId}/dashboard?tab=messages`,
-                  '_self',
-                )
-              }
-            >
-              💬 Send Message
-            </SecondaryButton>
-
             <SecondaryButton
               className="w-full"
               onClick={() => window.open(`/host/events/${eventId}`, '_blank')}
             >
               👁️ Preview Guest View
             </SecondaryButton>
+            
+            {stats.pendingRSVPs > 0 && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <div className="text-sm text-amber-700 font-medium mb-1">
+                  📧 {stats.pendingRSVPs} Pending RSVPs
+                </div>
+                <div className="text-xs text-amber-600">
+                  Send reminders from the Messages tab
+                </div>
+              </div>
+            )}
           </div>
 
           {stats.totalGuests === 0 && (

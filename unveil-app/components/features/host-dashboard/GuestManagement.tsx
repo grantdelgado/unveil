@@ -223,6 +223,20 @@ export function GuestManagement({
         />
       </div>
 
+      {/* Essential Actions */}
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-gray-900">Guest List</h3>
+        <div className="flex gap-2">
+          <SecondaryButton
+            onClick={onImportGuests}
+            className="inline-flex items-center gap-2"
+          >
+            <span>📄</span>
+            Import Guests
+          </SecondaryButton>
+        </div>
+      </div>
+
       {/* Search Bar - Sticky on Mobile */}
       <div className="sticky top-0 z-10 bg-white pb-2">
         <div className="relative">
@@ -255,26 +269,55 @@ export function GuestManagement({
         </div>
       </div>
 
-      {/* Bulk Actions Sidebar for Mobile */}
-      <BulkActionShortcuts
-        onMarkAllPendingAsAttending={handleMarkAllPendingAsAttending}
-        onSendReminderToPending={handleSendReminderToPending}
-        onImportGuests={() => onImportGuests?.()}
-        pendingCount={statusCounts.pending}
-        totalCount={statusCounts.total}
-        loading={loading}
-      />
+      {/* Bulk Actions - Only show when actionable */}
+      {statusCounts.pending > 5 && (
+        <BulkActionShortcuts
+          onMarkAllPendingAsAttending={handleMarkAllPendingAsAttending}
+          onSendReminderToPending={handleSendReminderToPending}
+          onImportGuests={() => onImportGuests?.()}
+          pendingCount={statusCounts.pending}
+          totalCount={statusCounts.total}
+          loading={loading}
+        />
+      )}
 
-      {/* Selected Actions Bar */}
+      {/* Selection Prompt - Help users discover bulk selection */}
+      {filteredGuests.length > 2 && selectedGuests.size === 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+          <div className="flex items-center gap-3">
+            <span className="text-xl">💡</span>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-blue-900">Tip: Bulk Actions</p>
+              <p className="text-xs text-blue-700">Select multiple guests to update RSVPs, send messages, or manage them together</p>
+            </div>
+            <button
+              onClick={() => {
+                // Select first few guests as demo
+                const firstFew = new Set(filteredGuests.slice(0, 2).map(g => g.id));
+                setSelectedGuests(firstFew);
+              }}
+              className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+            >
+              Try it
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Selected Actions Bar - Enhanced with better UX */}
       {selectedGuests.size > 0 && (
-        <div className="bg-[#FF6B6B] text-white rounded-lg p-4">
+        <div className="bg-gradient-to-r from-[#FF6B6B] to-purple-600 text-white rounded-lg p-4 shadow-lg border">
           <div className="flex items-center justify-between mb-3">
-            <p className="font-medium">
-              {selectedGuests.size} guest{selectedGuests.size > 1 ? 's' : ''} selected
-            </p>
+            <div className="flex items-center gap-2">
+              <span className="text-lg">🎯</span>
+              <p className="font-medium">
+                {selectedGuests.size} guest{selectedGuests.size > 1 ? 's' : ''} selected
+              </p>
+            </div>
             <button
               onClick={() => setSelectedGuests(new Set())}
-              className="text-white/80 hover:text-white"
+              className="text-white/80 hover:text-white transition-colors duration-200 p-1 rounded"
+              title="Clear selection"
             >
               ✕
             </button>
@@ -314,19 +357,34 @@ export function GuestManagement({
 
       {/* Guest List - Mobile Optimized */}
       <CardContainer className="overflow-hidden">
-        {/* Header with Select All */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+        {/* Header with Select All - Enhanced with contextual hints */}
+        <div className={cn(
+          "flex items-center justify-between p-4 border-b border-gray-200 transition-all duration-200",
+          selectedGuests.size > 0 && "bg-purple-50 border-purple-200"
+        )}>
           <div className="flex items-center gap-3">
             <input
               type="checkbox"
               checked={isAllSelected}
               onChange={selectAll}
               className="h-4 w-4 text-[#FF6B6B] focus:ring-[#FF6B6B] border-gray-300 rounded"
+              title="Select all guests"
             />
             <span className="text-sm font-medium text-gray-700">
               {guestCountText}
             </span>
+            {selectedGuests.size === 0 && filteredGuests.length > 0 && (
+              <span className="text-xs text-gray-500 ml-2">
+                → Select guests for bulk actions
+              </span>
+            )}
           </div>
+          
+          {selectedGuests.size > 0 && (
+            <div className="text-xs text-purple-600 font-medium">
+              {selectedGuests.size}/{filteredGuests.length} selected
+            </div>
+          )}
         </div>
 
         {/* Guest Cards */}

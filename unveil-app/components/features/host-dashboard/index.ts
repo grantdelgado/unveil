@@ -2,6 +2,12 @@
 export { EventHeader } from './EventHeader';
 export { GuestStatusCard } from './GuestStatusCard';
 export { TabNavigation, type TabItem } from './TabNavigation';
+export { ContextualActionBanner } from './ContextualActionBanner';
+
+// Phase 2 Redesign Components
+export { StaticEventHeader } from './StaticEventHeader';
+export { EventSummaryCard } from './EventSummaryCard';
+export { DashboardActions } from './DashboardActions';
 
 // Phase 3 Components - Enhanced Guest Management
 export { GuestStatusSummary } from './GuestStatusSummary';
