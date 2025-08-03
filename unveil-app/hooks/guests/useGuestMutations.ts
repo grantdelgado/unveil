@@ -7,6 +7,7 @@ import { useQueryClient } from '@tanstack/react-query';
 interface UseGuestMutationsOptions {
   eventId: string;
   onGuestUpdated?: () => void;
+  onOptimisticRollback?: (guestId: string) => void;
 }
 
 interface UseGuestMutationsReturn {
@@ -22,12 +23,36 @@ interface UseGuestMutationsReturn {
  */
 export function useGuestMutations({ 
   eventId, 
-  onGuestUpdated 
+  onGuestUpdated,
+  onOptimisticRollback 
 }: UseGuestMutationsOptions): UseGuestMutationsReturn {
   const queryClient = useQueryClient();
 
-  // Single guest RSVP update
+  // Single guest RSVP update with optimistic updates
   const handleRSVPUpdate = useCallback(async (guestId: string, newStatus: string) => {
+    // Optimistically update React Query cache immediately
+    const guestQueryKey = ['guests', eventId];
+    
+    // Cancel any outgoing refetches (to avoid overwriting our optimistic update)
+    await queryClient.cancelQueries({ queryKey: guestQueryKey });
+    
+    // Snapshot the previous value for potential rollback
+    const previousData = queryClient.getQueryData(guestQueryKey);
+    
+    // Optimistically update the cache
+    queryClient.setQueryData(guestQueryKey, (oldData: any) => {
+      if (!oldData || !Array.isArray(oldData)) return oldData;
+      
+      return oldData.map((guest: any) =>
+        guest.id === guestId
+          ? { ...guest, rsvp_status: newStatus }
+          : guest
+      );
+    });
+    
+    // Trigger immediate callback for other listeners
+    onGuestUpdated?.();
+    
     try {
       const { error } = await supabase
         .from('event_guests')
@@ -43,12 +68,15 @@ export function useGuestMutations({
         eventId
       });
       
-      onGuestUpdated?.();
     } catch (updateError) {
+      // Rollback optimistic update on error
+      queryClient.setQueryData(guestQueryKey, previousData);
+      onOptimisticRollback?.(guestId);
+      
       logger.databaseError('Error updating RSVP', updateError);
       throw updateError;
     }
-  }, [eventId, onGuestUpdated, queryClient]);
+  }, [eventId, onGuestUpdated, onOptimisticRollback, queryClient]);
 
   // Remove guest
   const handleRemoveGuest = useCallback(async (guestId: string) => {

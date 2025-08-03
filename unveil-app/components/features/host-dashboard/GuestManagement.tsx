@@ -1,15 +1,14 @@
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
-import { cn } from '@/lib/utils';
-
 // Core dependencies
 import { useGuestMutations } from '@/hooks/guests';
 import { useSimpleGuestStore } from '@/hooks/guests/useSimpleGuestStore';
 
 // Local components
-import { SecondaryButton, PrimaryButton, CardContainer } from '@/components/ui';
+import { SecondaryButton, PrimaryButton } from '@/components/ui';
 import { GuestListItem } from './GuestListItem';
+import { GuestControlPanel } from './GuestControlPanel';
 import { GuestManagementErrorBoundary } from './ErrorBoundary';
 import { FeedbackProvider, useFeedback } from './UserFeedback';
 
@@ -36,14 +35,20 @@ function GuestManagementContent({
   const { 
     guests, 
     statusCounts, 
-    loading
+    loading,
+    updateGuestOptimistically,
+    rollbackOptimisticUpdate
   } = useSimpleGuestStore(eventId);
   
   const {
     handleRSVPUpdate,
     handleRemoveGuest,
     handleMarkAllPendingAsAttending,
-  } = useGuestMutations({ eventId, onGuestUpdated });
+  } = useGuestMutations({ 
+    eventId, 
+    onGuestUpdated,
+    onOptimisticRollback: rollbackOptimisticUpdate
+  });
 
   // Simplified filtering (removed complex multi-filter logic)
   const filteredGuests = useMemo(() => {
@@ -85,12 +90,17 @@ function GuestManagementContent({
   // Enhanced handlers with user feedback
   const handleRSVPUpdateWithFeedback = useCallback(async (guestId: string, newStatus: string) => {
     try {
+      // Immediately update the UI for instant feedback
+      updateGuestOptimistically(guestId, { rsvp_status: newStatus as 'attending' | 'declined' | 'maybe' | 'pending' });
+      
+      // Then perform the actual database update
       await handleRSVPUpdate(guestId, newStatus);
       showSuccess('RSVP Updated', 'Guest status has been updated successfully.');
     } catch {
+      // If the mutation fails, the mutation hook will handle rollback
       showError('Update Failed', 'Failed to update RSVP status. Please try again.');
     }
-  }, [handleRSVPUpdate, showSuccess, showError]);
+  }, [handleRSVPUpdate, updateGuestOptimistically, showSuccess, showError]);
 
   const handleRemoveGuestWithFeedback = useCallback(async (guestId: string) => {
     const guest = guests.find(g => g.id === guestId);
@@ -142,15 +152,17 @@ function GuestManagementContent({
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        {/* Loading skeleton - simplified */}
-        <div className="animate-pulse space-y-4">
-          <div className="h-16 bg-gray-200 rounded"></div>
-          <div className="h-10 bg-gray-200 rounded"></div>
-          <div className="space-y-3">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="h-20 bg-gray-200 rounded"></div>
-            ))}
+      <div className="min-h-screen bg-gray-50 pb-8">
+        <div className="max-w-4xl mx-auto p-4 space-y-6">
+          {/* Loading skeleton - simplified */}
+          <div className="animate-pulse space-y-4">
+            <div className="h-20 bg-gray-200 rounded-lg"></div>
+            <div className="h-16 bg-gray-200 rounded-lg"></div>
+            <div className="space-y-3">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="h-24 bg-gray-200 rounded-lg"></div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -158,104 +170,36 @@ function GuestManagementContent({
   }
 
   return (
-    <div className="space-y-6">
-      {/* 1. PRIMARY ACTIONS (Top Priority - Audit Recommendation) */}
-      <CardContainer>
-        <div className="p-6">
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">Guest Management</h2>
-              <p className="text-sm text-gray-600 mt-1">
-                Manage your guest list and track RSVPs
-              </p>
-            </div>
-            
-            {/* Primary Actions */}
-            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-              <PrimaryButton
-                onClick={onImportGuests}
-                className="flex items-center justify-center gap-2"
-              >
-                <span>📄</span>
-                Import Guests
-              </PrimaryButton>
-              
-              {/* Simplified bulk action */}
-              {pendingCount > 0 && (
-                <SecondaryButton
-                  onClick={handleConfirmAllPending}
-                  className="flex items-center justify-center gap-2"
-                >
-                  <span>✅</span>
-                  Confirm All Pending ({pendingCount})
-                </SecondaryButton>
-              )}
-            </div>
-          </div>
-          
-          {/* Search Bar */}
-          <div className="mt-4">
-            <input
-              type="text"
-              placeholder="Search guests by name, email, or phone..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF6B6B] focus:border-[#FF6B6B] min-h-[44px]"
-            />
-          </div>
-        </div>
-      </CardContainer>
+    <div className="min-h-screen bg-gray-50 pb-8">
+      <div className="max-w-4xl mx-auto p-4 space-y-6">
+        {/* Control Panel - Single unified top section */}
+        <GuestControlPanel
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          filterByRSVP={filterByRSVP}
+          onFilterChange={setFilterByRSVP}
+          statusCounts={simplifiedCounts}
+          onImportGuests={onImportGuests || (() => {})}
+          hasGuests={guests.length > 0}
+        />
 
-      {/* 2. SIMPLIFIED STATUS SUMMARY (3 filters only) */}
-      <CardContainer>
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-md font-medium text-gray-900">
-              Guest Status
-            </h3>
-            <span className="text-sm text-gray-600">
-              {filteredGuests.length} of {simplifiedCounts.total} guests
-            </span>
+        {/* Bulk Actions (if applicable) */}
+        {pendingCount > 0 && (
+          <div className="flex justify-center">
+            <SecondaryButton
+              onClick={handleConfirmAllPending}
+              className="flex items-center justify-center gap-2 min-h-[44px]"
+              fullWidth={false}
+            >
+              <span>✅</span>
+              Confirm All Pending ({pendingCount})
+            </SecondaryButton>
           </div>
-          
-          {/* Simplified Filter Pills (3 only - Audit Recommendation) */}
-          <div className="flex gap-2 overflow-x-auto">
-            {[
-              { key: 'all', label: 'All', count: simplifiedCounts.total, emoji: '👥' },
-              { key: 'attending', label: 'Attending', count: simplifiedCounts.attending, emoji: '✅' },
-              { key: 'pending', label: 'Pending', count: simplifiedCounts.pending, emoji: '⏳' },
-            ].map((filter) => (
-              <button
-                key={filter.key}
-                onClick={() => setFilterByRSVP(filter.key as 'all' | 'attending' | 'pending')}
-                className={cn(
-                  'flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap',
-                  'border-2 min-h-[44px] transition-all duration-200',
-                  filterByRSVP === filter.key ? [
-                    'bg-[#FF6B6B] text-white border-[#FF6B6B]'
-                  ] : [
-                    'bg-gray-50 text-gray-800 border-gray-200 hover:border-gray-300'
-                  ]
-                )}
-              >
-                <span>{filter.emoji}</span>
-                <span>{filter.label}</span>
-                <span className={cn(
-                  'px-2 py-1 rounded-full text-xs font-semibold',
-                  filterByRSVP === filter.key ? 'bg-white bg-opacity-20' : 'bg-gray-200'
-                )}>
-                  {filter.count}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </CardContainer>
+        )}
 
-      {/* 3. GUEST LIST (Main Content) */}
-      <CardContainer>
+        {/* Guest List */}
         {filteredGuests.length === 0 ? (
-          <div className="p-8 text-center">
+          <div className="bg-white rounded-lg p-8 text-center shadow-sm border border-gray-100">
             <div className="text-6xl mb-4">
               {searchTerm || filterByRSVP !== 'all' ? '🔍' : '👥'}
             </div>
@@ -265,40 +209,33 @@ function GuestManagementContent({
             <p className="text-gray-600 mb-6">
               {searchTerm || filterByRSVP !== 'all' 
                 ? 'Try adjusting your search or filter to find guests.'
-                : 'Get started by importing your guest list.'
+                : 'Get started by importing your guest list from a CSV file.'
               }
             </p>
             {(!searchTerm && filterByRSVP === 'all') && (
-              <PrimaryButton onClick={onImportGuests}>
-                Import Guest List
+              <PrimaryButton 
+                onClick={onImportGuests}
+                fullWidth={false}
+                className="min-h-[44px] px-8"
+              >
+                📄 Import Guest List
               </PrimaryButton>
             )}
           </div>
         ) : (
-          <div>
-            {/* List header */}
-            <div className="px-6 py-4 border-b border-gray-100">
-              <h3 className="text-md font-medium text-gray-900">
-                Guest List ({filteredGuests.length})
-              </h3>
-            </div>
-            
-            {/* Guest items */}
-            <div className="divide-y divide-gray-100">
-              {filteredGuests.map((guest) => (
-                <GuestListItem
-                  key={guest.id}
-                  guest={guest}
-                  isSelected={false} // Simplified - removed selection complexity
-                  onToggleSelect={() => {}} // Simplified - removed selection complexity
-                  onRSVPUpdate={handleRSVPUpdateWithFeedback}
-                  onRemove={handleRemoveGuestWithFeedback}
-                />
-              ))}
-            </div>
+          <div className="space-y-0">
+            {/* Guest items - no wrapper, individual cards handle their own styling */}
+            {filteredGuests.map((guest) => (
+              <GuestListItem
+                key={guest.id}
+                guest={guest}
+                onRSVPUpdate={handleRSVPUpdateWithFeedback}
+                onRemove={handleRemoveGuestWithFeedback}
+              />
+            ))}
           </div>
         )}
-      </CardContainer>
+      </div>
     </div>
   );
 }

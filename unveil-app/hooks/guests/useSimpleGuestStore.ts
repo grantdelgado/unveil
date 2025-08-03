@@ -50,6 +50,8 @@ interface SimpleGuestStoreReturn {
   error: string | null;
   connectionStatus: 'connecting' | 'connected' | 'disconnected' | 'error';
   refreshGuests: () => Promise<void>;
+  updateGuestOptimistically: (guestId: string, updates: Partial<SimpleGuest>) => void;
+  rollbackOptimisticUpdate: (guestId: string) => void;
 }
 
 /**
@@ -61,6 +63,7 @@ export function useSimpleGuestStore(eventId: string): SimpleGuestStoreReturn {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'error'>('connecting');
+  const [guestSnapshots, setGuestSnapshots] = useState<Map<string, SimpleGuest>>(new Map());
 
   // Calculate status counts from guests array
   const statusCounts = useCallback((guestsList: SimpleGuest[]): SimpleGuestStatusCounts => {
@@ -189,6 +192,42 @@ export function useSimpleGuestStore(eventId: string): SimpleGuestStoreReturn {
     };
   }, [connectionStatus]); // Only depend on connectionStatus
 
+  // Optimistic update function for immediate UI feedback
+  const updateGuestOptimistically = useCallback((guestId: string, updates: Partial<SimpleGuest>) => {
+    setGuests(prevGuests => {
+      // Find and store snapshot of original guest before updating
+      const originalGuest = prevGuests.find(g => g.id === guestId);
+      if (originalGuest) {
+        setGuestSnapshots(prev => new Map(prev).set(guestId, originalGuest));
+      }
+      
+      return prevGuests.map(guest => 
+        guest.id === guestId 
+          ? { ...guest, ...updates }
+          : guest
+      );
+    });
+  }, []);
+
+  // Rollback function to revert optimistic updates
+  const rollbackOptimisticUpdate = useCallback((guestId: string) => {
+    setGuestSnapshots(prevSnapshots => {
+      const snapshot = prevSnapshots.get(guestId);
+      if (snapshot) {
+        setGuests(prevGuests => 
+          prevGuests.map(guest => 
+            guest.id === guestId ? snapshot : guest
+          )
+        );
+        // Remove snapshot after rollback
+        const newSnapshots = new Map(prevSnapshots);
+        newSnapshots.delete(guestId);
+        return newSnapshots;
+      }
+      return prevSnapshots;
+    });
+  }, []);
+
   return {
     guests: guests || [], // Ensure never undefined
     statusCounts: statusCounts(guests),
@@ -196,6 +235,8 @@ export function useSimpleGuestStore(eventId: string): SimpleGuestStoreReturn {
     error,
     connectionStatus,
     refreshGuests: fetchGuests,
+    updateGuestOptimistically,
+    rollbackOptimisticUpdate,
   };
 }
 

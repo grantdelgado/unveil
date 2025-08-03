@@ -15,6 +15,7 @@ export { BulkActionShortcuts } from './BulkActionShortcuts';
 
 // Existing Components
 export { GuestManagement } from './GuestManagement';
+export { GuestControlPanel } from './GuestControlPanel';
 
 // Re-export messaging components from new location for backwards compatibility
 export { 

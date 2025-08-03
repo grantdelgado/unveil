@@ -12,16 +12,12 @@ import type { OptimizedGuest } from './types';
 
 interface GuestListItemProps {
   guest: OptimizedGuest;
-  isSelected: boolean;
-  onToggleSelect: (guestId: string, selected: boolean) => void;
   onRSVPUpdate: (guestId: string, newStatus: RSVPStatus) => void;
   onRemove: (guestId: string) => void;
 }
 
 export const GuestListItem = memo<GuestListItemProps>(({
   guest,
-  isSelected,
-  onToggleSelect,
   onRSVPUpdate,
   onRemove,
 }) => {
@@ -34,75 +30,73 @@ export const GuestListItem = memo<GuestListItemProps>(({
   const displayEmail = guest.users?.email || guest.guest_email;
   
   return (
-    <div className="p-4 hover:bg-gray-50 transition-colors">
-      <div className="flex items-start gap-3">
-        <input
-          type="checkbox"
-          checked={isSelected}
-          onChange={(e) => onToggleSelect(guest.id, e.target.checked)}
-          className="mt-1 h-11 w-11 text-[#FF6B6B] focus:ring-[#FF6B6B] border-gray-300 rounded"
-          aria-label={`Select ${displayName}`}
-        />
+    <div className="p-4 bg-white border border-gray-100 rounded-lg hover:shadow-sm transition-all duration-200 m-3">
+      <div className="space-y-3">
+        {/* Guest Name - Full Width */}
+        <div>
+          <h3 className="text-base font-semibold text-gray-900">
+            {displayName}
+          </h3>
+        </div>
         
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between">
-            <div className="flex-1 min-w-0">
-              <h3 className="text-sm font-medium text-gray-900 truncate">
-                {displayName}
-              </h3>
-              <div className="flex flex-col gap-1 mt-1">
-                <p className="text-xs text-gray-500">
-                  Phone: {guest.phone}
-                </p>
-                {displayEmail && (
-                  <p className="text-xs text-gray-500">
-                    Email: {displayEmail}
-                  </p>
-                )}
-                <p className="text-xs text-gray-500">
-                  Role: {guest.role}
-                </p>
-              </div>
-            </div>
-            
-            {/* RSVP Status and Actions */}
-            <div className="flex flex-col items-end gap-2 ml-4">
-              <select
-                value={currentStatus}
-                onChange={(e) => onRSVPUpdate(guest.id, e.target.value as RSVPStatus)}
-                className={cn(
-                  'text-xs px-3 py-2 border rounded focus:ring-2 focus:ring-[#FF6B6B] focus:border-[#FF6B6B]',
-                  'min-h-[44px] min-w-[120px]', // Improved touch-friendly size
-                  statusConfig.bgColor,
-                  statusConfig.textColor,
-                  statusConfig.borderColor
-                )}
-                aria-label={`RSVP status for ${displayName}. Currently ${statusConfig.label}`}
-              >
-                {RSVP_STATUS_VALUES.map((status) => {
-                  const config = getRSVPStatusConfig(status);
-                  return (
-                    <option key={status} value={status}>
-                      {config.emoji} {config.label}
-                    </option>
-                  );
-                })}
-              </select>
-              
-              <button
-                onClick={() => onRemove(guest.id)}
-                className={cn(
-                  'text-xs px-3 py-2 text-red-600 hover:text-red-700',
-                  'hover:bg-red-50 rounded transition-colors',
-                  'border border-red-200 hover:border-red-300',
-                  'min-h-[44px] min-w-[80px]' // Improved touch-friendly size
-                )}
-                aria-label={`Remove ${displayName} from guest list`}
-              >
-                Remove
-              </button>
-            </div>
-          </div>
+        {/* RSVP Status Dropdown - Below Name */}
+        <div className="flex justify-start">
+          <select
+            value={currentStatus}
+            onChange={(e) => onRSVPUpdate(guest.id, e.target.value as RSVPStatus)}
+            className={cn(
+              'text-sm px-3 py-2 border rounded-lg focus:ring-2 focus:ring-pink-300 focus:border-pink-300',
+              'min-h-[44px] min-w-[130px] transition-colors duration-200',
+              statusConfig.bgColor,
+              statusConfig.textColor,
+              statusConfig.borderColor
+            )}
+            aria-label={`RSVP status for ${displayName}. Currently ${statusConfig.label}`}
+          >
+            {RSVP_STATUS_VALUES.map((status) => {
+              const config = getRSVPStatusConfig(status);
+              return (
+                <option key={status} value={status}>
+                  {config.emoji} {config.label}
+                </option>
+              );
+            })}
+          </select>
+        </div>
+
+        {/* Contact Information */}
+        <div className="space-y-1">
+          <p className="text-sm text-gray-600">
+            📱 {guest.phone}
+          </p>
+          {displayEmail && (
+            <p className="text-sm text-gray-600">
+              ✉️ {displayEmail}
+            </p>
+          )}
+          <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">
+            {guest.role}
+          </p>
+        </div>
+
+        {/* Bottom Row: Remove Button */}
+        <div className="flex justify-end pt-2 border-t border-gray-50">
+          <button
+            onClick={() => {
+              if (window.confirm(`Are you sure you want to remove ${displayName} from the guest list?`)) {
+                onRemove(guest.id);
+              }
+            }}
+            className={cn(
+              'text-sm px-4 py-2 text-red-600 hover:text-red-700',
+              'hover:bg-red-50 rounded-lg transition-colors duration-200',
+              'border border-red-200 hover:border-red-300',
+              'min-h-[44px] min-w-[100px] font-medium'
+            )}
+            aria-label={`Remove ${displayName} from guest list`}
+          >
+            🗑️ Remove
+          </button>
         </div>
       </div>
     </div>
