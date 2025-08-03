@@ -8,7 +8,7 @@ import {
   normalizeRSVPStatus,
   type RSVPStatus 
 } from '@/lib/types/rsvp';
-import type { OptimizedGuest } from '@/components/features/guest-management/shared/types';
+import type { OptimizedGuest } from './types';
 
 interface GuestListItemProps {
   guest: OptimizedGuest;
@@ -40,7 +40,7 @@ export const GuestListItem = memo<GuestListItemProps>(({
           type="checkbox"
           checked={isSelected}
           onChange={(e) => onToggleSelect(guest.id, e.target.checked)}
-          className="mt-1 h-4 w-4 text-[#FF6B6B] focus:ring-[#FF6B6B] border-gray-300 rounded"
+          className="mt-1 h-11 w-11 text-[#FF6B6B] focus:ring-[#FF6B6B] border-gray-300 rounded"
           aria-label={`Select ${displayName}`}
         />
         
