@@ -21,6 +21,10 @@ export interface SubscriptionConfig {
   timeoutMs?: number;
   retryOnTimeout?: boolean;
   maxRetries?: number;
+  // New: Connection stability options
+  enableBackoff?: boolean;
+  maxBackoffDelay?: number;
+  connectionTimeout?: number;
 }
 
 export interface SubscriptionState {
@@ -34,6 +38,12 @@ export interface SubscriptionState {
   retryCount: number;
   connectionAttempts: number;
   lastHeartbeat?: Date;
+  // New: Connection stability tracking
+  consecutiveErrors: number;
+  lastSuccessfulConnection?: Date;
+  backoffDelay: number;
+  isReconnecting: boolean;
+  connectionStartTime?: Date;
 }
 
 export interface SubscriptionStats {
@@ -74,11 +84,19 @@ export class SubscriptionManager {
   private errorCount = 0;
   private healthCheckInterval: NodeJS.Timeout | null = null;
   private connectionTimes: number[] = [];
+  
+  // New: Global connection stability
+  private globalConsecutiveErrors = 0;
+  private lastGlobalReconnect = 0;
+  private globalReconnectCooldown = 30000; // 30 seconds between global reconnects
 
   // Enhanced configuration
   private readonly DEFAULT_TIMEOUT = 30000; // 30 seconds
   private readonly HEARTBEAT_INTERVAL = 15000; // 15 seconds
   private readonly MAX_RETRIES = 3;
+  private readonly DEFAULT_BACKOFF_DELAY = 2000; // 2 seconds
+  private readonly MAX_BACKOFF_DELAY = 30000; // 30 seconds
+  private readonly CONNECTION_TIMEOUT = 15000; // 15 seconds
 
   constructor() {
     logger.realtime('🚀 Enhanced SubscriptionManager initialized');
@@ -99,23 +117,15 @@ export class SubscriptionManager {
       );
       throw createRealtimeError(
         'SUBSCRIPTION_FAILED',
-        'Cannot create subscription: SubscriptionManager is destroyed',
-        { subscriptionId },
+        'SubscriptionManager is destroyed',
       );
     }
-
-    // Clean up existing subscription if it exists
-    if (this.subscriptions.has(subscriptionId)) {
-      logger.realtime(
-        `⚠️ Subscription ${subscriptionId} already exists, cleaning up old one`,
-      );
-      this.cleanupExistingSubscription(subscriptionId);
-    }
-
-    const startTime = Date.now();
 
     try {
-      // Enhanced channel configuration with timeout and heartbeat
+      // Clean up any existing subscription with the same ID
+      this.cleanupExistingSubscription(subscriptionId);
+
+      const startTime = Date.now();
       const channel = supabase
         .channel(subscriptionId, {
           config: {
@@ -126,7 +136,6 @@ export class SubscriptionManager {
               self: false, 
               ack: true,
             },
-            // Enhanced realtime config
             private: false,
           },
         })
@@ -134,36 +143,20 @@ export class SubscriptionManager {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           'postgres_changes' as any,
           {
-            event: config.event || '*',
+            event: config.event,
             schema: config.schema || 'public',
             table: config.table,
             filter: config.filter,
           },
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (payload: RealtimePostgresChangesPayload<any>) => {
-            if (config.callback) {
-              try {
-                // Update activity timestamp
-                const subscription = this.subscriptions.get(subscriptionId);
-                if (subscription) {
-                  subscription.lastActivity = new Date();
-                  subscription.lastHeartbeat = new Date();
-                }
-
-                config.callback(payload);
-              } catch (callbackError) {
-                logger.error(
-                  `❌ Error in subscription callback: ${subscriptionId}`,
-                  callbackError,
-                );
-                this.handleSubscriptionError(
-                  subscriptionId,
-                  callbackError instanceof Error
-                    ? callbackError
-                    : new Error(String(callbackError)),
-                );
-              }
+          (payload: RealtimePostgresChangesPayload<Record<string, string | number | boolean | null>>) => {
+            // Update last activity
+            const subscription = this.subscriptions.get(subscriptionId);
+            if (subscription) {
+              subscription.lastActivity = new Date();
+              subscription.consecutiveErrors = 0; // Reset error count on successful data
             }
+
+            config.callback(payload);
           },
         );
 
@@ -175,6 +168,7 @@ export class SubscriptionManager {
           filter: config.filter,
           timeout: config.timeoutMs || this.DEFAULT_TIMEOUT,
           retryOnTimeout: config.retryOnTimeout ?? true,
+          enableBackoff: config.enableBackoff ?? true,
         },
       );
 
@@ -219,13 +213,17 @@ export class SubscriptionManager {
             config.onStatusChange?.('connected');
             this.connectionState = 'connected';
             
-            // Reset retry count on successful connection
+            // Reset retry count and error tracking on successful connection
             const subscription = this.subscriptions.get(subscriptionId);
             if (subscription) {
               subscription.retryCount = 0;
               subscription.connectionAttempts = 0;
               subscription.lastError = null;
               subscription.lastHeartbeat = new Date();
+              subscription.lastSuccessfulConnection = new Date();
+              subscription.consecutiveErrors = 0;
+              subscription.isReconnecting = false;
+              subscription.backoffDelay = config.enableBackoff !== false ? this.DEFAULT_BACKOFF_DELAY : 0;
             }
             
           } else if (status === 'CHANNEL_ERROR') {
@@ -256,6 +254,10 @@ export class SubscriptionManager {
         retryCount: 0,
         connectionAttempts: 1,
         lastHeartbeat: new Date(),
+        consecutiveErrors: 0,
+        backoffDelay: config.enableBackoff !== false ? this.DEFAULT_BACKOFF_DELAY : 0,
+        isReconnecting: false,
+        connectionStartTime: new Date(),
       };
 
       this.subscriptions.set(subscriptionId, subscription);
@@ -283,203 +285,187 @@ export class SubscriptionManager {
    */
   private handleSubscriptionTimeout(subscriptionId: string): void {
     const subscription = this.subscriptions.get(subscriptionId);
-    if (!subscription) {
-      logger.error(`❌ Cannot handle timeout for unknown subscription: ${subscriptionId}`);
-      return;
-    }
+    if (!subscription) return;
 
-    const maxRetries = subscription.config.maxRetries || this.MAX_RETRIES;
-    subscription.retryCount = (subscription.retryCount || 0) + 1;
-
-    logger.realtime(`⏰ Subscription timeout: ${subscriptionId} (attempt ${subscription.retryCount}/${maxRetries})`);
-
-    if (subscription.retryCount <= maxRetries) {
-      // Exponential backoff for retry
-      const retryDelay = Math.min(
-        this.reconnectDelay * Math.pow(2, subscription.retryCount - 1),
-        this.maxReconnectDelay
+    // Increment consecutive errors
+    subscription.consecutiveErrors++;
+    
+    // Use exponential backoff for reconnection
+    if (subscription.config.enableBackoff !== false) {
+      subscription.backoffDelay = Math.min(
+        subscription.backoffDelay * 1.5,
+        subscription.config.maxBackoffDelay || this.MAX_BACKOFF_DELAY
       );
-
-      logger.realtime(`🔄 Retrying subscription ${subscriptionId} in ${retryDelay}ms`);
-
-      setTimeout(() => {
-        if (!this.isDestroyed && this.subscriptions.has(subscriptionId)) {
-          // Cleanup and recreate subscription
-          this.unsubscribe(subscriptionId);
-          this.subscribe(subscriptionId, subscription.config);
-        }
-      }, retryDelay);
-    } else {
-      logger.error(`❌ Max retries exceeded for ${subscriptionId}, giving up`);
-      const timeoutError = new Error(`Subscription timeout after ${maxRetries} retries: ${subscriptionId}`);
-      this.handleSubscriptionError(subscriptionId, timeoutError);
-      subscription.config.onStatusChange?.('error');
     }
+
+    logger.warn(`⏰ Subscription timeout: ${subscriptionId} (attempt ${subscription.consecutiveErrors})`);
+    
+    // Schedule reconnection with backoff
+    setTimeout(() => {
+      if (!this.isDestroyed && subscription.isActive) {
+        this.reconnectSubscription(subscriptionId);
+      }
+    }, subscription.backoffDelay);
   }
 
   /**
-   * Clean up existing subscription without throwing errors
+   * Reconnect a single subscription with stability checks
    */
+  private reconnectSubscription(subscriptionId: string): void {
+    const subscription = this.subscriptions.get(subscriptionId);
+    if (!subscription || subscription.isReconnecting) return;
+
+    // Check if we're in a global error state
+    if (this.globalConsecutiveErrors > 5) {
+      const timeSinceLastGlobalReconnect = Date.now() - this.lastGlobalReconnect;
+      if (timeSinceLastGlobalReconnect < this.globalReconnectCooldown) {
+        logger.warn(`⏸️ Skipping reconnect for ${subscriptionId} due to global error state`);
+        return;
+      }
+    }
+
+    subscription.isReconnecting = true;
+    subscription.connectionAttempts++;
+
+    logger.realtime(`🔄 Reconnecting subscription: ${subscriptionId} (attempt ${subscription.connectionAttempts})`);
+
+    // Clean up existing channel
+    this.cleanupExistingSubscription(subscriptionId);
+
+    // Recreate subscription
+    setTimeout(() => {
+      if (!this.isDestroyed && subscription.isActive) {
+        try {
+          this.subscribe(subscriptionId, subscription.config);
+        } catch (error) {
+          logger.error(`❌ Failed to reconnect subscription: ${subscriptionId}`, error);
+          subscription.isReconnecting = false;
+        }
+      }
+    }, subscription.backoffDelay);
+  }
+
   private cleanupExistingSubscription(subscriptionId: string): void {
-    const existingSubscription = this.subscriptions.get(subscriptionId);
-    if (existingSubscription) {
+    const existing = this.subscriptions.get(subscriptionId);
+    if (existing?.channel) {
       try {
-        // Mark as inactive
-        existingSubscription.isActive = false;
-        
-        // Remove channel
-        supabase.removeChannel(existingSubscription.channel);
-        
-        // Remove from map
-        this.subscriptions.delete(subscriptionId);
-        
-        logger.realtime(`✅ Cleaned up existing subscription: ${subscriptionId}`);
+        existing.channel.unsubscribe();
+        logger.realtime(`🔌 Unsubscribing: ${subscriptionId}`);
       } catch (error) {
-        logger.error(`❌ Error cleaning up existing subscription: ${subscriptionId}`, error);
-        
-        // Force remove from map
-        this.subscriptions.delete(subscriptionId);
+        logger.warn(`⚠️ Error during cleanup: ${subscriptionId}`, error);
       }
     }
   }
 
-  /**
-   * Remove a subscription and clean up resources with enhanced error handling
-   */
   public unsubscribe(subscriptionId: string): void {
     const subscription = this.subscriptions.get(subscriptionId);
-    if (!subscription) {
-      logger.realtime(`⚠️ Subscription not found: ${subscriptionId}`);
-      return;
-    }
+    if (!subscription) return;
+
+    logger.realtime(`🔌 Unsubscribing: ${subscriptionId}`);
 
     try {
-      logger.realtime(`🔌 Unsubscribing: ${subscriptionId}`);
-
-      // Mark as inactive first
+      subscription.channel.unsubscribe();
       subscription.isActive = false;
-
-      // Remove the channel with enhanced error handling
-      try {
-        supabase.removeChannel(subscription.channel);
-        logger.realtime(`✅ Channel removed: ${subscriptionId}`);
-      } catch (channelError) {
-        logger.error(`❌ Error removing channel: ${subscriptionId}`, channelError);
-      }
+      subscription.isReconnecting = false;
       
-      // Remove from subscriptions map
-      this.subscriptions.delete(subscriptionId);
-      logger.realtime(`✅ Unsubscribed: ${subscriptionId}`);
-
-      // Update connection state if no active subscriptions
-      if (this.subscriptions.size === 0) {
-        this.connectionState = 'disconnected';
-      }
-
-      // Notify status change
-      subscription.config.onStatusChange?.('disconnected');
+      logger.realtime(`✅ Channel removed: ${subscriptionId}`);
     } catch (error) {
-      logger.error(`❌ Error during unsubscribe: ${subscriptionId}`, error);
-      
-      // Force remove from map even if there was an error
-      this.subscriptions.delete(subscriptionId);
-      
-      // Still notify of disconnection
-      subscription.config.onStatusChange?.('disconnected');
+      logger.warn(`⚠️ Error during unsubscribe: ${subscriptionId}`, error);
     }
+
+    this.subscriptions.delete(subscriptionId);
+    logger.realtime(`✅ Unsubscribed: ${subscriptionId}`);
   }
 
-  /**
-   * Get enhanced subscription statistics with health scoring
-   */
   public getStats(): SubscriptionStats {
+    const now = Date.now();
+    const uptime = now - this.startTime.getTime();
     const activeSubscriptions = Array.from(this.subscriptions.values()).filter(
-      sub => sub.isActive
+      (sub) => sub.isActive,
     ).length;
 
-    const totalRetries = Array.from(this.subscriptions.values())
-      .reduce((sum, sub) => sum + (sub.retryCount || 0), 0);
+    const avgConnectionTime =
+      this.connectionTimes.length > 0
+        ? this.connectionTimes.reduce((a, b) => a + b, 0) / this.connectionTimes.length
+        : 0;
 
-    const recentErrors = Array.from(this.subscriptions.values())
-      .filter(sub => sub.lastError && sub.lastError instanceof Error)
-      .length;
-
-    // Calculate average connection time
-    const avgConnectionTime = this.connectionTimes.length > 0
-      ? this.connectionTimes.reduce((sum, time) => sum + time, 0) / this.connectionTimes.length
-      : 0;
-
-    // Calculate health score (0-100)
     const healthScore = this.calculateHealthScore();
-
-    // Find the most recent error across all subscriptions
-    const lastError = Array.from(this.subscriptions.values())
-      .map(sub => ({
-        error: sub.lastError,
-        subscriptionId: sub.id,
-        timestamp: sub.lastActivity || sub.createdAt,
-      }))
-      .filter((item): item is { error: Error; subscriptionId: string; timestamp: Date } => 
-        item.error instanceof Error
-      )
-      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())[0];
 
     return {
       totalSubscriptions: this.subscriptions.size,
       activeSubscriptions,
       errorCount: this.errorCount,
       connectionState: this.connectionState,
-      uptime: Date.now() - this.startTime.getTime(),
-      totalRetries,
-      recentErrors,
+      uptime,
+      totalRetries: Array.from(this.subscriptions.values()).reduce(
+        (sum, sub) => sum + sub.retryCount,
+        0,
+      ),
+      recentErrors: Array.from(this.subscriptions.values()).reduce(
+        (sum, sub) => sum + sub.consecutiveErrors,
+        0,
+      ),
       avgConnectionTime,
       healthScore,
-      lastError: lastError ? {
-        message: lastError.error.message,
-        timestamp: lastError.timestamp,
-        subscriptionId: lastError.subscriptionId,
-      } : null,
+      lastError: this.getLastError(),
     };
   }
 
-  /**
-   * Calculate health score based on various metrics
-   */
   private calculateHealthScore(): number {
-    const subscriptions = Array.from(this.subscriptions.values());
-    if (subscriptions.length === 0) return 100;
+    if (this.subscriptions.size === 0) return 100;
 
-    let score = 100;
+    const activeSubscriptions = Array.from(this.subscriptions.values()).filter(
+      (sub) => sub.isActive,
+    ).length;
 
-    // Deduct points for errors
-    const errorRate = this.errorCount / Math.max(subscriptions.length, 1);
-    score -= Math.min(errorRate * 20, 40); // Max 40 points deduction
+    if (activeSubscriptions === 0) return 0;
 
-    // Deduct points for recent errors
-    const recentErrorRate = subscriptions.filter(s => s.lastError).length / subscriptions.length;
-    score -= recentErrorRate * 20; // Max 20 points deduction
+    // Base score from connection state
+    let score = this.connectionState === 'connected' ? 80 : 40;
 
-    // Deduct points for high retry counts
-    const avgRetries = subscriptions.reduce((sum, s) => sum + s.retryCount, 0) / subscriptions.length;
-    score -= Math.min(avgRetries * 5, 20); // Max 20 points deduction
+    // Deduct for errors
+    const totalErrors = Array.from(this.subscriptions.values()).reduce(
+      (sum, sub) => sum + sub.consecutiveErrors,
+      0,
+    );
+    score -= Math.min(totalErrors * 5, 30);
 
-    // Deduct points for slow connections
-    if (this.connectionTimes.length > 0) {
-      const avgTime = this.connectionTimes.reduce((sum, time) => sum + time, 0) / this.connectionTimes.length;
-      if (avgTime > 5000) score -= 10; // Deduct 10 points for slow connections
-    }
+    // Deduct for retries
+    const totalRetries = Array.from(this.subscriptions.values()).reduce(
+      (sum, sub) => sum + sub.retryCount,
+      0,
+    );
+    score -= Math.min(totalRetries * 2, 20);
 
-    // Deduct points if not connected
-    if (this.connectionState !== 'connected') {
-      score -= 20;
-    }
+    // Bonus for stable connections
+    const stableConnections = Array.from(this.subscriptions.values()).filter(
+      (sub) => sub.lastSuccessfulConnection && 
+      Date.now() - sub.lastSuccessfulConnection.getTime() > 60000
+    ).length;
+    score += Math.min(stableConnections * 5, 20);
 
-    return Math.max(0, Math.round(score));
+    return Math.max(0, Math.min(100, Math.round(score)));
   }
 
-  /**
-   * Get detailed information about all subscriptions with enhanced metrics
-   */
+  private getLastError(): SubscriptionStats['lastError'] {
+    const subscriptionsWithErrors = Array.from(this.subscriptions.values()).filter(
+      (sub) => sub.lastError,
+    );
+
+    if (subscriptionsWithErrors.length === 0) return null;
+
+    const mostRecentError = subscriptionsWithErrors.reduce((latest, current) => {
+      if (!latest.lastError || !current.lastError) return latest;
+      return current.lastError > latest.lastError ? current : latest;
+    });
+
+    return {
+      message: mostRecentError.lastError?.message || 'Unknown error',
+      timestamp: mostRecentError.lastActivity || new Date(),
+      subscriptionId: mostRecentError.id,
+    };
+  }
+
   public getSubscriptionDetails(): Array<{
     id: string;
     table: string;
@@ -493,45 +479,37 @@ export class SubscriptionManager {
     uptime: number;
     healthStatus: 'healthy' | 'warning' | 'critical';
   }> {
-    return Array.from(this.subscriptions.entries()).map(
-      ([id, subscription]) => {
-        const uptime = Date.now() - subscription.createdAt.getTime();
-        const timeSinceLastActivity = subscription.lastActivity 
-          ? Date.now() - subscription.lastActivity.getTime()
-          : uptime;
+    const now = new Date();
+    return Array.from(this.subscriptions.values()).map((sub) => {
+      const uptime = now.getTime() - sub.createdAt.getTime();
+      const errorCount = sub.consecutiveErrors;
+      
+      let healthStatus: 'healthy' | 'warning' | 'critical' = 'healthy';
+      if (errorCount > 3) healthStatus = 'critical';
+      else if (errorCount > 1) healthStatus = 'warning';
 
-        // Determine health status
-        let healthStatus: 'healthy' | 'warning' | 'critical' = 'healthy';
-        if (subscription.retryCount > 2 || subscription.lastError) {
-          healthStatus = 'critical';
-        } else if (subscription.retryCount > 0 || timeSinceLastActivity > 60000) {
-          healthStatus = 'warning';
-        }
-
-        return {
-          id,
-          table: subscription.config.table,
-          event: subscription.config.event,
-          isActive: subscription.isActive,
-          createdAt: subscription.createdAt,
-          lastActivity: subscription.lastActivity || subscription.createdAt,
-          lastHeartbeat: subscription.lastHeartbeat,
-          errorCount: subscription.retryCount,
-          connectionAttempts: subscription.connectionAttempts,
-          uptime,
-          healthStatus,
-        };
-      },
-    );
+      return {
+        id: sub.id,
+        table: sub.config.table,
+        event: sub.config.event,
+        isActive: sub.isActive,
+        createdAt: sub.createdAt,
+        lastActivity: sub.lastActivity || sub.createdAt,
+        lastHeartbeat: sub.lastHeartbeat,
+        errorCount,
+        connectionAttempts: sub.connectionAttempts,
+        uptime,
+        healthStatus,
+      };
+    });
   }
 
-  /**
-   * Clean up all subscriptions with enhanced logging
-   */
   public destroy(): void {
     if (this.isDestroyed) return;
 
-    logger.realtime('🧹 Destroying Enhanced SubscriptionManager');
+    logger.realtime('🧹 Destroying SubscriptionManager');
+
+    this.isDestroyed = true;
 
     // Clear health check interval
     if (this.healthCheckInterval) {
@@ -539,23 +517,25 @@ export class SubscriptionManager {
       this.healthCheckInterval = null;
     }
 
-    // Unsubscribe from all active subscriptions
+    // Unsubscribe from all channels
     const subscriptionIds = Array.from(this.subscriptions.keys());
-    logger.realtime(`🧹 Cleaning up ${subscriptionIds.length} subscriptions`);
-    
     subscriptionIds.forEach((id) => this.unsubscribe(id));
 
-    this.isDestroyed = true;
-    this.connectionState = 'disconnected';
-
-    logger.realtime('✅ Enhanced SubscriptionManager destroyed');
+    logger.realtime('✅ SubscriptionManager destroyed');
   }
 
-  /**
-   * Manually trigger reconnection for all subscriptions with enhanced logic
-   */
   public reconnectAll(): void {
     if (this.isDestroyed) return;
+
+    // Check global reconnect cooldown
+    const timeSinceLastGlobalReconnect = Date.now() - this.lastGlobalReconnect;
+    if (timeSinceLastGlobalReconnect < this.globalReconnectCooldown) {
+      logger.warn(`⏸️ Skipping global reconnect due to cooldown (${Math.round((this.globalReconnectCooldown - timeSinceLastGlobalReconnect) / 1000)}s remaining)`);
+      return;
+    }
+
+    this.lastGlobalReconnect = Date.now();
+    this.globalConsecutiveErrors++;
 
     logger.realtime('🔄 Reconnecting all subscriptions with enhanced logic');
 
@@ -574,7 +554,7 @@ export class SubscriptionManager {
 
     // Recreate all subscriptions with staggered timing to avoid overwhelming
     activeSubscriptions.forEach(([id, subscription], index) => {
-      const delay = index * 200; // 200ms delay between reconnections
+      const delay = index * 500; // Increased delay to 500ms between reconnections
       setTimeout(() => {
         if (!this.isDestroyed) {
           logger.realtime(`🔄 Recreating subscription ${id} (${index + 1}/${activeSubscriptions.length})`);
@@ -603,11 +583,16 @@ export class SubscriptionManager {
     // Update subscription error state
     subscription.lastError = normalizedError;
     subscription.retryCount = (subscription.retryCount || 0) + 1;
+    subscription.consecutiveErrors++;
+
+    // Update global error tracking
+    this.globalConsecutiveErrors++;
 
     // Enhanced error logging with context
     logger.error(`❌ Subscription error: ${subscriptionId}`, {
       error: normalizedError.message,
       retryCount: subscription.retryCount,
+      consecutiveErrors: subscription.consecutiveErrors,
       subscriptionAge: Date.now() - subscription.createdAt.getTime(),
       lastActivity: subscription.lastActivity?.toISOString(),
       table: subscription.config.table,
@@ -629,6 +614,9 @@ export class SubscriptionManager {
     if (subscription.retryCount >= maxRetries) {
       logger.error(`❌ Max retries exceeded for ${subscriptionId}, cleaning up`);
       this.unsubscribe(subscriptionId);
+    } else if (subscription.consecutiveErrors <= 3) {
+      // Only attempt reconnection for reasonable error counts
+      this.reconnectSubscription(subscriptionId);
     }
   }
 
@@ -645,8 +633,9 @@ export class SubscriptionManager {
         logger.realtime('🔑 User signed in, connection monitoring active');
         this.connectionState = 'connected';
         
-        // Reset error count on new auth
+        // Reset error counts on new auth
         this.errorCount = 0;
+        this.globalConsecutiveErrors = 0;
       } else if (event === 'TOKEN_REFRESHED') {
         logger.realtime('🔄 Token refreshed, subscriptions should continue');
       }
@@ -687,10 +676,15 @@ export class SubscriptionManager {
         });
       }
 
-      // Trigger reconnect if health score is very low
-      if (stats.healthScore < 30 && stats.activeSubscriptions > 0) {
-        logger.error(`🚨 Health score critically low (${stats.healthScore}), triggering reconnect`);
-        this.reconnectAll();
+      // Only trigger reconnect if health score is very low and we haven't recently reconnected
+      if (stats.healthScore < 25 && stats.activeSubscriptions > 0) {
+        const timeSinceLastGlobalReconnect = Date.now() - this.lastGlobalReconnect;
+        if (timeSinceLastGlobalReconnect > this.globalReconnectCooldown) {
+          logger.error(`🚨 Health score critically low (${stats.healthScore}), triggering reconnect`);
+          this.reconnectAll();
+        } else {
+          logger.warn(`⏸️ Health score low (${stats.healthScore}) but reconnect cooldown active`);
+        }
       }
 
       // Log warning if we have many errors
@@ -698,6 +692,12 @@ export class SubscriptionManager {
         logger.error(
           `⚠️ High error count detected: ${stats.errorCount} errors`,
         );
+      }
+
+      // Reset global error count if we've been stable
+      if (stats.healthScore > 80 && this.globalConsecutiveErrors > 0) {
+        this.globalConsecutiveErrors = 0;
+        logger.realtime('✅ Connection stability restored, resetting error counters');
       }
     }, this.HEARTBEAT_INTERVAL);
   }
@@ -711,16 +711,14 @@ export class SubscriptionManager {
         reject(new Error('Connection timeout'));
       }, timeoutMs);
 
-      // Wait for channel to be subscribed
       const checkStatus = () => {
         if (channel.state === 'joined') {
           clearTimeout(timeout);
           resolve();
-        } else if (channel.state === 'errored' || channel.state === 'closed') {
+        } else if (channel.state === 'errored') {
           clearTimeout(timeout);
-          reject(new Error(`Channel connection failed: ${channel.state}`));
+          reject(new Error('Connection failed'));
         } else {
-          // Check again in 100ms
           setTimeout(checkStatus, 100);
         }
       };
@@ -730,12 +728,9 @@ export class SubscriptionManager {
   }
 }
 
-// Global singleton instance
+// Singleton instance
 let subscriptionManager: SubscriptionManager | null = null;
 
-/**
- * Get the global subscription manager instance
- */
 export function getSubscriptionManager(): SubscriptionManager {
   if (!subscriptionManager) {
     subscriptionManager = new SubscriptionManager();
@@ -743,9 +738,6 @@ export function getSubscriptionManager(): SubscriptionManager {
   return subscriptionManager;
 }
 
-/**
- * Clean up the global subscription manager
- */
 export function destroySubscriptionManager(): void {
   if (subscriptionManager) {
     subscriptionManager.destroy();

@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback, memo } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
+// Remove unused imports - only keep what's needed
 import { useRealtimeSubscription } from '@/hooks/realtime';
 import { RSVPProgressChart } from './RSVPProgressChart';
 import { StatusPill } from './StatusPill';
@@ -81,54 +82,41 @@ const statusConfig = [
   },
 ] as const;
 
-
-// Recent activity feed component
 function RecentActivityFeed({ activities }: { activities: RSVPActivity[] }) {
-  if (activities.length === 0) return null;
-
-  const getStatusEmoji = (status: string) => {
-    switch (status) {
-      case 'attending': return '✅';
-      case 'maybe': return '🤷‍♂️';
-      case 'declined': return '❌';
-      default: return '⏳';
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'attending': return 'will attend';
-      case 'maybe': return 'might attend';
-      case 'declined': return 'declined';
-      default: return 'is pending';
-    }
-  };
+  if (activities.length === 0) {
+    return (
+      <div className="text-sm text-gray-500 text-center py-4">
+        No recent RSVP activity
+      </div>
+    );
+  }
 
   return (
-    <div className="mt-4 bg-gray-50 rounded-lg p-3">
-      <div className="flex items-center gap-2 mb-2">
-        <span className="text-sm font-medium text-gray-700">Recent Activity</span>
-        <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-      </div>
-      
-      <div className="space-y-2 max-h-32 overflow-y-auto">
-        {activities.slice(0, 5).map((activity) => (
-          <div key={`${activity.id}-${activity.timestamp}`} className="flex items-center gap-2 text-xs">
-            <span className="text-base">{getStatusEmoji(activity.new_status)}</span>
-            <span className="text-gray-600 flex-1">
-              <span className="font-medium">{activity.user_name}</span>
-              {' '}
-              {getStatusLabel(activity.new_status)}
+    <div className="space-y-2 max-h-48 overflow-y-auto">
+      {activities.map((activity) => (
+        <div key={activity.id} className="flex items-center gap-2 text-sm">
+          <div className="flex-1 min-w-0">
+            <span className="font-medium text-gray-900 truncate">
+              {activity.user_name}
             </span>
-            <span className="text-gray-400">
-              {new Date(activity.timestamp).toLocaleTimeString([], { 
-                hour: '2-digit', 
-                minute: '2-digit' 
-              })}
+            <span className="text-gray-500">
+              {' '}
+              changed from{' '}
+              <span className="font-medium">
+                {activity.old_status || 'No response'}
+              </span>{' '}
+              to{' '}
+              <span className="font-medium">{activity.new_status}</span>
             </span>
           </div>
-        ))}
-      </div>
+          <div className="text-xs text-gray-400 flex-shrink-0">
+            {new Date(activity.timestamp).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -189,20 +177,19 @@ export const GuestStatusSummary = memo<GuestStatusSummaryProps>(({
     }
   }, [eventId]);
 
-  // Set up real-time subscription using centralized hook
+  // Set up real-time subscription using centralized hook with enhanced stability
   const { } = useRealtimeSubscription({
     subscriptionId: `guest-status-summary-${eventId}`,
     table: 'event_guests',
     event: '*',
     filter: `event_id=eq.${eventId}`,
     enabled: Boolean(eventId),
+    performanceOptions: {
+      enablePooling: true,
+      eventId,
+    },
     onDataChange: useCallback(async (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => {
-      logger.realtime('Real-time RSVP update', { 
-        eventType: payload.eventType, 
-        guestId: payload.new && 'id' in payload.new ? payload.new.id : null 
-      });
-      
-      // Update activity feed for RSVP changes
+      // Only log significant updates to reduce noise
       if (payload.eventType === 'UPDATE' && payload.new && payload.old) {
         const oldData = payload.old as Record<string, unknown>;
         const newData = payload.new as Record<string, unknown>;
@@ -210,6 +197,13 @@ export const GuestStatusSummary = memo<GuestStatusSummaryProps>(({
         const newRsvp = newData?.rsvp_status;
         
         if (oldRsvp !== newRsvp) {
+          logger.realtime('Real-time RSVP update', { 
+            eventType: payload.eventType, 
+            guestId: payload.new && 'id' in payload.new ? payload.new.id : null,
+            oldStatus: oldRsvp,
+            newStatus: newRsvp,
+          });
+          
           const activity: RSVPActivity = {
             id: `rsvp-${Date.now()}`,
             user_name: (newData?.guest_name as string) || 'Unknown Guest',
@@ -226,15 +220,19 @@ export const GuestStatusSummary = memo<GuestStatusSummaryProps>(({
       await fetchStatusCounts();
     }, [fetchStatusCounts]),
     onError: useCallback((error: Error) => {
-      logger.realtimeError('Guest status summary subscription error', error);
+      // Only log non-connection errors to reduce noise
+      if (!error.message.includes('CHANNEL_ERROR') && !error.message.includes('timeout')) {
+        logger.realtimeError('Guest status summary subscription error', error);
+      }
       setRealtimeConnected(false);
     }, []),
     onStatusChange: useCallback((status: string) => {
       setRealtimeConnected(status === 'connected');
+      // Only log meaningful status changes
       if (status === 'connected') {
         logger.realtime('Guest status summary realtime connected');
-      } else {
-        logger.realtime(`Guest status summary realtime status: ${status}`);
+      } else if (status === 'error') {
+        logger.realtime('Guest status summary realtime status: error');
       }
     }, [])
   });
@@ -293,94 +291,66 @@ export const GuestStatusSummary = memo<GuestStatusSummaryProps>(({
 
   return (
     <div className={cn('space-y-4', className)}>
-      {/* Enhanced progress overview */}
-      <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+      {/* RSVP Progress Chart */}
+      <div className="bg-white rounded-lg p-4 border border-gray-200">
         <div className="flex items-center gap-4">
-          <RSVPProgressChart statusCounts={statusCounts} />
-          
+          <RSVPProgressChart
+            statusCounts={statusCounts}
+          />
           <div className="flex-1">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="font-semibold text-gray-900">RSVP Progress</h3>
-              {!realtimeConnected && (
-                <div className="flex items-center gap-1 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
-                  <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
-                  <span>Polling mode</span>
-                </div>
-              )}
-            </div>
-            <div className="space-y-1">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Responses</span>
-                <span className="font-medium">
-                  {statusCounts.attending + statusCounts.maybe + statusCounts.declined} of {statusCounts.total}
-                </span>
-              </div>
-              
-              {/* Mini breakdown */}
-              <div className="flex gap-3 text-xs">
-                <span className="flex items-center gap-1">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  {statusCounts.attending} attending
-                </span>
-                {statusCounts.maybe > 0 && (
-                  <span className="flex items-center gap-1">
-                    <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                    {statusCounts.maybe} maybe
-                  </span>
-                )}
-                {statusCounts.declined > 0 && (
-                  <span className="flex items-center gap-1">
-                    <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                    {statusCounts.declined} declined
-                  </span>
-                )}
-              </div>
-            </div>
+            <h3 className="text-lg font-semibold text-gray-900">
+              RSVP Progress
+            </h3>
+            <p className="text-sm text-gray-600">
+              {statusCounts.attending} of {statusCounts.total} guests confirmed
+            </p>
+            {!realtimeConnected && (
+              <p className="text-xs text-yellow-600 mt-1">
+                Using polling mode (real-time connection lost)
+              </p>
+            )}
           </div>
-
-          {/* Activity toggle */}
-          {recentActivity.length > 0 && (
-            <button
-              onClick={() => setShowActivity(!showActivity)}
-              className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
-            >
-              📈 Activity
-              <span className="text-xs transform transition-transform duration-200" 
-                    style={{ transform: showActivity ? 'rotate(180deg)' : 'rotate(0deg)' }}>
-                ▼
-              </span>
-            </button>
-          )}
         </div>
-
-        {/* Recent activity feed */}
-        {showActivity && <RecentActivityFeed activities={recentActivity} />}
       </div>
 
-      {/* Status filter buttons */}
+      {/* Status Filters */}
       <div className="flex gap-2 overflow-x-auto scrollbar-hide py-2">
-        {statusConfig.map((status) => {
-          const isActive = activeFilter === status.key;
-          const count = getCountForStatus(status.key);
-          
-          return (
-            <StatusPill
-              key={status.key}
-              label={status.label}
-              icon={status.icon}
-              count={count}
-              isActive={isActive}
-              bgColor={status.bgColor}
-              activeColor={status.activeColor}
-              textColor={status.textColor}
-              activeTextColor={status.activeTextColor}
-              onClick={() => onFilterChange(status.key)}
-            />
-          );
-        })}
+        {statusConfig.map((status) => (
+          <StatusPill
+            key={status.key}
+            label={status.label}
+            icon={status.icon}
+            count={getCountForStatus(status.key)}
+            isActive={activeFilter === status.key}
+            bgColor={status.bgColor}
+            activeColor={status.activeColor}
+            textColor={status.textColor}
+            activeTextColor={status.activeTextColor}
+            onClick={() => onFilterChange(status.key)}
+          />
+        ))}
+      </div>
+
+      {/* Recent Activity */}
+      <div className="bg-white rounded-lg p-4 border border-gray-200">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-gray-900">
+            Recent RSVP Activity
+          </h3>
+          <button
+            onClick={() => setShowActivity(!showActivity)}
+            className="text-xs text-blue-600 hover:text-blue-800 transition-colors"
+          >
+            {showActivity ? 'Hide' : 'Show'}
+          </button>
+        </div>
+        
+        {showActivity && (
+          <RecentActivityFeed activities={recentActivity} />
+        )}
       </div>
     </div>
   );
-});
+}); 
 
 GuestStatusSummary.displayName = 'GuestStatusSummary'; 

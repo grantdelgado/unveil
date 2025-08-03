@@ -3,17 +3,19 @@
 // External dependencies
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 
+// Error boundary and feedback system
+import { GuestManagementErrorBoundary } from '@/components/features/guest-management/shared/ErrorBoundary';
+import { FeedbackProvider, useFeedback } from '@/components/features/guest-management/shared/UserFeedback';
+
 // Internal utilities
 import { cn } from '@/lib/utils';
 
 // Internal hooks (specific imports for better tree-shaking)
 import { useHapticFeedback, usePullToRefresh } from '@/hooks/common';
 import { 
-  useGuests, 
-  useGuestFiltering, 
-  useGuestStatusCounts, 
   useGuestMutations 
 } from '@/hooks/guests';
+import { useSimpleGuestStore } from '@/hooks/guests/useSimpleGuestStore';
 
 // Internal components (specific imports)
 import { SecondaryButton, CardContainer } from '@/components/ui';
@@ -28,12 +30,13 @@ interface GuestManagementProps {
   onSendMessage?: (messageType: 'reminder') => void;
 }
 
-export function GuestManagement({
+function GuestManagementContent({
   eventId,
   onGuestUpdated,
   onImportGuests,
   onSendMessage,
 }: GuestManagementProps) {
+  const { showError, showSuccess } = useFeedback();
   const [selectedGuests, setSelectedGuests] = useState<Set<string>>(new Set());
   
   // 🚀 PERFORMANCE OPTIMIZATION: Focused hook architecture
@@ -43,9 +46,55 @@ export function GuestManagement({
   // - Optimized dependency arrays prevent cascade re-renders
   // - Follows single responsibility principle for better performance
   // Week 3: Replaced heavy useGuestData hook with focused alternatives
-  const { guests, loading, fetchData } = useGuests({ eventId });
-  const { searchTerm, setSearchTerm, filterByRSVP, setFilterByRSVP, filteredGuests } = useGuestFiltering(guests);
-  const { statusCounts } = useGuestStatusCounts(guests);
+  const { 
+    guests, 
+    statusCounts, 
+    loading,
+    refreshGuests 
+  } = useSimpleGuestStore(eventId);
+  
+  // Local filtering state
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterByRSVP, setFilterByRSVP] = useState('all');
+  
+  // Filter guests based on search and RSVP status
+  const filteredGuests = useMemo(() => {
+    if (!guests || !Array.isArray(guests)) return [];
+    
+    let filtered = guests;
+    
+    // Apply search filter
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter(guest => {
+        const guestName = guest.guest_name?.toLowerCase() || '';
+        const guestEmail = guest.guest_email?.toLowerCase() || '';
+        const phone = guest.phone?.toLowerCase() || '';
+        const userFullName = guest.users?.full_name?.toLowerCase() || '';
+        const userEmail = guest.users?.email?.toLowerCase() || '';
+        
+        return (
+          guestName.includes(searchLower) ||
+          guestEmail.includes(searchLower) ||
+          phone.includes(searchLower) ||
+          userFullName.includes(searchLower) ||
+          userEmail.includes(searchLower)
+        );
+      });
+    }
+    
+    // Apply RSVP filter
+    if (filterByRSVP !== 'all') {
+      filtered = filtered.filter(guest => {
+        if (!guest.rsvp_status) return filterByRSVP === 'pending';
+        return guest.rsvp_status === filterByRSVP;
+      });
+    }
+    
+    return filtered;
+  }, [guests, searchTerm, filterByRSVP]);
+  
+  const fetchData = refreshGuests;
   const { 
     handleRSVPUpdate: baseHandleRSVPUpdate,
     handleRemoveGuest: baseHandleRemoveGuest,
@@ -73,20 +122,30 @@ export function GuestManagement({
       triggerHaptic('light');
       await baseHandleRSVPUpdate(guestId, newStatus);
       triggerHaptic('success');
-    } catch (error) {
+      showSuccess('RSVP Updated', 'Guest RSVP status has been updated successfully.');
+    } catch {
       triggerHaptic('error');
-      console.error('Failed to update guest:', error);
+      showError(
+        'Failed to Update RSVP',
+        'There was an error updating the guest RSVP status. Please try again.',
+        () => handleRSVPUpdate(guestId, newStatus)
+      );
     }
-  }, [baseHandleRSVPUpdate, triggerHaptic]);
+  }, [baseHandleRSVPUpdate, triggerHaptic, showError, showSuccess]);
 
   const handleRemoveGuest = useCallback(async (guestId: string) => {
     if (!confirm('Are you sure you want to remove this guest?')) return;
     try {
       await baseHandleRemoveGuest(guestId);
-    } catch (error) {
-      console.error('Failed to delete guest:', error);
+      showSuccess('Guest Removed', 'The guest has been successfully removed from the event.');
+    } catch {
+      showError(
+        'Failed to Remove Guest',
+        'There was an error removing the guest. Please try again.',
+        () => handleRemoveGuest(guestId)
+      );
     }
-  }, [baseHandleRemoveGuest]);
+  }, [baseHandleRemoveGuest, showError, showSuccess]);
 
   const handleMarkAllPendingAsAttending = useCallback(async () => {
     const pendingCount = statusCounts.pending;
@@ -98,11 +157,16 @@ export function GuestManagement({
       triggerHaptic('medium');
       await baseHandleMarkAllPendingAsAttending();
       triggerHaptic('success');
-    } catch (error) {
+      showSuccess('Bulk Update Complete', `Successfully marked ${pendingCount} guests as attending.`);
+    } catch {
       triggerHaptic('error');
-      console.error('Failed to mark guests as attending:', error);
+      showError(
+        'Bulk Update Failed',
+        'There was an error updating the guest statuses. Please try again.',
+        handleMarkAllPendingAsAttending
+      );
     }
-  }, [baseHandleMarkAllPendingAsAttending, statusCounts.pending, triggerHaptic]);
+  }, [baseHandleMarkAllPendingAsAttending, statusCounts.pending, triggerHaptic, showError, showSuccess]);
 
   const handleSendReminderToPending = useCallback(() => {
     onSendMessage?.('reminder');
@@ -111,16 +175,22 @@ export function GuestManagement({
   const handleBulkRSVPUpdateWithFeedback = useCallback(async (newStatus: string) => {
     if (selectedGuests.size === 0) return;
 
+    const guestCount = selectedGuests.size;
     try {
       triggerHaptic('medium');
       await handleBulkRSVPUpdate(Array.from(selectedGuests), newStatus);
       setSelectedGuests(new Set());
       triggerHaptic('success');
-    } catch (error) {
+      showSuccess('Bulk Update Complete', `Successfully updated ${guestCount} guests to ${newStatus}.`);
+    } catch {
       triggerHaptic('error');
-      console.error('Failed to update guests:', error);
+      showError(
+        'Bulk Update Failed',
+        'There was an error updating the selected guests. Please try again.',
+        () => handleBulkRSVPUpdateWithFeedback(newStatus)
+      );
     }
-  }, [handleBulkRSVPUpdate, selectedGuests, triggerHaptic]);
+  }, [handleBulkRSVPUpdate, selectedGuests, triggerHaptic, showError, showSuccess]);
 
   // Memoize expensive calculations
   const pullToRefreshStyle = useMemo(() => ({
@@ -418,5 +488,16 @@ export function GuestManagement({
         </div>
       </CardContainer>
     </div>
+  );
+}
+
+// Main export with error boundary and feedback provider
+export function GuestManagement(props: GuestManagementProps) {
+  return (
+    <GuestManagementErrorBoundary>
+      <FeedbackProvider>
+        <GuestManagementContent {...props} />
+      </FeedbackProvider>
+    </GuestManagementErrorBoundary>
   );
 }

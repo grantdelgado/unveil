@@ -79,9 +79,9 @@ export function useGuestMutations({
     try {
       const { error } = await supabase
         .from('event_guests')
-        .update({ rsvp_status: 'Attending' })
+        .update({ rsvp_status: 'attending' })
         .eq('event_id', eventId)
-        .or('rsvp_status.is.null,rsvp_status.eq.Pending');
+        .or('rsvp_status.is.null,rsvp_status.eq.pending');
 
       if (error) throw error;
       

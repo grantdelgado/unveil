@@ -1,0 +1,678 @@
+{
+  "project": {
+    "name": "Guest Management Module Improvements",
+    "version": "1.0.0",
+    "baselineGrade": "B+ (85/100)",
+    "targetGrade": "A- (92/100)",
+    "startDate": "2025-01-29",
+    "estimatedDuration": "10-14 weeks",
+    "totalEffort": "250-290 hours"
+  },
+  "phases": [
+    {
+      "id": "phase1",
+      "name": "Critical Fixes",
+      "priority": "CRITICAL",
+      "duration": "1-2 weeks",
+      "effort": "40-50 hours",
+      "status": "pending",
+      "description": "Production stability and compliance fixes",
+      "successCriteria": [
+        "Zero data inconsistencies",
+        "Full accessibility compliance",
+        "Robust error handling"
+      ],
+      "tasks": [
+        {
+          "id": "p1_rsvp_standardization",
+          "title": "RSVP Status Standardization",
+          "priority": "critical",
+          "effort": "24-32 hours",
+          "status": "pending",
+          "assignee": null,
+          "dueDate": null,
+          "dependencies": [],
+          "files": [
+            "lib/types/rsvp.ts",
+            "components/features/host-dashboard/GuestListItem.tsx",
+            "hooks/guests/useGuestMutations.ts",
+            "components/features/host-dashboard/GuestStatusSummary.tsx"
+          ],
+          "subtasks": [
+            {
+              "id": "p1_rsvp_1",
+              "title": "Create standardized RSVP enum in lib/types/rsvp.ts",
+              "status": "pending",
+              "effort": "2 hours"
+            },
+            {
+              "id": "p1_rsvp_2", 
+              "title": "Update GuestListItem dropdown to use enum",
+              "status": "pending",
+              "effort": "4 hours"
+            },
+            {
+              "id": "p1_rsvp_3",
+              "title": "Fix useGuestMutations status values",
+              "status": "pending", 
+              "effort": "4 hours"
+            },
+            {
+              "id": "p1_rsvp_4",
+              "title": "Update filter components to use enum",
+              "status": "pending",
+              "effort": "6 hours"
+            },
+            {
+              "id": "p1_rsvp_5",
+              "title": "Add TypeScript strict checking",
+              "status": "pending",
+              "effort": "4 hours"
+            },
+            {
+              "id": "p1_rsvp_6",
+              "title": "End-to-end testing of RSVP workflows",
+              "status": "pending",
+              "effort": "4-8 hours"
+            }
+          ]
+        },
+        {
+          "id": "p1_accessibility",
+          "title": "Accessibility Enhancement",
+          "priority": "critical",
+          "effort": "32-40 hours",
+          "status": "pending",
+          "assignee": null,
+          "dueDate": null,
+          "dependencies": [],
+          "compliance": "WCAG 2.1 AA",
+          "subtasks": [
+            {
+              "id": "p1_a11y_1",
+              "title": "Add ARIA labels to all interactive elements",
+              "status": "pending",
+              "effort": "8 hours"
+            },
+            {
+              "id": "p1_a11y_2",
+              "title": "Implement keyboard navigation for guest list",
+              "status": "pending",
+              "effort": "12 hours"
+            },
+            {
+              "id": "p1_a11y_3",
+              "title": "Add focus management for bulk selection",
+              "status": "pending",
+              "effort": "6 hours"
+            },
+            {
+              "id": "p1_a11y_4",
+              "title": "Ensure color contrast meets AA standards",
+              "status": "pending",
+              "effort": "4 hours"
+            },
+            {
+              "id": "p1_a11y_5",
+              "title": "Add screen reader support for status changes",
+              "status": "pending",
+              "effort": "4 hours"
+            },
+            {
+              "id": "p1_a11y_6",
+              "title": "Test with keyboard-only navigation",
+              "status": "pending",
+              "effort": "4-8 hours"
+            }
+          ]
+        },
+        {
+          "id": "p1_error_handling",
+          "title": "Error Boundaries & User Feedback",
+          "priority": "high",
+          "effort": "16-24 hours",
+          "status": "pending",
+          "assignee": null,
+          "dueDate": null,
+          "dependencies": [],
+          "goal": "Zero silent failures",
+          "subtasks": [
+            {
+              "id": "p1_error_1",
+              "title": "Create ErrorBoundary wrapper for guest components",
+              "status": "pending",
+              "effort": "4 hours"
+            },
+            {
+              "id": "p1_error_2",
+              "title": "Replace console.error with user-visible feedback",
+              "status": "pending",
+              "effort": "6 hours"
+            },
+            {
+              "id": "p1_error_3",
+              "title": "Add loading states for async operations",
+              "status": "pending",
+              "effort": "4 hours"
+            },
+            {
+              "id": "p1_error_4",
+              "title": "Implement retry mechanisms",
+              "status": "pending",
+              "effort": "4 hours"
+            },
+            {
+              "id": "p1_error_5",
+              "title": "Add haptic feedback for error states",
+              "status": "pending",
+              "effort": "2 hours"
+            },
+            {
+              "id": "p1_error_6",
+              "title": "Create fallback UI components",
+              "status": "pending",
+              "effort": "4-8 hours"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase2",
+      "name": "Performance & UX",
+      "priority": "HIGH",
+      "duration": "2-3 weeks",
+      "effort": "60-70 hours",
+      "status": "pending",
+      "description": "User experience and scalability improvements",
+      "successCriteria": [
+        "<500ms load times",
+        "Virtualized lists for large datasets",
+        "Modular component architecture"
+      ],
+      "tasks": [
+        {
+          "id": "p2_component_refactor",
+          "title": "Component Architecture Refactoring",
+          "priority": "high",
+          "effort": "40 hours",
+          "status": "pending",
+          "assignee": null,
+          "dueDate": null,
+          "dependencies": ["p1_rsvp_standardization"],
+          "goal": "Break down 422-line monolith",
+          "newStructure": "components/features/guest-management/",
+          "subtasks": [
+            {
+              "id": "p2_refactor_1",
+              "title": "Create GuestManagementContainer.tsx",
+              "status": "pending",
+              "effort": "8 hours"
+            },
+            {
+              "id": "p2_refactor_2",
+              "title": "Create filters/ subdirectory with components",
+              "status": "pending",
+              "effort": "12 hours"
+            },
+            {
+              "id": "p2_refactor_3",
+              "title": "Create actions/ subdirectory with components",
+              "status": "pending",
+              "effort": "8 hours"
+            },
+            {
+              "id": "p2_refactor_4",
+              "title": "Create list/ subdirectory with components",
+              "status": "pending",
+              "effort": "8 hours"
+            },
+            {
+              "id": "p2_refactor_5",
+              "title": "Create shared/ utilities and types",
+              "status": "pending",
+              "effort": "4 hours"
+            }
+          ]
+        },
+        {
+          "id": "p2_performance",
+          "title": "Performance Optimization",
+          "priority": "high",
+          "effort": "40 hours",
+          "status": "pending",
+          "target": "Support 10,000+ guests",
+          "subtasks": [
+            {
+              "id": "p2_perf_1",
+              "title": "Implement react-window virtualization",
+              "status": "pending",
+              "effort": "12 hours"
+            },
+            {
+              "id": "p2_perf_2",
+              "title": "Add request deduplication for subscriptions",
+              "status": "pending",
+              "effort": "8 hours"
+            },
+            {
+              "id": "p2_perf_3",
+              "title": "Optimize filtering with Web Workers",
+              "status": "pending",
+              "effort": "8 hours"
+            },
+            {
+              "id": "p2_perf_4",
+              "title": "Implement infinite scroll",
+              "status": "pending",
+              "effort": "6 hours"
+            },
+            {
+              "id": "p2_perf_5",
+              "title": "Add query caching with invalidation",
+              "status": "pending",
+              "effort": "4 hours"
+            },
+            {
+              "id": "p2_perf_6",
+              "title": "Bundle size optimization",
+              "status": "pending",
+              "effort": "2 hours"
+            }
+          ]
+        },
+        {
+          "id": "p2_realtime",
+          "title": "Real-time Optimization",
+          "priority": "medium",
+          "effort": "24-32 hours",
+          "status": "pending",
+          "goal": "Reduce WebSocket connections by 90%",
+          "subtasks": [
+            {
+              "id": "p2_rt_1",
+              "title": "Create shared useRealtimeGuestStore hook",
+              "status": "pending",
+              "effort": "8 hours"
+            },
+            {
+              "id": "p2_rt_2",
+              "title": "Implement subscription pooling",
+              "status": "pending",
+              "effort": "8 hours"
+            },
+            {
+              "id": "p2_rt_3",
+              "title": "Add real-time conflict resolution",
+              "status": "pending",
+              "effort": "6 hours"
+            },
+            {
+              "id": "p2_rt_4",
+              "title": "Optimize subscription event filtering",
+              "status": "pending",
+              "effort": "4 hours"
+            },
+            {
+              "id": "p2_rt_5",
+              "title": "Add connection health monitoring",
+              "status": "pending",
+              "effort": "4-8 hours"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase3",
+      "name": "Enhanced Features",
+      "priority": "MEDIUM",
+      "duration": "3-4 weeks",
+      "effort": "70-80 hours",
+      "status": "pending",
+      "description": "Feature completeness and user delight",
+      "successCriteria": [
+        "Export functionality",
+        "Advanced filtering",
+        "Mobile-first UX"
+      ],
+      "tasks": [
+        {
+          "id": "p3_export",
+          "title": "Guest Export & Reporting",
+          "priority": "medium",
+          "effort": "40 hours",
+          "status": "pending",
+          "subtasks": [
+            {
+              "id": "p3_export_1",
+              "title": "CSV export with custom field selection",
+              "status": "pending",
+              "effort": "12 hours"
+            },
+            {
+              "id": "p3_export_2",
+              "title": "PDF guest list with event branding",
+              "status": "pending",
+              "effort": "12 hours"
+            },
+            {
+              "id": "p3_export_3",
+              "title": "RSVP analytics dashboard with charts",
+              "status": "pending",
+              "effort": "12 hours"
+            },
+            {
+              "id": "p3_export_4",
+              "title": "Email integration for guest summaries",
+              "status": "pending",
+              "effort": "4 hours"
+            }
+          ]
+        },
+        {
+          "id": "p3_filtering",
+          "title": "Advanced Filtering System",
+          "priority": "medium",
+          "effort": "40 hours",
+          "status": "pending",
+          "subtasks": [
+            {
+              "id": "p3_filter_1",
+              "title": "Tag-based filtering with autocomplete",
+              "status": "pending",
+              "effort": "12 hours"
+            },
+            {
+              "id": "p3_filter_2",
+              "title": "Date range filters",
+              "status": "pending",
+              "effort": "8 hours"
+            },
+            {
+              "id": "p3_filter_3",
+              "title": "Custom field filtering",
+              "status": "pending",
+              "effort": "8 hours"
+            },
+            {
+              "id": "p3_filter_4",
+              "title": "Saved filter presets",
+              "status": "pending",
+              "effort": "8 hours"
+            },
+            {
+              "id": "p3_filter_5",
+              "title": "Quick filter shortcuts",
+              "status": "pending",
+              "effort": "4 hours"
+            }
+          ]
+        },
+        {
+          "id": "p3_mobile",
+          "title": "Mobile Experience Enhancement",
+          "priority": "medium",
+          "effort": "40 hours",
+          "status": "pending",
+          "subtasks": [
+            {
+              "id": "p3_mobile_1",
+              "title": "Swipe-to-remove gesture",
+              "status": "pending",
+              "effort": "8 hours"
+            },
+            {
+              "id": "p3_mobile_2",
+              "title": "Swipe-to-RSVP quick actions",
+              "status": "pending",
+              "effort": "8 hours"
+            },
+            {
+              "id": "p3_mobile_3",
+              "title": "Larger touch targets (44px minimum)",
+              "status": "pending",
+              "effort": "6 hours"
+            },
+            {
+              "id": "p3_mobile_4",
+              "title": "Bottom sheet for bulk actions",
+              "status": "pending",
+              "effort": "8 hours"
+            },
+            {
+              "id": "p3_mobile_5",
+              "title": "Pull-to-refresh improvements",
+              "status": "pending",
+              "effort": "4 hours"
+            },
+            {
+              "id": "p3_mobile_6",
+              "title": "Native share integration",
+              "status": "pending",
+              "effort": "6 hours"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "phase4",
+      "name": "Architecture Improvements",
+      "priority": "LOW",
+      "duration": "4-5 weeks",
+      "effort": "80-90 hours",
+      "status": "pending",
+      "description": "Future-proofing and extensibility",
+      "successCriteria": [
+        "Plugin architecture",
+        "Database optimization",
+        "Multi-event support"
+      ],
+      "tasks": [
+        {
+          "id": "p4_database",
+          "title": "Database Schema Enhancement",
+          "priority": "medium",
+          "effort": "40 hours",
+          "status": "pending",
+          "goal": "Type safety and performance at DB level",
+          "subtasks": [
+            {
+              "id": "p4_db_1",
+              "title": "Create rsvp_status_enum migration",
+              "status": "pending",
+              "effort": "8 hours"
+            },
+            {
+              "id": "p4_db_2",
+              "title": "Add unique constraint for phone+event",
+              "status": "pending",
+              "effort": "4 hours"
+            },
+            {
+              "id": "p4_db_3",
+              "title": "Add performance indexes",
+              "status": "pending",
+              "effort": "4 hours"
+            },
+            {
+              "id": "p4_db_4",
+              "title": "Update TypeScript types",
+              "status": "pending",
+              "effort": "8 hours"
+            },
+            {
+              "id": "p4_db_5",
+              "title": "Test migration and rollback",
+              "status": "pending",
+              "effort": "16 hours"
+            }
+          ]
+        },
+        {
+          "id": "p4_plugins",
+          "title": "Plugin Architecture Foundation",
+          "priority": "low",
+          "effort": "80 hours",
+          "status": "pending",
+          "goal": "Extensible system for custom features",
+          "subtasks": [
+            {
+              "id": "p4_plugin_1",
+              "title": "Create plugin interface and manager",
+              "status": "pending",
+              "effort": "16 hours"
+            },
+            {
+              "id": "p4_plugin_2",
+              "title": "Implement plugin hook system",
+              "status": "pending",
+              "effort": "16 hours"
+            },
+            {
+              "id": "p4_plugin_3",
+              "title": "Create dietary restrictions plugin",
+              "status": "pending",
+              "effort": "16 hours"
+            },
+            {
+              "id": "p4_plugin_4",
+              "title": "Create seating arrangement plugin",
+              "status": "pending",
+              "effort": "16 hours"
+            },
+            {
+              "id": "p4_plugin_5",
+              "title": "Plugin documentation and examples",
+              "status": "pending",
+              "effort": "16 hours"
+            }
+          ]
+        },
+        {
+          "id": "p4_multi_event",
+          "title": "Multi-Event Guest Management",
+          "priority": "low",
+          "effort": "40 hours",
+          "status": "pending",
+          "goal": "Shared guest database across events",
+          "subtasks": [
+            {
+              "id": "p4_multi_1",
+              "title": "Cross-event guest lookup",
+              "status": "pending",
+              "effort": "12 hours"
+            },
+            {
+              "id": "p4_multi_2",
+              "title": "Guest history and preferences",
+              "status": "pending",
+              "effort": "12 hours"
+            },
+            {
+              "id": "p4_multi_3",
+              "title": "Bulk invite from previous events",
+              "status": "pending",
+              "effort": "8 hours"
+            },
+            {
+              "id": "p4_multi_4",
+              "title": "Guest relationship mapping",
+              "status": "pending",
+              "effort": "4 hours"
+            },
+            {
+              "id": "p4_multi_5",
+              "title": "Unified guest profiles",
+              "status": "pending",
+              "effort": "4 hours"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metrics": {
+    "performance": {
+      "initialLoad": {
+        "current": "800ms",
+        "phase1Target": "600ms",
+        "finalTarget": "400ms"
+      },
+      "filterResponse": {
+        "current": "150ms",
+        "phase1Target": "100ms",
+        "finalTarget": "50ms"
+      },
+      "rsvpUpdate": {
+        "current": "300ms",
+        "phase1Target": "200ms",
+        "finalTarget": "100ms"
+      },
+      "memoryUsage": {
+        "current": "45MB",
+        "phase1Target": "35MB",
+        "finalTarget": "25MB"
+      }
+    },
+    "quality": {
+      "accessibilityScore": "100% WCAG 2.1 AA",
+      "errorRate": "<0.1%",
+      "userSatisfaction": ">4.5/5",
+      "mobilePerformance": ">90 Lighthouse"
+    },
+    "business": {
+      "productivityGain": "40% reduction in management time",
+      "errorReduction": "95% fewer support tickets",
+      "scalabilityTarget": "10,000+ guests",
+      "featureAdoption": "80% advanced filtering usage"
+    }
+  },
+  "tools": {
+    "development": [
+      "TypeScript strict mode",
+      "Vitest testing framework",
+      "Playwright E2E tests",
+      "Storybook documentation"
+    ],
+    "performance": [
+      "react-window virtualization",
+      "Web Workers for filtering",
+      "React Query caching",
+      "Bundle analyzer"
+    ],
+    "accessibility": [
+      "axe-core testing",
+      "NVDA screen reader",
+      "Keyboard navigation testing",
+      "Color contrast analyzer"
+    ]
+  },
+  "deliverables": {
+    "phase1": [
+      "RSVP status enum system",
+      "Accessibility compliance report",
+      "Error boundary components",
+      "User feedback system"
+    ],
+    "phase2": [
+      "Refactored component architecture",
+      "Virtualized guest list",
+      "Performance optimization report",
+      "Real-time pooling system"
+    ],
+    "phase3": [
+      "Export functionality suite",
+      "Advanced filtering components",
+      "Mobile UX enhancements",
+      "Analytics dashboard"
+    ],
+    "phase4": [
+      "Database migration scripts",
+      "Plugin architecture documentation",
+      "Multi-event guest system",
+      "Extensibility guidelines"
+    ]
+  }
+}

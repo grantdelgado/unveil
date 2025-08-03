@@ -13,7 +13,7 @@ import {
 
 // Lazy load heavy components
 const LazyGuestImportWizard = lazy(() => import('@/components/features/guests/GuestImportWizard').then(m => ({ default: m.GuestImportWizard })));
-const LazyGuestManagement = lazy(() => import('@/components/features/host-dashboard/GuestManagement').then(m => ({ default: m.GuestManagement })));
+const LazyGuestManagement = lazy(() => import('@/components/features/guest-management').then(m => ({ default: m.GuestManagement })));
 
 type Event = Database['public']['Tables']['events']['Row'];
 

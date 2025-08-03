@@ -51,6 +51,11 @@ class SubscriptionPool {
         refCount: 0,
         config: {
           ...config,
+          // Enhanced stability configuration
+          enableBackoff: true,
+          maxBackoffDelay: 30000,
+          connectionTimeout: 15000,
+          maxRetries: 3,
           callback: (payload) => {
             // Broadcast to all subscribers in this pool
             pool!.callbacks.forEach((cb) => {
@@ -72,7 +77,13 @@ class SubscriptionPool {
       // Store unsubscribe function for cleanup
       (pool as any).unsubscribe = unsubscribe;
       
-      logger.realtime(`🏊 Created new subscription pool: ${poolKey}`);
+      logger.realtime(`🏊 Created new subscription pool: ${poolKey}`, {
+        pooling: true,
+        batching: false,
+        rateLimit: false,
+        batchDelay: 100,
+        maxUpdatesPerSecond: 5,
+      });
     }
     
     // Add component's callback to the pool
@@ -98,13 +109,13 @@ class SubscriptionPool {
     
     logger.realtime(`🔌 Removed component ${componentId} from pool ${poolKey} (refs: ${pool.refCount})`);
     
-    // If no more references, clean up the pool
-    if (pool.refCount <= 0) {
+    // Clean up pool if no more references
+    if (pool.refCount === 0) {
+      logger.realtime(`🧹 Cleaning up empty pool: ${poolKey}`);
       if ((pool as any).unsubscribe) {
         (pool as any).unsubscribe();
       }
       this.pools.delete(poolKey);
-      logger.realtime(`🗑️ Cleaned up empty subscription pool: ${poolKey}`);
     }
   }
 
@@ -117,19 +128,20 @@ class SubscriptionPool {
       callbackCount: number;
     }>;
   } {
+    const poolDetails = Array.from(this.pools.entries()).map(([key, pool]) => ({
+      poolKey: key,
+      refCount: pool.refCount,
+      callbackCount: pool.callbacks.size,
+    }));
+
     return {
       totalPools: this.pools.size,
-      totalSubscriptions: Array.from(this.pools.values()).reduce((sum, pool) => sum + pool.refCount, 0),
-      poolDetails: Array.from(this.pools.entries()).map(([key, pool]) => ({
-        poolKey: key,
-        refCount: pool.refCount,
-        callbackCount: pool.callbacks.size,
-      }))
+      totalSubscriptions: this.pools.size,
+      poolDetails,
     };
   }
 }
 
-// Performance configuration
 interface PerformanceOptions {
   enableBatching?: boolean;
   enableRateLimit?: boolean;
@@ -140,7 +152,6 @@ interface PerformanceOptions {
   eventId?: string; // For event-specific pooling
 }
 
-// Hook configuration
 export interface UseRealtimeSubscriptionOptions {
   subscriptionId: string;
   table: string;
@@ -154,7 +165,6 @@ export interface UseRealtimeSubscriptionOptions {
   onStatusChange?: (status: 'connecting' | 'connected' | 'disconnected' | 'error') => void;
 }
 
-// Hook return type
 export interface UseRealtimeSubscriptionReturn {
   isConnected: boolean;
   error: Error | null;
@@ -203,195 +213,127 @@ export function useRealtimeSubscription({
   onError,
   onStatusChange,
 }: UseRealtimeSubscriptionOptions): UseRealtimeSubscriptionReturn {
-  const mountedRef = useRef(true);
-  const subscriptionActiveRef = useRef(false);
-  const cleanupRef = useRef<(() => void) | null>(null);
-
-  // Stabilize callbacks
-  const stableOnDataChange = useMemo(() => onDataChange, [onDataChange]);
-  const stableOnError = useMemo(() => onError, [onError]);
-  const stableOnStatusChange = useMemo(() => onStatusChange, [onStatusChange]);
-
-  // Extract performance options with defaults
-  const {
-    enableBatching = false,
-    enableRateLimit = false,
-    batchDelay = 100,
-    maxUpdatesPerSecond = 5,
-    enablePooling = true, // Enable pooling by default for better performance
-    eventId,
-  } = performanceOptions;
-
-  // Generate unique component ID for pooling
+  const subscriptionManager = getSubscriptionManager();
+  const unsubscribeRef = useRef<(() => void) | null>(null);
+  const isConnectedRef = useRef(false);
+  const errorRef = useRef<Error | null>(null);
   const componentId = useMemo(() => `${subscriptionId}-${Date.now()}-${Math.random()}`, [subscriptionId]);
 
-  // Setup subscription with optional pooling
+  // Enhanced error handling with reduced noise
+  const handleError = useCallback((error: Error) => {
+    // Only log errors that aren't connection-related or are significant
+    if (!error.message.includes('CHANNEL_ERROR') && !error.message.includes('timeout')) {
+      logger.realtimeError('Subscription error', error);
+    }
+    errorRef.current = error;
+    onError?.(error);
+  }, [onError]);
+
+  // Enhanced status change handling
+  const handleStatusChange = useCallback((status: 'connecting' | 'connected' | 'disconnected' | 'error') => {
+    const wasConnected = isConnectedRef.current;
+    isConnectedRef.current = status === 'connected';
+    
+    // Only log status changes that are meaningful
+    if (status === 'connected' && !wasConnected) {
+      logger.realtime('Subscription connected');
+    } else if (status === 'error' && wasConnected) {
+      logger.realtime('Subscription error state');
+    }
+    
+    onStatusChange?.(status);
+  }, [onStatusChange]);
+
+  // Enhanced data change handling with error boundaries
+  const handleDataChange = useCallback((payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => {
+    try {
+      onDataChange?.(payload);
+    } catch (error) {
+      logger.error('Error in data change handler', error);
+      // Don't propagate data change errors to avoid cascading failures
+    }
+  }, [onDataChange]);
+
+  // Set up subscription with enhanced stability
   useEffect(() => {
-    if (!enabled || !subscriptionId || !table) {
+    if (!enabled || !subscriptionId) {
       return;
     }
 
-    // Prevent double subscription in React StrictMode
-    if (subscriptionActiveRef.current) {
-      logger.realtime(`⚠️ Subscription already active, skipping: ${subscriptionId}`);
-      return;
-    }
-
-    // Debounce subscription creation in development to handle React Strict Mode
-    const isDevelopment = process.env.NODE_ENV === 'development';
-    const setupDelay = isDevelopment ? 100 : 0; // Small delay in development only
-
-    const setupTimer = setTimeout(() => {
-      if (!mountedRef.current || subscriptionActiveRef.current) {
-        return; // Component unmounted or subscription already active
-      }
-
-      logger.realtime(`🔗 Setting up ${enablePooling ? 'pooled' : 'direct'} subscription: ${subscriptionId}`, {
-        pooling: enablePooling,
-        eventId,
-        batching: enableBatching,
-        rateLimit: enableRateLimit,
-        batchDelay,
-        maxUpdatesPerSecond,
-      });
-
-      // Mark subscription as active
-      subscriptionActiveRef.current = true;
-
-      try {
+    try {
+      // Use pooling if enabled and appropriate
+      if (performanceOptions.enablePooling && performanceOptions.eventId) {
+        const pool = SubscriptionPool.getInstance();
         const config: SubscriptionConfig = {
           table,
           event,
           schema,
           filter,
-          callback: stableOnDataChange || (() => {}),
-          onError: stableOnError,
-          onStatusChange: stableOnStatusChange,
+          callback: handleDataChange,
+          onError: handleError,
+          onStatusChange: handleStatusChange,
+          // Enhanced stability configuration
+          enableBackoff: true,
+          maxBackoffDelay: 30000,
+          connectionTimeout: 15000,
+          maxRetries: 3,
+          timeoutMs: 30000,
+          retryOnTimeout: true,
         };
 
-        if (enablePooling) {
-          // Use pooled subscription for better performance
-          const poolCleanup = SubscriptionPool.getInstance().addToPool(
-            componentId,
-            table,
-            config,
-            eventId,
-            stableOnDataChange
-          );
-          cleanupRef.current = poolCleanup;
-          logger.realtime(`✅ Pooled subscription setup complete: ${subscriptionId}`);
-        } else {
-          // Use direct subscription (original behavior)
-          const unsubscribe = getSubscriptionManager().subscribe(subscriptionId, config);
-          cleanupRef.current = unsubscribe;
-          logger.realtime(`✅ Direct subscription setup complete: ${subscriptionId}`);
-        }
-      } catch (error) {
-        logger.error(`❌ Failed to setup subscription: ${subscriptionId}`, error);
-        subscriptionActiveRef.current = false;
-        stableOnError?.(error instanceof Error ? error : new Error('Subscription setup failed'));
-      }
-    }, setupDelay);
-
-    // Cleanup function
-    return () => {
-      // Clear setup timer if still pending
-      clearTimeout(setupTimer);
-      
-      if (!mountedRef.current) return;
-
-      logger.realtime(`🧹 Cleaning up ${enablePooling ? 'pooled' : 'direct'} subscription: ${subscriptionId}`);
-      
-      // Mark as inactive
-      subscriptionActiveRef.current = false;
-      
-      // Execute cleanup
-      if (cleanupRef.current) {
-        try {
-          cleanupRef.current();
-          cleanupRef.current = null;
-        } catch (error) {
-          logger.error(`❌ Error during subscription cleanup: ${subscriptionId}`, error);
-        }
-      }
-    };
-  }, [
-    enabled,
-    subscriptionId,
-    table,
-    event,
-    schema,
-    filter,
-    enableBatching,
-    enableRateLimit,
-    batchDelay,
-    maxUpdatesPerSecond,
-    enablePooling,
-    eventId,
-    componentId,
-    stableOnDataChange,
-    stableOnError,
-    stableOnStatusChange,
-  ]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    mountedRef.current = true;
-    
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
-
-  // Reconnect function
-  const reconnect = useCallback(() => {
-    if (!enabled || !subscriptionId || !table) {
-      logger.realtime(`❌ Cannot reconnect: invalid parameters`);
-      return;
-    }
-
-    logger.realtime(`🔄 Manual reconnect triggered: ${subscriptionId}`);
-
-    // Clean up existing subscription
-    if (cleanupRef.current) {
-      cleanupRef.current();
-      cleanupRef.current = null;
-    }
-
-    // Reset state
-    subscriptionActiveRef.current = false;
-
-    try {
-      const config: SubscriptionConfig = {
-        table,
-        event,
-        schema,
-        filter,
-        callback: stableOnDataChange || (() => {}),
-        onError: stableOnError,
-        onStatusChange: stableOnStatusChange,
-      };
-
-      if (enablePooling) {
-        const poolCleanup = SubscriptionPool.getInstance().addToPool(
+        unsubscribeRef.current = pool.addToPool(
           componentId,
           table,
           config,
-          eventId,
-          stableOnDataChange
+          performanceOptions.eventId,
+          handleDataChange
         );
-        cleanupRef.current = poolCleanup;
       } else {
-        const unsubscribe = getSubscriptionManager().subscribe(subscriptionId, config);
-        cleanupRef.current = unsubscribe;
+        // Direct subscription with enhanced stability
+        const config: SubscriptionConfig = {
+          table,
+          event,
+          schema,
+          filter,
+          callback: handleDataChange,
+          onError: handleError,
+          onStatusChange: handleStatusChange,
+          // Enhanced stability configuration
+          enableBackoff: true,
+          maxBackoffDelay: 30000,
+          connectionTimeout: 15000,
+          maxRetries: 3,
+          timeoutMs: 30000,
+          retryOnTimeout: true,
+        };
+
+        unsubscribeRef.current = subscriptionManager.subscribe(subscriptionId, config);
       }
 
-      subscriptionActiveRef.current = true;
-      logger.realtime(`✅ Reconnect successful: ${subscriptionId}`);
+      logger.realtime(`📡 Creating enhanced subscription: ${subscriptionId}`, {
+        table,
+        event,
+        filter,
+        timeout: 30000,
+        retryOnTimeout: true,
+        enableBackoff: true,
+      });
     } catch (error) {
-      logger.error(`❌ Reconnect failed: ${subscriptionId}`, error);
-      stableOnError?.(error instanceof Error ? error : new Error('Reconnect failed'));
+      logger.error(`Failed to create subscription: ${subscriptionId}`, error);
+      handleError(error instanceof Error ? error : new Error(String(error)));
     }
+
+    // Cleanup function
+    return () => {
+      if (unsubscribeRef.current) {
+        try {
+          unsubscribeRef.current();
+          unsubscribeRef.current = null;
+        } catch (error) {
+          logger.warn(`Error during subscription cleanup: ${subscriptionId}`, error);
+        }
+      }
+    };
   }, [
     enabled,
     subscriptionId,
@@ -399,74 +341,122 @@ export function useRealtimeSubscription({
     event,
     schema,
     filter,
-    enablePooling,
-    eventId,
+    handleDataChange,
+    handleError,
+    handleStatusChange,
     componentId,
-    stableOnDataChange,
-    stableOnError,
-    stableOnStatusChange,
+    performanceOptions.enablePooling,
+    performanceOptions.eventId,
   ]);
 
-  // Get stats from subscription manager
+  // Manual reconnect function with stability checks
+  const reconnect = useCallback(() => {
+    if (!enabled || !subscriptionId) return;
+
+    // Check if we're already reconnecting
+    const stats = subscriptionManager.getStats();
+    if (stats.connectionState === 'connecting') {
+      logger.warn('Already reconnecting, skipping manual reconnect');
+      return;
+    }
+
+    logger.realtime(`🔄 Manual reconnect requested for: ${subscriptionId}`);
+    
+    // Clean up existing subscription
+    if (unsubscribeRef.current) {
+      unsubscribeRef.current();
+      unsubscribeRef.current = null;
+    }
+
+    // Recreate subscription with delay to avoid overwhelming
+    setTimeout(() => {
+      if (enabled) {
+        try {
+          const config: SubscriptionConfig = {
+            table,
+            event,
+            schema,
+            filter,
+            callback: handleDataChange,
+            onError: handleError,
+            onStatusChange: handleStatusChange,
+            enableBackoff: true,
+            maxBackoffDelay: 30000,
+            connectionTimeout: 15000,
+            maxRetries: 3,
+            timeoutMs: 30000,
+            retryOnTimeout: true,
+          };
+
+          unsubscribeRef.current = subscriptionManager.subscribe(subscriptionId, config);
+        } catch (error) {
+          logger.error(`Failed to reconnect subscription: ${subscriptionId}`, error);
+          handleError(error instanceof Error ? error : new Error(String(error)));
+        }
+      }
+    }, 1000); // 1 second delay before reconnecting
+  }, [
+    enabled,
+    subscriptionId,
+    table,
+    event,
+    schema,
+    filter,
+    handleDataChange,
+    handleError,
+    handleStatusChange,
+  ]);
+
+  // Get stats with enhanced error handling
   const getStats = useCallback(() => {
-    const managerStats = getSubscriptionManager().getStats();
-    return {
-      totalSubscriptions: managerStats.totalSubscriptions,
-      activeSubscriptions: managerStats.activeSubscriptions,
-      errorCount: managerStats.errorCount,
-      connectionState: managerStats.connectionState,
-      uptime: managerStats.uptime,
-      totalRetries: managerStats.totalRetries,
-      recentErrors: managerStats.recentErrors,
-      lastError: managerStats.lastError,
-    };
+    try {
+      return subscriptionManager.getStats();
+    } catch (error) {
+      logger.error('Error getting subscription stats', error);
+      return {
+        totalSubscriptions: 0,
+        activeSubscriptions: 0,
+        errorCount: 0,
+        connectionState: 'error' as const,
+        uptime: 0,
+        totalRetries: 0,
+        recentErrors: 0,
+        lastError: null,
+      };
+    }
   }, []);
 
-  // Get performance metrics including pooling stats
+  // Get performance metrics
   const getPerformanceMetrics = useCallback(() => {
-    const poolStats = SubscriptionPool.getInstance().getPoolStats();
-    
+    const poolStats = performanceOptions.enablePooling 
+      ? SubscriptionPool.getInstance().getPoolStats()
+      : undefined;
+
     return {
       subscriptionId,
       enabled,
-      isConnected: subscriptionActiveRef.current,
+      isConnected: isConnectedRef.current,
       performanceOptions: {
-        enableBatching,
-        enableRateLimit,
-        batchDelay,
-        maxUpdatesPerSecond,
-        enablePooling,
+        enableBatching: performanceOptions.enableBatching ?? false,
+        enableRateLimit: performanceOptions.enableRateLimit ?? false,
+        batchDelay: performanceOptions.batchDelay ?? 100,
+        maxUpdatesPerSecond: performanceOptions.maxUpdatesPerSecond ?? 5,
+        enablePooling: performanceOptions.enablePooling ?? false,
       },
-      poolStats: enablePooling ? {
-        totalPools: poolStats.totalPools,
-        totalSubscriptions: poolStats.totalSubscriptions,
-      } : undefined,
+      poolStats,
     };
-  }, [
-    subscriptionId,
-    enabled,
-    enableBatching,
-    enableRateLimit,
-    batchDelay,
-    maxUpdatesPerSecond,
-    enablePooling,
-  ]);
-
-  const stats = getStats();
+  }, [subscriptionId, enabled, performanceOptions]);
 
   return {
-    isConnected: stats.connectionState === 'connected',
-    error: stats.lastError ? new Error(stats.lastError.message) : null,
+    isConnected: isConnectedRef.current,
+    error: errorRef.current,
     reconnect,
     getStats,
     getPerformanceMetrics,
   };
 }
 
-/**
- * Convenience hook for event-scoped subscriptions with automatic pooling
- * This is optimized for components that subscribe to the same event data
- */
+// Convenience hook for event-specific subscriptions
 export function useEventSubscription({
   eventId,
   table,
@@ -484,16 +474,17 @@ export function useEventSubscription({
   enabled?: boolean;
   performanceOptions?: UseRealtimeSubscriptionOptions['performanceOptions'];
 }): UseRealtimeSubscriptionReturn {
+  const subscriptionId = eventId ? `${table}-${eventId}-${event}` : null;
+
   return useRealtimeSubscription({
-    subscriptionId: `event-${eventId}-${table}`,
+    subscriptionId: subscriptionId || 'disabled',
     table,
     event,
-    filter: eventId ? `event_id=eq.${eventId}` : undefined,
     enabled: enabled && Boolean(eventId),
     performanceOptions: {
-      ...performanceOptions,
-      enablePooling: true, // Always enable pooling for event subscriptions
+      enablePooling: true,
       eventId: eventId || undefined,
+      ...performanceOptions,
     },
     onDataChange,
     onError,

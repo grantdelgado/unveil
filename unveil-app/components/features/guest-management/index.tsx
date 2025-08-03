@@ -28,5 +28,5 @@ export { GuestActions } from './actions/GuestActions';
 export { GuestList } from './list/GuestList';
 export { BulkSelectionBar } from './actions/BulkSelectionBar';
 
-// Re-export hooks
-export { useRealtimeGuestStore, useGuestList, useGuestStatusCounts } from '@/hooks/guests/useRealtimeGuestStore';
+// Re-export hooks (using stable simple store for production reliability)
+export { useSimpleGuestStore as useRealtimeGuestStore, useSimpleGuestList as useGuestList, useSimpleGuestStatusCounts as useGuestStatusCounts } from '@/hooks/guests/useSimpleGuestStore';
