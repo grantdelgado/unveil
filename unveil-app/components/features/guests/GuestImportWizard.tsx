@@ -205,6 +205,34 @@ export function GuestImportWizard({
       // Clear duplicate check cache after successful import
       clearGuestExistsCache(eventId);
 
+      // Send SMS invitations to successfully imported guests
+      if (result.length > 0) {
+        try {
+          const { sendGuestInvitationsAPI } = await import('@/lib/api/sms-invitations');
+          
+          const guestsForSMS = validGuestsToImport.map(guest => ({
+            phone: normalizePhoneNumber(guest.phone),
+            guestName: guest.guest_name || undefined
+          }));
+
+          console.log(`Sending SMS invitations to ${guestsForSMS.length} guests...`);
+          
+          const smsResult = await sendGuestInvitationsAPI(eventId, guestsForSMS, {
+            maxConcurrency: 3,
+            skipRateLimit: false
+          });
+
+          if (smsResult.success) {
+            console.log(`SMS invitations sent: ${smsResult.sent} successful, ${smsResult.failed} failed, ${smsResult.rateLimited} rate limited`);
+          } else {
+            console.warn('SMS invitations failed:', smsResult.error);
+          }
+        } catch (smsError) {
+          console.error('Error sending SMS invitations:', smsError);
+          // Don't fail the import process for SMS errors
+        }
+      }
+
       onImportComplete();
     } catch (err) {
       console.error('Error processing guests:', err);

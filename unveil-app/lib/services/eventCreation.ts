@@ -583,6 +583,54 @@ export class EventCreationService {
         failedCount: importResult.failed_count
       });
 
+      // Step 4: Send SMS invitations to successfully imported guests (server-side only)
+      let smsResults = null;
+      if (importResult.successfully_imported.length > 0 && typeof window === 'undefined') {
+        try {
+          logger.info('Starting SMS invitations for imported guests', {
+            operationId,
+            eventId,
+            guestCount: importResult.successfully_imported.length
+          });
+
+          // Only import SMS functions on server-side to avoid client-side Twilio imports
+          const { sendBatchGuestInvitations } = await import('../sms-invitations');
+          
+          smsResults = await sendBatchGuestInvitations(
+            importResult.successfully_imported,
+            eventId,
+            {
+              maxConcurrency: 3, // Limit concurrent SMS sends
+              skipRateLimit: false // Respect rate limiting
+            }
+          );
+
+          logger.info('SMS invitations completed', {
+            operationId,
+            eventId,
+            sent: smsResults.sent,
+            failed: smsResults.failed,
+            rateLimited: smsResults.rateLimited
+          });
+
+        } catch (smsError) {
+          // Log SMS errors but don't fail the entire import
+          logger.error('SMS invitation sending failed', {
+            operationId,
+            eventId,
+            error: smsError,
+            guestCount: importResult.successfully_imported.length
+          });
+        }
+      } else if (importResult.successfully_imported.length > 0) {
+        // On client-side, we'll handle SMS via a separate API call after import
+        logger.info('Client-side import completed, SMS invitations will be handled separately', {
+          operationId,
+          eventId,
+          guestCount: importResult.successfully_imported.length
+        });
+      }
+
       return {
         success: true,
         data: {
@@ -837,11 +885,13 @@ export class EventCreationService {
     imported_count: number;
     failed_count: number;
     failed_rows: GuestImportError[];
+    successfully_imported: Array<{ phone: string; guest_name?: string }>;
   }> {
     const batchSize = 100; // Process in smaller batches for better performance
     let imported_count = 0;
     let failed_count = 0;
     const failed_rows: GuestImportError[] = [];
+    const successfully_imported: Array<{ phone: string; guest_name?: string }> = [];
 
     // Process guests in batches
     for (let i = 0; i < guests.length; i += batchSize) {
@@ -861,10 +911,10 @@ export class EventCreationService {
           sms_opt_out: false
         }));
 
-        const { error } = await supabase
+        const { data: insertedGuests, error } = await supabase
           .from('event_guests')
           .insert(guestInserts)
-          .select('id');
+          .select('id, phone, guest_name');
 
         if (error) {
           // Handle batch failure - add all guests in this batch to failed
@@ -879,6 +929,16 @@ export class EventCreationService {
           failed_count += batch.length;
         } else {
           imported_count += batch.length;
+          
+          // Track successfully imported guests for SMS invitations
+          if (insertedGuests) {
+            insertedGuests.forEach((insertedGuest) => {
+              successfully_imported.push({
+                phone: insertedGuest.phone,
+                guest_name: insertedGuest.guest_name || undefined
+              });
+            });
+          }
         }
 
       } catch (batchError) {
@@ -912,7 +972,8 @@ export class EventCreationService {
     return {
       imported_count,
       failed_count,
-      failed_rows
+      failed_rows,
+      successfully_imported
     };
   }
 

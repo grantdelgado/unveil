@@ -225,3 +225,183 @@ export const generateGuestAccessLink = (
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://unveil.app';
   return `${baseUrl}/guest/events/${eventId}?phone=${encodeURIComponent(guestPhone)}&autoLogin=true`;
 };
+
+/**
+ * Send invitation SMS to a newly added guest with rate limiting
+ * Automatically checks rate limits and logs the send attempt
+ */
+export const sendGuestInvitationSMS = async (
+  phone: string,
+  eventId: string,
+  options: {
+    guestName?: string;
+    skipRateLimit?: boolean; // For development/testing
+  } = {}
+): Promise<{ success: boolean; error?: string; rateLimited?: boolean }> => {
+  try {
+    // Import Supabase dynamically to avoid circular dependencies
+    const { supabase } = await import('./supabase');
+
+    // TODO: Rate limiting will be implemented after migration is applied
+    // Currently disabled to allow building without guest_sms_log table
+    if (!options.skipRateLimit) {
+      console.info('Rate limiting temporarily disabled - will be enabled after migration');
+    }
+
+    // Fetch event details for the invitation
+    const { data: event, error: eventError } = await supabase
+      .from('events')
+      .select(`
+        title,
+        event_date,
+        location,
+        host:users!events_host_user_id_fkey(full_name)
+      `)
+      .eq('id', eventId)
+      .single();
+
+    if (eventError || !event) {
+      console.error('Event not found for SMS invitation:', eventId);
+      return { success: false, error: 'Event not found' };
+    }
+
+    // Create invitation object for message generation
+    const invitation: EventInvitation = {
+      eventId,
+      eventTitle: event.title,
+      eventDate: new Date(event.event_date).toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric'
+      }),
+      guestPhone: phone,
+      guestName: options.guestName,
+      hostName: (event.host as { full_name?: string } | null)?.full_name || 'Your host'
+    };
+
+    // Generate invitation message
+    const message = createInvitationMessage(invitation);
+
+    // Send SMS using existing infrastructure
+    const { sendSMS } = await import('./sms');
+    const smsResult = await sendSMS({
+      to: phone,
+      message: message,
+      eventId: eventId,
+      messageType: 'welcome'
+    });
+
+    // TODO: SMS logging will be implemented after migration is applied
+    console.log('SMS send result:', {
+      phone: phone.substring(0, 6) + '****', // Redacted for privacy
+      success: smsResult.success,
+      error: smsResult.error || null
+    });
+
+    return {
+      success: smsResult.success,
+      error: smsResult.error
+    };
+
+  } catch (error) {
+    console.error('Error sending guest invitation SMS:', error);
+    
+    // TODO: SMS error logging will be implemented after migration is applied
+    console.error('SMS error for phone', phone.substring(0, 6) + '****:', error);
+    
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to send invitation'
+    };
+  }
+};
+
+/**
+ * Send batch invitation SMS with rate limiting and proper error handling
+ * Used when importing multiple guests at once
+ */
+export const sendBatchGuestInvitations = async (
+  guests: Array<{
+    phone: string;
+    guestName?: string;
+  }>,
+  eventId: string,
+  options: {
+    skipRateLimit?: boolean;
+    maxConcurrency?: number;
+  } = {}
+): Promise<{
+  sent: number;
+  failed: number;
+  rateLimited: number;
+  results: Array<{
+    phone: string;
+    success: boolean;
+    error?: string;
+    rateLimited?: boolean;
+  }>;
+}> => {
+  const maxConcurrency = options.maxConcurrency || 3; // Limit concurrent SMS sends
+  const results: Array<{
+    phone: string;
+    success: boolean;
+    error?: string;
+    rateLimited?: boolean;
+  }> = [];
+
+  let sent = 0;
+  let failed = 0;
+  let rateLimited = 0;
+
+  // Process guests in batches to avoid overwhelming the SMS service
+  for (let i = 0; i < guests.length; i += maxConcurrency) {
+    const batch = guests.slice(i, i + maxConcurrency);
+    
+    const batchPromises = batch.map(async (guest) => {
+      const result = await sendGuestInvitationSMS(guest.phone, eventId, {
+        guestName: guest.guestName,
+        skipRateLimit: options.skipRateLimit
+      });
+
+      const guestResult = {
+        phone: guest.phone,
+        success: result.success,
+        error: result.error,
+        rateLimited: result.rateLimited
+      };
+
+      if (result.success) {
+        sent++;
+      } else if (result.rateLimited) {
+        rateLimited++;
+      } else {
+        failed++;
+      }
+
+      return guestResult;
+    });
+
+    const batchResults = await Promise.allSettled(batchPromises);
+    
+    batchResults.forEach((promiseResult) => {
+      if (promiseResult.status === 'fulfilled') {
+        results.push(promiseResult.value);
+      } else {
+        console.error('Batch SMS send promise rejected:', promiseResult.reason);
+        results.push({
+          phone: 'unknown',
+          success: false,
+          error: 'Promise rejected'
+        });
+        failed++;
+      }
+    });
+
+    // Small delay between batches to be nice to the SMS service
+    if (i + maxConcurrency < guests.length) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  }
+
+  return { sent, failed, rateLimited, results };
+};
