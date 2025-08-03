@@ -176,7 +176,8 @@ function EventAnalyticsComponent({ eventId }: EventAnalyticsProps) {
     if (guests.length > 0 || messages.length > 0 || media.length > 0) {
       calculateAnalytics();
     }
-  }, [guests, messages, media]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [guests, messages, media]); // Removed analytics to prevent infinite loop
 
   if (loading) {
     return (
