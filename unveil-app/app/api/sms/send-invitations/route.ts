@@ -44,11 +44,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Get authenticated user with robust auth handling
-    const cookieStore = await cookies();
-    const supabaseAuth = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabaseAuth = createRouteHandlerClient({ cookies });
     
     // Try session from cookies first
-    let { data: { session }, error: sessionError } = await supabaseAuth.auth.getSession();
+    const { data: { session }, error: sessionError } = await supabaseAuth.auth.getSession();
     let currentUser = session?.user;
 
     if (sessionError || !currentUser) {

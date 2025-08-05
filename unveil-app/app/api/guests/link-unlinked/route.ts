@@ -18,11 +18,10 @@ interface LinkUnlinkedRequest {
 export async function POST(request: NextRequest) {
   try {
     // Get authenticated user session with proper cookie handling
-    const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabase = createRouteHandlerClient({ cookies });
     
     // Attempt to get session from cookies first
-    let { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     let currentUser = session?.user;
 
     if (sessionError || !currentUser) {

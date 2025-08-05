@@ -16,7 +16,7 @@ class RequestThrottler {
    * Throttle a function call by key
    * Ensures the function is not called more than once per delay period
    */
-  throttle<T extends (...args: any[]) => any>(
+  throttle<T extends (...args: unknown[]) => unknown>(
     key: string,
     fn: T,
     delay: number = this.defaultDelay
@@ -50,7 +50,7 @@ class RequestThrottler {
    * Debounce a function call by key
    * Ensures the function is only called after no more calls for the delay period
    */
-  debounce<T extends (...args: any[]) => any>(
+  debounce<T extends (...args: unknown[]) => unknown>(
     key: string,
     fn: T,
     delay: number = this.defaultDelay

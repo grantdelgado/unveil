@@ -3,8 +3,6 @@
  * Ensures event_guests.user_id is always populated when phone numbers match
  */
 
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
 import { supabase } from '@/lib/supabase/client';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
@@ -95,7 +93,7 @@ export async function linkGuestRecordsToUser(
     });
 
     // Update all guest records with matching phone where user_id IS NULL
-    const { data, error } = await supabaseClient
+    const { data, error } = await (supabaseClient as unknown as typeof supabase)
       .from('event_guests')
       .update({ 
         user_id: userId,
@@ -163,10 +161,10 @@ export async function findUserByPhone(
 ): Promise<string | null> {
   try {
     const supabaseClient = useServerClient 
-      ? createServerComponentClient({ cookies })
+      ? supabaseAdmin  // Use admin client for server operations to avoid RLS issues
       : supabase;
 
-    const { data, error } = await supabaseClient
+    const { data, error } = await (supabaseClient as unknown as typeof supabase)
       .from('users')
       .select('id')
       .eq('phone', phone)
@@ -218,7 +216,7 @@ export async function getGuestLinkingStats(phone: string): Promise<{
     const totalGuests = data.length;
     const linkedGuests = data.filter(guest => guest.user_id !== null).length;
     const unlinkedGuests = totalGuests - linkedGuests;
-    const linkedToUserId = data.find(guest => guest.user_id !== null)?.user_id;
+    const linkedToUserId = data.find(guest => guest.user_id !== null)?.user_id || undefined;
 
     return {
       totalGuests,

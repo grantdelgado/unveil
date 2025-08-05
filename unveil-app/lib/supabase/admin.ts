@@ -33,10 +33,7 @@ export const supabaseAdmin = createClient<Database>(
       autoRefreshToken: false,
       persistSession: false,
     },
-    // Disable realtime for admin client (not needed for API operations)
-    realtime: {
-      enabled: false
-    },
+    // Note: Realtime is not needed for admin operations
     global: {
       headers: {
         'X-Client-Info': 'unveil-admin-v1',
@@ -48,7 +45,7 @@ export const supabaseAdmin = createClient<Database>(
 // Test function to verify admin client is working
 export async function testAdminConnection(): Promise<boolean> {
   try {
-    const { data, error } = await supabaseAdmin
+    const { error } = await supabaseAdmin
       .from('events')
       .select('id')
       .limit(1);

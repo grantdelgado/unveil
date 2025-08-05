@@ -66,8 +66,8 @@ export async function retrySMSInvitations(options: SMSRetryOptions): Promise<SMS
       const oneHourAgo = Date.now() - (60 * 60 * 1000);
       
       // Clean old entries and get current ones
-      const currentRecentSent = recentlySent.filter((item: any) => item.timestamp > oneHourAgo);
-      const recentPhones = new Set(currentRecentSent.map((item: any) => item.phone));
+      const currentRecentSent = recentlySent.filter((item: { timestamp: number; phone: string }) => item.timestamp > oneHourAgo);
+      const recentPhones = new Set(currentRecentSent.map((item: { timestamp: number; phone: string }) => item.phone));
       
       phonesToSend = guestPhones.filter(phone => !recentPhones.has(phone));
       
@@ -118,7 +118,7 @@ export async function retrySMSInvitations(options: SMSRetryOptions): Promise<SMS
       // Keep only last hour + new entries
       const oneHourAgo = now - (60 * 60 * 1000);
       const updatedRecent = [
-        ...recentlySent.filter((item: any) => item.timestamp > oneHourAgo),
+        ...recentlySent.filter((item: { timestamp: number; phone: string }) => item.timestamp > oneHourAgo),
         ...newEntries
       ];
       

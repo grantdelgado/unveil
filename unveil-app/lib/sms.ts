@@ -329,7 +329,6 @@ export async function sendRSVPReminder(
       .select(
         'title, event_date, host:users!events_host_user_id_fkey(full_name)',
       )
-      // @ts-expect-error - Supabase typing issue with admin client
       .eq('id', eventId)
       .single();
 
@@ -348,11 +347,9 @@ export async function sendRSVPReminder(
         users:user_id(id, full_name)
       `,
       )
-      // @ts-expect-error - Supabase typing issue with admin client
       .eq('event_id', eventId);
 
     if (guestIds && guestIds.length > 0) {
-      // @ts-expect-error - Supabase typing issue with admin client
       query = query.in('id', guestIds);
     } else {
       // Only send to pending RSVPs
@@ -410,7 +407,6 @@ export async function sendEventAnnouncement(
       .select(
         'title, host:users!events_host_user_id_fkey(full_name)',
       )
-      // @ts-expect-error - Supabase typing issue with admin client
       .eq('id', eventId)
       .single();
 
@@ -427,11 +423,9 @@ export async function sendEventAnnouncement(
         users:user_id(id, full_name)
       `,
       )
-      // @ts-expect-error - Supabase typing issue with admin client
       .eq('event_id', eventId);
 
     if (targetGuestIds && targetGuestIds.length > 0) {
-      // @ts-expect-error - Supabase typing issue with admin client
       query = query.in('id', targetGuestIds);
     }
 

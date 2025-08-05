@@ -269,7 +269,6 @@ export const sendGuestInvitationSMS = async (
         location,
         host:users!events_host_user_id_fkey(full_name)
       `)
-      // @ts-expect-error - Supabase typing issue with admin client
       .eq('id', eventId)
       .single();
 
@@ -285,11 +284,8 @@ export const sendGuestInvitationSMS = async (
     if (process.env.NODE_ENV === 'development') {
       console.log(`📱 SMS Debug: Event found for ${redactedPhone}:`, {
         eventId,
-        // @ts-expect-error - Event properties from Supabase query
         eventTitle: event.title,
-        // @ts-expect-error - Event properties from Supabase query
         eventDate: event.event_date,
-        // @ts-expect-error - Event properties from Supabase query
         hasHost: !!(event.host as { full_name?: string } | null)?.full_name
       });
     }
@@ -297,9 +293,7 @@ export const sendGuestInvitationSMS = async (
     // Create invitation object for message generation
     const invitation: EventInvitation = {
       eventId,
-      // @ts-expect-error - Event properties from Supabase query
       eventTitle: event.title,
-      // @ts-expect-error - Event properties from Supabase query
       eventDate: new Date(event.event_date).toLocaleDateString('en-US', {
         weekday: 'long',
         month: 'long',
@@ -307,7 +301,6 @@ export const sendGuestInvitationSMS = async (
       }),
       guestPhone: phone,
       guestName: options.guestName,
-      // @ts-expect-error - Event properties from Supabase query
       hostName: (event.host as { full_name?: string } | null)?.full_name || 'Your host'
     };
 
