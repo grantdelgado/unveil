@@ -46,7 +46,23 @@ export default function EventDashboardPage() {
           return;
         }
 
-        // Parallel data loading for better performance
+        // Check if user is authorized as host (primary or delegated)
+        const { data: hostCheck, error: hostError } = await supabase
+          .rpc('is_event_host', { p_event_id: eventId });
+
+        if (hostError) {
+          console.error('Host authorization check failed:', hostError);
+          setError('Failed to verify event access permissions');
+          return;
+        }
+
+        if (!hostCheck) {
+          console.warn('User not authorized as host for event:', eventId);
+          setError('You do not have host permissions for this event');
+          return;
+        }
+
+        // Parallel data loading for better performance (user is authorized)
         const [
           { data: eventData, error: eventError },
           { data: guestData, error: guestError }
@@ -55,7 +71,6 @@ export default function EventDashboardPage() {
             .from('events')
             .select('*')
             .eq('id', eventId)
-            .eq('host_user_id', user.id)
             .single(),
           supabase
             .from('event_guests')
@@ -66,9 +81,7 @@ export default function EventDashboardPage() {
         if (eventError) {
           console.error('Event fetch error:', eventError);
           if (eventError.code === 'PGRST116') {
-            setError(
-              'Event not found or you do not have permission to access it.',
-            );
+            setError('Event not found');
           } else {
             setError('Failed to load event data');
           }

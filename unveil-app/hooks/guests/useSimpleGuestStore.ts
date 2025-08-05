@@ -5,9 +5,10 @@
  * that prioritizes reliability over advanced features.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { logger } from '@/lib/logger';
+import { createEventRequestManager } from '@/lib/utils/requestThrottling';
 import { getGuestStatusCounts, normalizeRSVPStatus, type RSVPStatus } from '@/lib/types/rsvp';
 
 // Simplified guest type
@@ -82,8 +83,8 @@ export function useSimpleGuestStore(eventId: string): SimpleGuestStoreReturn {
     return getGuestStatusCounts(guestsList);
   }, []);
 
-  // Fetch guests from database
-  const fetchGuests = useCallback(async () => {
+  // Fetch guests from database (core function without throttling)
+  const fetchGuestsCore = useCallback(async () => {
     if (!eventId) {
       logger.warn('useSimpleGuestStore: No eventId provided');
       setGuests([]);
@@ -160,13 +161,22 @@ export function useSimpleGuestStore(eventId: string): SimpleGuestStoreReturn {
     }
   }, [eventId]);
 
+  // Create request manager for this event
+  const requestManager = useMemo(() => createEventRequestManager(eventId), [eventId]);
+
+  // Throttled version of fetchGuests
+  const fetchGuests = useMemo(
+    () => requestManager.throttledFetch(fetchGuestsCore),
+    [requestManager, fetchGuestsCore]
+  );
+
   // Initial fetch on mount and when eventId changes
   useEffect(() => {
     let isMounted = true;
     
     const loadGuests = async () => {
       if (isMounted) {
-        await fetchGuests();
+        await fetchGuestsCore();
       }
     };
     
@@ -177,20 +187,29 @@ export function useSimpleGuestStore(eventId: string): SimpleGuestStoreReturn {
     };
   }, [eventId]); // Only depend on eventId, not fetchGuests
 
-  // Set up a simple polling mechanism for updates (every 30 seconds)
+  // Set up a very conservative polling mechanism (only every 5 minutes when needed)
   useEffect(() => {
     if (connectionStatus !== 'connected') return;
 
     const pollInterval = setInterval(() => {
-      logger.debug('Polling for guest updates', { eventId });
-      // Call fetchGuests directly without dependency
-      fetchGuests().catch(console.error);
-    }, 30000); // Poll every 30 seconds
+      // Only poll if the tab is visible and hasn't been updated recently
+      if (document.visibilityState === 'visible') {
+        const lastUpdate = localStorage.getItem(`guest-last-update-${eventId}`);
+        const now = Date.now();
+        const shouldPoll = !lastUpdate || (now - parseInt(lastUpdate)) > 300000; // 5 minutes
+        
+        if (shouldPoll) {
+          logger.debug('🛠️ Polling for guest updates', { eventId });
+          fetchGuests();
+          localStorage.setItem(`guest-last-update-${eventId}`, now.toString());
+        }
+      }
+    }, 300000); // Poll every 5 minutes instead of 2 minutes
 
     return () => {
       clearInterval(pollInterval);
     };
-  }, [connectionStatus]); // Only depend on connectionStatus
+  }, [connectionStatus, fetchGuests]); // Use throttled version
 
   // Optimistic update function for immediate UI feedback
   const updateGuestOptimistically = useCallback((guestId: string, updates: Partial<SimpleGuest>) => {
@@ -234,7 +253,7 @@ export function useSimpleGuestStore(eventId: string): SimpleGuestStoreReturn {
     loading,
     error,
     connectionStatus,
-    refreshGuests: fetchGuests,
+    refreshGuests: fetchGuestsCore,
     updateGuestOptimistically,
     rollbackOptimisticUpdate,
   };

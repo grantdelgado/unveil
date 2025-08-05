@@ -875,7 +875,7 @@ export class EventCreationService {
   }
 
   /**
-   * Perform batch guest import with error tracking
+   * Perform batch guest import with error tracking and immediate user linking
    */
   private static async performBatchGuestImport(
     eventId: string,
@@ -898,18 +898,28 @@ export class EventCreationService {
       const batch = guests.slice(i, i + batchSize);
       
       try {
-        const guestInserts: EventGuestInsert[] = batch.map(guest => ({
-          event_id: eventId,
-          guest_name: guest.guest_name,
-          phone: guest.phone,
-          guest_email: guest.guest_email || null,
-          role: guest.role || 'guest',
-          notes: guest.notes || null,
-          guest_tags: guest.guest_tags || null,
-          rsvp_status: 'pending',
-          preferred_communication: 'sms',
-          sms_opt_out: false
-        }));
+        // ✅ NEW: Check for existing users during import for immediate linking
+        const { findUserByPhone } = await import('@/lib/db/linkGuestRecords');
+        
+        const guestInserts: EventGuestInsert[] = await Promise.all(
+          batch.map(async (guest) => {
+            const existingUserId = await findUserByPhone(guest.phone);
+            
+            return {
+              event_id: eventId,
+              guest_name: guest.guest_name,
+              phone: guest.phone,
+              guest_email: guest.guest_email || null,
+              role: guest.role || 'guest',
+              notes: guest.notes || null,
+              guest_tags: guest.guest_tags || null,
+              rsvp_status: 'pending',
+              preferred_communication: 'sms',
+              sms_opt_out: false,
+              user_id: existingUserId // ✅ Set user_id if user exists!
+            };
+          })
+        );
 
         const { data: insertedGuests, error } = await supabase
           .from('event_guests')

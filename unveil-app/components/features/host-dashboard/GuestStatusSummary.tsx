@@ -241,13 +241,16 @@ export const GuestStatusSummary = memo<GuestStatusSummaryProps>(({
     fetchStatusCounts();
   }, [fetchStatusCounts]);
 
-  // Polling fallback when realtime is not connected
+  // Conservative polling fallback when realtime is not connected
   useEffect(() => {
     if (!realtimeConnected) {
       logger.realtime('Starting polling fallback for guest status updates');
       const pollInterval = setInterval(() => {
-        fetchStatusCounts();
-      }, 10000); // Poll every 10 seconds when realtime is down
+        // Only poll if tab is visible to reduce load
+        if (document.visibilityState === 'visible') {
+          fetchStatusCounts();
+        }
+      }, 60000); // Poll every 60 seconds instead of 10 seconds when realtime is down
 
       return () => {
         logger.realtime('Stopping polling fallback for guest status updates');

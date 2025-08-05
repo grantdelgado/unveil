@@ -13,7 +13,7 @@ import {
   validateGuestField, 
   type FieldValidation 
 } from '@/lib/utils/guestHelpers';
-import { formatPhoneNumber, normalizePhoneNumber } from '@/lib/utils/validation';
+import { normalizePhoneNumber } from '@/lib/utils/validation';
 import { cn } from '@/lib/utils';
 // Note: Guest functionality handled via domain hooks
 
@@ -120,22 +120,17 @@ export function GuestImportWizard({
       updated[index].validationStates.guest_email = validation;
     }
     
-    // Handle phone number formatting and duplicate check
+    // Handle phone number validation and duplicate check
     if (field === 'phone') {
-      // Auto-add +1 prefix if user starts typing and doesn't have it
-      let phoneValue = value;
-      if (phoneValue && !phoneValue.startsWith('+1') && !phoneValue.startsWith('1')) {
-        phoneValue = '+1 ' + phoneValue;
-      }
-      
-      // Format phone number as user types
-      const formatted = formatPhoneNumber(phoneValue);
-      updated[index].phone = formatted;
+      // Store the raw input without auto-formatting to avoid feedback loops
+      updated[index].phone = value;
       
       // Check for duplicates when phone is valid
       if (validation.isValid) {
         try {
-          const exists = await checkGuestExists(eventId, value);
+          // Normalize for duplicate checking 
+          const normalizedForCheck = normalizePhoneNumber(value);
+          const exists = await checkGuestExists(eventId, normalizedForCheck);
           if (exists) {
             updated[index].duplicateWarning = '⚠ Guest already added to this event';
           } else {
@@ -205,35 +200,72 @@ export function GuestImportWizard({
       // Clear duplicate check cache after successful import
       clearGuestExistsCache(eventId);
 
-      // Send SMS invitations to successfully imported guests
+      // Complete the import first, then send SMS invitations asynchronously
+      onImportComplete();
+
+      // Send SMS invitations in the background (non-blocking)
       if (result.length > 0) {
-        try {
-          const { sendGuestInvitationsAPI } = await import('@/lib/api/sms-invitations');
-          
-          const guestsForSMS = validGuestsToImport.map(guest => ({
-            phone: normalizePhoneNumber(guest.phone),
-            guestName: guest.guest_name || undefined
-          }));
+        // Fire and forget - don't block the UI for SMS sending
+        setTimeout(async () => {
+          try {
+            console.log(`📱 SMS Debug: Starting SMS invitation process...`);
+            console.log(`📱 SMS Debug: Event ID: ${eventId}`);
+            console.log(`📱 SMS Debug: Imported ${result.length} guests successfully`);
+            
+            const { sendGuestInvitationsAPI } = await import('@/lib/api/sms-invitations');
+            
+            const guestsForSMS = validGuestsToImport.map(guest => ({
+              phone: normalizePhoneNumber(guest.phone),
+              guestName: guest.guest_name || undefined
+            }));
 
-          console.log(`Sending SMS invitations to ${guestsForSMS.length} guests...`);
-          
-          const smsResult = await sendGuestInvitationsAPI(eventId, guestsForSMS, {
-            maxConcurrency: 3,
-            skipRateLimit: false
-          });
+            console.log(`📱 SMS Debug: Prepared ${guestsForSMS.length} guests for SMS:`, {
+              guests: guestsForSMS.map(g => ({
+                phone: g.phone.slice(0, 6) + '...', // Redact for privacy
+                hasName: !!g.guestName
+              })),
+              maxConcurrency: 1,
+              skipRateLimit: false
+            });
 
-          if (smsResult.success) {
-            console.log(`SMS invitations sent: ${smsResult.sent} successful, ${smsResult.failed} failed, ${smsResult.rateLimited} rate limited`);
-          } else {
-            console.warn('SMS invitations failed:', smsResult.error);
+            const smsResult = await sendGuestInvitationsAPI(eventId, guestsForSMS, {
+              maxConcurrency: 1, // Further reduce to avoid overwhelming
+              skipRateLimit: false
+            });
+
+            console.log(`📱 SMS Debug: SMS API call completed:`, {
+              success: smsResult.success,
+              sent: smsResult.sent,
+              failed: smsResult.failed,
+              rateLimited: smsResult.rateLimited,
+              hasError: !!smsResult.error
+            });
+
+            if (smsResult.success && smsResult.sent > 0) {
+              console.log(`✅ Background SMS: Successfully sent invitations to ${smsResult.sent} guests`);
+              if (smsResult.results) {
+                console.log(`📱 SMS Debug: Individual results:`, smsResult.results.map(r => ({
+                  phone: r.phone?.slice(0, 6) + '...',
+                  success: r.success,
+                  error: r.error,
+                  rateLimited: r.rateLimited
+                })));
+              }
+            } else {
+              console.warn('⚠️ Background SMS: Some invitations failed', {
+                sent: smsResult.sent,
+                failed: smsResult.failed,
+                error: smsResult.error
+              });
+            }
+          } catch (smsError) {
+            // Log but don't disrupt user experience
+            console.warn('⚠️ Background SMS failed:', smsError instanceof Error ? smsError.message : 'Unknown error');
+            console.log('ℹ️ Guests were imported successfully. SMS invitations can be sent manually from the dashboard.');
           }
-        } catch (smsError) {
-          console.error('Error sending SMS invitations:', smsError);
-          // Don't fail the import process for SMS errors
-        }
+        }, 100); // Small delay to ensure UI updates first
       }
 
-      onImportComplete();
     } catch (err) {
       console.error('Error processing guests:', err);
       const errorMessage = err instanceof Error ? err.message : 'Failed to import guests. Please try again.';
@@ -381,7 +413,7 @@ export function GuestImportWizard({
                           }
                           placeholder="John Doe"
                           className={cn(
-                            'w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-pink-300 focus:border-pink-300 transition-colors',
+                            'w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-pink-300 focus:border-pink-300 transition-colors text-gray-900',
                             guest.touchedFields.guest_name && guest.validationStates.guest_name.isValid === false && guest.guest_name
                               ? 'border-red-300 bg-red-50'
                               : guest.touchedFields.guest_name && guest.validationStates.guest_name.isValid
@@ -414,9 +446,9 @@ export function GuestImportWizard({
                           onChange={(e) =>
                             handleUpdateGuest(index, 'phone', e.target.value)
                           }
-                          placeholder="+1 (555) 123-4567"
+                          placeholder="5551234567 or +1 (555) 123-4567"
                           className={cn(
-                            'w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-pink-300 focus:border-pink-300 transition-colors',
+                            'w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-pink-300 focus:border-pink-300 transition-colors text-gray-900',
                             guest.touchedFields.phone && guest.validationStates.phone.isValid === false && guest.phone
                               ? 'border-red-300 bg-red-50'
                               : guest.touchedFields.phone && guest.validationStates.phone.isValid
@@ -425,7 +457,7 @@ export function GuestImportWizard({
                           )}
                         />
                         <p className="mt-1 text-xs text-gray-500">
-                          Must include country code (+1)
+                          Enter 10 digits (5551234567) or full format (+1 555 123 4567)
                         </p>
                         {/* Field Error/Success Message */}
                         {guest.touchedFields.phone && guest.validationStates.phone.error && (
@@ -460,7 +492,7 @@ export function GuestImportWizard({
                           }
                           placeholder="john@example.com"
                           className={cn(
-                            'w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-pink-300 focus:border-pink-300 transition-colors',
+                            'w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-pink-300 focus:border-pink-300 transition-colors text-gray-900',
                             guest.touchedFields.guest_email && guest.validationStates.guest_email.isValid === false && guest.guest_email
                               ? 'border-red-300 bg-red-50'
                               : guest.touchedFields.guest_email && guest.validationStates.guest_email.isValid && guest.guest_email
@@ -494,7 +526,7 @@ export function GuestImportWizard({
                             handleUpdateGuest(index, 'notes', e.target.value)
                           }
                           placeholder="Plus one, dietary restrictions, etc."
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-300 focus:border-pink-300 transition-colors"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-300 focus:border-pink-300 transition-colors text-gray-900"
                         />
                       </div>
                     </div>

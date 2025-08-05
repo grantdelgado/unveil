@@ -38,13 +38,59 @@ export async function sendGuestInvitationsAPI(
   options: SMSInvitationOptions = {}
 ): Promise<SMSInvitationResult> {
   try {
-    // Get the user's session token
+    // Get the user's session token with better error handling
     const { supabase } = await import('../supabase/client');
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
-    if (sessionError || !session) {
-      throw new Error('Authentication required to send invitations');
+    if (sessionError) {
+      console.error('Session error:', sessionError);
+      throw new Error(`Authentication error: ${sessionError.message}`);
     }
+
+    if (!session?.access_token) {
+      throw new Error('No valid session found. Please log in again.');
+    }
+
+    // First check if event exists
+    const { data: event, error: eventError } = await supabase
+      .from('events')
+      .select('host_user_id, title')
+      .eq('id', eventId)
+      .single();
+
+    if (eventError) {
+      console.error('Event lookup error:', eventError);
+      throw new Error(`Event not found: ${eventError.message}`);
+    }
+
+    if (!event) {
+      throw new Error('Event not found');
+    }
+
+    // Check if current user is authorized as host (either primary host or delegated host)
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('User authentication required');
+    }
+
+    const { data: hostCheck, error: hostError } = await supabase
+      .rpc('is_event_host', { p_event_id: eventId });
+
+    if (hostError) {
+      console.error('Host authorization check failed:', hostError);
+      throw new Error(`Authorization check failed: ${hostError.message}`);
+    }
+
+    if (!hostCheck) {
+      throw new Error('You must be authorized as a host for this event to send invitations');
+    }
+
+    console.log('Sending SMS invitations:', {
+      eventId,
+      eventTitle: event.title,
+      guestCount: guests.length,
+      userId: user.id
+    });
 
     const response = await fetch('/api/sms/send-invitations', {
       method: 'POST',
@@ -62,7 +108,13 @@ export async function sendGuestInvitationsAPI(
     const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(result.error || 'Failed to send invitations');
+      console.error('SMS API error:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: result.error,
+        details: result.details
+      });
+      throw new Error(result.error || `SMS API error (${response.status}): ${response.statusText}`);
     }
 
     return {

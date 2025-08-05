@@ -8,14 +8,40 @@ const authToken = process.env.TWILIO_AUTH_TOKEN;
 const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER;
 const twilioMessagingServiceSid = process.env.TWILIO_MESSAGING_SERVICE_SID;
 
-// Initialize Twilio client lazily
+// Validate Twilio configuration on module load
+function validateTwilioConfig() {
+  const missingVars = [];
+  
+  if (!accountSid) missingVars.push('TWILIO_ACCOUNT_SID');
+  if (!authToken) missingVars.push('TWILIO_AUTH_TOKEN');
+  if (!twilioPhoneNumber && !twilioMessagingServiceSid) {
+    missingVars.push('TWILIO_PHONE_NUMBER or TWILIO_MESSAGING_SERVICE_SID');
+  }
+  
+  if (missingVars.length > 0) {
+    logger.warn('Twilio Configuration Warning', {
+      missing: missingVars,
+      note: 'SMS invitations will not work until these are configured'
+    });
+  } else {
+    logger.info('Twilio Configuration: All required variables present');
+  }
+}
 
+// Run validation (only in server environment)
+if (typeof window === 'undefined') {
+  validateTwilioConfig();
+}
+
+// Initialize Twilio client lazily
 let twilioClient: ReturnType<typeof import('twilio')> | null = null;
 
 const getTwilioClient = async () => {
   if (!twilioClient && accountSid && authToken) {
+    logger.info('Initializing Twilio client...');
     const twilio = (await import('twilio')).default;
     twilioClient = twilio(accountSid, authToken);
+    logger.info('Twilio client initialized successfully');
   }
   return twilioClient;
 };
@@ -132,8 +158,23 @@ export async function sendSMS({
   messageType = 'custom',
 }: SMSMessage): Promise<SMSResult> {
   try {
+    logger.info('Starting SMS send process', {
+      phone: to.slice(0, 6) + '...',
+      eventId,
+      messageType,
+      hasGuestId: !!guestId
+    });
+
     // Get Twilio client
     const client = await getTwilioClient();
+    
+    logger.info('Twilio client status', {
+      hasClient: !!client,
+      hasPhoneNumber: !!twilioPhoneNumber,
+      hasMessagingService: !!twilioMessagingServiceSid,
+      accountSid: accountSid ? accountSid.slice(0, 8) + '...' : 'missing'
+    });
+
     if (!client || (!twilioPhoneNumber && !twilioMessagingServiceSid)) {
       throw new Error(
         'Twilio not configured. Please check your environment variables.',
@@ -145,6 +186,11 @@ export async function sendSMS({
     if (!formattedPhone) {
       throw new Error('Invalid phone number format');
     }
+
+    logger.info('Phone formatting completed', {
+      original: to.slice(0, 6) + '...',
+      formatted: formattedPhone.slice(0, 6) + '...'
+    });
 
     // Redact phone number for logging (show first 3 and last 4 characters)
     const redactedPhone = formattedPhone.length > 7 
@@ -168,16 +214,24 @@ export async function sendSMS({
 
     if (twilioMessagingServiceSid) {
       messageParams.messagingServiceSid = twilioMessagingServiceSid;
-      logger.sms(`Using Messaging Service: ${twilioMessagingServiceSid}`);
+      logger.sms(`Using Messaging Service: ${twilioMessagingServiceSid.slice(0, 8)}...`);
     } else if (twilioPhoneNumber) {
       messageParams.from = twilioPhoneNumber;
-      logger.sms(`Using Phone Number: ${twilioPhoneNumber}`);
+      logger.sms(`Using Phone Number: ${twilioPhoneNumber.slice(0, 8)}...`);
     } else {
       throw new Error('No Twilio sender configured');
     }
 
+    logger.info('Calling Twilio API...');
+    
     // Send SMS via Twilio
     const twilioMessage = await client.messages.create(messageParams);
+
+    logger.info('Twilio API success', {
+      sid: twilioMessage.sid,
+      status: twilioMessage.status,
+      phone: redactedPhone
+    });
 
     logger.sms(`SMS sent successfully. SID: ${twilioMessage.sid}`);
 
@@ -199,7 +253,12 @@ export async function sendSMS({
     };
   } catch (error) {
     const errorMessage = getErrorMessage(error);
-    logger.smsError('Failed to send SMS', errorMessage);
+    
+    logger.smsError('Failed to send SMS', {
+      error: errorMessage,
+      phone: to.slice(0, 6) + '...',
+      eventId
+    });
 
     // Log failed message to database
     if (eventId) {
@@ -261,15 +320,16 @@ export async function sendRSVPReminder(
   guestIds?: string[],
 ): Promise<{ sent: number; failed: number }> {
   try {
-    // Import Supabase dynamically to avoid circular dependencies
-    const { supabase } = await import('./supabase');
+    // Import Supabase admin client to bypass RLS for event lookup
+    const { supabaseAdmin } = await import('./supabase/admin');
 
-    // Fetch event details
-    const { data: event, error: eventError } = await supabase
+    // Fetch event details using admin client
+    const { data: event, error: eventError } = await supabaseAdmin
       .from('events')
       .select(
         'title, event_date, host:users!events_host_user_id_fkey(full_name)',
       )
+      // @ts-expect-error - Supabase typing issue with admin client
       .eq('id', eventId)
       .single();
 
@@ -278,7 +338,7 @@ export async function sendRSVPReminder(
     }
 
     // Fetch guests who need reminders
-    let query = supabase
+    let query = supabaseAdmin
       .from('event_guests')
       .select(
         `
@@ -288,9 +348,11 @@ export async function sendRSVPReminder(
         users:user_id(id, full_name)
       `,
       )
+      // @ts-expect-error - Supabase typing issue with admin client
       .eq('event_id', eventId);
 
     if (guestIds && guestIds.length > 0) {
+      // @ts-expect-error - Supabase typing issue with admin client
       query = query.in('id', guestIds);
     } else {
       // Only send to pending RSVPs
@@ -339,15 +401,16 @@ export async function sendEventAnnouncement(
   targetGuestIds?: string[],
 ): Promise<{ sent: number; failed: number }> {
   try {
-    // Import Supabase dynamically to avoid circular dependencies
-    const { supabase } = await import('./supabase');
+    // Import Supabase admin client to bypass RLS for event lookup
+    const { supabaseAdmin } = await import('./supabase/admin');
 
-    // Fetch event details
-    const { data: event, error: eventError } = await supabase
+    // Fetch event details using admin client
+    const { data: event, error: eventError } = await supabaseAdmin
       .from('events')
       .select(
         'title, host:users!events_host_user_id_fkey(full_name)',
       )
+      // @ts-expect-error - Supabase typing issue with admin client
       .eq('id', eventId)
       .single();
 
@@ -356,7 +419,7 @@ export async function sendEventAnnouncement(
     }
 
     // Fetch guests - Note: phone not available in public_user_profiles for privacy
-    let query = supabase
+    let query = supabaseAdmin
       .from('event_guests')
       .select(
         `
@@ -364,9 +427,11 @@ export async function sendEventAnnouncement(
         users:user_id(id, full_name)
       `,
       )
+      // @ts-expect-error - Supabase typing issue with admin client
       .eq('event_id', eventId);
 
     if (targetGuestIds && targetGuestIds.length > 0) {
+      // @ts-expect-error - Supabase typing issue with admin client
       query = query.in('id', targetGuestIds);
     }
 
@@ -401,23 +466,41 @@ export async function sendEventAnnouncement(
  * Format phone number for Twilio (E.164 format)
  */
 function formatPhoneNumber(phone: string): string | null {
+  if (!phone || typeof phone !== 'string') {
+    logger.warn('Invalid phone input for formatting', { phone });
+    return null;
+  }
+
   // Remove all non-digits
   const digits = phone.replace(/\D/g, '');
+  
+  logger.debug('Processing phone number', {
+    original: phone.slice(0, 6) + '...',
+    digits: digits.slice(0, 6) + '...',
+    length: digits.length
+  });
 
   // Handle US numbers
   if (digits.length === 10) {
-    return `+1${digits}`;
+    const formatted = `+1${digits}`;
+    logger.debug('Formatted 10-digit US number', { formatted: formatted.slice(0, 6) + '...' });
+    return formatted;
   }
 
   if (digits.length === 11 && digits.startsWith('1')) {
-    return `+${digits}`;
+    const formatted = `+${digits}`;
+    logger.debug('Formatted 11-digit US number', { formatted: formatted.slice(0, 6) + '...' });
+    return formatted;
   }
 
   // If it already has country code
   if (digits.length > 10 && !digits.startsWith('1')) {
-    return `+${digits}`;
+    const formatted = `+${digits}`;
+    logger.debug('Formatted international number', { formatted: formatted.slice(0, 6) + '...' });
+    return formatted;
   }
 
+  logger.warn('Unable to format phone number', { digits, length: digits.length });
   return null;
 }
 

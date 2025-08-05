@@ -1,4 +1,5 @@
 import { normalizePhoneNumber } from './utils';
+import { logger } from '@/lib/logger';
 
 // SMS invitation and notification utilities for phone-based guest management
 
@@ -238,18 +239,29 @@ export const sendGuestInvitationSMS = async (
     skipRateLimit?: boolean; // For development/testing
   } = {}
 ): Promise<{ success: boolean; error?: string; rateLimited?: boolean }> => {
+  const redactedPhone = phone.slice(0, 6) + '...';
+  
   try {
-    // Import Supabase dynamically to avoid circular dependencies
-    const { supabase } = await import('./supabase');
+    // Development-only debug logging
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`📱 SMS Debug: Starting invitation SMS for ${redactedPhone}`, {
+        eventId,
+        hasGuestName: !!options.guestName,
+        skipRateLimit: options.skipRateLimit
+      });
+    }
+
+    // Import Supabase admin client to bypass RLS for event lookup
+    const { supabaseAdmin } = await import('./supabase/admin');
 
     // TODO: Rate limiting will be implemented after migration is applied
     // Currently disabled to allow building without guest_sms_log table
     if (!options.skipRateLimit) {
-      console.info('Rate limiting temporarily disabled - will be enabled after migration');
+      logger.info('SMS Debug: Rate limiting temporarily disabled - will be enabled after migration');
     }
 
-    // Fetch event details for the invitation
-    const { data: event, error: eventError } = await supabase
+    // Fetch event details for the invitation using admin client
+    const { data: event, error: eventError } = await supabaseAdmin
       .from('events')
       .select(`
         title,
@@ -257,18 +269,37 @@ export const sendGuestInvitationSMS = async (
         location,
         host:users!events_host_user_id_fkey(full_name)
       `)
+      // @ts-expect-error - Supabase typing issue with admin client
       .eq('id', eventId)
       .single();
 
     if (eventError || !event) {
-      console.error('Event not found for SMS invitation:', eventId);
+      logger.error(`SMS Debug: Event not found for SMS invitation - ${redactedPhone}`, {
+        eventId,
+        error: eventError?.message,
+        errorCode: eventError?.code
+      });
       return { success: false, error: 'Event not found' };
+    }
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`📱 SMS Debug: Event found for ${redactedPhone}:`, {
+        eventId,
+        // @ts-expect-error - Event properties from Supabase query
+        eventTitle: event.title,
+        // @ts-expect-error - Event properties from Supabase query
+        eventDate: event.event_date,
+        // @ts-expect-error - Event properties from Supabase query
+        hasHost: !!(event.host as { full_name?: string } | null)?.full_name
+      });
     }
 
     // Create invitation object for message generation
     const invitation: EventInvitation = {
       eventId,
+      // @ts-expect-error - Event properties from Supabase query
       eventTitle: event.title,
+      // @ts-expect-error - Event properties from Supabase query
       eventDate: new Date(event.event_date).toLocaleDateString('en-US', {
         weekday: 'long',
         month: 'long',
@@ -276,38 +307,57 @@ export const sendGuestInvitationSMS = async (
       }),
       guestPhone: phone,
       guestName: options.guestName,
+      // @ts-expect-error - Event properties from Supabase query
       hostName: (event.host as { full_name?: string } | null)?.full_name || 'Your host'
     };
 
     // Generate invitation message
     const message = createInvitationMessage(invitation);
 
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`📱 SMS Debug: Prepared invitation message for ${redactedPhone}:`, {
+        messageLength: message.length,
+        messagePreview: message.substring(0, 100) + '...',
+        guestName: options.guestName || 'No name provided',
+        hostName: invitation.hostName
+      });
+    }
+
     // Send SMS using existing infrastructure
     const { sendSMS } = await import('./sms');
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`📱 SMS Debug: Calling sendSMS for ${redactedPhone}...`);
+    }
+    
     const smsResult = await sendSMS({
       to: phone,
       message: message,
       eventId: eventId,
+      guestId: undefined, // Guest invitations don't have a specific guest record ID yet
       messageType: 'welcome'
     });
 
-    // TODO: SMS logging will be implemented after migration is applied
-    console.log('SMS send result:', {
-      phone: phone.substring(0, 6) + '****', // Redacted for privacy
-      success: smsResult.success,
-      error: smsResult.error || null
-    });
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`📱 SMS Debug: sendSMS result for ${redactedPhone}:`, {
+        success: smsResult.success,
+        error: smsResult.error,
+        messageId: smsResult.messageId,
+        status: smsResult.status
+      });
+    }
 
     return {
       success: smsResult.success,
-      error: smsResult.error
+      error: smsResult.error,
+      rateLimited: false
     };
 
   } catch (error) {
-    console.error('Error sending guest invitation SMS:', error);
+    logger.error('Error sending guest invitation SMS', error);
     
     // TODO: SMS error logging will be implemented after migration is applied
-    console.error('SMS error for phone', phone.substring(0, 6) + '****:', error);
+    logger.error('SMS error for phone', { phone: phone.substring(0, 6) + '****', error });
     
     return {
       success: false,

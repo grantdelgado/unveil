@@ -433,7 +433,7 @@ export function GuestImportStep({
                     className="text-sm"
                   />
                   <TextInput
-                    placeholder="Phone number *"
+                    placeholder="5551234567 or +1 (555) 123-4567"
                     value={guest.phone}
                     onChange={(e) => updateManualGuest(index, 'phone', e.target.value)}
                     disabled={disabled}
@@ -450,7 +450,7 @@ export function GuestImportStep({
                     value={guest.role}
                     onChange={(e) => updateManualGuest(index, 'role', e.target.value)}
                     disabled={disabled}
-                    className="text-sm border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-pink-400"
+                    className="text-sm border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-pink-400 text-gray-900"
                   >
                     <option value="guest">Guest</option>
                     <option value="host">Co-host</option>

@@ -1,14 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { sendBatchGuestInvitations } from '@/lib/sms-invitations';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
+    logger.info('SMS API: Request received');
+    
     const { eventId, guests, options = {} } = await request.json();
+
+    logger.info('SMS API: Request parsed', {
+      eventId,
+      guestCount: guests?.length || 0,
+      hasOptions: !!options
+    });
 
     // Validate required fields
     if (!eventId || !guests || !Array.isArray(guests)) {
+      logger.error('SMS API: Missing required fields', { 
+        eventId: !!eventId, 
+        guests: !!guests, 
+        isArray: Array.isArray(guests) 
+      });
       return NextResponse.json(
         { error: 'Event ID and guests array are required' },
         { status: 400 },
@@ -21,54 +36,142 @@ export async function POST(request: NextRequest) {
     );
 
     if (invalidGuests.length > 0) {
+      logger.error('SMS API: Invalid guests found', { count: invalidGuests.length });
       return NextResponse.json(
         { error: 'All guests must have a valid phone number' },
         { status: 400 },
       );
     }
 
-    // Get the authorization header
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader) {
-      return NextResponse.json(
-        { error: 'Authorization required' },
-        { status: 401 },
-      );
+    // Get authenticated user with robust auth handling
+    const cookieStore = await cookies();
+    const supabaseAuth = createRouteHandlerClient({ cookies: () => cookieStore });
+    
+    // Try session from cookies first
+    let { data: { session }, error: sessionError } = await supabaseAuth.auth.getSession();
+    let currentUser = session?.user;
+
+    if (sessionError || !currentUser) {
+      // Fallback to Authorization header
+      const authHeader = request.headers.get('authorization');
+      if (!authHeader?.startsWith('Bearer ')) {
+        return NextResponse.json(
+          { error: 'Authorization required - no session or token found' },
+          { status: 401 },
+        );
+      }
+
+      const token = authHeader.substring(7);
+      const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
+
+      if (userError || !user) {
+        return NextResponse.json(
+          { error: 'Invalid authentication token' },
+          { status: 401 },
+        );
+      }
+      
+      currentUser = user;
     }
 
-    // Verify the user is authenticated and is the host of this event
-    const token = authHeader.replace('Bearer ', '');
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser(token);
+    // Add debug logging for user context
+    logger.info('SMS API: Checking event access', { 
+      eventId, 
+      currentUserId: currentUser.id,
+      currentUserPhone: currentUser.phone 
+    });
 
-    if (userError || !user) {
-      return NextResponse.json(
-        { error: 'Invalid authentication' },
-        { status: 401 },
-      );
-    }
-
-    // Verify user is the host of this event
-    const { data: event, error: eventError } = await supabase
+    // First check if event exists (use admin client to bypass RLS for existence check)
+    const { data: event, error: eventError } = await supabaseAdmin
       .from('events')
       .select('host_user_id, title')
       .eq('id', eventId)
-      .eq('host_user_id', user.id)
       .single();
 
     if (eventError || !event) {
+      logger.error('SMS API: Event lookup failed', { 
+        eventId, 
+        currentUserId: currentUser.id,
+        error: eventError?.message,
+        errorCode: eventError?.code,
+        errorDetails: eventError?.details,
+        hint: eventError?.hint
+      });
+      
+      // Event truly does not exist
+      logger.error('SMS API: Event does not exist in database', {
+        eventId,
+        currentUserId: currentUser.id,
+        error: eventError?.message
+      });
+      
       return NextResponse.json(
-        { error: 'Event not found or unauthorized' },
+        { error: 'Event not found or access denied' },
         { status: 404 },
       );
     }
 
-    logger.info('Starting batch SMS invitations', {
+    logger.info('SMS API: Event access successful', {
       eventId,
-      hostUserId: user.id,
-      guestCount: guests.length
+      eventTitle: event.title,
+      eventHostId: event.host_user_id,
+      currentUserId: currentUser.id,
+      isUserTheHost: event.host_user_id === currentUser.id
+    });
+
+    // Check if current user is authorized as host
+    const isPrimaryHost = event.host_user_id === currentUser.id;
+    let isDelegatedHost = false;
+    
+    if (!isPrimaryHost) {
+      // Check if user is a delegated host using the RPC function
+      const { data: hostCheck, error: hostError } = await supabaseAuth
+        .rpc('is_event_host', { p_event_id: eventId });
+
+      if (hostError) {
+        logger.error('Delegated host authorization check failed', { 
+          eventId, 
+          userId: currentUser.id, 
+          error: hostError 
+        });
+        return NextResponse.json(
+          { error: 'Authorization check failed' },
+          { status: 500 },
+        );
+      }
+      
+      isDelegatedHost = !!hostCheck;
+    }
+
+    const isAuthorizedHost = isPrimaryHost || isDelegatedHost;
+    
+    if (!isAuthorizedHost) {
+      logger.warn('User not authorized as host', { 
+        eventId, 
+        userId: currentUser.id,
+        eventTitle: event.title,
+        eventHostUserId: event.host_user_id,
+        isPrimaryHost,
+        isDelegatedHost
+      });
+      return NextResponse.json(
+        { error: 'User is not authorized as host for this event' },
+        { status: 403 },
+      );
+    }
+
+    logger.info('SMS API: User authorized as host', {
+      eventId,
+      userId: currentUser.id,
+      isPrimaryHost,
+      isDelegatedHost,
+      authorizationType: isPrimaryHost ? 'primary' : 'delegated'
+    });
+
+    logger.info('SMS API: Calling sendBatchGuestInvitations', {
+      eventId,
+      guestCount: guests.length,
+      maxConcurrency: options.maxConcurrency || 3
     });
 
     // Send the batch invitations
@@ -81,8 +184,7 @@ export async function POST(request: NextRequest) {
       }
     );
 
-    logger.info('Batch SMS invitations completed', {
-      eventId,
+    logger.info('SMS API: Batch SMS completed', {
       sent: result.sent,
       failed: result.failed,
       rateLimited: result.rateLimited
@@ -102,7 +204,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    logger.error('Error sending batch SMS invitations', error);
+    logger.error('SMS API: Unexpected error', error);
     return NextResponse.json(
       { 
         error: 'Failed to send SMS invitations',

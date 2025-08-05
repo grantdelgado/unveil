@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import { supabase } from '@/lib/supabase';
 import { Session, User } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
+import { useAutoLinkGuests } from '@/hooks/useLinkGuestsToUser';
 
 interface AuthContextType {
   session: Session | null;
@@ -94,6 +95,7 @@ if (process.env.UNVEIL_DEBUG === 'true') {
 
   return (
     <AuthContext.Provider value={value}>
+      <GuestLinkingManager />
       {children}
     </AuthContext.Provider>
   );
@@ -103,6 +105,15 @@ if (process.env.UNVEIL_DEBUG === 'true') {
  * Hook to use the centralized auth context
  * Replaces the individual useAuth hook for better performance
  */
+/**
+ * Internal component to manage automatic guest linking
+ * Runs guest linking when user sessions are established
+ */
+function GuestLinkingManager() {
+  useAutoLinkGuests();
+  return null; // This component has no UI
+}
+
 export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
   if (context === undefined) {
@@ -110,3 +121,6 @@ export function useAuth(): AuthContextType {
   }
   return context;
 }
+
+// Export alias for compatibility with existing code
+export const useSupabase = useAuth;
