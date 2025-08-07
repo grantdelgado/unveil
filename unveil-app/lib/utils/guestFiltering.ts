@@ -18,6 +18,12 @@ export interface GuestWithUser {
   preferred_communication: string | null;
   created_at: string | null;
   updated_at: string | null;
+  /** 
+   * Computed display name from COALESCE(users.full_name, event_guests.guest_name)
+   * Prefer this over guest_name for UI display
+   * @readonly
+   */
+  guest_display_name: string;
   users?: {
     id: string;
     full_name: string | null;

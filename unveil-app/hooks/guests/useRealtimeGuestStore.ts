@@ -27,6 +27,8 @@ interface OptimizedGuest {
   role: string;
   created_at: string | null;
   updated_at: string | null;
+  /** Computed display name from COALESCE(users.full_name, event_guests.guest_name) */
+  guest_display_name: string;
   users?: {
     id: string;
     full_name: string | null;
@@ -127,32 +129,44 @@ export function useRealtimeGuestStore(eventId: string): GuestStoreReturn {
     });
   }, [eventId, localState]);
 
-  // Fetch guests from database
+  // Fetch guests from database with display names
   const fetchGuests = useCallback(async (): Promise<OptimizedGuest[]> => {
     try {
       updateGlobalState({ connectionStatus: 'connecting', error: null });
 
+      // Use RPC function to get guests with computed display names
       const { data, error } = await supabase
-        .from('event_guests')
-        .select(`
-          *,
-          users (
-            id,
-            full_name,
-            email,
-            phone,
-            avatar_url
-          )
-        `)
-        .eq('event_id', eventId)
-        .order('created_at', { ascending: false });
+        .rpc('get_event_guests_with_display_names', {
+          p_event_id: eventId,
+          p_limit: undefined,
+          p_offset: 0
+        });
 
       if (error) throw error;
 
-      // Transform and normalize data
-      const guests: OptimizedGuest[] = data.map(guest => ({
-        ...guest,
+      // Transform to OptimizedGuest format with computed display name
+      const guests: OptimizedGuest[] = (data || []).map(guest => ({
+        id: guest.id,
+        event_id: guest.event_id,
+        user_id: guest.user_id,
+        guest_name: guest.guest_name,
+        guest_email: guest.guest_email,
+        phone: guest.phone,
         rsvp_status: normalizeRSVPStatus(guest.rsvp_status),
+        notes: guest.notes,
+        guest_tags: guest.guest_tags,
+        role: guest.role,
+        created_at: guest.created_at,
+        updated_at: guest.updated_at,
+        display_name: guest.display_name,
+        guest_display_name: guest.guest_display_name,
+        users: guest.user_id ? {
+          id: guest.user_id,
+          full_name: guest.user_full_name,
+          email: guest.user_email || guest.guest_email,
+          phone: guest.user_phone || guest.phone,
+          avatar_url: guest.user_avatar_url,
+        } : null,
       }));
 
       const statusCounts = getGuestStatusCounts(guests);

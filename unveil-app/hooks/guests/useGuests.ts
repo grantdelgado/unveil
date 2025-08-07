@@ -38,60 +38,68 @@ export function useGuests({
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
 
-  // Optimized guest data fetching
+  // Optimized guest data fetching with display names
   const fetchGuestsOptimized = useCallback(async (page: number = 1): Promise<{
     data: OptimizedGuest[];
     count: number;
   }> => {
-    const startIndex = enablePagination ? (page - 1) * pageSize : 0;
-    const endIndex = enablePagination ? startIndex + pageSize - 1 : undefined;
+    const offset = enablePagination ? (page - 1) * pageSize : 0;
+    const limit = enablePagination ? pageSize : null;
 
-    let query = supabase
-      .from('event_guests')
-      .select(`
-        id,
-        event_id,
-        user_id,
-        guest_name,
-        guest_email,
-        phone,
-        rsvp_status,
-        notes,
-        guest_tags,
-        role,
-        invited_at,
-        phone_number_verified,
-        sms_opt_out,
-        preferred_communication,
-        created_at,
-        updated_at,
-        users!user_id(
-          id,
-          full_name,
-          phone,
-          email,
-          avatar_url,
-          created_at,
-          updated_at,
-          intended_redirect,
-          onboarding_completed
-        )
-      `, { count: 'exact' })
-      .eq('event_id', eventId);
-
-    if (enablePagination && endIndex !== undefined) {
-      query = query.range(startIndex, endIndex);
-    }
-
-    const { data, error, count } = await query;
+    // Use RPC function to get guests with computed display names
+    const { data: guestData, error } = await supabase
+      .rpc('get_event_guests_with_display_names', {
+        p_event_id: eventId,
+        p_limit: limit ?? undefined,
+        p_offset: offset
+      });
 
     if (error) {
       logger.databaseError('Error fetching guests', error);
       throw error;
     }
 
+    // Get total count for pagination
+    const { count } = await supabase
+      .from('event_guests')
+      .select('*', { count: 'exact', head: true })
+      .eq('event_id', eventId);
+
+    // Transform to OptimizedGuest format with computed display name
+    const optimizedGuests: OptimizedGuest[] = (guestData || []).map(guest => ({
+      id: guest.id,
+      event_id: guest.event_id,
+      user_id: guest.user_id,
+      guest_name: guest.guest_name,
+      guest_email: guest.guest_email,
+      phone: guest.phone,
+      rsvp_status: guest.rsvp_status,
+      notes: guest.notes,
+      guest_tags: guest.guest_tags,
+      role: guest.role,
+      invited_at: guest.invited_at,
+      phone_number_verified: guest.phone_number_verified,
+      sms_opt_out: guest.sms_opt_out,
+      preferred_communication: guest.preferred_communication,
+      created_at: guest.created_at,
+      updated_at: guest.updated_at,
+      display_name: guest.display_name,
+      guest_display_name: guest.guest_display_name,
+      users: guest.user_id ? {
+        id: guest.user_id,
+        full_name: guest.user_full_name,
+        phone: guest.user_phone || guest.phone,
+        email: guest.user_email || guest.guest_email,
+        avatar_url: guest.user_avatar_url,
+        created_at: guest.user_created_at,
+        updated_at: guest.user_updated_at,
+        intended_redirect: guest.user_intended_redirect,
+        onboarding_completed: guest.user_onboarding_completed || false,
+      } : null,
+    }));
+
     return {
-      data: data || [],
+      data: optimizedGuests,
       count: count || 0
     };
   }, [eventId, pageSize, enablePagination]);

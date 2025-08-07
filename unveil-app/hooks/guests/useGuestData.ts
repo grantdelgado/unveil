@@ -24,6 +24,16 @@ export type OptimizedGuest = {
   preferred_communication: string | null;
   created_at: string | null;
   updated_at: string | null;
+  /** 
+   * Stored display name (automatically synced with users.full_name)
+   */
+  display_name: string;
+  /** 
+   * Computed display name from COALESCE(display_name, users.full_name, guest_name)
+   * Prefer this over guest_name for UI display
+   * @readonly
+   */
+  guest_display_name: string;
   // Maintain compatibility with existing components
   users: {
     id: string;
@@ -96,57 +106,31 @@ export function useGuestData({
   
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-  // Optimized query that only fetches needed fields and supports pagination
+  // Optimized query using RPC function for guest display names
   const fetchGuestsOptimized = useCallback(async (page: number = 1): Promise<{
     data: OptimizedGuest[];
     count: number;
   }> => {
-    const startIndex = enablePagination ? (page - 1) * pageSize : 0;
-    const endIndex = enablePagination ? startIndex + pageSize - 1 : undefined;
+    const offset = enablePagination ? (page - 1) * pageSize : 0;
+    const limit = enablePagination ? pageSize : null;
 
-    // Optimized query: select required fields efficiently  
-    let query = supabase
-      .from('event_guests')
-      .select(`
-        id,
-        event_id,
-        user_id,
-        guest_name,
-        guest_email,
-        phone,
-        rsvp_status,
-        notes,
-        guest_tags,
-        role,
-        invited_at,
-        phone_number_verified,
-        sms_opt_out,
-        preferred_communication,
-        created_at,
-        updated_at,
-        users!event_guests_user_id_fkey(
-          id,
-          full_name,
-          phone,
-          email,
-          avatar_url,
-          created_at,
-          updated_at
-        )
-      `, { count: 'exact' })
-      .eq('event_id', eventId)
-      .order('created_at', { ascending: false });
-
-    // Apply pagination if enabled
-    if (enablePagination && endIndex !== undefined) {
-      query = query.range(startIndex, endIndex);
-    }
-
-    const { data: guestData, error: guestError, count } = await query;
+    // Use RPC function to get guests with computed display names
+    const { data: guestData, error: guestError } = await supabase
+      .rpc('get_event_guests_with_display_names', {
+        p_event_id: eventId,
+        p_limit: limit ?? undefined,
+        p_offset: offset
+      });
 
     if (guestError) throw guestError;
 
-    // Transform to optimized format with compatibility for existing components
+    // Get total count for pagination
+    const { count } = await supabase
+      .from('event_guests')
+      .select('*', { count: 'exact', head: true })
+      .eq('event_id', eventId);
+
+    // Transform to optimized format with computed display name
     const optimizedGuests: OptimizedGuest[] = (guestData || []).map(guest => ({
       id: guest.id,
       event_id: guest.event_id,
@@ -164,17 +148,20 @@ export function useGuestData({
       preferred_communication: guest.preferred_communication,
       created_at: guest.created_at,
       updated_at: guest.updated_at,
+      // Add stored and computed display names from RPC function
+      display_name: guest.display_name,
+      guest_display_name: guest.guest_display_name,
       // Maintain compatibility with existing components expecting nested users object
-      users: guest.users ? {
-        id: guest.users.id || guest.user_id || '',
-        full_name: guest.users.full_name,
-        phone: guest.users.phone,
-        email: guest.users.email || guest.guest_email,
-        avatar_url: guest.users.avatar_url,
-        created_at: guest.users.created_at,
-        updated_at: guest.users.updated_at,
-        intended_redirect: null, // Property doesn't exist in current schema
-        onboarding_completed: false, // Property doesn't exist in current schema
+      users: guest.user_id ? {
+        id: guest.user_id,
+        full_name: guest.user_full_name,
+        phone: guest.user_phone || guest.phone,
+        email: guest.user_email || guest.guest_email,
+        avatar_url: guest.user_avatar_url,
+        created_at: guest.user_created_at,
+        updated_at: guest.user_updated_at,
+        intended_redirect: guest.user_intended_redirect,
+        onboarding_completed: guest.user_onboarding_completed || false,
       } : null,
     }));
 

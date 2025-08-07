@@ -9,6 +9,12 @@ import { useDebounce } from '@/hooks/common'
 import type { Database } from '@/app/reference/supabase.types'
 
 type Guest = Database['public']['Tables']['event_guests']['Row'] & {
+  /** 
+   * Computed display name from COALESCE(users.full_name, event_guests.guest_name)
+   * Prefer this over guest_name for UI display
+   * @readonly
+   */
+  guest_display_name: string;
   users: Database['public']['Tables']['users']['Row'] | null;
 };
 
@@ -18,25 +24,41 @@ const guestQueryKeys = {
   guestStats: (eventId: string) => ['guests', 'stats', eventId] as const,
 }
 
-// Cached hook for getting guests for an event
+// Cached hook for getting guests for an event with display names
 export function useEventGuestsCached(eventId: string) {
   return useQuery({
     queryKey: guestQueryKeys.eventGuests(eventId),
     queryFn: async () => {
+      // Use RPC function to get guests with computed display names
       const { data, error } = await supabase
-        .from('event_guests')
-        .select(`
-          *,
-          users:user_id(*)
-        `)
-        .eq('event_id', eventId)
+        .rpc('get_event_guests_with_display_names', {
+          p_event_id: eventId,
+          p_limit: undefined,
+          p_offset: 0
+        });
 
       if (error) {
         logger.databaseError('Failed to fetch guests', error)
         throw new Error('Failed to fetch guests')
       }
 
-      return data || []
+      // Transform to include users object for compatibility
+      const transformedData = (data || []).map(guest => ({
+        ...guest,
+        users: guest.user_id ? {
+          id: guest.user_id,
+          full_name: guest.user_full_name,
+          email: guest.user_email,
+          phone: guest.user_phone,
+          avatar_url: guest.user_avatar_url,
+          created_at: guest.user_created_at,
+          updated_at: guest.user_updated_at,
+          intended_redirect: guest.user_intended_redirect,
+          onboarding_completed: guest.user_onboarding_completed || false,
+        } : null,
+      }));
+
+      return transformedData;
     },
     enabled: !!eventId,
     staleTime: 30 * 1000, // Guests don't change as frequently, cache for 30 seconds

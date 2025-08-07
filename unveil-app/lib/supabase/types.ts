@@ -47,6 +47,22 @@ export interface EventGuestWithUser extends EventGuest {
   users: PublicUserProfile | null;
 }
 
+// Enhanced guest type with computed display name
+export interface EventGuestWithDisplayName extends EventGuestWithUser {
+  /** 
+   * Stored display name in event_guests table (automatically synced)
+   * This field is stored in the database and kept in sync with users.full_name
+   */
+  display_name: string;
+  /** 
+   * Computed display name that prefers stored display_name, then users.full_name, then guest_name
+   * This field is derived from COALESCE(display_name, users.full_name, guest_name) 
+   * Use this for UI display
+   * @readonly
+   */
+  guest_display_name: string;
+}
+
 export interface EventGuestWithEvent extends EventGuest {
   events: Event | null;
 }

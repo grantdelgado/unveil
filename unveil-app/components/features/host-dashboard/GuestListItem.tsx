@@ -25,8 +25,8 @@ export const GuestListItem = memo<GuestListItemProps>(({
   const currentStatus = normalizeRSVPStatus(guest.rsvp_status);
   const statusConfig = getRSVPStatusConfig(currentStatus);
   
-  // Guest display name with fallback
-  const displayName = guest.users?.full_name || guest.guest_name || 'Unnamed Guest';
+  // Use computed guest display name from database
+  const displayName = guest.guest_display_name || guest.users?.full_name || guest.guest_name || 'Unnamed Guest';
   const displayEmail = guest.users?.email || guest.guest_email;
   
   return (

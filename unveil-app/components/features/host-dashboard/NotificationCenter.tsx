@@ -105,7 +105,7 @@ function NotificationCenterComponent({ eventId }: NotificationCenterProps) {
           id: `guest-${guest.id}`,
           type: 'rsvp',
           title: getRSVPTitle(guest.rsvp_status),
-          description: `${guest.users?.full_name || guest.guest_name || 'A guest'} ${getRSVPDescription(guest.rsvp_status)}`,
+          description: `${guest.guest_display_name || guest.users?.full_name || guest.guest_name || 'A guest'} ${getRSVPDescription(guest.rsvp_status)}`,
           timestamp: guest.created_at,
           isRead: false,
           icon: getRSVPIcon(guest.rsvp_status),

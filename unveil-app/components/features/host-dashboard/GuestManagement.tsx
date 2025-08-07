@@ -60,12 +60,14 @@ function GuestManagementContent({
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter(guest => {
+        const displayName = guest.guest_display_name?.toLowerCase() || '';
         const guestName = guest.guest_name?.toLowerCase() || '';
         const guestEmail = guest.guest_email?.toLowerCase() || '';
         const phone = guest.phone?.toLowerCase() || '';
         const userFullName = guest.users?.full_name?.toLowerCase() || '';
         
         return (
+          displayName.includes(searchLower) ||
           guestName.includes(searchLower) ||
           guestEmail.includes(searchLower) ||
           phone.includes(searchLower) ||
@@ -104,7 +106,7 @@ function GuestManagementContent({
 
   const handleRemoveGuestWithFeedback = useCallback(async (guestId: string) => {
     const guest = guests.find(g => g.id === guestId);
-    const guestName = guest?.guest_name || guest?.users?.full_name || 'Guest';
+    const guestName = guest?.guest_display_name || guest?.guest_name || guest?.users?.full_name || 'Guest';
     
     if (!confirm(`Are you sure you want to remove ${guestName} from the guest list?`)) {
       return;

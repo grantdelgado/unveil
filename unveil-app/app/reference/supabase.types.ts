@@ -17,6 +17,7 @@ export type Database = {
       event_guests: {
         Row: {
           created_at: string | null
+          display_name: string | null
           event_id: string
           guest_email: string | null
           guest_name: string | null
@@ -35,6 +36,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          display_name?: string | null
           event_id: string
           guest_email?: string | null
           guest_name?: string | null
@@ -53,6 +55,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          display_name?: string | null
           event_id?: string
           guest_email?: string | null
           guest_name?: string | null
@@ -455,6 +458,50 @@ export type Database = {
         Args: { p_message_id: string }
         Returns: boolean
       }
+      create_event_with_host_atomic: {
+        Args: { event_data: Json }
+        Returns: {
+          success: boolean
+          event_id: string
+          created_at: string
+          error_message: string
+        }[]
+      }
+      get_event_guests_with_display_names: {
+        Args: { p_event_id: string; p_limit?: number; p_offset?: number }
+        Returns: {
+          id: string
+          event_id: string
+          user_id: string
+          guest_name: string
+          guest_email: string
+          phone: string
+          rsvp_status: string
+          notes: string
+          guest_tags: string[]
+          role: string
+          invited_at: string
+          phone_number_verified: boolean
+          sms_opt_out: boolean
+          preferred_communication: string
+          created_at: string
+          updated_at: string
+          display_name: string
+          guest_display_name: string
+          user_full_name: string
+          user_email: string
+          user_phone: string
+          user_avatar_url: string
+          user_created_at: string
+          user_updated_at: string
+          user_intended_redirect: string
+          user_onboarding_completed: boolean
+        }[]
+      }
+      get_guest_display_name: {
+        Args: { p_guest_name: string; p_user_full_name: string }
+        Returns: string
+      }
       get_user_events: {
         Args: { user_id_param?: string }
         Returns: {
@@ -667,12 +714,3 @@ export const Constants = {
     },
   },
 } as const
-
-// Additional type exports for better developer experience
-export type User = Tables<'users'>
-export type Event = Tables<'events'>
-export type EventGuest = Tables<'event_guests'>
-export type Message = Tables<'messages'>
-export type ScheduledMessage = Tables<'scheduled_messages'>
-export type Media = Tables<'media'>
-export type MessageDelivery = Tables<'message_deliveries'>
