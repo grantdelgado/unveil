@@ -219,7 +219,7 @@ export default function GuestEventHomePage() {
     return (
       <button
         onClick={() => handleRSVPUpdate(status)}
-        className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 ${getColorClasses()}`}
+        className={`w-full py-4 px-4 rounded-xl font-medium transition-all duration-300 hover:scale-[1.01] hover:shadow-md active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-300 ${getColorClasses()}`}
       >
         {children}
       </button>
@@ -396,11 +396,11 @@ export default function GuestEventHomePage() {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* RSVP Card */}
-            <CardContainer>
-              <div className="space-y-6">
+            <CardContainer className="p-5">
+              <div className="space-y-5">
                 <div className="space-y-2">
-                  <SectionTitle>Will you be joining us?</SectionTitle>
-                  <MicroCopy>Let us know if you can celebrate with us</MicroCopy>
+                  <h3 className="text-lg font-medium text-stone-800">Will you be joining us?</h3>
+                  <p className="text-sm text-stone-600">Let us know if you can celebrate with us</p>
                 </div>
 
                 <div className="space-y-3">
