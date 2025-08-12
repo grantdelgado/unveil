@@ -14,11 +14,10 @@ import {
   FieldLabel,
   TextInput,
   PrimaryButton,
-  SecondaryButton,
-  BackButton,
   MicroCopy,
   LoadingSpinner
 } from '@/components/ui';
+import { ArrowLeft } from 'lucide-react';
 
 export default function AccountSetupPage() {
   const [fullName, setFullName] = useState('');
@@ -118,12 +117,20 @@ export default function AccountSetupPage() {
       }
 
       // Update user profile and mark onboarding as completed
+      // Only mark as complete if full_name is provided and not empty
+      const trimmedFullName = fullName.trim();
+      
+      if (!trimmedFullName) {
+        setError('Full name is required to complete setup.');
+        return;
+      }
+
       const { error: updateError } = await supabase
         .from('users')
         .update({
-          full_name: fullName.trim(),
+          full_name: trimmedFullName,
           email: email.trim() || null,
-          onboarding_completed: true, // Mark setup as complete
+          onboarding_completed: true, // Mark setup as complete only with full name
         })
         .eq('id', userProfile.id);
 
@@ -145,33 +152,13 @@ export default function AccountSetupPage() {
     }
   };
 
-  const handleSkip = async () => {
-    // Mark minimal setup as complete but don't require full name
+  const handleLogoutAndRedirect = async () => {
     try {
-      if (!userProfile?.id) {
-        setError('User profile not found. Please try logging in again.');
-        return;
-      }
-
-      // Mark onboarding as completed even if skipping
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({
-          onboarding_completed: true,
-        })
-        .eq('id', userProfile.id);
-
-      if (updateError) {
-        console.error('Failed to complete setup:', updateError);
-        setError('Failed to complete setup. Please try again.');
-        return;
-      }
-
-      console.log('✅ Setup skipped but marked as completed');
-      router.push('/select-event');
+      await supabase.auth.signOut();
+      router.push('/login');
     } catch (err) {
-      console.error('Skip setup error:', err);
-      setError('An unexpected error occurred. Please try again.');
+      console.error('Logout error:', err);
+      setError('Failed to sign out. Please try again.');
     }
   };
 
@@ -189,12 +176,14 @@ export default function AccountSetupPage() {
         <div className="space-y-6">
           {/* Back Navigation */}
           <div className="flex justify-start">
-            <BackButton 
-              href="/login"
-              variant="subtle"
+            <button
+              onClick={handleLogoutAndRedirect}
+              className="inline-flex items-center gap-2 p-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-200 rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 min-h-[44px] min-w-[44px]"
+              disabled={loading}
             >
-              Back to Login
-            </BackButton>
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+              <span>← Cancel and Start Over (you&apos;ll need to re-enter your phone number)</span>
+            </button>
           </div>
 
           <div className="text-center space-y-4">
@@ -217,6 +206,7 @@ export default function AccountSetupPage() {
                 disabled={loading}
                 autoFocus={true}
                 autoComplete="name"
+                required
                 className="min-h-[44px]" // Touch-friendly height
               />
             </div>
@@ -247,28 +237,19 @@ export default function AccountSetupPage() {
             <div className="space-y-3">
               <PrimaryButton
                 type="submit"
-                disabled={loading}
+                disabled={loading || !fullName.trim()}
                 loading={loading}
                 className="min-h-[44px]" // Touch-friendly height
               >
                 {loading ? 'Setting up...' : 'Complete Setup'}
               </PrimaryButton>
-
-              <SecondaryButton
-                type="button"
-                onClick={handleSkip}
-                disabled={loading}
-                className="min-h-[44px]" // Touch-friendly height
-              >
-                Skip for now
-              </SecondaryButton>
             </div>
           </form>
 
           <div className="text-center space-y-1">
             <MicroCopy>Phone: {userProfile.phone}</MicroCopy>
             <MicroCopy>
-              You can update this information later in your profile
+              This is your verified phone number. You can update your name or email anytime in your profile.
             </MicroCopy>
           </div>
         </div>

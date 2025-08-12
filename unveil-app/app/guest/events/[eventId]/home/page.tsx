@@ -14,6 +14,7 @@ import { useEventWithGuest } from '@/hooks/events';
 const LazyGuestPhotoGallery = lazy(() => import('@/components/features/media/GuestPhotoGallery'));
 import { GuestMessaging } from '@/components/features/messaging';
 import { EventSchedule } from '@/components/features/scheduling';
+import { InstructionalBanner } from '@/components/features/guest';
 import { throttle } from '@/lib/utils/throttle';
 import {
   PageWrapper,
@@ -283,20 +284,16 @@ export default function GuestEventHomePage() {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 py-8">
+      {/* Instructional Banner */}
+      <div className="max-w-5xl mx-auto px-6 pt-8 pb-4">
+        <InstructionalBanner />
+      </div>
+
+      <div className="max-w-5xl mx-auto px-6 pb-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Welcome Message */}
-            <CardContainer className="bg-gradient-to-r from-rose-50 to-purple-50 border-rose-200/50">
-              <div className="text-center space-y-3">
-                <SectionTitle>You&apos;re invited to celebrate</SectionTitle>
-                <SubTitle className="text-lg leading-relaxed">
-                  We&apos;re so excited to share this special moment with you.
-                  Your presence would make our day even more magical.
-                </SubTitle>
-              </div>
-            </CardContainer>
+
 
             {/* Event Details Card */}
             <CardContainer>
