@@ -461,6 +461,7 @@ export function useEventSubscription({
   eventId,
   table,
   event = '*',
+  filter,
   onDataChange,
   onError,
   enabled = true,
@@ -469,6 +470,7 @@ export function useEventSubscription({
   eventId: string | null;
   table: string;
   event?: '*' | 'INSERT' | 'UPDATE' | 'DELETE';
+  filter?: string;
   onDataChange: (payload: RealtimePostgresChangesPayload<any>) => void;
   onError?: (error: Error) => void;
   enabled?: boolean;
@@ -480,6 +482,7 @@ export function useEventSubscription({
     subscriptionId: subscriptionId || 'disabled',
     table,
     event,
+    filter,
     enabled: enabled && Boolean(eventId),
     performanceOptions: {
       enablePooling: true,
