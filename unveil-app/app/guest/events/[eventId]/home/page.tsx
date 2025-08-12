@@ -19,7 +19,6 @@ import {
   PrimaryButton,
   SecondaryButton,
   BackButton,
-  MicroCopy,
   SkeletonLoader
 } from '@/components/ui';
 import { ErrorBoundary, MessagingErrorFallback } from '@/components/ui/ErrorBoundary';
@@ -448,20 +447,20 @@ export default function GuestEventHomePage() {
 
             {/* Host Contact */}
             {event.host && (
-              <CardContainer>
-                <div className="space-y-4">
-                  <SectionTitle>Your Hosts</SectionTitle>
-                  <div className="flex items-center space-x-4">
-                    <div className="w-14 h-14 bg-gradient-to-br from-rose-400 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold text-xl shadow-sm">
+              <CardContainer className="p-4">
+                <div className="space-y-3">
+                  <h3 className="text-lg font-medium text-stone-800">Your Hosts</h3>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 bg-gradient-to-br from-stone-300 to-stone-400 rounded-full flex items-center justify-center text-white font-medium text-lg border-2 border-stone-200">
                       {event.host.full_name?.charAt(0) || '?'}
                     </div>
                     <div>
-                      <h3 className="font-medium text-gray-800 text-lg">
+                      <h4 className="font-medium text-stone-800 text-base">
                         {event.host.full_name || 'Your hosts'}
-                      </h3>
-                      <MicroCopy>
+                      </h4>
+                      <p className="text-sm text-stone-600">
                         Looking forward to celebrating with you
-                      </MicroCopy>
+                      </p>
                     </div>
                   </div>
                 </div>
