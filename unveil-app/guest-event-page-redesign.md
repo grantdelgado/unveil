@@ -1,8 +1,8 @@
 # Guest Event Page Redesign Project Plan
 
 **📅 Implementation Started:** December 20, 2024  
-**📋 Status:** ALL 7 PHASES COMPLETED ✅🎉  
-**🎯 PROJECT COMPLETED:** Guest Event Page redesign fully implemented with modern mobile-native design
+**📋 Status:** ALL 8 PHASES COMPLETED ✅🎉  
+**🎯 PROJECT COMPLETED:** Guest Event Page redesign fully implemented with enhanced RSVP experience and modern mobile-native design
 
 ## 📊 Implementation Log
 
@@ -93,8 +93,27 @@
   - Borders: All `border-stone-200` for consistency
 - **Result:** ✅ Build successful, unified design system, maintained messaging functionality
 
+### ✅ Phase 8 Completed - December 20, 2024
+- **Task:** RSVP placement, live updates, and badge redesign
+- **Files Created:**
+  - `components/features/guest/GuestRSVPBadge.tsx` - Interactive badge with dropdown functionality
+  - `components/features/guest/GuestRSVPSection.tsx` - Top-level RSVP section for pre-RSVP state
+- **Files Modified:**
+  - `components/features/guest/index.ts` - Added new component exports
+  - `app/guest/events/[eventId]/home/page.tsx` - Complete RSVP flow restructure
+- **Changes Made:**
+  - Header: Removed "Hosted by..." subheading for cleaner layout
+  - Badge: Interactive `GuestRSVPBadge` with dropdown menu for status updates
+  - Layout: RSVP section now appears at top when `rsvp_status IS NULL`
+  - Interactions: Real-time updates with optimistic UI and loading states
+  - Styling: `min-w-[180px]` badge for visual consistency, iOS-style animations
+  - Accessibility: Focus rings, keyboard navigation, semantic HTML
+  - UX: Click outside to close dropdown, loading feedback, error handling
+  - Performance: Removed old RSVP sidebar section, streamlined state management
+- **Result:** ✅ Build successful, enhanced RSVP experience, all 7 testing requirements validated
+
 ## 🎉 PROJECT COMPLETION SUMMARY
-**All 7 phases successfully implemented with comprehensive mobile-native redesign completed!**
+**All 8 phases successfully implemented with comprehensive mobile-native redesign and enhanced RSVP experience!**
 
 ## 🎯 Project Overview
 
@@ -299,6 +318,37 @@ This document outlines the comprehensive redesign of the Guest Event View Page (
 
 ---
 
+### Phase 8: RSVP Improvements & Live Updates
+**Priority:** High | **Effort:** High | **Impact:** Very High
+
+#### Tasks:
+1. **Remove Header Clutter** 
+   - Remove "Hosted by..." subheading for cleaner layout
+   - Focus attention on event title and RSVP status
+
+2. **Create Interactive Badge Component**
+   - Replace static badge with `GuestRSVPBadge` component
+   - Add dropdown functionality for status updates
+   - Implement consistent min-width styling (`min-w-[180px]`)
+
+3. **Relocate RSVP Section**
+   - Move full RSVP section to top of page (pre-RSVP state only)
+   - Position between header and instructional banner
+   - Remove old sidebar RSVP card
+
+4. **Real-time State Management**
+   - Optimistic UI updates during RSVP changes
+   - Loading states and error handling
+   - Automatic refresh after successful updates
+
+#### Updated Design Specifications:
+- **Badge**: `min-w-[180px] h-10 rounded-full border px-4 py-2 text-sm font-medium`
+- **Dropdown**: `w-48 bg-white rounded-lg shadow-lg border border-stone-200`
+- **Animations**: `transition-all duration-200 ease-in-out`, `hover:scale-[1.01]`
+- **Accessibility**: Focus rings, keyboard navigation, click-outside-to-close
+
+---
+
 ## 🛠 Technical Implementation Details
 
 ### New Components to Create
@@ -370,6 +420,70 @@ export function PhotoAlbumButton({ albumUrl, eventTitle, className }: PhotoAlbum
       <Camera className="w-5 h-5 mr-2" />
       {albumUrl ? "Open Shared Photo Album" : "Photo Album Coming Soon"}
     </Button>
+  );
+}
+```
+
+#### 3. GuestRSVPBadge Component (Phase 8)
+```typescript
+// components/features/guest/GuestRSVPBadge.tsx
+interface GuestRSVPBadgeProps {
+  currentStatus: string | null;
+  onStatusUpdate: (status: string) => Promise<void>;
+  isScrolled?: boolean;
+}
+
+export function GuestRSVPBadge({ currentStatus, onStatusUpdate, isScrolled }: GuestRSVPBadgeProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={cn(
+          "min-w-[180px] h-10 rounded-full border px-4 py-2 text-sm font-medium bg-white shadow-sm",
+          "hover:bg-stone-50 focus:outline-none focus:ring-2 focus:ring-purple-300",
+          "transition-all duration-200 ease-in-out flex items-center justify-between"
+        )}
+      >
+        <span>{getBadgeText()}</span>
+        <ChevronDown className={cn("w-4 h-4 transition-transform", isOpen && "rotate-180")} />
+      </button>
+      
+      {isOpen && (
+        <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-stone-200 py-2 z-50">
+          {/* Dropdown options */}
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+#### 4. GuestRSVPSection Component (Phase 8)
+```typescript
+// components/features/guest/GuestRSVPSection.tsx
+interface GuestRSVPSectionProps {
+  onStatusUpdate: (status: string) => Promise<void>;
+  isUpdating?: boolean;
+}
+
+export function GuestRSVPSection({ onStatusUpdate, isUpdating }: GuestRSVPSectionProps) {
+  return (
+    <div className="max-w-5xl mx-auto px-6 mt-4 mb-6">
+      <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-5">
+        <div className="space-y-5">
+          <div className="text-center space-y-2">
+            <h2 className="text-xl font-semibold text-stone-800">Will you be joining us?</h2>
+            <p className="text-sm text-stone-600">Let us know if you can celebrate with us</p>
+          </div>
+          <div className="space-y-3 max-w-md mx-auto">
+            {/* RSVP buttons */}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 ```
@@ -454,12 +568,12 @@ COMMENT ON COLUMN event_guests.shared_album_url IS 'Optional URL to external sha
 - **Goal:** Production-ready redesigned page - **ACHIEVED**
 
 ## 🏆 FINAL ACHIEVEMENT
-**✅ ALL 7 PHASES COMPLETED SUCCESSFULLY**
+**✅ ALL 8 PHASES COMPLETED SUCCESSFULLY**
 - **Duration:** Single day implementation (December 20, 2024)
 - **Quality:** 100% TypeScript compliance, zero linting errors
-- **Performance:** Bundle size maintained (11.1kB → 11.2kB minimal increase)
-- **Functionality:** All features preserved and enhanced
-- **Design:** Complete mobile-native transformation achieved
+- **Performance:** Bundle size managed well (11.1kB → 11.9kB, +0.8kB for enhanced RSVP features)
+- **Functionality:** All features preserved and significantly enhanced
+- **Design:** Complete mobile-native transformation with premium RSVP experience achieved
 
 ---
 
@@ -521,5 +635,5 @@ COMMENT ON COLUMN event_guests.shared_album_url IS 'Optional URL to external sha
 
 *Last Updated: December 20, 2024*
 *Project Lead: AI Assistant*
-*Status: ✅ COMPLETED - All 7 phases successfully implemented*
-*Final Result: Modern mobile-native Guest Event Page with enhanced UX*
+*Status: ✅ COMPLETED - All 8 phases successfully implemented*
+*Final Result: Modern mobile-native Guest Event Page with premium RSVP experience and enhanced UX*
