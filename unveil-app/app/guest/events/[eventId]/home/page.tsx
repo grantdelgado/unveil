@@ -1,20 +1,13 @@
 'use client';
 
-import { useEffect, useState, useMemo, Suspense, lazy } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import { useEventWithGuest } from '@/hooks/events';
-// 🚀 PERFORMANCE OPTIMIZATION: Lazy loading heavy components
-// Lazy loading provides:
-// - Reduced initial bundle size and faster page loads
-// - Code splitting for better First Contentful Paint
-// - Components load only when needed (on-demand)
-// - Better Core Web Vitals scores
-// Week 3: Implemented for all heavy components to achieve bundle size targets
-const LazyGuestPhotoGallery = lazy(() => import('@/components/features/media/GuestPhotoGallery'));
+
 import { GuestMessaging } from '@/components/features/messaging';
 import { EventSchedule } from '@/components/features/scheduling';
-import { InstructionalBanner } from '@/components/features/guest';
+import { InstructionalBanner, PhotoAlbumButton } from '@/components/features/guest';
 import { throttle } from '@/lib/utils/throttle';
 import {
   PageWrapper,
@@ -382,22 +375,15 @@ export default function GuestEventHomePage() {
               </div>
             </CardContainer>
 
-            {/* Photo Gallery */}
-            <Suspense 
-              fallback={
-                <CardContainer>
-                  <div className="flex items-center justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
-                    <span className="ml-3 text-gray-600">Loading photo gallery...</span>
-                  </div>
-                </CardContainer>
-              }
-            >
-              <LazyGuestPhotoGallery
-                eventId={eventId}
-                currentUserId={currentUserId}
-              />
-            </Suspense>
+            {/* Shared Photo Album */}
+            <CardContainer>
+              <div className="space-y-4">
+                <SectionTitle>Photo Album</SectionTitle>
+                <PhotoAlbumButton 
+                  albumUrl={undefined} // TODO: Add shared_album_url field to database
+                />
+              </div>
+            </CardContainer>
 
             {/* Messaging */}
             <GuestMessaging 
