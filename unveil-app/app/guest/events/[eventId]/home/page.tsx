@@ -289,13 +289,13 @@ export default function GuestEventHomePage() {
 
 
             {/* Event Details Card */}
-            <CardContainer>
-              <div className="space-y-6">
-                <SectionTitle>Celebration Details</SectionTitle>
+            <CardContainer className="p-5">
+              <div className="space-y-4">
+                <h2 className="text-lg font-medium text-stone-800">Celebration Details</h2>
 
-                <div className="space-y-6">
-                  <div className="flex items-start space-x-4">
-                    <div className="w-6 h-6 text-rose-500 mt-1 flex-shrink-0">
+                <div className="space-y-4">
+                  <div className="flex items-start space-x-3">
+                    <div className="w-4 h-4 text-stone-400 mt-1 flex-shrink-0">
                       <svg
                         fill="none"
                         stroke="currentColor"
@@ -310,16 +310,16 @@ export default function GuestEventHomePage() {
                       </svg>
                     </div>
                     <div>
-                      <h3 className="font-medium text-gray-800 mb-1">When</h3>
-                      <p className="text-gray-600 text-lg">
+                      <h3 className="font-medium text-stone-800 mb-1">When</h3>
+                      <p className="text-stone-700 text-base">
                         {formatDate(event.event_date)}
                       </p>
                     </div>
                   </div>
 
                   {event.location && (
-                    <div className="flex items-start space-x-4">
-                      <div className="w-6 h-6 text-rose-500 mt-1 flex-shrink-0">
+                    <div className="flex items-start space-x-3">
+                      <div className="w-4 h-4 text-stone-400 mt-1 flex-shrink-0">
                         <svg
                           fill="none"
                           stroke="currentColor"
@@ -339,15 +339,15 @@ export default function GuestEventHomePage() {
                         </svg>
                       </div>
                       <div>
-                        <h3 className="font-medium text-gray-800 mb-1">Where</h3>
-                        <p className="text-gray-600 text-lg">{event.location}</p>
+                        <h3 className="font-medium text-stone-800 mb-1">Where</h3>
+                        <p className="text-stone-700 text-base">{event.location}</p>
                       </div>
                     </div>
                   )}
 
                   {event.description && (
-                    <div className="flex items-start space-x-4">
-                      <div className="w-6 h-6 text-rose-500 mt-1 flex-shrink-0">
+                    <div className="flex items-start space-x-3">
+                      <div className="w-4 h-4 text-stone-400 mt-1 flex-shrink-0">
                         <svg
                           fill="none"
                           stroke="currentColor"
@@ -362,10 +362,10 @@ export default function GuestEventHomePage() {
                         </svg>
                       </div>
                       <div>
-                        <h3 className="font-medium text-gray-800 mb-1">
+                        <h3 className="font-medium text-stone-800 mb-1">
                           About this celebration
                         </h3>
-                        <p className="text-gray-600 leading-relaxed">
+                        <p className="text-stone-700 leading-relaxed">
                           {event.description}
                         </p>
                       </div>
