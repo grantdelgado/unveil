@@ -161,12 +161,12 @@ export default function GuestEventHomePage() {
   };
 
   const getRSVPStatusColor = (status: string | null) => {
-    switch (status) {
-      case 'Attending':
+    switch ((status || '').toLowerCase()) {
+      case 'attending':
         return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-      case 'Declined':
+      case 'declined':
         return 'bg-stone-100 text-stone-700 border-stone-200';
-      case 'Maybe':
+      case 'maybe':
         return 'bg-amber-50 text-amber-700 border-amber-200';
       default:
         return 'bg-purple-50 text-purple-700 border-purple-200';
@@ -174,12 +174,12 @@ export default function GuestEventHomePage() {
   };
 
   const getRSVPStatusText = (status: string | null) => {
-    switch (status) {
-      case 'Attending':
+    switch ((status || '').toLowerCase()) {
+      case 'attending':
         return 'Celebrating with you';
-      case 'Declined':
+      case 'declined':
         return 'Unable to attend';
-      case 'Maybe':
+      case 'maybe':
         return 'Considering';
       default:
         return 'Awaiting your response';
@@ -195,7 +195,7 @@ export default function GuestEventHomePage() {
     children: React.ReactNode; 
     currentStatus: string | null;
   }) => {
-    const isSelected = currentStatus === status;
+    const isSelected = (currentStatus || '').toLowerCase() === status.toLowerCase();
     const getColorClasses = () => {
       if (isSelected) {
         switch (status) {

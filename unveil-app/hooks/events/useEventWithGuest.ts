@@ -6,6 +6,10 @@ import { logError, type AppError } from '@/lib/error-handling';
 import { withErrorHandling } from '@/lib/error-handling';
 import { getEventById } from '@/lib/services/events';
 import { smartInvalidation } from '@/lib/queryUtils';
+import { logger } from '@/lib/logger';
+import { RSVP_STATUS, type RSVPStatus } from '@/lib/types/rsvp';
+import { isValidUUID } from '@/lib/utils/validation';
+import { useEventSubscription } from '@/hooks/realtime';
 
 interface UseEventWithGuestReturn {
   event: EventWithHost | null;
@@ -86,14 +90,45 @@ export function useEventWithGuest(
       return { success: false, error: 'Missing event or user ID' };
     }
 
+    // Validate identifiers before making request
+    if (!isValidUUID(eventId) || !isValidUUID(userId)) {
+      logger.apiError('Invalid UUIDs provided for RSVP update', undefined, 'useEventWithGuest.updateRSVP');
+      return { success: false, error: 'Invalid event or user identifier' };
+    }
+
+    // Normalize and validate status against allowed set
+    const normalizedStatus = (status || '').toLowerCase() as RSVPStatus;
+    const allowedStatuses = new Set<RSVPStatus>([
+      RSVP_STATUS.ATTENDING,
+      RSVP_STATUS.MAYBE,
+      RSVP_STATUS.DECLINED,
+      RSVP_STATUS.PENDING,
+    ]);
+    if (!allowedStatuses.has(normalizedStatus)) {
+      logger.validation?.('Invalid RSVP status provided', { status }, 'useEventWithGuest.updateRSVP');
+      return { success: false, error: 'Invalid RSVP status' };
+    }
+
     const wrappedUpdate = withErrorHandling(async () => {
+      // Debug visibility: log request details
+      logger.api(
+        'Submitting RSVP update',
+        {
+          query: `event_id=eq.${eventId}&user_id=eq.${userId}`,
+          payload: { rsvp_status: normalizedStatus },
+        },
+        'useEventWithGuest.updateRSVP',
+      );
+
       const { error: updateError } = await supabase
         .from('event_guests')
-        .update({ rsvp_status: status })
+        .update({ rsvp_status: normalizedStatus })
         .eq('event_id', eventId)
         .eq('user_id', userId);
 
       if (updateError) {
+        // Include more context in error logs
+        logger.databaseError('RSVP update failed', updateError, 'useEventWithGuest.updateRSVP');
         throw new Error(updateError.message);
       }
 
@@ -108,6 +143,7 @@ export function useEventWithGuest(
         userId
       });
       
+      logger.api('RSVP updated successfully', { eventId, userId, rsvp_status: normalizedStatus }, 'useEventWithGuest.updateRSVP');
       return { success: true };
     }, 'useEventWithGuest.updateRSVP');
 
@@ -128,6 +164,38 @@ export function useEventWithGuest(
   useEffect(() => {
     fetchEventData();
   }, [fetchEventData]);
+
+  // Realtime: keep guestInfo in sync for this event (and user)
+  useEventSubscription({
+    eventId: eventId,
+    table: 'event_guests',
+    event: '*',
+    // Scope realtime at the channel level for efficiency
+    // Note: We still guard in the handler as a safety net
+    // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+    filter: eventId ? `event_id=eq.${eventId}` : undefined,
+    onDataChange: useCallback((payload) => {
+      try {
+        // Narrow to the current user's row
+        const updated = payload.new as unknown as { id?: string; event_id?: string; user_id?: string; rsvp_status?: string };
+        if (!updated || updated.event_id !== eventId) return;
+        if (userId && updated.user_id !== userId) return;
+
+        // Merge minimal fields into guestInfo; realtime payload has flat record
+        setGuestInfo((prev) => ({
+          ...(prev || ({} as EventGuestWithUser)),
+          ...(updated as Partial<EventGuestWithUser>),
+        }));
+      } catch (err) {
+        logger.realtimeError('Failed to apply realtime RSVP update', err);
+      }
+    }, [eventId, userId]),
+    onError: useCallback((err: Error) => {
+      logger.realtimeError('RSVP realtime subscription error', err);
+    }, []),
+    enabled: Boolean(eventId),
+    performanceOptions: { enablePooling: true, eventId: eventId || undefined },
+  });
 
   return {
     event,
