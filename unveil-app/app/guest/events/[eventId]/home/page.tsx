@@ -7,7 +7,7 @@ import { useEventWithGuest } from '@/hooks/events';
 
 import { GuestMessaging } from '@/components/features/messaging';
 import { EventSchedule } from '@/components/features/scheduling';
-import { InstructionalBanner, PhotoAlbumButton } from '@/components/features/guest';
+import { InstructionalBanner, PhotoAlbumButton, GuestRSVPBadge, GuestRSVPSection } from '@/components/features/guest';
 import { throttle } from '@/lib/utils/throttle';
 import {
   PageWrapper,
@@ -32,6 +32,7 @@ export default function GuestEventHomePage() {
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [messageText, setMessageText] = useState('');
+  const [isUpdatingRSVP, setIsUpdatingRSVP] = useState(false);
 
   // Get session first
   useEffect(() => {
@@ -78,12 +79,18 @@ export default function GuestEventHomePage() {
     useEventWithGuest(eventId, currentUserId);
 
   const handleRSVPUpdate = async (status: string) => {
-    const result = await updateRSVP(status);
+    setIsUpdatingRSVP(true);
+    try {
+      const result = await updateRSVP(status);
 
-    if (result.success) {
-      // Success feedback handled by the UI state change
-    } else {
-      alert(result.error || 'Something went wrong. Please try again.');
+      if (!result.success) {
+        alert(result.error || 'Something went wrong. Please try again.');
+      }
+    } catch (error) {
+      console.error('RSVP update error:', error);
+      alert('Something went wrong. Please try again.');
+    } finally {
+      setIsUpdatingRSVP(false);
     }
   };
 
@@ -153,77 +160,7 @@ export default function GuestEventHomePage() {
     });
   };
 
-  const getRSVPStatusColor = (status: string | null) => {
-    switch ((status || '').toLowerCase()) {
-      case 'attending':
-        return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-      case 'declined':
-        return 'bg-stone-100 text-stone-700 border-stone-200';
-      case 'maybe':
-        return 'bg-amber-50 text-amber-700 border-amber-200';
-      default:
-        return 'bg-purple-50 text-purple-700 border-purple-200';
-    }
-  };
 
-  const getRSVPStatusText = (status: string | null) => {
-    switch ((status || '').toLowerCase()) {
-      case 'attending':
-        return 'Celebrating with you';
-      case 'declined':
-        return 'Unable to attend';
-      case 'maybe':
-        return 'Considering';
-      default:
-        return 'Awaiting your response';
-    }
-  };
-
-  const RSVPButton = ({ 
-    status, 
-    children, 
-    currentStatus 
-  }: { 
-    status: string; 
-    children: React.ReactNode; 
-    currentStatus: string | null;
-  }) => {
-    const isSelected = (currentStatus || '').toLowerCase() === status.toLowerCase();
-    const getColorClasses = () => {
-      if (isSelected) {
-        switch (status) {
-          case 'Attending':
-            return 'bg-emerald-600 text-white shadow-sm';
-          case 'Maybe':
-            return 'bg-amber-600 text-white shadow-sm';
-          case 'Declined':
-            return 'bg-stone-600 text-white shadow-sm';
-          default:
-            return 'bg-purple-600 text-white shadow-sm';
-        }
-      } else {
-        switch (status) {
-          case 'Attending':
-            return 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 hover:border-emerald-300';
-          case 'Maybe':
-            return 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 hover:border-amber-300';
-          case 'Declined':
-            return 'bg-stone-50 text-stone-700 hover:bg-stone-100 border border-stone-200 hover:border-stone-300';
-          default:
-            return 'bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 hover:border-purple-300';
-        }
-      }
-    };
-
-    return (
-      <button
-        onClick={() => handleRSVPUpdate(status)}
-        className={`w-full py-4 px-4 rounded-xl font-medium transition-all duration-300 hover:scale-[1.01] hover:shadow-md active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-300 ${getColorClasses()}`}
-      >
-        {children}
-      </button>
-    );
-  };
 
   return (
     <ErrorBoundary fallback={MessagingErrorFallback}>
@@ -256,25 +193,24 @@ export default function GuestEventHomePage() {
                 >
                   {event.title}
                 </h1>
-                <p
-                  className={`text-gray-600 transition-all duration-300 ${
-                    isScrolled ? 'text-sm' : 'text-base'
-                  }`}
-                >
-                  Hosted by {event.host?.full_name || 'Your hosts'}
-                </p>
               </div>
-              <div
-                className={`px-4 py-2 rounded-full border font-medium transition-all duration-300 ${
-                  isScrolled ? 'text-xs px-3 py-1' : 'text-sm'
-                } ${getRSVPStatusColor(guestInfo?.rsvp_status || null)}`}
-              >
-                                  {getRSVPStatusText(guestInfo?.rsvp_status || null)}
-              </div>
+              <GuestRSVPBadge
+                currentStatus={guestInfo?.rsvp_status || null}
+                onStatusUpdate={handleRSVPUpdate}
+                isScrolled={isScrolled}
+              />
             </div>
           </div>
         </div>
       </div>
+
+      {/* RSVP Section - Only show if guest hasn't RSVP'd */}
+      {!guestInfo?.rsvp_status && (
+        <GuestRSVPSection 
+          onStatusUpdate={handleRSVPUpdate}
+          isUpdating={isUpdatingRSVP}
+        />
+      )}
 
       {/* Instructional Banner */}
       <div className="max-w-5xl mx-auto px-6 pt-8 pb-4">
@@ -396,29 +332,6 @@ export default function GuestEventHomePage() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* RSVP Card */}
-            <CardContainer className="p-5">
-              <div className="space-y-5">
-                <div className="space-y-2">
-                  <h3 className="text-lg font-medium text-stone-800">Will you be joining us?</h3>
-                  <p className="text-sm text-stone-600">Let us know if you can celebrate with us</p>
-                </div>
-
-                <div className="space-y-3">
-                  <RSVPButton status="Attending" currentStatus={guestInfo?.rsvp_status || null}>
-                    Yes, I&apos;ll be there
-                  </RSVPButton>
-
-                  <RSVPButton status="Maybe" currentStatus={guestInfo?.rsvp_status || null}>
-                    I&apos;m not sure yet
-                  </RSVPButton>
-
-                  <RSVPButton status="Declined" currentStatus={guestInfo?.rsvp_status || null}>
-                    I can&apos;t make it
-                  </RSVPButton>
-                </div>
-              </div>
-            </CardContainer>
 
             {/* Connect & Explore */}
             <CardContainer className="p-5">
