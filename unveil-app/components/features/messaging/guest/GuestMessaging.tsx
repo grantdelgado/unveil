@@ -146,12 +146,12 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
    }
 
   return (
-    <div className="flex flex-col h-full bg-gray-50">
+    <div className="flex flex-col h-full bg-stone-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-3">
+      <div className="bg-white border-b border-stone-200 px-5 py-4">
         <div className="flex items-center gap-3">
-          <MessageCircle className="h-5 w-5 text-rose-500" />
-          <h2 className="text-lg font-semibold text-gray-900">Event Messages</h2>
+          <MessageCircle className="h-5 w-5 text-stone-400" />
+          <h2 className="text-lg font-medium text-stone-800">Event Messages</h2>
           {isConnected && (
             <div className="flex items-center gap-1">
               <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
@@ -162,7 +162,7 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
       </div>
 
       {/* Message Thread */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
         {messages.map((message) => {
           const isOwnMessage = message.sender_user_id === currentUserId;
           
@@ -188,7 +188,7 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
       </div>
 
       {/* Response UI */}
-      <div className="bg-white border-t border-gray-200 p-4 space-y-3">
+      <div className="bg-white border-t border-stone-200 p-5 space-y-3">
         {/* Response status indicator */}
         <ResponseIndicator canRespond={canRespond} variant="compact" />
         
@@ -196,7 +196,7 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
           // Response toggle button
           <button
             onClick={() => setShowResponseInput(true)}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={!canRespond}
           >
             <Send className="h-4 w-4" />

@@ -385,11 +385,13 @@ export default function GuestEventHomePage() {
             </CardContainer>
 
             {/* Messaging */}
-            <GuestMessaging 
-              eventId={eventId} 
-              currentUserId={currentUserId} 
-              guestId={guestInfo?.id || currentUserId || ''} 
-            />
+            <CardContainer className="p-0 overflow-hidden">
+              <GuestMessaging 
+                eventId={eventId} 
+                currentUserId={currentUserId} 
+                guestId={guestInfo?.id || currentUserId || ''} 
+              />
+            </CardContainer>
           </div>
 
           {/* Sidebar */}
