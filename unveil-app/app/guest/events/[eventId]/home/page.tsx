@@ -419,26 +419,26 @@ export default function GuestEventHomePage() {
               </div>
             </CardContainer>
 
-            {/* Quick Actions */}
-            <CardContainer>
+            {/* Connect & Explore */}
+            <CardContainer className="p-5">
               <div className="space-y-4">
-                <SectionTitle>Connect & Explore</SectionTitle>
+                <h3 className="text-lg font-medium text-stone-800">Connect & Explore</h3>
 
-                <div className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <SecondaryButton
                     onClick={() => setShowMessageModal(true)}
-                    className="w-full bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100 hover:border-purple-300"
+                    className="py-2.5 px-3 text-sm bg-stone-50 text-stone-700 border-stone-200 hover:bg-stone-100 hover:border-stone-300"
                   >
                     Send a private note
                   </SecondaryButton>
 
-                  <SecondaryButton className="w-full bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100 hover:border-rose-300">
+                  <SecondaryButton className="py-2.5 px-3 text-sm bg-stone-50 text-stone-700 border-stone-200 hover:bg-stone-100 hover:border-stone-300">
                     View gift registry
                   </SecondaryButton>
 
                   <SecondaryButton
                     onClick={() => setShowScheduleModal(true)}
-                    className="w-full"
+                    className="py-2.5 px-3 text-sm bg-stone-50 text-stone-700 border-stone-200 hover:bg-stone-100 hover:border-stone-300 md:col-span-2"
                   >
                     View schedule
                   </SecondaryButton>
