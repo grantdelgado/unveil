@@ -5,16 +5,19 @@ import { cn } from '@/lib/utils';
 interface LoadingOverlayProps {
   message?: string;
   className?: string;
+  fadeOut?: boolean;
 }
 
 export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
   message = 'Loading...',
   className,
+  fadeOut = false,
 }) => {
   return (
     <div
       className={cn(
-        'fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm transition-opacity',
+        'fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm transition-opacity duration-300',
+        fadeOut && 'opacity-0',
         className
       )}
       role="status"

@@ -11,6 +11,7 @@ import { AuthProvider } from '@/lib/auth/AuthProvider';
 import { RouteSuspenseFallback } from '@/components/ui/RouteSuspenseFallback';
 import { RobustRouteTransitionOverlay } from '@/components/ui/RobustRouteTransitionOverlay';
 import { TransitionDebugger } from '@/components/dev/TransitionDebugger';
+import { TransitionStatusBadge } from '@/components/dev/TransitionStatusBadge';
 
 const inter = localFont({
   src: [
@@ -116,7 +117,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className="light">
       <head>
         {/* PWA and mobile optimizations */}
         <link rel="manifest" href="/manifest.json" />
@@ -132,7 +133,7 @@ export default function RootLayout({
         {/* Preload critical resources */}
         <link rel="dns-prefetch" href="//wvhtbqvnamerdkkjknuv.supabase.co" />
       </head>
-      <body className={`${inter.variable} antialiased font-sans touch-manipulation`}>
+      <body className={`${inter.variable} antialiased font-sans touch-manipulation bg-white text-gray-900`}>
         <ReactQueryProvider>
           <AuthProvider>
             <ErrorBoundary>
@@ -140,6 +141,7 @@ export default function RootLayout({
                 <Suspense fallback={<RouteSuspenseFallback /> }>
                   <RobustRouteTransitionOverlay />
                   <TransitionDebugger />
+                  <TransitionStatusBadge />
                   {children}
                 </Suspense>
               </PerformanceMonitor>

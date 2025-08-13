@@ -5,9 +5,9 @@ import { usePathname } from 'next/navigation';
 import { LoadingOverlay } from './LoadingOverlay';
 import { useTransitionStore } from '@/lib/hooks/useTransitionStore';
 
-const TRANSITION_TIMEOUT = 8000; // 8 seconds max
+const TRANSITION_TIMEOUT = 5000; // 5 seconds max for better UX
 const DEBOUNCE_DELAY = 100; // Debounce rapid navigation
-const HIDE_DELAY = 150; // Extra delay before hiding to ensure paint
+const HIDE_DELAY = 100; // Reduced delay for faster transitions
 
 export const RobustRouteTransitionOverlay: React.FC = () => {
   const pathname = usePathname();
@@ -51,7 +51,7 @@ export const RobustRouteTransitionOverlay: React.FC = () => {
       // Set timeout to force complete if transition hangs
       timeoutRef.current = window.setTimeout(() => {
         if (debugMode) {
-          console.warn(`[TRANSITION] Timeout reached, force completing`);
+          console.warn(`[TRANSITION] Timeout reached after ${TRANSITION_TIMEOUT}ms, force completing`);
         }
         forceComplete();
       }, TRANSITION_TIMEOUT);

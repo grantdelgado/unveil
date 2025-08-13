@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { supabase } from '@/lib/supabase';
 import type { User } from '@/lib/supabase/types';
+import { useTransitionComplete } from '@/lib/hooks/useTransitionComplete';
 import {
   PageWrapper,
   CardContainer,
@@ -29,6 +30,9 @@ export default function AccountSetupPage() {
 
   // Simplified: Using useAuth hook instead
   const { user, loading: authLoading } = useAuth();
+  
+  // Ensure page transition completes when this component mounts
+  useTransitionComplete();
 
   useEffect(() => {
     const loadUserProfile = async () => {
