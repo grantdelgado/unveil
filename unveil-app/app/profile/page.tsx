@@ -27,6 +27,11 @@ interface UserProfile {
   avatar_url: string | null;
 }
 
+interface UserEvent {
+  id: string;
+  title: string;
+}
+
 export default function ProfilePage() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [displayName, setDisplayName] = useState('');
@@ -34,6 +39,7 @@ export default function ProfilePage() {
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [userEvents, setUserEvents] = useState<UserEvent[]>([]);
 
   const router = useRouter();
 
@@ -76,26 +82,44 @@ export default function ProfilePage() {
           return;
         }
 
-        // Fetch user profile from users table
-        const { data: profile, error: profileError } = await supabase
-          .from('users')
-          .select('id, email, full_name, phone, avatar_url')
-          .eq('id', user.id)
-          .single();
+        // 🚀 PERFORMANCE: Parallel queries for profile and events
+        const [profileResult, eventsResult] = await Promise.allSettled([
+          // Fetch user profile from users table
+          supabase
+            .from('users')
+            .select('id, email, full_name, phone, avatar_url')
+            .eq('id', user.id)
+            .single(),
+          
+          // Fetch user events
+          supabase
+            .from('events')
+            .select('id, title')
+            .eq('host_user_id', user.id)
+        ]);
 
         if (signal.aborted) return;
 
         // Handle profile result
-        if (profileError || !profile) {
-          console.error('Profile fetch error:', profileError);
+        if (profileResult.status === 'rejected' || profileResult.value.error || !profileResult.value.data) {
+          const error = profileResult.status === 'rejected' ? profileResult.reason : profileResult.value.error;
+          console.error('Profile fetch error:', error);
           setMessage('Unable to load profile data. Please try again.');
           setIsLoading(false);
           return;
         }
 
+        const profile = profileResult.value.data;
         setUserProfile(profile);
         setDisplayName(profile.full_name || '');
         setEmail(profile.email || '');
+
+        // Handle events result
+        if (eventsResult.status === 'fulfilled' && !eventsResult.value.error) {
+          const events = eventsResult.value.data || [];
+          setUserEvents(events);
+        }
+        // Events error is non-critical, don't block profile loading
 
       } catch (error) {
         if (signal.aborted) return;
@@ -349,19 +373,38 @@ export default function ProfilePage() {
         {/* Event Management Section */}
         <CardContainer maxWidth="xl">
           <div className="space-y-6">
-            <div className="text-center space-y-2">
-              <SectionTitle>Planning Your Wedding?</SectionTitle>
-              <SubTitle>Create your wedding event here.</SubTitle>
-            </div>
+            {userEvents.length > 0 ? (
+              // User has existing events - show manage option
+              <div className="text-center space-y-2">
+                <SectionTitle>Your Wedding</SectionTitle>
+                <SubTitle>Manage your wedding event and guests.</SubTitle>
+              </div>
+            ) : (
+              // User has no events - show create option
+              <div className="text-center space-y-2">
+                <SectionTitle>Planning Your Wedding?</SectionTitle>
+                <SubTitle>Create your wedding event here.</SubTitle>
+              </div>
+            )}
 
             <div className="space-y-4">
-              {/* Create Wedding Button */}
-              <Link href="/host/events/create">
-                <PrimaryButton className="w-full flex items-center justify-center gap-2">
-                  <span>+</span>
-                  Create Your Wedding
-                </PrimaryButton>
-              </Link>
+              {userEvents.length > 0 ? (
+                // Show manage button for existing events
+                <Link href={`/host/events/${userEvents[0].id}/dashboard`}>
+                  <PrimaryButton className="w-full flex items-center justify-center gap-2">
+                    <span>📋</span>
+                    Manage Your Wedding Page
+                  </PrimaryButton>
+                </Link>
+              ) : (
+                // Show create button for new users
+                <Link href="/host/events/create">
+                  <PrimaryButton className="w-full flex items-center justify-center gap-2">
+                    <span>+</span>
+                    Create Your Wedding
+                  </PrimaryButton>
+                </Link>
+              )}
             </div>
           </div>
         </CardContainer>
