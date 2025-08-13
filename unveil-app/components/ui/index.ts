@@ -3,6 +3,7 @@ export { Button } from './Button';
 export { Input } from './Input';
 export { LoadingSpinner } from './LoadingSpinner';
 export { LoadingOverlay } from './LoadingOverlay';
+export { RobustRouteTransitionOverlay } from './RobustRouteTransitionOverlay';
 export { ErrorBoundary, MessagingErrorFallback } from './ErrorBoundary';
 export { BackButton } from './BackButton';
 export { CardContainer } from './CardContainer';

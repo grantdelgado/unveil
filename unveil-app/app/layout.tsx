@@ -9,6 +9,8 @@ import { Suspense } from 'react';
 import { PerformanceMonitor } from '@/components/monitoring/PerformanceMonitor';
 import { AuthProvider } from '@/lib/auth/AuthProvider';
 import { RouteSuspenseFallback } from '@/components/ui/RouteSuspenseFallback';
+import { RobustRouteTransitionOverlay } from '@/components/ui/RobustRouteTransitionOverlay';
+import { TransitionDebugger } from '@/components/dev/TransitionDebugger';
 
 const inter = localFont({
   src: [
@@ -136,6 +138,8 @@ export default function RootLayout({
             <ErrorBoundary>
               <PerformanceMonitor>
                 <Suspense fallback={<RouteSuspenseFallback /> }>
+                  <RobustRouteTransitionOverlay />
+                  <TransitionDebugger />
                   {children}
                 </Suspense>
               </PerformanceMonitor>
