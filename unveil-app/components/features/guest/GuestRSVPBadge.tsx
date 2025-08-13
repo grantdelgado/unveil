@@ -73,11 +73,11 @@ export function GuestRSVPBadge({ currentStatus, onStatusUpdate, isScrolled = fal
         onClick={() => setIsOpen(!isOpen)}
         disabled={isUpdating}
         className={cn(
-          "min-w-[180px] h-10 rounded-full border px-4 py-2 text-sm font-medium bg-white shadow-sm transition-all duration-200 ease-in-out",
+          "min-w-[160px] h-9 rounded-full border px-3 py-2 text-sm font-medium bg-white shadow-sm transition-all duration-200 ease-in-out",
           "hover:bg-stone-50 focus:outline-none focus:ring-2 focus:ring-purple-300 focus:ring-offset-2",
           "disabled:opacity-50 disabled:cursor-not-allowed",
           "flex items-center justify-between",
-          isScrolled ? "text-xs px-3 h-8 min-w-[160px]" : "",
+          isScrolled ? "text-xs px-2 h-7 min-w-[140px]" : "",
           getBadgeColor()
         )}
       >

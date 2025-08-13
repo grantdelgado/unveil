@@ -175,29 +175,35 @@ export default function GuestEventHomePage() {
           <div
             className={`transition-all duration-300 ${isScrolled ? 'py-3' : 'py-6'}`}
           >
-            <div className={`mb-3 transition-all duration-300 ${isScrolled ? 'text-sm' : ''}`}>
-              <BackButton 
-                href="/select-event"
-                variant="subtle"
-                className={isScrolled ? 'text-xs py-1 px-2' : ''}
-              >
-                Your Events
-              </BackButton>
-            </div>
-            <div className="space-y-2">
-              <h1
-                className={`font-semibold text-gray-900 transition-all duration-300 tracking-tight ${
-                  isScrolled ? 'text-xl' : 'text-3xl'
-                }`}
-              >
-                {event.title}
-              </h1>
-              <div className="flex justify-end">
+            {/* Header with RSVP button positioned top-right */}
+            <div className="relative">
+              {/* RSVP Button - Top Right Corner */}
+              <div className="absolute top-0 right-0">
                 <GuestRSVPBadge
                   currentStatus={guestInfo?.rsvp_status || null}
                   onStatusUpdate={handleRSVPUpdate}
                   isScrolled={isScrolled}
                 />
+              </div>
+              
+              {/* Main header content */}
+              <div className={`transition-all duration-300 ${isScrolled ? 'pr-40' : 'pr-44'}`}> {/* Responsive padding for button size */}
+                <div className={`mb-3 transition-all duration-300 ${isScrolled ? 'text-sm' : ''}`}>
+                  <BackButton 
+                    href="/select-event"
+                    variant="subtle"
+                    className={isScrolled ? 'text-xs py-1 px-2' : ''}
+                  >
+                    Your Events
+                  </BackButton>
+                </div>
+                <h1
+                  className={`font-semibold text-gray-900 transition-all duration-300 tracking-tight ${
+                    isScrolled ? 'text-xl' : 'text-3xl'
+                  }`}
+                >
+                  {event.title}
+                </h1>
               </div>
             </div>
           </div>
