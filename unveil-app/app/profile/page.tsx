@@ -37,11 +37,21 @@ export default function ProfilePage() {
 
   const router = useRouter();
 
+  // Email validation helper
+  const isValidEmail = (email: string): boolean => {
+    if (!email.trim()) return true; // Empty email is valid since it's optional
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email.trim());
+  };
+
   // Check if there are any changes to enable/disable save button
   const hasChanges = userProfile && (
     displayName !== (userProfile.full_name || '') ||
     email !== (userProfile.email || '')
   );
+
+  // Check if form is valid
+  const isFormValid = displayName.trim() && isValidEmail(email);
 
   useEffect(() => {
     const abortController = new AbortController();
@@ -113,17 +123,25 @@ export default function ProfilePage() {
       setMessage('Profile not loaded. Please refresh the page.');
       return;
     }
+
+    if (!isFormValid) {
+      setMessage('Please check that all fields are filled correctly.');
+      return;
+    }
     
     setIsSaving(true);
     setMessage('');
     
     try {
+      // Prepare email value (null if empty, otherwise trimmed)
+      const emailValue = email.trim() || null;
+
       // Update the users table with both email and full_name
       const { error: dbError } = await supabase
         .from('users')
         .update({ 
-          full_name: displayName,
-          email: email 
+          full_name: displayName.trim(),
+          email: emailValue 
         })
         .eq('id', userProfile.id);
 
@@ -134,17 +152,22 @@ export default function ProfilePage() {
         return;
       }
 
-      // Also update auth metadata for consistency
-      await supabase.auth.updateUser({
-        email: email,
-        data: { full_name: displayName },
-      });
+      // Also update auth metadata for consistency (only if email is provided)
+      const authUpdateData: { data: { full_name: string }; email?: string } = {
+        data: { full_name: displayName.trim() },
+      };
+      
+      if (emailValue) {
+        authUpdateData.email = emailValue;
+      }
+
+      await supabase.auth.updateUser(authUpdateData);
 
       // Update local state
       setUserProfile(prev => prev ? { 
         ...prev, 
-        full_name: displayName,
-        email: email 
+        full_name: displayName.trim(),
+        email: emailValue 
       } : null);
       setMessage('Profile updated successfully!');
       
@@ -240,15 +263,19 @@ export default function ProfilePage() {
 
             <form onSubmit={handleUpdate} className="space-y-5">
               <div className="space-y-2">
-                <FieldLabel htmlFor="email">Email Address</FieldLabel>
+                <FieldLabel htmlFor="email">Email Address (Optional)</FieldLabel>
                 <TextInput
                   type="email"
                   id="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email address"
+                  placeholder="Enter your email address (optional)"
                   disabled={isSaving}
+                  className={email && !isValidEmail(email) ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''}
                 />
+                {email && !isValidEmail(email) && (
+                  <p className="text-sm text-red-600">Please enter a valid email address</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -275,7 +302,7 @@ export default function ProfilePage() {
 
               <PrimaryButton
                 type="submit"
-                disabled={isSaving || !displayName.trim() || !email.trim() || !hasChanges}
+                disabled={isSaving || !isFormValid || !hasChanges}
                 loading={isSaving}
                 className={!hasChanges ? 'bg-gray-300 text-gray-500 cursor-not-allowed hover:bg-gray-300' : ''}
               >
