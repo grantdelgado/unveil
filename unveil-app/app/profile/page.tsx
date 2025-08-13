@@ -334,8 +334,8 @@ export default function ProfilePage() {
               {message && (
                 <div
                   className={`p-4 rounded-lg text-center text-sm ${
-                    message.includes('wrong') || message.includes('Unable')
-                      ? 'bg-red-50 text-red-700 border border-red-100'
+                    message.includes('wrong') || message.includes('Unable') || message.includes('already taken')
+                      ? 'bg-red-100 text-red-800 border border-red-200 shadow-sm'
                       : 'bg-green-50 text-green-700 border border-green-100'
                   }`}
                 >
