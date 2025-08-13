@@ -9,7 +9,7 @@ const config: Config = {
     './lib/**/*.{js,ts,jsx,tsx}',
     './services/**/*.{js,ts,jsx,tsx}',
   ],
-  darkMode: 'class',
+  darkMode: false,
   theme: {
     extend: {
       fontFamily: {

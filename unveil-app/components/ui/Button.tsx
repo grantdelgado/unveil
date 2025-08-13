@@ -11,14 +11,11 @@ export interface ButtonProps
 }
 
 const buttonVariants = {
-  primary: 'bg-stone-800 text-white hover:bg-stone-900 focus:ring-stone-500 dark:bg-stone-700 dark:hover:bg-stone-600',
-  secondary:
-    'bg-stone-100 text-stone-900 hover:bg-stone-200 focus:ring-stone-300 dark:bg-stone-800 dark:text-stone-100 dark:hover:bg-stone-700',
-  outline:
-    'border border-stone-300 bg-transparent text-stone-700 hover:bg-stone-50 focus:ring-stone-300 dark:border-stone-600 dark:text-stone-300 dark:hover:bg-stone-800',
-  ghost:
-    'bg-transparent text-stone-700 hover:bg-stone-100 focus:ring-stone-300 dark:text-stone-300 dark:hover:bg-stone-800',
-  destructive: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 dark:bg-red-700 dark:hover:bg-red-800',
+  primary: 'bg-stone-800 text-white hover:bg-stone-900 focus:ring-stone-500',
+  secondary: 'bg-stone-100 text-stone-900 hover:bg-stone-200 focus:ring-stone-300',
+  outline: 'border border-stone-300 bg-transparent text-stone-700 hover:bg-stone-50 focus:ring-stone-300',
+  ghost: 'bg-transparent text-stone-700 hover:bg-stone-100 focus:ring-stone-300',
+  destructive: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
 };
 
 const buttonSizes = {

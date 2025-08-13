@@ -13,11 +13,10 @@ import { cn } from '@/lib/utils';
 import { useUserEvents } from '@/hooks/events';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { usePullToRefresh } from '@/hooks/common/usePullToRefresh';
-import { useTransitionComplete } from '@/lib/hooks/useTransitionComplete';
 
 // Internal components (specific imports)
 import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
-import { PageWrapper, LoadingSpinner } from '@/components/ui';
+import { PageWrapper, SkeletonLoader } from '@/components/ui';
 
 // Helper function to format RSVP status
 const formatRSVPStatus = (rsvpStatus: string | null) => {
@@ -62,9 +61,6 @@ export default function SelectEventPage() {
   const { user } = useAuth();
   const containerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  
-  // Ensure page transition completes when this component mounts
-  useTransitionComplete();
 
   // Pull-to-refresh functionality
   const pullToRefresh = usePullToRefresh({
@@ -85,8 +81,31 @@ export default function SelectEventPage() {
 
   if (loading) {
     return (
-      <PageWrapper centered={true}>
-        <LoadingSpinner size="lg" text="" />
+      <PageWrapper>
+        <div className="min-h-screen flex flex-col">
+          {/* TOP SECTION - Loading state */}
+          <div className="max-w-md mx-auto px-4 pt-6 w-full">
+            <div className="flex justify-between items-start">
+              <div className="flex-1">
+                <div className="h-8 w-32 bg-gray-200 rounded animate-pulse mb-2"></div>
+                <div className="h-4 w-48 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+              <div className="w-12 h-12 bg-gray-200 rounded-full animate-pulse"></div>
+            </div>
+          </div>
+          
+          {/* MIDDLE SECTION - Loading content */}
+          <div className="flex-1 max-w-md mx-auto px-4 py-8 w-full">
+            <SkeletonLoader variant="card" count={3} />
+          </div>
+          
+          {/* BOTTOM SECTION - Placeholder */}
+          <div className="mt-auto max-w-md mx-auto w-full">
+            <div className="text-center text-sm text-gray-400 pb-6 px-4">
+              Loading...
+            </div>
+          </div>
+        </div>
       </PageWrapper>
     );
   }

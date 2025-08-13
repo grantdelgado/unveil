@@ -36,8 +36,8 @@ export const BackButton: React.FC<BackButtonProps> = ({
   };
 
   const variantStyles = {
-    subtle: 'text-muted-foreground hover:text-foreground hover:bg-accent',
-    prominent: 'text-primary hover:text-primary/80 hover:bg-primary/10',
+    subtle: 'text-gray-600 hover:text-gray-900 hover:bg-gray-100',
+    prominent: 'text-rose-600 hover:text-rose-700 hover:bg-rose-50',
   };
 
   return (

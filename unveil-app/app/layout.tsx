@@ -8,10 +8,6 @@ import { APP_CONFIG } from '@/lib/constants';
 import { Suspense } from 'react';
 import { PerformanceMonitor } from '@/components/monitoring/PerformanceMonitor';
 import { AuthProvider } from '@/lib/auth/AuthProvider';
-import { RouteSuspenseFallback } from '@/components/ui/RouteSuspenseFallback';
-import { RobustRouteTransitionOverlay } from '@/components/ui/RobustRouteTransitionOverlay';
-import { TransitionDebugger } from '@/components/dev/TransitionDebugger';
-import { TransitionStatusBadge } from '@/components/dev/TransitionStatusBadge';
 
 const inter = localFont({
   src: [
@@ -103,11 +99,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#ff89a6' },
-    { media: '(prefers-color-scheme: dark)', color: '#ff89a6' },
-  ],
-  colorScheme: 'light dark',
+  themeColor: '#ff89a6',
+  colorScheme: 'light',
   viewportFit: 'cover',
 };
 
@@ -117,7 +110,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="light">
+    <html lang="en">
       <head>
         {/* PWA and mobile optimizations */}
         <link rel="manifest" href="/manifest.json" />
@@ -133,15 +126,12 @@ export default function RootLayout({
         {/* Preload critical resources */}
         <link rel="dns-prefetch" href="//wvhtbqvnamerdkkjknuv.supabase.co" />
       </head>
-      <body className={`${inter.variable} antialiased font-sans touch-manipulation bg-white text-gray-900`}>
+      <body className={`${inter.variable} antialiased font-sans touch-manipulation`}>
         <ReactQueryProvider>
           <AuthProvider>
             <ErrorBoundary>
               <PerformanceMonitor>
-                <Suspense fallback={<RouteSuspenseFallback /> }>
-                  <RobustRouteTransitionOverlay />
-                  <TransitionDebugger />
-                  <TransitionStatusBadge />
+                <Suspense>
                   {children}
                 </Suspense>
               </PerformanceMonitor>

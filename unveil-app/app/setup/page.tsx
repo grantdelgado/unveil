@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { supabase } from '@/lib/supabase';
 import type { User } from '@/lib/supabase/types';
-import { useTransitionComplete } from '@/lib/hooks/useTransitionComplete';
 import {
   PageWrapper,
   CardContainer,
@@ -30,9 +29,6 @@ export default function AccountSetupPage() {
 
   // Simplified: Using useAuth hook instead
   const { user, loading: authLoading } = useAuth();
-  
-  // Ensure page transition completes when this component mounts
-  useTransitionComplete();
 
   useEffect(() => {
     const loadUserProfile = async () => {
@@ -182,7 +178,7 @@ export default function AccountSetupPage() {
           <div className="flex justify-start">
             <button
               onClick={handleLogoutAndRedirect}
-              className="inline-flex items-center gap-2 p-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-200 rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 min-h-[44px] min-w-[44px]"
+              className="inline-flex items-center gap-2 p-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all duration-200 rounded-md focus:outline-none focus:ring-2 focus:ring-rose-300 focus:ring-offset-2 min-h-[44px] min-w-[44px]"
               disabled={loading}
             >
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />

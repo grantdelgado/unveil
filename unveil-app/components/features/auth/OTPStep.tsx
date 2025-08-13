@@ -43,7 +43,7 @@ export const OTPStep: React.FC<OTPStepProps> = ({
         </div>
 
         {isDev && (
-          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-200">
+          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
             <strong>Development Mode:</strong> Enter any 6-digit code to continue
           </div>
         )}

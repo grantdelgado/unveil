@@ -32,18 +32,7 @@
   --color-brand-pink: var(--color-brand-pink);
 }
 
-/* Dark mode support with brand consistency */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-bg: #1a1a1a; /* Dark background */
-    --color-text: #f5f5f5; /* Light text */
-    --color-muted: #a0a0a0; /* Muted text */
-    --color-primary: #2c1810; /* Dark muted rose */
-    --color-accent: #2a2442; /* Dark dusk lavender */
-    --color-success: #1a2e20;
-    --color-error: #2e1a1a;
-  }
-}
+/* Light mode only - dark mode disabled */
 
 body {
   background: var(--color-bg);
@@ -286,15 +275,4 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Dark mode utility classes */
-.dark {
-  color-scheme: dark;
-}
-
-.dark .bg-app {
-  background-color: var(--color-bg);
-}
-
-.dark .text-primary {
-  color: var(--color-text);
-}
+/* Light mode utility classes only */

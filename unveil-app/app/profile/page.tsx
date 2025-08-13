@@ -5,7 +5,6 @@ import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useTransitionComplete } from '@/lib/hooks/useTransitionComplete';
 import {
   PageWrapper,
   CardContainer,
@@ -38,9 +37,6 @@ export default function ProfilePage() {
   const [hasHostedEvents, setHasHostedEvents] = useState(false);
 
   const router = useRouter();
-  
-  // Ensure page transition completes when this component mounts
-  useTransitionComplete();
 
   useEffect(() => {
     const abortController = new AbortController();
@@ -172,8 +168,9 @@ export default function ProfilePage() {
   if (isLoading) {
     return (
       <PageWrapper centered={true}>
-        <div className="flex items-center justify-center">
-          <LoadingSpinner size="lg" text="" />
+        <div className="flex flex-col items-center justify-center space-y-4">
+          <LoadingSpinner size="lg" />
+          <p className="text-gray-600">Loading your profile...</p>
         </div>
       </PageWrapper>
     );
