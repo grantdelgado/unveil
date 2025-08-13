@@ -184,21 +184,21 @@ export default function GuestEventHomePage() {
                 Your Events
               </BackButton>
             </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <h1
-                  className={`font-semibold text-gray-900 transition-all duration-300 tracking-tight ${
-                    isScrolled ? 'text-xl' : 'text-3xl'
-                  }`}
-                >
-                  {event.title}
-                </h1>
+            <div className="space-y-2">
+              <h1
+                className={`font-semibold text-gray-900 transition-all duration-300 tracking-tight ${
+                  isScrolled ? 'text-xl' : 'text-3xl'
+                }`}
+              >
+                {event.title}
+              </h1>
+              <div className="flex justify-end">
+                <GuestRSVPBadge
+                  currentStatus={guestInfo?.rsvp_status || null}
+                  onStatusUpdate={handleRSVPUpdate}
+                  isScrolled={isScrolled}
+                />
               </div>
-              <GuestRSVPBadge
-                currentStatus={guestInfo?.rsvp_status || null}
-                onStatusUpdate={handleRSVPUpdate}
-                isScrolled={isScrolled}
-              />
             </div>
           </div>
         </div>
