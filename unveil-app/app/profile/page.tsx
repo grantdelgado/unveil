@@ -210,17 +210,15 @@ export default function ProfilePage() {
     <PageWrapper centered={false}>
       <div className="max-w-2xl mx-auto space-y-8">
         {/* Header */}
-        <CardContainer maxWidth="xl">
-          <div className="flex items-center justify-between">
-            <BackButton 
-              href="/select-event"
-              variant="subtle"
-              className="text-gray-900 hover:text-gray-700"
-            >
-              Back to Events
-            </BackButton>
-          </div>
-        </CardContainer>
+        <div className="mb-6">
+          <BackButton 
+            href="/select-event"
+            variant="subtle"
+            className="text-gray-900 hover:text-gray-700"
+          >
+            Back to Events
+          </BackButton>
+        </div>
 
         {/* Profile Section */}
         <CardContainer maxWidth="xl">
@@ -309,31 +307,24 @@ export default function ProfilePage() {
         <CardContainer maxWidth="xl">
           <div className="space-y-6">
             <div className="text-center space-y-2">
-              <SectionTitle>Event Management</SectionTitle>
-              <SubTitle>Create and manage your wedding events</SubTitle>
+              <SectionTitle>Planning Your Wedding?</SectionTitle>
+              <SubTitle>Create your wedding event here.</SubTitle>
             </div>
 
             <div className="space-y-4">
-              {/* Create New Event Button */}
+              {/* Create Wedding Button */}
               <Link href="/host/events/create">
                 <PrimaryButton className="w-full flex items-center justify-center gap-2">
                   <span>+</span>
-                  Create New Event
+                  Create Your Wedding
                 </PrimaryButton>
               </Link>
 
-              {/* Show additional management options if user has hosted events */}
-              {hasHostedEvents && (
-                <div className="pt-4 border-t border-gray-200 space-y-4">
-                  <MicroCopy className="text-center">
-                    You have hosted events. You can create additional events or manage existing ones.
-                  </MicroCopy>
-                  <Link href="/host/events/create">
-                    <SecondaryButton className="w-full">
-                      Create Another Event
-                    </SecondaryButton>
-                  </Link>
-                </div>
+              {/* Note about single event model */}
+              {!hasHostedEvents && (
+                <MicroCopy className="text-center text-gray-500">
+                  🔒 Each host should create one wedding event
+                </MicroCopy>
               )}
             </div>
           </div>
@@ -345,13 +336,6 @@ export default function ProfilePage() {
             <SectionTitle>Account Actions</SectionTitle>
 
             <div className="space-y-3">
-              <SecondaryButton
-                onClick={() => router.push('/select-event')}
-                className="w-full"
-              >
-                View All Events
-              </SecondaryButton>
-
               <LogoutButtonStyled router={router} />
             </div>
           </div>
