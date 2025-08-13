@@ -136,6 +136,28 @@ export default function ProfilePage() {
       // Prepare email value (null if empty, otherwise trimmed)
       const emailValue = email.trim() || null;
 
+      // Check for email uniqueness if email is provided and different from current
+      if (emailValue && emailValue !== userProfile.email) {
+        const { data: existingUsers, error: checkError } = await supabase
+          .from('users')
+          .select('id')
+          .eq('email', emailValue)
+          .neq('id', userProfile.id); // Exclude current user
+
+        if (checkError) {
+          console.error('Email uniqueness check error:', checkError);
+          setMessage('Unable to verify email availability. Please try again.');
+          setIsSaving(false);
+          return;
+        }
+
+        if (existingUsers && existingUsers.length > 0) {
+          setMessage('This email address is already taken. Please use a different email.');
+          setIsSaving(false);
+          return;
+        }
+      }
+
       // Update the users table with both email and full_name
       const { error: dbError } = await supabase
         .from('users')
