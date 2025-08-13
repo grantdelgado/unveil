@@ -18,10 +18,13 @@ export const RouteTransitionOverlay: React.FC = () => {
       }
     };
 
-    const show = () => {
+    // Schedule state updates outside React's useInsertionEffect phase
+    const scheduleShow = () => {
       clearHideTimer();
-      shownAtRef.current = Date.now();
-      setActive(true);
+      window.setTimeout(() => {
+        shownAtRef.current = Date.now();
+        setActive(true);
+      }, 0);
     };
 
     const onClick = (e: MouseEvent) => {
@@ -42,11 +45,11 @@ export const RouteTransitionOverlay: React.FC = () => {
       } catch {
         return;
       }
-      show();
+      scheduleShow();
     };
 
     const onPopState = () => {
-      show();
+      scheduleShow();
     };
 
     // Patch history to catch programmatic router.push/replace
@@ -55,11 +58,11 @@ export const RouteTransitionOverlay: React.FC = () => {
     type PushArgs = Parameters<typeof history.pushState>;
     type ReplaceArgs = Parameters<typeof history.replaceState>;
     history.pushState = ((...args: PushArgs) => {
-      show();
+      scheduleShow();
       return originalPushState.apply(history, args);
     }) as typeof history.pushState;
     history.replaceState = ((...args: ReplaceArgs) => {
-      show();
+      scheduleShow();
       return originalReplaceState.apply(history, args);
     }) as typeof history.replaceState;
 
