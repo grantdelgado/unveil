@@ -168,9 +168,8 @@ export default function ProfilePage() {
   if (isLoading) {
     return (
       <PageWrapper centered={true}>
-        <div className="flex flex-col items-center justify-center space-y-4">
-          <LoadingSpinner size="lg" />
-          <p className="text-muted-foreground">Loading your profile...</p>
+        <div className="flex items-center justify-center">
+          <LoadingSpinner size="lg" text="" />
         </div>
       </PageWrapper>
     );

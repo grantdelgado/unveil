@@ -9,7 +9,7 @@ export const RouteTransitionOverlay: React.FC = () => {
   const [active, setActive] = useState(false);
   const shownAtRef = useRef<number | null>(null);
   const hideTimerRef = useRef<number | null>(null);
-  const failSafeTimerRef = useRef<number | null>(null);
+  const pendingShowRef = useRef<boolean>(false);
 
   useEffect(() => {
     const clearHideTimer = () => {
@@ -19,24 +19,21 @@ export const RouteTransitionOverlay: React.FC = () => {
       }
     };
 
-    // Schedule state updates outside React's useInsertionEffect phase
-    const scheduleShow = (targetHref?: string) => {
+    const scheduleShow = () => {
       clearHideTimer();
-      // Skip if navigating to same URL (common in dev/HMR replaceState)
-      const currentHref = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-      if (targetHref && targetHref === currentHref) {
-        return;
-      }
-      window.setTimeout(() => {
+      if (active || pendingShowRef.current) return;
+      pendingShowRef.current = true;
+      const run = () => {
         shownAtRef.current = Date.now();
         setActive(true);
-        // Fail-safe: hide overlay if something goes wrong (e.g., dev HMR)
-        if (failSafeTimerRef.current) window.clearTimeout(failSafeTimerRef.current);
-        failSafeTimerRef.current = window.setTimeout(() => {
-          setActive(false);
-          shownAtRef.current = null;
-        }, 8000);
-      }, 0);
+        pendingShowRef.current = false;
+      };
+      if (typeof window.requestAnimationFrame === 'function') {
+        window.requestAnimationFrame(() => run());
+      } else {
+        // Ensure update happens outside React commit/insertion phases
+        setTimeout(run, 0);
+      }
     };
 
     const onClick = (e: MouseEvent) => {
@@ -54,20 +51,14 @@ export const RouteTransitionOverlay: React.FC = () => {
       try {
         const url = new URL(href, window.location.href);
         if (url.origin !== window.location.origin) return;
-        const targetHref = `${url.pathname}${url.search}${url.hash}`;
-        const currentHref = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-        if (targetHref === currentHref) return;
-        scheduleShow(targetHref);
-        return;
       } catch {
         return;
       }
+      scheduleShow();
     };
 
     const onPopState = () => {
-      // When the browser back/forward occurs, the target is the new location
-      const targetHref = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-      scheduleShow(targetHref);
+      scheduleShow();
     };
 
     // Patch history to catch programmatic router.push/replace
@@ -76,38 +67,23 @@ export const RouteTransitionOverlay: React.FC = () => {
     type PushArgs = Parameters<typeof history.pushState>;
     type ReplaceArgs = Parameters<typeof history.replaceState>;
     history.pushState = ((...args: PushArgs) => {
-      const urlArg = args[2];
-      if (urlArg != null) {
-        const url = new URL(String(urlArg), window.location.href);
-        const targetHref = `${url.pathname}${url.search}${url.hash}`;
-        scheduleShow(targetHref);
-      } else {
-        // state-only change
-      }
+      scheduleShow();
       return originalPushState.apply(history, args);
     }) as typeof history.pushState;
     history.replaceState = ((...args: ReplaceArgs) => {
-      const urlArg = args[2];
-      if (urlArg != null) {
-        const url = new URL(String(urlArg), window.location.href);
-        const targetHref = `${url.pathname}${url.search}${url.hash}`;
-        scheduleShow(targetHref);
-      }
+      scheduleShow();
       return originalReplaceState.apply(history, args);
     }) as typeof history.replaceState;
 
     document.addEventListener('click', onClick, true);
     window.addEventListener('popstate', onPopState);
-    window.addEventListener('hashchange', onPopState);
 
     return () => {
       document.removeEventListener('click', onClick, true);
       window.removeEventListener('popstate', onPopState);
-      window.removeEventListener('hashchange', onPopState);
       history.pushState = originalPushState;
       history.replaceState = originalReplaceState;
       clearHideTimer();
-      if (failSafeTimerRef.current) window.clearTimeout(failSafeTimerRef.current);
     };
   }, []);
 
@@ -130,7 +106,7 @@ export const RouteTransitionOverlay: React.FC = () => {
   }, [pathname]);
 
   if (!active) return null;
-  return <LoadingOverlay message="" />;
+  return <LoadingOverlay message="Loading..." />;
 };
 
 RouteTransitionOverlay.displayName = 'RouteTransitionOverlay';
