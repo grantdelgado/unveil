@@ -8,6 +8,7 @@ import { APP_CONFIG } from '@/lib/constants';
 import { Suspense } from 'react';
 import { PerformanceMonitor } from '@/components/monitoring/PerformanceMonitor';
 import { AuthProvider } from '@/lib/auth/AuthProvider';
+import { RouteSuspenseFallback } from '@/components/ui/RouteSuspenseFallback';
 
 const inter = localFont({
   src: [
@@ -134,7 +135,7 @@ export default function RootLayout({
           <AuthProvider>
             <ErrorBoundary>
               <PerformanceMonitor>
-                <Suspense>
+                <Suspense fallback={<RouteSuspenseFallback /> }>
                   {children}
                 </Suspense>
               </PerformanceMonitor>
