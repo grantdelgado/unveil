@@ -285,19 +285,14 @@ export default function ProfilePage() {
 
             <form onSubmit={handleUpdate} className="space-y-5">
               <div className="space-y-2">
-                <FieldLabel htmlFor="email">Email Address (Optional)</FieldLabel>
+                <FieldLabel htmlFor="displayName">Full Name</FieldLabel>
                 <TextInput
-                  type="email"
-                  id="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email address (optional)"
+                  id="displayName"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder="Enter your full name"
                   disabled={isSaving}
-                  className={email && !isValidEmail(email) ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''}
                 />
-                {email && !isValidEmail(email) && (
-                  <p className="text-sm text-red-600">Please enter a valid email address</p>
-                )}
               </div>
 
               <div className="space-y-2">
@@ -312,14 +307,19 @@ export default function ProfilePage() {
               </div>
 
               <div className="space-y-2">
-                <FieldLabel htmlFor="displayName">Full Name</FieldLabel>
+                <FieldLabel htmlFor="email">Email Address (Optional)</FieldLabel>
                 <TextInput
-                  id="displayName"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  placeholder="Enter your full name"
+                  type="email"
+                  id="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email address (optional)"
                   disabled={isSaving}
+                  className={email && !isValidEmail(email) ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''}
                 />
+                {email && !isValidEmail(email) && (
+                  <p className="text-sm text-red-600">Please enter a valid email address</p>
+                )}
               </div>
 
               <PrimaryButton
