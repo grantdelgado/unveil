@@ -16,7 +16,6 @@ import {
   PrimaryButton,
   SecondaryButton,
   BackButton,
-  MicroCopy,
   LoadingSpinner
 } from '@/components/ui';
 
@@ -31,12 +30,18 @@ interface UserProfile {
 export default function ProfilePage() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [displayName, setDisplayName] = useState('');
+  const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [hasHostedEvents, setHasHostedEvents] = useState(false);
 
   const router = useRouter();
+
+  // Check if there are any changes to enable/disable save button
+  const hasChanges = userProfile && (
+    displayName !== (userProfile.full_name || '') ||
+    email !== (userProfile.email || '')
+  );
 
   useEffect(() => {
     const abortController = new AbortController();
@@ -61,47 +66,26 @@ export default function ProfilePage() {
           return;
         }
 
-        // 🚀 PERFORMANCE: Parallel queries instead of sequential
-        const [profileResult, eventsResult] = await Promise.allSettled([
-          // Fetch user profile from users table
-          supabase
-            .from('users')
-            .select('id, email, full_name, phone, avatar_url')
-            .eq('id', user.id)
-            .single(),
-          
-          // Check if user has hosted events
-          supabase
-            .from('events')
-            .select('id')
-            .eq('host_user_id', user.id)
-        ]);
+        // Fetch user profile from users table
+        const { data: profile, error: profileError } = await supabase
+          .from('users')
+          .select('id, email, full_name, phone, avatar_url')
+          .eq('id', user.id)
+          .single();
 
         if (signal.aborted) return;
 
         // Handle profile result
-        if (profileResult.status === 'fulfilled' && !profileResult.value.error) {
-          const profile = profileResult.value.data;
-          if (profile) {
-            setUserProfile(profile);
-            setDisplayName(profile.full_name || '');
-          }
-        } else {
-          const error = profileResult.status === 'fulfilled' 
-            ? profileResult.value.error 
-            : profileResult.reason;
-          console.error('Profile fetch error:', error);
+        if (profileError || !profile) {
+          console.error('Profile fetch error:', profileError);
           setMessage('Unable to load profile data. Please try again.');
           setIsLoading(false);
           return;
         }
 
-        // Handle events result
-        if (eventsResult.status === 'fulfilled' && !eventsResult.value.error) {
-          const hostedEvents = eventsResult.value.data;
-          setHasHostedEvents((hostedEvents?.length || 0) > 0);
-        }
-        // Events error is non-critical, don't block profile loading
+        setUserProfile(profile);
+        setDisplayName(profile.full_name || '');
+        setEmail(profile.email || '');
 
       } catch (error) {
         if (signal.aborted) return;
@@ -134,10 +118,13 @@ export default function ProfilePage() {
     setMessage('');
     
     try {
-      // Update the users table
+      // Update the users table with both email and full_name
       const { error: dbError } = await supabase
         .from('users')
-        .update({ full_name: displayName })
+        .update({ 
+          full_name: displayName,
+          email: email 
+        })
         .eq('id', userProfile.id);
 
       if (dbError) {
@@ -149,11 +136,16 @@ export default function ProfilePage() {
 
       // Also update auth metadata for consistency
       await supabase.auth.updateUser({
+        email: email,
         data: { full_name: displayName },
       });
 
       // Update local state
-      setUserProfile(prev => prev ? { ...prev, full_name: displayName } : null);
+      setUserProfile(prev => prev ? { 
+        ...prev, 
+        full_name: displayName,
+        email: email 
+      } : null);
       setMessage('Profile updated successfully!');
       
     } catch (error) {
@@ -252,9 +244,10 @@ export default function ProfilePage() {
                 <TextInput
                   type="email"
                   id="email"
-                  value={userProfile.email || 'Not provided'}
-                  disabled
-                  className="bg-gray-50 text-gray-500"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email address"
+                  disabled={isSaving}
                 />
               </div>
 
@@ -270,20 +263,21 @@ export default function ProfilePage() {
               </div>
 
               <div className="space-y-2">
-                <FieldLabel htmlFor="displayName">Display Name</FieldLabel>
+                <FieldLabel htmlFor="displayName">Full Name</FieldLabel>
                 <TextInput
                   id="displayName"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  placeholder="Enter your display name"
+                  placeholder="Enter your full name"
                   disabled={isSaving}
                 />
               </div>
 
               <PrimaryButton
                 type="submit"
-                disabled={isSaving || !displayName.trim()}
+                disabled={isSaving || !displayName.trim() || !email.trim() || !hasChanges}
                 loading={isSaving}
+                className={!hasChanges ? 'bg-gray-300 text-gray-500 cursor-not-allowed hover:bg-gray-300' : ''}
               >
                 {isSaving ? 'Saving...' : 'Save Changes'}
               </PrimaryButton>
@@ -319,13 +313,6 @@ export default function ProfilePage() {
                   Create Your Wedding
                 </PrimaryButton>
               </Link>
-
-              {/* Note about single event model */}
-              {!hasHostedEvents && (
-                <MicroCopy className="text-center text-gray-500">
-                  🔒 Each host should create one wedding event
-                </MicroCopy>
-              )}
             </div>
           </div>
         </CardContainer>
