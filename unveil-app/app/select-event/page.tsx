@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { useUserEvents } from '@/hooks/events';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { usePullToRefresh } from '@/hooks/common/usePullToRefresh';
+import { useTransitionComplete } from '@/lib/hooks/useTransitionComplete';
 
 // Internal components (specific imports)
 import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
@@ -61,6 +62,9 @@ export default function SelectEventPage() {
   const { user } = useAuth();
   const containerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  
+  // Ensure page transition completes when this component mounts
+  useTransitionComplete();
 
   // Pull-to-refresh functionality
   const pullToRefresh = usePullToRefresh({

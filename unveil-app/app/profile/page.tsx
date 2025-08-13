@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useTransitionComplete } from '@/lib/hooks/useTransitionComplete';
 import {
   PageWrapper,
   CardContainer,
@@ -37,6 +38,9 @@ export default function ProfilePage() {
   const [hasHostedEvents, setHasHostedEvents] = useState(false);
 
   const router = useRouter();
+  
+  // Ensure page transition completes when this component mounts
+  useTransitionComplete();
 
   useEffect(() => {
     const abortController = new AbortController();

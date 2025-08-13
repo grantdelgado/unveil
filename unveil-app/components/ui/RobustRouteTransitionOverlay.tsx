@@ -62,14 +62,24 @@ export const RobustRouteTransitionOverlay: React.FC = () => {
   const handleTransitionComplete = useCallback(() => {
     if (!isLoading) return;
     
-    const navigationId = navigationIdRef.current.toString();
+    // Get the current navigation ID from the store
+    const currentNavId = useTransitionStore.getState().lastNavigationId;
+    
+    if (debugMode) {
+      console.log(`[TRANSITION] Completing transition for navId: ${currentNavId}`);
+    }
     
     // Add minimal delay to ensure new page is painted
     setTimeout(() => {
-      completeTransition(navigationId);
+      if (currentNavId) {
+        completeTransition(currentNavId);
+      } else {
+        // Fallback: force complete if no navigation ID
+        forceComplete();
+      }
       clearTimers();
     }, HIDE_DELAY);
-  }, [isLoading, completeTransition, clearTimers]);
+  }, [isLoading, completeTransition, forceComplete, clearTimers, debugMode]);
 
   // Setup navigation event listeners
   useEffect(() => {
@@ -185,20 +195,25 @@ export const RobustRouteTransitionOverlay: React.FC = () => {
   // Handle pathname changes (route completion)
   useEffect(() => {
     if (lastPathnameRef.current !== pathname) {
+      const previousPath = lastPathnameRef.current;
       lastPathnameRef.current = pathname;
       
       if (debugMode) {
-        console.log(`[TRANSITION] Pathname changed to: ${pathname}`);
+        console.log(`[TRANSITION] Pathname changed from ${previousPath} to: ${pathname}`);
+        console.log(`[TRANSITION] Current loading state: ${isLoading}`);
       }
       
-      // Add small delay to ensure the new page is rendered
-      requestAnimationFrame(() => {
+      // Only complete transition if we're currently loading
+      if (isLoading) {
+        // Add small delay to ensure the new page is rendered
         requestAnimationFrame(() => {
-          handleTransitionComplete();
+          requestAnimationFrame(() => {
+            handleTransitionComplete();
+          });
         });
-      });
+      }
     }
-  }, [pathname, handleTransitionComplete, debugMode]);
+  }, [pathname, handleTransitionComplete, debugMode, isLoading]);
 
   // Cleanup on unmount
   useEffect(() => {

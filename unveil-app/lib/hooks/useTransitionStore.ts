@@ -36,6 +36,7 @@ export const useTransitionStore = create<TransitionStore>((set, get) => ({
     
     if (state.debugMode) {
       console.log(`[TRANSITION] Start: ${route} (ID: ${navigationId})`);
+      console.log(`[TRANSITION] Previous state - Loading: ${state.isLoading}, NavId: ${state.lastNavigationId}`);
     }
     
     // Cancel any existing transition
@@ -51,15 +52,23 @@ export const useTransitionStore = create<TransitionStore>((set, get) => ({
       startedAt: Date.now(),
       lastNavigationId: navigationId,
     });
+
+    if (state.debugMode) {
+      console.log(`[TRANSITION] New state set - Loading: true, NavId: ${navigationId}`);
+    }
   },
 
   completeTransition: (navigationId: string) => {
     const state = get();
     
+    if (state.debugMode) {
+      console.log(`[TRANSITION] Complete called for navId: ${navigationId}, current: ${state.lastNavigationId}`);
+    }
+    
     // Only complete if this is the current navigation
     if (state.lastNavigationId !== navigationId) {
       if (state.debugMode) {
-        console.log(`[TRANSITION] Ignoring complete for stale navigation: ${navigationId}`);
+        console.log(`[TRANSITION] Ignoring complete for stale navigation: ${navigationId} (current: ${state.lastNavigationId})`);
       }
       return;
     }
@@ -74,6 +83,10 @@ export const useTransitionStore = create<TransitionStore>((set, get) => ({
       startedAt: null,
       lastNavigationId: null,
     });
+
+    if (state.debugMode) {
+      console.log(`[TRANSITION] State cleared - Loading: false`);
+    }
   },
 
   cancelTransition: (navigationId: string) => {
