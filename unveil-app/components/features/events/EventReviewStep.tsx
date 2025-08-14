@@ -9,22 +9,14 @@ interface EventReviewStepProps {
   formData: EventFormData;
   headerImage: File | null;
   imagePreview: string;
-  guestImportMethod: 'skip' | 'csv' | 'manual';
-  guestCount: number;
 }
 
 export function EventReviewStep({
   formData,
   headerImage,
-  imagePreview,
-  guestImportMethod,
-  guestCount
+  imagePreview
 }: EventReviewStepProps) {
-  const guestMethodLabels = {
-    skip: 'Will add guests later',
-    csv: 'CSV import',
-    manual: 'Manual entry'
-  };
+
 
   return (
     <div className="space-y-6">
@@ -70,13 +62,7 @@ export function EventReviewStep({
             </div>
           )}
 
-          {formData.description && (
-            <div className="border-t border-pink-200 pt-4">
-              <p className="text-sm text-gray-700 leading-relaxed">
-                {formData.description}
-              </p>
-            </div>
-          )}
+
         </div>
       </div>
 
@@ -100,16 +86,9 @@ export function EventReviewStep({
           </div>
           
           <div className="flex items-center justify-between">
-            <span className="text-gray-600">Guest List:</span>
+            <span className="text-gray-600">Guest Management:</span>
             <span className="font-medium text-gray-900">
-              {guestMethodLabels[guestImportMethod]}
-            </span>
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <span className="text-gray-600">Initial Guests:</span>
-            <span className="font-medium text-gray-900">
-              {guestCount || 0}
+              Available after creation
             </span>
           </div>
         </div>

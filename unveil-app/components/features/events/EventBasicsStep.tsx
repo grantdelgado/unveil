@@ -17,13 +17,13 @@ export function EventBasicsStep({ formData, errors, onUpdate, disabled }: EventB
       {/* Event Name */}
       <div className="space-y-2">
         <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-          Wedding/Event Name <span className="text-red-500">*</span>
+          What would you like your guests to see as the title of your wedding? <span className="text-red-500">*</span>
         </label>
         <TextInput
           id="title"
           value={formData.title}
           onChange={(e: ChangeEvent<HTMLInputElement>) => onUpdate('title', e.target.value)}
-          placeholder="e.g., Sarah & John's Wedding"
+          placeholder="e.g., Sarah & Max's Wedding"
           disabled={disabled}
           error={errors.title}
           autoFocus
@@ -38,7 +38,7 @@ export function EventBasicsStep({ formData, errors, onUpdate, disabled }: EventB
         {/* Event Date */}
         <div className="space-y-2">
           <label htmlFor="event_date" className="block text-sm font-medium text-gray-700">
-            Event Date <span className="text-red-500">*</span>
+            Wedding Date <span className="text-red-500">*</span>
           </label>
           <TextInput
             type="date"
@@ -55,7 +55,7 @@ export function EventBasicsStep({ formData, errors, onUpdate, disabled }: EventB
         {/* Event Time */}
         <div className="space-y-2">
           <label htmlFor="event_time" className="block text-sm font-medium text-gray-700">
-            Event Time <span className="text-red-500">*</span>
+            Wedding Time <span className="text-red-500">*</span>
           </label>
           <TextInput
             type="time"
@@ -86,24 +86,6 @@ export function EventBasicsStep({ formData, errors, onUpdate, disabled }: EventB
         <MicroCopy>Optional: Where will your celebration take place?</MicroCopy>
       </div>
 
-      {/* Event Description */}
-      <div className="space-y-2">
-        <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-          Description
-        </label>
-        <textarea
-          id="description"
-          value={formData.description}
-          onChange={(e: ChangeEvent<HTMLTextAreaElement>) => onUpdate('description', e.target.value)}
-          placeholder="Tell your guests about your special day..."
-          rows={4}
-          maxLength={500}
-          className="w-full py-3 px-4 border border-gray-300 rounded-lg text-[16px] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-pink-400 transition-colors duration-200 resize-none disabled:bg-gray-50 disabled:text-gray-500"
-          disabled={disabled}
-        />
-        <MicroCopy>Optional: Share details about your celebration</MicroCopy>
-      </div>
-
       {/* Privacy Setting */}
       <div className="bg-gray-50 rounded-lg p-4">
         <div className="flex items-start space-x-3">
@@ -120,10 +102,10 @@ export function EventBasicsStep({ formData, errors, onUpdate, disabled }: EventB
               htmlFor="is_public"
               className="text-base font-medium text-gray-700"
             >
-              Make this wedding hub discoverable
+              Publish your wedding hub now?
             </label>
             <MicroCopy>
-              Guests will be able to find your event when they sign up with their invited phone number
+              Guests will be able to see your wedding hub as soon as they log in with their invited phone number. You can also choose to add guests before publishing.
             </MicroCopy>
           </div>
         </div>

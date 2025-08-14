@@ -17,7 +17,6 @@ import {
 
 import { EventBasicsStep } from './EventBasicsStep';
 import { EventImageStep } from './EventImageStep';
-import { GuestImportStep } from './GuestImportStep';
 import { EventReviewStep } from './EventReviewStep';
 
 export interface EventFormData {
@@ -25,7 +24,6 @@ export interface EventFormData {
   event_date: string;
   event_time: string;
   location: string;
-  description: string;
   is_public: boolean;
 }
 
@@ -37,13 +35,12 @@ export interface EventFormErrors {
   image?: string;
 }
 
-type WizardStep = 'basics' | 'image' | 'guests' | 'review';
+type WizardStep = 'basics' | 'image' | 'review';
 
 const STEP_CONFIG = {
   basics: { title: 'Event Details', icon: '📅', step: 1 },
   image: { title: 'Header Image', icon: '🖼️', step: 2 },
-  guests: { title: 'Guest List', icon: '👥', step: 3 },
-  review: { title: 'Review & Create', icon: '✅', step: 4 },
+  review: { title: 'Review & Create', icon: '✅', step: 3 },
 };
 
 export default function CreateEventWizard() {
@@ -58,7 +55,6 @@ export default function CreateEventWizard() {
     event_date: '',
     event_time: '15:00',
     location: '',
-    description: '',
     is_public: true,
   });
   
@@ -66,9 +62,7 @@ export default function CreateEventWizard() {
   const [headerImage, setHeaderImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
   
-  // Guest import state
-  const [guestImportMethod, setGuestImportMethod] = useState<'skip' | 'csv' | 'manual'>('skip');
-  const [guestCount, setGuestCount] = useState(0);
+
   
   // UI state
   const [errors, setErrors] = useState<EventFormErrors>({});
@@ -143,7 +137,7 @@ export default function CreateEventWizard() {
   }, [validateCurrentStep]);
 
   const goToNextStep = useCallback(() => {
-    const stepOrder: WizardStep[] = ['basics', 'image', 'guests', 'review'];
+    const stepOrder: WizardStep[] = ['basics', 'image', 'review'];
     const currentIndex = stepOrder.indexOf(currentStep);
     if (currentIndex < stepOrder.length - 1) {
       goToStep(stepOrder[currentIndex + 1]);
@@ -151,7 +145,7 @@ export default function CreateEventWizard() {
   }, [currentStep, goToStep]);
 
   const goToPrevStep = useCallback(() => {
-    const stepOrder: WizardStep[] = ['basics', 'image', 'guests', 'review'];
+    const stepOrder: WizardStep[] = ['basics', 'image', 'review'];
     const currentIndex = stepOrder.indexOf(currentStep);
     if (currentIndex > 0) {
       setCurrentStep(stepOrder[currentIndex - 1]);
@@ -189,7 +183,6 @@ export default function CreateEventWizard() {
         title: formData.title,
         event_date: formData.event_date,
         location: formData.location || undefined,
-        description: formData.description || undefined,
         is_public: formData.is_public,
         header_image: headerImage || undefined,
       };
@@ -294,24 +287,13 @@ export default function CreateEventWizard() {
               />
             )}
 
-            {currentStep === 'guests' && (
-              <GuestImportStep
-                importMethod={guestImportMethod}
-                guestCount={guestCount}
-                onMethodChange={setGuestImportMethod}
-                onGuestCountChange={setGuestCount}
-                disabled={isLoading}
-                eventId={undefined} // No import during wizard - guests added after event creation
-              />
-            )}
+
 
             {currentStep === 'review' && (
               <EventReviewStep
                 formData={formData}
                 headerImage={headerImage}
                 imagePreview={imagePreview}
-                guestImportMethod={guestImportMethod}
-                guestCount={guestCount}
               />
             )}
 

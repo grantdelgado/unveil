@@ -9,7 +9,6 @@ export interface EventCreationInput {
   title: string;
   event_date: string;
   location?: string;
-  description?: string;
   is_public: boolean;
   header_image?: File;
 }
@@ -280,7 +279,7 @@ export class EventCreationService {
       title: input.title.trim(),
       event_date: input.event_date,
       location: input.location?.trim() || null,
-      description: input.description?.trim() || null,
+
       header_image_url: headerImageUrl,
       host_user_id: userId,
       is_public: input.is_public,
@@ -332,7 +331,7 @@ export class EventCreationService {
         title: input.title.trim(),
         event_date: input.event_date,
         location: input.location?.trim() || null,
-        description: input.description?.trim() || null,
+  
         header_image_url: headerImageUrl,
         host_user_id: userId,
         is_public: input.is_public,

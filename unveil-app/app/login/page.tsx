@@ -218,9 +218,6 @@ export default function LoginPage() {
               {step === 'phone' ? (
                 <div className="space-y-2">
                   <SubTitle className="text-base sm:text-lg">Enter your phone number to continue</SubTitle>
-                  <p className="text-sm sm:text-base text-gray-600 max-w-sm mx-auto">
-                    New here? We&apos;ll set everything up for you automatically.
-                  </p>
                 </div>
               ) : (
                 <div className="space-y-2">

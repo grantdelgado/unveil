@@ -423,13 +423,13 @@ export default function EditEventPage() {
               {/* Event Name */}
               <div className="space-y-2">
                 <FieldLabel htmlFor="title" required>
-                  Wedding/Event Name
+                  What would you like your guests to see as the title of your wedding?
                 </FieldLabel>
                 <TextInput
                   id="title"
                   value={formData.title}
                   onChange={(e) => handleInputChange('title', e.target.value)}
-                  placeholder="e.g., Sarah & John's Wedding"
+                  placeholder="e.g., Sarah & Max's Wedding"
                   disabled={isLoading}
                   error={errors.title}
                 />
@@ -437,10 +437,10 @@ export default function EditEventPage() {
 
               {/* Date and Time Row */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Event Date */}
+                {/* Wedding Date */}
                 <div className="space-y-2">
                   <FieldLabel htmlFor="event_date" required>
-                    Event Date
+                    Wedding Date
                   </FieldLabel>
                   <TextInput
                     type="date"
@@ -452,10 +452,10 @@ export default function EditEventPage() {
                   />
                 </div>
 
-                {/* Event Time */}
+                {/* Wedding Time */}
                 <div className="space-y-2">
                   <FieldLabel htmlFor="event_time" required>
-                    Event Time
+                    Wedding Time
                   </FieldLabel>
                   <TextInput
                     type="time"
