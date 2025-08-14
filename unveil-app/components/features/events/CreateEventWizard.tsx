@@ -115,10 +115,7 @@ export default function CreateEventWizard() {
         }
         break;
         
-      case 'guests':
-        // No validation required - this step is optional
-        break;
-        
+
       case 'review':
         // Final validation would be done here if needed
         break;
