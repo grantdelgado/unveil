@@ -30,23 +30,19 @@ export const GuestListItem = memo<GuestListItemProps>(({
   const displayEmail = guest.users?.email || guest.guest_email;
   
   return (
-    <div className="p-3 bg-white border border-gray-100 rounded-lg hover:shadow-sm transition-all duration-200 m-2">
-      <div className="space-y-2">
-        {/* Guest Name - Full Width */}
-        <div>
-          <h3 className="text-base font-semibold text-gray-900 leading-tight">
+    <div className="p-2 bg-white border border-gray-100 rounded-lg hover:shadow-sm transition-all duration-200 m-1">
+      <div className="space-y-1">
+        {/* Top Row: Guest Name + RSVP Dropdown */}
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="text-base font-semibold text-gray-900 leading-tight flex-1 truncate">
             {displayName}
           </h3>
-        </div>
-        
-        {/* RSVP Status Dropdown - Below Name */}
-        <div className="flex justify-start">
           <select
             value={currentStatus}
             onChange={(e) => onRSVPUpdate(guest.id, e.target.value as RSVPStatus)}
             className={cn(
-              'text-sm px-2 py-1.5 border rounded-md focus:ring-2 focus:ring-pink-300 focus:border-pink-300',
-              'min-h-[36px] min-w-[130px] transition-colors duration-200',
+              'text-xs px-2 py-1 border rounded-md focus:ring-2 focus:ring-pink-300 focus:border-pink-300',
+              'min-h-[28px] min-w-[110px] transition-colors duration-200 flex-shrink-0',
               statusConfig.bgColor,
               statusConfig.textColor,
               statusConfig.borderColor
@@ -79,19 +75,15 @@ export const GuestListItem = memo<GuestListItemProps>(({
           </p>
         </div>
 
-        {/* Bottom Row: Remove Button */}
-        <div className="flex justify-end pt-1 border-t border-gray-50">
+        {/* Bottom Right: Remove Button */}
+        <div className="flex justify-end">
           <button
-            onClick={() => {
-              if (window.confirm(`Are you sure you want to remove ${displayName} from the guest list?`)) {
-                onRemove(guest.id);
-              }
-            }}
+            onClick={() => onRemove(guest.id)}
             className={cn(
-              'text-sm px-3 py-1.5 text-red-600 hover:text-red-700',
+              'text-xs px-2 py-1 text-red-600 hover:text-red-700',
               'hover:bg-red-50 rounded-md transition-colors duration-200',
               'border border-red-200 hover:border-red-300',
-              'min-h-[32px] min-w-[80px] font-medium'
+              'min-h-[24px] min-w-[70px] font-medium'
             )}
             aria-label={`Remove ${displayName} from guest list`}
           >

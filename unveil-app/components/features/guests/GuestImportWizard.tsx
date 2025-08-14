@@ -21,6 +21,7 @@ interface GuestImportWizardProps {
   eventId: string;
   onClose: () => void;
   onImportComplete: () => void;
+  startInManualMode?: boolean;
 }
 
 // Using GuestImportData from guest import service
@@ -43,39 +44,44 @@ interface EnhancedGuestEntry extends GuestEntry {
   isCollapsed: boolean;
 }
 
+const createEmptyGuest = (): EnhancedGuestEntry => ({
+  id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+  guest_name: '',
+  phone: '',
+  guest_email: '',
+  notes: '',
+  validationStates: {
+    guest_name: { isValid: true },
+    phone: { isValid: true },
+    guest_email: { isValid: true },
+  },
+  touchedFields: {
+    guest_name: false,
+    phone: false,
+    guest_email: false,
+  },
+  isCollapsed: false,
+});
+
 export function GuestImportWizard({
   eventId,
   onClose,
   onImportComplete,
+  startInManualMode = false,
 }: GuestImportWizardProps) {
   const [step, setStep] = useState<'method' | 'manual' | 'csv' | 'processing'>(
-    'method',
+    startInManualMode ? 'manual' : 'method',
   );
-  const [guests, setGuests] = useState<EnhancedGuestEntry[]>([]);
+  const [guests, setGuests] = useState<EnhancedGuestEntry[]>(
+    startInManualMode ? [createEmptyGuest()] : []
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeGuestIndex, setActiveGuestIndex] = useState<number | null>(null);
+  const [activeGuestIndex, setActiveGuestIndex] = useState<number | null>(
+    startInManualMode ? 0 : null
+  );
   const { importGuests } = useGuests();
   const nameInputRefs = useRef<(HTMLInputElement | null)[]>([]);
-
-  const createEmptyGuest = (): EnhancedGuestEntry => ({
-    id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-    guest_name: '',
-    phone: '',
-    guest_email: '',
-    notes: '',
-    validationStates: {
-      guest_name: { isValid: true },
-      phone: { isValid: true },
-      guest_email: { isValid: true },
-    },
-    touchedFields: {
-      guest_name: false,
-      phone: false,
-      guest_email: false,
-    },
-    isCollapsed: false,
-  });
 
   const handleAddManualGuest = () => {
     const newGuest = createEmptyGuest();

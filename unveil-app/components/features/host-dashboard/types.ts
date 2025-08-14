@@ -57,5 +57,6 @@ export interface GuestManagementProps {
   eventId: string;
   onGuestUpdated?: () => void;
   onImportGuests?: () => void;
+  onAddIndividualGuest?: () => void;
   onSendMessage?: (messageType: 'reminder') => void;
 }

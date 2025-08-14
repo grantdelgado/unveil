@@ -2,7 +2,7 @@
 
 import { memo } from 'react';
 import { cn } from '@/lib/utils';
-import { PrimaryButton, SecondaryButton } from '@/components/ui';
+import { SecondaryButton } from '@/components/ui';
 import type { GuestStatusCounts } from './types';
 
 interface GuestControlPanelProps {
@@ -12,6 +12,7 @@ interface GuestControlPanelProps {
   onFilterChange: (filter: 'all' | 'attending' | 'pending') => void;
   statusCounts: GuestStatusCounts;
   onImportGuests: () => void;
+  onAddIndividualGuest?: () => void;
   hasGuests: boolean;
   className?: string;
 }
@@ -69,6 +70,7 @@ export const GuestControlPanel = memo<GuestControlPanelProps>(({
   onFilterChange,
   statusCounts,
   onImportGuests,
+  onAddIndividualGuest,
   hasGuests,
   className,
 }) => {
@@ -100,27 +102,24 @@ export const GuestControlPanel = memo<GuestControlPanelProps>(({
           </div>
         </div>
 
-        {/* Import Button */}
-        <div className="sm:w-auto">
-          {hasGuests ? (
-            <SecondaryButton
-              onClick={onImportGuests}
-              fullWidth={false}
-              className="flex items-center justify-center gap-2 min-h-[44px] px-6"
-            >
-              <span>📄</span>
-              Import More
-            </SecondaryButton>
-          ) : (
-            <PrimaryButton
-              onClick={onImportGuests}
-              fullWidth={false}
-              className="flex items-center justify-center gap-2 min-h-[44px] px-6"
-            >
-              <span>📄</span>
-              Import Guests
-            </PrimaryButton>
-          )}
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-2 sm:w-auto">
+          <SecondaryButton
+            onClick={onAddIndividualGuest || (() => {})}
+            fullWidth={false}
+            className="flex items-center justify-center gap-2 min-h-[44px] px-4"
+          >
+            <span>👤</span>
+            Add Guest
+          </SecondaryButton>
+          <SecondaryButton
+            onClick={onImportGuests}
+            fullWidth={false}
+            className="flex items-center justify-center gap-2 min-h-[44px] px-4"
+          >
+            <span>📄</span>
+            Import CSV
+          </SecondaryButton>
         </div>
       </div>
 

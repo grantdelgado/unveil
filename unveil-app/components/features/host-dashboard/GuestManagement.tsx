@@ -24,6 +24,7 @@ function GuestManagementContent({
   eventId,
   onGuestUpdated,
   onImportGuests,
+  onAddIndividualGuest,
 }: GuestManagementProps) {
   const { showError, showSuccess } = useFeedback();
 
@@ -67,7 +68,13 @@ function GuestManagementContent({
     };
   }, [eventId, refreshGuests]);
 
-  // Simplified filtering (removed complex multi-filter logic)
+  // Helper function to extract first name from display name
+  const getFirstName = useCallback((guest: typeof guests[0]) => {
+    const displayName = guest.guest_display_name || guest.users?.full_name || guest.guest_name || '';
+    return displayName.split(' ')[0]?.trim() || '';
+  }, []);
+
+  // Simplified filtering and sorting (removed complex multi-filter logic)
   const filteredGuests = useMemo(() => {
     if (!guests || !Array.isArray(guests)) return [];
     
@@ -103,8 +110,20 @@ function GuestManagementContent({
       });
     }
     
-    return filtered;
-  }, [guests, searchTerm, filterByRSVP]);
+    // Sort alphabetically by first name (case-insensitive, null names last)
+    return filtered.sort((a, b) => {
+      const firstNameA = getFirstName(a);
+      const firstNameB = getFirstName(b);
+      
+      // Handle null/empty names - sort them last
+      if (!firstNameA && !firstNameB) return 0;
+      if (!firstNameA) return 1;
+      if (!firstNameB) return -1;
+      
+      // Case-insensitive alphabetical sort
+      return firstNameA.toLowerCase().localeCompare(firstNameB.toLowerCase());
+    });
+  }, [guests, searchTerm, filterByRSVP, getFirstName]);
 
   // Enhanced handlers with user feedback
   const handleRSVPUpdateWithFeedback = useCallback(async (guestId: string, newStatus: string) => {
@@ -171,17 +190,15 @@ function GuestManagementContent({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 pb-8">
-        <div className="max-w-4xl mx-auto p-4 space-y-6">
-          {/* Loading skeleton - simplified */}
-          <div className="animate-pulse space-y-4">
-            <div className="h-20 bg-gray-200 rounded-lg"></div>
-            <div className="h-16 bg-gray-200 rounded-lg"></div>
-            <div className="space-y-3">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="h-24 bg-gray-200 rounded-lg"></div>
-              ))}
-            </div>
+      <div className="space-y-6">
+        {/* Loading skeleton - simplified */}
+        <div className="animate-pulse space-y-4">
+          <div className="h-20 bg-gray-200 rounded-lg"></div>
+          <div className="h-16 bg-gray-200 rounded-lg"></div>
+          <div className="space-y-3">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="h-24 bg-gray-200 rounded-lg"></div>
+            ))}
           </div>
         </div>
       </div>
@@ -189,72 +206,80 @@ function GuestManagementContent({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-8">
-      <div className="max-w-4xl mx-auto p-4 space-y-6">
-        {/* Control Panel - Single unified top section */}
-        <GuestControlPanel
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          filterByRSVP={filterByRSVP}
-          onFilterChange={setFilterByRSVP}
-          statusCounts={simplifiedCounts}
-          onImportGuests={onImportGuests || (() => {})}
-          hasGuests={guests.length > 0}
-        />
+    <div className="space-y-6">
+      {/* Control Panel - Single unified top section */}
+      <GuestControlPanel
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        filterByRSVP={filterByRSVP}
+        onFilterChange={setFilterByRSVP}
+        statusCounts={simplifiedCounts}
+        onImportGuests={onImportGuests || (() => {})}
+        onAddIndividualGuest={onAddIndividualGuest}
+        hasGuests={guests.length > 0}
+      />
 
-        {/* Bulk Actions (if applicable) */}
-        {pendingCount > 0 && (
-          <div className="flex justify-center">
-            <SecondaryButton
-              onClick={handleConfirmAllPending}
-              className="flex items-center justify-center gap-2 min-h-[44px]"
-              fullWidth={false}
-            >
-              <span>✅</span>
-              Confirm All Pending ({pendingCount})
-            </SecondaryButton>
+      {/* Bulk Actions (if applicable) */}
+      {pendingCount > 0 && (
+        <div className="flex justify-center">
+          <SecondaryButton
+            onClick={handleConfirmAllPending}
+            className="flex items-center justify-center gap-2 min-h-[44px]"
+            fullWidth={false}
+          >
+            <span>✅</span>
+            Confirm All Pending ({pendingCount})
+          </SecondaryButton>
+        </div>
+      )}
+
+      {/* Guest List */}
+      {filteredGuests.length === 0 ? (
+        <div className="bg-white rounded-lg p-8 text-center shadow-sm border border-gray-100">
+          <div className="text-6xl mb-4">
+            {searchTerm || filterByRSVP !== 'all' ? '🔍' : '👥'}
           </div>
-        )}
-
-        {/* Guest List */}
-        {filteredGuests.length === 0 ? (
-          <div className="bg-white rounded-lg p-8 text-center shadow-sm border border-gray-100">
-            <div className="text-6xl mb-4">
-              {searchTerm || filterByRSVP !== 'all' ? '🔍' : '👥'}
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              {searchTerm || filterByRSVP !== 'all' ? 'No matching guests' : 'No guests yet'}
-            </h3>
-            <p className="text-gray-600 mb-6">
-              {searchTerm || filterByRSVP !== 'all' 
-                ? 'Try adjusting your search or filter to find guests.'
-                : 'Get started by importing your guest list from a CSV file.'
-              }
-            </p>
-            {(!searchTerm && filterByRSVP === 'all') && (
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            {searchTerm || filterByRSVP !== 'all' ? 'No matching guests' : 'No guests yet'}
+          </h3>
+          <p className="text-gray-600 mb-6">
+            {searchTerm || filterByRSVP !== 'all' 
+              ? 'Try adjusting your search or filter to find guests.'
+              : 'Get started by adding guests individually or importing from a CSV file.'
+            }
+          </p>
+          {(!searchTerm && filterByRSVP === 'all') && (
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <PrimaryButton 
+                onClick={onAddIndividualGuest}
+                fullWidth={false}
+                className="min-h-[44px] px-8"
+              >
+                👤 Add Individual Guest
+              </PrimaryButton>
+              <SecondaryButton 
                 onClick={onImportGuests}
                 fullWidth={false}
                 className="min-h-[44px] px-8"
               >
-                📄 Import Guest List
-              </PrimaryButton>
-            )}
-          </div>
-        ) : (
-          <div className="space-y-1">
-            {/* Guest items - reduced spacing between cards */}
-            {filteredGuests.map((guest) => (
-              <GuestListItem
-                key={guest.id}
-                guest={guest}
-                onRSVPUpdate={handleRSVPUpdateWithFeedback}
-                onRemove={handleRemoveGuestWithFeedback}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+                📄 Import from CSV
+              </SecondaryButton>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-1">
+          {/* Guest items - reduced spacing between cards */}
+          {filteredGuests.map((guest) => (
+            <GuestListItem
+              key={guest.id}
+              guest={guest}
+              onRSVPUpdate={handleRSVPUpdateWithFeedback}
+              onRemove={handleRemoveGuestWithFeedback}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

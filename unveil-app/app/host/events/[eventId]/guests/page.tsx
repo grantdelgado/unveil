@@ -27,6 +27,7 @@ export default function EventGuestsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showGuestImport, setShowGuestImport] = useState(false);
+  const [showAddIndividualGuest, setShowAddIndividualGuest] = useState(false);
   const [, setGuestCount] = useState(0);
 
   // Fetch event data and guest count
@@ -150,7 +151,7 @@ export default function EventGuestsPage() {
 
   return (
     <PageWrapper centered={false}>
-      {/* Guest Import Modal */}
+      {/* Guest Import Modal (CSV) */}
       {showGuestImport && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="max-w-4xl w-full max-h-[90vh] overflow-y-auto">
@@ -177,6 +178,34 @@ export default function EventGuestsPage() {
         </div>
       )}
 
+      {/* Add Individual Guest Modal */}
+      {showAddIndividualGuest && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <Suspense 
+              fallback={
+                <CardContainer>
+                  <div className="flex items-center justify-center py-8">
+                    <LoadingSpinner size="lg" />
+                    <span className="ml-3 text-gray-600">Loading guest form...</span>
+                  </div>
+                </CardContainer>
+              }
+            >
+              <LazyGuestImportWizard
+                eventId={eventId}
+                startInManualMode={true}
+                onImportComplete={() => {
+                  setShowAddIndividualGuest(false);
+                  handleDataRefresh();
+                }}
+                onClose={() => setShowAddIndividualGuest(false)}
+              />
+            </Suspense>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Navigation */}
         <div className="mb-6">
@@ -197,26 +226,25 @@ export default function EventGuestsPage() {
         </div>
 
         {/* Guest Management Interface */}
-        <CardContainer>
-          <Suspense 
-            fallback={
-              <div className="flex items-center justify-center py-8">
-                <LoadingSpinner size="lg" />
-                <span className="ml-3 text-gray-600">Loading guest management...</span>
-              </div>
-            }
-          >
-            <LazyGuestManagement
-              eventId={eventId}
-              onGuestUpdated={handleDataRefresh}
-              onImportGuests={() => setShowGuestImport(true)}
-              onSendMessage={(messageType) => {
-                // Navigate to messages page with pre-selected type
-                router.push(`/host/events/${eventId}/messages?type=${messageType}`);
-              }}
-            />
-          </Suspense>
-        </CardContainer>
+        <Suspense 
+          fallback={
+            <div className="flex items-center justify-center py-8">
+              <LoadingSpinner size="lg" />
+              <span className="ml-3 text-gray-600">Loading guest management...</span>
+            </div>
+          }
+        >
+          <LazyGuestManagement
+            eventId={eventId}
+            onGuestUpdated={handleDataRefresh}
+            onImportGuests={() => setShowGuestImport(true)}
+            onAddIndividualGuest={() => setShowAddIndividualGuest(true)}
+            onSendMessage={(messageType) => {
+              // Navigate to messages page with pre-selected type
+              router.push(`/host/events/${eventId}/messages?type=${messageType}`);
+            }}
+          />
+        </Suspense>
       </div>
     </PageWrapper>
   );
