@@ -576,6 +576,14 @@ export type Database = {
           guest_name: string
         }[]
       }
+      backfill_user_id_from_phone: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          updated_count: number
+          total_eligible_count: number
+          details: string
+        }[]
+      }
     }
     Enums: {
       media_type_enum: "image" | "video"

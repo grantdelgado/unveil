@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { Database } from '@/app/reference/supabase.types';
@@ -24,7 +24,7 @@ interface BackfillResult {
  * - total_eligible_count: number of rows that were eligible for update
  * - details: human-readable status message
  */
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     // Create Supabase client
     const supabase = createRouteHandlerClient<Database>({ cookies });
@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
 /**
  * GET endpoint to check current state without running backfill
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const supabase = createRouteHandlerClient<Database>({ cookies });
 
