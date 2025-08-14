@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 // Core dependencies
 import { useGuestMutations } from '@/hooks/guests';
 import { useSimpleGuestStore } from '@/hooks/guests/useSimpleGuestStore';
@@ -37,7 +37,8 @@ function GuestManagementContent({
     statusCounts, 
     loading,
     updateGuestOptimistically,
-    rollbackOptimisticUpdate
+    rollbackOptimisticUpdate,
+    refreshGuests
   } = useSimpleGuestStore(eventId);
   
   const {
@@ -49,6 +50,22 @@ function GuestManagementContent({
     onGuestUpdated,
     onOptimisticRollback: rollbackOptimisticUpdate
   });
+
+  // Listen for guest data refresh events (e.g., after guest import)
+  useEffect(() => {
+    const handleGuestDataRefresh = (event: CustomEvent) => {
+      if (event.detail?.eventId === eventId) {
+        // Trigger refresh of guest data
+        refreshGuests();
+      }
+    };
+
+    window.addEventListener('guestDataRefresh', handleGuestDataRefresh as EventListener);
+    
+    return () => {
+      window.removeEventListener('guestDataRefresh', handleGuestDataRefresh as EventListener);
+    };
+  }, [eventId, refreshGuests]);
 
   // Simplified filtering (removed complex multi-filter logic)
   const filteredGuests = useMemo(() => {
@@ -225,8 +242,8 @@ function GuestManagementContent({
             )}
           </div>
         ) : (
-          <div className="space-y-0">
-            {/* Guest items - no wrapper, individual cards handle their own styling */}
+          <div className="space-y-1">
+            {/* Guest items - reduced spacing between cards */}
             {filteredGuests.map((guest) => (
               <GuestListItem
                 key={guest.id}

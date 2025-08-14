@@ -30,11 +30,11 @@ export const GuestListItem = memo<GuestListItemProps>(({
   const displayEmail = guest.users?.email || guest.guest_email;
   
   return (
-    <div className="p-4 bg-white border border-gray-100 rounded-lg hover:shadow-sm transition-all duration-200 m-3">
-      <div className="space-y-3">
+    <div className="p-3 bg-white border border-gray-100 rounded-lg hover:shadow-sm transition-all duration-200 m-2">
+      <div className="space-y-2">
         {/* Guest Name - Full Width */}
         <div>
-          <h3 className="text-base font-semibold text-gray-900">
+          <h3 className="text-base font-semibold text-gray-900 leading-tight">
             {displayName}
           </h3>
         </div>
@@ -45,8 +45,8 @@ export const GuestListItem = memo<GuestListItemProps>(({
             value={currentStatus}
             onChange={(e) => onRSVPUpdate(guest.id, e.target.value as RSVPStatus)}
             className={cn(
-              'text-sm px-3 py-2 border rounded-lg focus:ring-2 focus:ring-pink-300 focus:border-pink-300',
-              'min-h-[44px] min-w-[130px] transition-colors duration-200',
+              'text-sm px-2 py-1.5 border rounded-md focus:ring-2 focus:ring-pink-300 focus:border-pink-300',
+              'min-h-[36px] min-w-[130px] transition-colors duration-200',
               statusConfig.bgColor,
               statusConfig.textColor,
               statusConfig.borderColor
@@ -65,12 +65,12 @@ export const GuestListItem = memo<GuestListItemProps>(({
         </div>
 
         {/* Contact Information */}
-        <div className="space-y-1">
-          <p className="text-sm text-gray-600">
+        <div className="space-y-0.5">
+          <p className="text-sm text-gray-600 leading-tight">
             📱 {guest.phone}
           </p>
           {displayEmail && (
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 leading-tight">
               ✉️ {displayEmail}
             </p>
           )}
@@ -80,7 +80,7 @@ export const GuestListItem = memo<GuestListItemProps>(({
         </div>
 
         {/* Bottom Row: Remove Button */}
-        <div className="flex justify-end pt-2 border-t border-gray-50">
+        <div className="flex justify-end pt-1 border-t border-gray-50">
           <button
             onClick={() => {
               if (window.confirm(`Are you sure you want to remove ${displayName} from the guest list?`)) {
@@ -88,10 +88,10 @@ export const GuestListItem = memo<GuestListItemProps>(({
               }
             }}
             className={cn(
-              'text-sm px-4 py-2 text-red-600 hover:text-red-700',
-              'hover:bg-red-50 rounded-lg transition-colors duration-200',
+              'text-sm px-3 py-1.5 text-red-600 hover:text-red-700',
+              'hover:bg-red-50 rounded-md transition-colors duration-200',
               'border border-red-200 hover:border-red-300',
-              'min-h-[44px] min-w-[100px] font-medium'
+              'min-h-[32px] min-w-[80px] font-medium'
             )}
             aria-label={`Remove ${displayName} from guest list`}
           >

@@ -100,6 +100,9 @@ export default function EventGuestsPage() {
       .eq('event_id', eventId);
 
     setGuestCount(guestData?.length || 0);
+    
+    // Trigger a custom event to notify the guest management component to refresh
+    window.dispatchEvent(new CustomEvent('guestDataRefresh', { detail: { eventId } }));
   };
 
   // Loading state
