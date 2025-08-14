@@ -38,7 +38,9 @@
     "schema:validate": "npx tsx scripts/sync-schema.ts --validate",
     "schema:watch": "npx tsx scripts/sync-schema.ts --watch",
     "schema:test": "npx tsx scripts/test-schema-awareness.ts",
-    "schema:demo": "npx tsx scripts/demo-schema-awareness.ts"
+    "schema:demo": "npx tsx scripts/demo-schema-awareness.ts",
+    "script:backfill-user-ids": "npx tsx scripts/backfill-user-ids.ts",
+    "test:user-id-trigger": "npx tsx scripts/test-user-id-trigger.ts"
   },
   "dependencies": {
     "@sentry/nextjs": "^9.42.1",
