@@ -7,6 +7,7 @@ import { FieldLabel } from '@/components/ui/Typography';
 import { cn } from '@/lib/utils';
 import type { Database } from '@/app/reference/supabase.types';
 import { sendMessageToEvent } from '@/lib/services/messaging';
+import { supabase } from '@/lib/supabase/client';
 
 type Guest = Database['public']['Tables']['event_guests']['Row'];
 
@@ -66,12 +67,20 @@ export function MessageComposer({
     setError(null);
 
     try {
+      // Check authentication first
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        throw new Error('You must be logged in to send messages. Please refresh the page and try again.');
+      }
+
+      console.log('Sending message with authenticated user:', user.id);
+
       // Convert our UI filter to the service format
       const serviceRecipientFilter = recipientFilter === 'pending_rsvp' 
         ? { type: 'rsvp_status' as const, rsvpStatuses: ['pending'] }
         : { type: 'all' as const };
 
-      await sendMessageToEvent({
+      const result = await sendMessageToEvent({
         eventId,
         content: message.trim(),
         recipientFilter: serviceRecipientFilter,
@@ -83,9 +92,15 @@ export function MessageComposer({
         }
       });
 
+      if (!result.success) {
+        throw new Error(result.error?.message || 'Failed to send message');
+      }
+
+      console.log('Message sent successfully:', result.data);
       setMessage('');
       onMessageSent?.();
     } catch (err) {
+      console.error('Message send error:', err);
       setError(err instanceof Error ? err.message : 'Failed to send message');
     } finally {
       setIsSending(false);

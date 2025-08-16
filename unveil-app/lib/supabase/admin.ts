@@ -56,6 +56,9 @@ export const supabaseAdmin = new Proxy({} as ReturnType<typeof createClient<Data
   }
 });
 
+// Export as 'supabase' for backward compatibility with existing imports
+export const supabase = supabaseAdmin;
+
 // Test function to verify admin client is working
 export async function testAdminConnection(): Promise<boolean> {
   try {

@@ -11,8 +11,8 @@ import {
   LoadingSpinner
 } from '@/components/ui';
 
-// Lazy load heavy components
-const LazyMessageCenter = lazy(() => import('@/components/features/messaging/host/MessageCenter').then(m => ({ default: m.MessageCenter })));
+// Lazy load enhanced messaging center with full functionality
+const LazyMessageCenter = lazy(() => import('@/components/features/messaging/host/MessageCenterEnhanced').then(m => ({ default: m.MessageCenterEnhanced })));
 
 type Event = Database['public']['Tables']['events']['Row'];
 
