@@ -1,144 +1,311 @@
 /**
- * useScheduledMessages Hook - Refactored Composition
- * 
- * Main hook that composes the three specialized hooks for better separation of concerns:
- * - useScheduledMessagesQuery: React Query logic
- * - useScheduledMessagesCache: Cache operations  
- * - useScheduledMessagesRealtime: Real-time subscriptions
- * 
- * This maintains the original API while providing cleaner internal architecture.
+ * Hook for managing scheduled messages with full CRUD operations
+ * Supports real-time updates and comprehensive error handling
  */
 
-import { useCallback, useEffect } from 'react';
-import { useScheduledMessagesQuery } from './scheduled/useScheduledMessagesQuery';
-import { useScheduledMessagesCache } from './scheduled/useScheduledMessagesCache';
-import { useScheduledMessagesRealtime } from './scheduled/useScheduledMessagesRealtime';
-import type { ScheduledMessageFilters } from '@/lib/types/messaging';
-// Note: ScheduledMessageFilters type moved to useMessages hook
-import type { Tables } from '@/app/reference/supabase.types';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { supabase } from '@/lib/supabase';
+import { 
+  getScheduledMessages, 
+  createScheduledMessage, 
+  deleteScheduledMessage,
+  cancelScheduledMessage 
+} from '@/lib/services/messaging';
+import type { 
+  CreateScheduledMessageData, 
+  ScheduledMessageFilters 
+} from '@/lib/types/messaging';
+import type { Database } from '@/app/reference/supabase.types';
 
-type ScheduledMessage = Tables<'scheduled_messages'>;
+type ScheduledMessage = Database['public']['Tables']['scheduled_messages']['Row'];
+
+interface UseScheduledMessagesReturn {
+  scheduledMessages: ScheduledMessage[];
+  loading: boolean;
+  error: string | null;
+  createScheduledMessage: (data: CreateScheduledMessageData) => Promise<{ success: boolean; error?: string }>;
+  deleteScheduledMessage: (messageId: string) => Promise<{ success: boolean; error?: string }>;
+  cancelScheduledMessage: (messageId: string) => Promise<{ success: boolean; error?: string }>;
+  refreshMessages: () => Promise<void>;
+  upcomingCount: number;
+  sentCount: number;
+  cancelledCount: number;
+}
 
 interface UseScheduledMessagesOptions {
   eventId: string;
-  filters?: ScheduledMessageFilters;
+  filters?: Omit<ScheduledMessageFilters, 'eventId'>;
   autoRefresh?: boolean;
-  refreshInterval?: number; // Deprecated, kept for API compatibility
-}
-
-interface UseScheduledMessagesReturn {
-  messages: ScheduledMessage[];
-  loading: boolean;
-  error: Error | null;
-  isConnected: boolean;
-  refresh: () => Promise<void>;
-  addMessage: (message: ScheduledMessage) => void;
-  updateMessage: (id: string, updates: Partial<ScheduledMessage>) => void;
-  removeMessage: (id: string) => void;
+  realTimeUpdates?: boolean;
 }
 
 /**
- * Composed hook for scheduled messages
- * 
- * Uses three specialized hooks for clean separation of concerns:
- * 1. Query management
- * 2. Cache operations  
- * 3. Real-time subscriptions
+ * Hook for managing scheduled messages with real-time updates
  */
 export function useScheduledMessages({
   eventId,
-  filters,
+  filters = {},
   autoRefresh = true,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  refreshInterval = 30000 // Deprecated, using React Query settings instead
+  realTimeUpdates = true
 }: UseScheduledMessagesOptions): UseScheduledMessagesReturn {
-  
-  // 1. React Query logic
-  const query = useScheduledMessagesQuery({
+  const [scheduledMessages, setScheduledMessages] = useState<ScheduledMessage[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Memoize the complete filters object
+  const completeFilters = useMemo(() => ({
     eventId,
-    filters,
-    autoRefresh,
-    enabled: !!eventId
-  });
+    ...filters
+  }), [eventId, filters]);
 
-  // 2. Cache operations
-  const cache = useScheduledMessagesCache({
-    queryKey: query.queryKey
-  });
+  /**
+   * Fetch scheduled messages from the server
+   */
+  const fetchMessages = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-  // 3. Real-time subscription
-  const realtime = useScheduledMessagesRealtime({
-    eventId,
-    cache,
-    onRefetch: query.refetch,
-    enabled: !!eventId
-  });
+      const result = await getScheduledMessages(completeFilters);
+      
+      if (!result.success) {
+        throw new Error(
+          (result.error && typeof result.error === 'object' && 'message' in result.error) 
+            ? String(result.error.message)
+            : 'Failed to fetch scheduled messages'
+        );
+      }
 
-  // Update processed message IDs when query data changes
-  useEffect(() => {
-    if (query.messages.length > 0) {
-      cache.processedMessageIds.current = new Set(query.messages.map(msg => msg.id));
+      setScheduledMessages(result.data || []);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch scheduled messages';
+      setError(errorMessage);
+      console.error('Error fetching scheduled messages:', err);
+    } finally {
+      setLoading(false);
     }
-  }, [query.messages, cache.processedMessageIds]);
+  }, [completeFilters]);
 
-  // Create refresh function that clears real-time errors
-  const refresh = useCallback(async () => {
-    await query.refetch();
-  }, [query.refetch]);
+  /**
+   * Create a new scheduled message
+   */
+  const handleCreateScheduledMessage = useCallback(async (data: CreateScheduledMessageData) => {
+    try {
+      setError(null);
+      
+      const result = await createScheduledMessage(data);
+      
+      if (!result.success) {
+        const errorMessage = result.error?.message || 'Failed to create scheduled message';
+        setError(errorMessage);
+        return { success: false, error: errorMessage };
+      }
 
-  // Combine errors from query and real-time
-  const combinedError = query.error || realtime.error;
+      // Refresh messages to include the new one
+      await fetchMessages();
+      
+      return { success: true };
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create scheduled message';
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
+    }
+  }, [fetchMessages]);
+
+  /**
+   * Delete a scheduled message permanently
+   */
+  const handleDeleteScheduledMessage = useCallback(async (messageId: string) => {
+    try {
+      setError(null);
+      
+      const result = await deleteScheduledMessage(messageId);
+      
+      if (!result.success) {
+        const errorMessage = result.error?.message || 'Failed to delete scheduled message';
+        setError(errorMessage);
+        return { success: false, error: errorMessage };
+      }
+
+      // Remove from local state immediately for optimistic updates
+      setScheduledMessages(prev => prev.filter(msg => msg.id !== messageId));
+      
+      return { success: true };
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete scheduled message';
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
+    }
+  }, []);
+
+  /**
+   * Cancel a scheduled message (mark as cancelled)
+   */
+  const handleCancelScheduledMessage = useCallback(async (messageId: string) => {
+    try {
+      setError(null);
+      
+      const result = await cancelScheduledMessage(messageId);
+      
+      if (!result.success) {
+        const errorMessage = result.error?.message || 'Failed to cancel scheduled message';
+        setError(errorMessage);
+        return { success: false, error: errorMessage };
+      }
+
+      // Update local state immediately for optimistic updates
+      setScheduledMessages(prev => 
+        prev.map(msg => 
+          msg.id === messageId 
+            ? { ...msg, status: 'cancelled' }
+            : msg
+        )
+      );
+      
+      return { success: true };
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to cancel scheduled message';
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
+    }
+  }, []);
+
+  /**
+   * Manual refresh function
+   */
+  const refreshMessages = useCallback(async () => {
+    await fetchMessages();
+  }, [fetchMessages]);
+
+  // Calculate message counts by status
+  const { upcomingCount, sentCount, cancelledCount } = useMemo(() => {
+    const upcoming = scheduledMessages.filter(msg => 
+      msg.status === 'scheduled' && new Date(msg.send_at) > new Date()
+    ).length;
+    
+    const sent = scheduledMessages.filter(msg => msg.status === 'sent').length;
+    const cancelled = scheduledMessages.filter(msg => msg.status === 'cancelled').length;
+
+    return {
+      upcomingCount: upcoming,
+      sentCount: sent,
+      cancelledCount: cancelled
+    };
+  }, [scheduledMessages]);
+
+  // Initial fetch
+  useEffect(() => {
+    fetchMessages();
+  }, [fetchMessages]);
+
+  // Set up real-time subscription for scheduled messages
+  useEffect(() => {
+    if (!realTimeUpdates) return;
+
+    const channel = supabase
+      .channel(`scheduled_messages_${eventId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'scheduled_messages',
+          filter: `event_id=eq.${eventId}`
+        },
+        (payload) => {
+          console.log('Scheduled message real-time update:', payload);
+
+          switch (payload.eventType) {
+            case 'INSERT':
+              setScheduledMessages(prev => [...prev, payload.new as ScheduledMessage]);
+              break;
+            
+            case 'UPDATE':
+              setScheduledMessages(prev =>
+                prev.map(msg =>
+                  msg.id === payload.new.id ? payload.new as ScheduledMessage : msg
+                )
+              );
+              break;
+            
+            case 'DELETE':
+              setScheduledMessages(prev =>
+                prev.filter(msg => msg.id !== payload.old.id)
+              );
+              break;
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [eventId, realTimeUpdates]);
+
+  // Auto-refresh interval (every 30 seconds for upcoming messages)
+  useEffect(() => {
+    if (!autoRefresh) return;
+
+    const interval = setInterval(() => {
+      // Only refresh if we have upcoming messages that might need status updates
+      const hasUpcoming = scheduledMessages.some(msg => 
+        msg.status === 'scheduled' && new Date(msg.send_at) > new Date()
+      );
+      
+      if (hasUpcoming) {
+        fetchMessages();
+      }
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
+  }, [autoRefresh, scheduledMessages, fetchMessages]);
 
   return {
-    messages: query.messages,
-    loading: query.loading,
-    error: combinedError,
-    isConnected: realtime.isConnected,
-    refresh,
-    addMessage: cache.addMessage,
-    updateMessage: cache.updateMessage,
-    removeMessage: cache.removeMessage
-  };
-}
-
-// Additional utility hook for scheduled message counts
-export function useScheduledMessageCounts(eventId: string) {
-  const { messages } = useScheduledMessages({ eventId, autoRefresh: true });
-
-  const counts = messages.reduce((acc, message) => {
-    const status = message.status || 'scheduled';
-    acc[status] = (acc[status] || 0) + 1;
-    acc.total++;
-    return acc;
-  }, {
-    total: 0,
-    scheduled: 0,
-    sending: 0,
-    sent: 0,
-    failed: 0,
-    cancelled: 0
-  } as Record<string, number>);
-
-  return counts;
-}
-
-// Hook for next scheduled message
-export function useNextScheduledMessage(eventId: string) {
-  const { messages, loading } = useScheduledMessages({ 
-    eventId, 
-    filters: { eventId, status: 'pending' }, // Fix: include required eventId
-    autoRefresh: true 
-  });
-
-  const nextMessage = messages
-    .filter(message => new Date(message.send_at) > new Date())
-    .sort((a, b) => new Date(a.send_at).getTime() - new Date(b.send_at).getTime())[0];
-
-  return {
-    nextMessage: nextMessage || null,
+    scheduledMessages,
     loading,
-    timeUntilNext: nextMessage 
-      ? new Date(nextMessage.send_at).getTime() - new Date().getTime()
-      : null
+    error,
+    createScheduledMessage: handleCreateScheduledMessage,
+    deleteScheduledMessage: handleDeleteScheduledMessage,
+    cancelScheduledMessage: handleCancelScheduledMessage,
+    refreshMessages,
+    upcomingCount,
+    sentCount,
+    cancelledCount
   };
-} 
+}
+
+/**
+ * Lightweight hook for just checking if there are any upcoming scheduled messages
+ */
+export function useUpcomingScheduledMessagesCount(eventId: string): {
+  count: number;
+  loading: boolean;
+} {
+  const [count, setCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCount = async () => {
+      try {
+        const { data } = await supabase
+          .from('scheduled_messages')
+          .select('id', { count: 'exact' })
+          .eq('event_id', eventId)
+          .eq('status', 'scheduled')
+          .gt('send_at', new Date().toISOString());
+
+        setCount(data?.length || 0);
+      } catch (error) {
+        console.error('Error fetching upcoming scheduled messages count:', error);
+        setCount(0);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCount();
+  }, [eventId]);
+
+  return { count, loading };
+}

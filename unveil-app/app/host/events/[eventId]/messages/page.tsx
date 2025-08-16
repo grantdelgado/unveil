@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, Suspense, lazy } from 'react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/app/reference/supabase.types';
 import {
@@ -11,19 +11,19 @@ import {
   LoadingSpinner
 } from '@/components/ui';
 
-// Lazy load enhanced messaging center with full functionality
-const LazyMessageCenter = lazy(() => import('@/components/features/messaging/host/MessageCenterEnhanced').then(m => ({ default: m.MessageCenterEnhanced })));
+// Lazy load MVP messaging center with simplified UI
+const LazyMessageCenter = lazy(() => import('@/components/features/messaging/host/MessageCenterMVP').then(m => ({ default: m.MessageCenterMVP })));
 
 type Event = Database['public']['Tables']['events']['Row'];
 
 export default function EventMessagesPage() {
   const params = useParams();
   const router = useRouter();
-  const searchParams = useSearchParams();
+  // const searchParams = useSearchParams();
   const eventId = params.eventId as string;
   
-  // Get pre-selected message type from URL params
-  const messageType = searchParams.get('type');
+  // Get pre-selected message type from URL params (for future use)
+  // const messageType = searchParams.get('type');
 
   // Core state
   const [event, setEvent] = useState<Event | null>(null);
@@ -135,33 +135,17 @@ export default function EventMessagesPage() {
           </BackButton>
         </div>
 
-        {/* Page Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Messages</h1>
-          <p className="text-gray-600">
-            Send announcements, reminders, and updates to guests for <span className="font-medium text-gray-800">{event.title}</span>
-          </p>
-          {messageType && (
-            <div className="mt-3 inline-flex items-center gap-2 px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">
-              <span>📧</span>
-              Pre-selected: {messageType === 'reminder' ? 'RSVP Reminder' : 'Message'}
-            </div>
-          )}
-        </div>
-
         {/* Message Center Interface */}
-        <CardContainer>
-          <Suspense 
-            fallback={
-              <div className="flex items-center justify-center py-8">
-                <LoadingSpinner size="lg" />
-                <span className="ml-3 text-gray-600">Loading message center...</span>
-              </div>
-            }
-          >
-            <LazyMessageCenter eventId={eventId} />
-          </Suspense>
-        </CardContainer>
+        <Suspense 
+          fallback={
+            <div className="flex items-center justify-center py-8">
+              <LoadingSpinner size="lg" />
+              <span className="ml-3 text-gray-600">Loading message center...</span>
+            </div>
+          }
+        >
+          <LazyMessageCenter eventId={eventId} />
+        </Suspense>
       </div>
     </PageWrapper>
   );

@@ -9,6 +9,11 @@ import { Suspense } from 'react';
 import { PerformanceMonitor } from '@/components/monitoring/PerformanceMonitor';
 import { AuthProvider } from '@/lib/auth/AuthProvider';
 
+// Load auth debug utilities in development
+if (process.env.NODE_ENV === 'development') {
+  import('@/lib/auth/debugAuth');
+}
+
 const inter = localFont({
   src: [
     {

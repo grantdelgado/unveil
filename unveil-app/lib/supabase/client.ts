@@ -18,6 +18,8 @@ export const supabase = createClient<Database>(
       detectSessionInUrl: true,
       // Longer session timeout (24 hours)
       flowType: 'pkce',
+      // Add debug logging for auth events
+      debug: process.env.NODE_ENV === 'development',
     },
     // Enhanced realtime configuration to prevent timeouts
     realtime: {

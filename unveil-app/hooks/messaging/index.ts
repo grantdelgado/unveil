@@ -4,9 +4,10 @@ export { useMessages } from './useMessages';
 
 export { 
   useScheduledMessages, 
-  useScheduledMessageCounts, 
-  useNextScheduledMessage 
+  useUpcomingScheduledMessagesCount
 } from './useScheduledMessages';
+
+// Analytics hooks temporarily removed
 
 // Note: Guest tagging removed - simplified in useMessages domain hook
 

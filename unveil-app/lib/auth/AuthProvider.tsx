@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { Session, User } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
 import { useAutoLinkGuests } from '@/hooks/useLinkGuestsToUser';
+import { clearCorruptedAuthState, isRefreshTokenError } from './clearAuthState';
 
 interface AuthContextType {
   session: Session | null;
@@ -40,30 +41,83 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (error) {
-        logger.error('Error getting initial session:', error);
+    let isMounted = true;
+
+    // Get initial session with proper error handling
+    const initializeAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (!isMounted) return;
+
+        if (error) {
+          logger.error('Error getting initial session:', error);
+          
+          // If it's a refresh token error, clear the corrupted state
+          if (isRefreshTokenError(error)) {
+            logger.auth('Detected refresh token error, clearing corrupted auth state');
+            await clearCorruptedAuthState();
+            setSession(null);
+            setUser(null);
+          }
+        } else {
+          setSession(session);
+          setUser(session?.user ?? null);
+        }
+      } catch (error: any) {
+        if (!isMounted) return;
+        logger.error('Failed to initialize auth:', error);
+        
+        // Clear any corrupted auth state
+        if (isRefreshTokenError(error)) {
+          await clearCorruptedAuthState();
+        } else {
+          try {
+            await supabase.auth.signOut({ scope: 'local' });
+          } catch (signOutError) {
+            logger.error('Failed to clear auth state:', signOutError);
+          }
+        }
+        setSession(null);
+        setUser(null);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    };
+
+    initializeAuth();
 
     // Single auth state change listener for the entire app
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!isMounted) return;
+
       // Only log auth state changes in debug mode to reduce console noise
-if (process.env.UNVEIL_DEBUG === 'true') {
-  logger.auth(`Auth state changed: ${event}`, { userId: session?.user?.id || null });
-}
+      if (process.env.UNVEIL_DEBUG === 'true') {
+        logger.auth(`Auth state changed: ${event}`, { userId: session?.user?.id || null });
+      }
+
+      // Handle specific auth events
+      if (event === 'TOKEN_REFRESHED') {
+        logger.auth('Token refreshed successfully');
+      } else if (event === 'SIGNED_OUT') {
+        logger.auth('User signed out');
+      } else if (event === 'SIGNED_IN') {
+        logger.auth('User signed in');
+      }
+
       setSession(session);
       setUser(session?.user ?? null);
+      
+      // Ensure loading is false after any auth state change
       setLoading(false);
     });
 
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, []);

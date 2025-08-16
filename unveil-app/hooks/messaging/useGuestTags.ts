@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase/client';
-import type { Guest, TagWithUsage } from '@/lib/types/messaging';
+import type { Guest, TagWithUsage, GuestWithDisplayName } from '@/lib/types/messaging';
 
 export function useGuestTags(eventId: string) {
   const [tags, setTags] = useState<string[]>([]);
