@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     const messageSid = formData.get('MessageSid')?.toString();
     const messageStatus = formData.get('MessageStatus')?.toString();
     const toNumber = formData.get('To')?.toString();
-    const fromNumber = formData.get('From')?.toString();
+    const _fromNumber = formData.get('From')?.toString();
     const errorCode = formData.get('ErrorCode')?.toString();
     const errorMessage = formData.get('ErrorMessage')?.toString();
 
@@ -170,7 +170,7 @@ function mapTwilioStatus(twilioStatus: string): string {
 /**
  * Update aggregate message statistics when delivery status changes
  */
-async function updateMessageAggregateStats(messageSid: string, status: string) {
+async function updateMessageAggregateStats(messageSid: string, _status: string) {
   try {
     // Find the message record associated with this delivery
     const { data: deliveryRecord, error: findError } = await supabase

@@ -149,8 +149,7 @@ export async function autoJoinInvitedGuests(
  * This respects the is_public setting (visibility toggle)
  */
 export async function getVisibleEventsForUser(
-  userId: string,
-  userPhone?: string
+  userId: string
 ): Promise<{ success: boolean; events: Event[]; error?: string }> {
   try {
 

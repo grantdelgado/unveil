@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { FieldLabel } from '@/components/ui/Typography';
 import { Button } from '@/components/ui/Button';
-import type { RecipientFilter, RSVP_STATUSES } from '@/lib/types/messaging';
+import type { RecipientFilter } from '@/lib/types/messaging';
 import { useAvailableTags } from '@/hooks/messaging/useRecipientPreview';
 
 interface RecipientSelectorProps {

@@ -18,6 +18,7 @@ const eslintConfig = [
       '**/components/features/messaging/host/**/*.tsx',
       '**/lib/services/messageAnalytics.ts',
       '**/lib/services/messaging-client.ts',
+      '**/lib/services/guestAutoJoin.ts',
       '**/app/api/**/*.ts',
       '**/lib/auth/**/*.ts',
       '**/lib/auth/**/*.tsx'
