@@ -6,7 +6,7 @@ import { MessageBubble } from '@/components/features/messaging/common';
 // Note: Guest messaging functionality simplified - using useMessages hook instead
 import { GuestMessageInput } from './GuestMessageInput';
 import { ResponseIndicator } from './ResponseIndicator';
-import { MessageCircle, Send } from 'lucide-react';
+import { MessageCircle, Send, ChevronDown } from 'lucide-react';
 import { logger } from '@/lib/logger';
 import { useGuestMessages } from '@/hooks/messaging/useGuestMessages';
 
@@ -46,17 +46,85 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
   const [responseError, setResponseError] = useState<string | null>(null);
   const [canRespond] = useState(true); // For now, assume guests can respond
   
+  // Scroll management state
+  const [isAtBottom, setIsAtBottom] = useState(true);
+  const [showJumpToLatest, setShowJumpToLatest] = useState(false);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const previousMessageCountRef = useRef(messages.length);
 
   /**
-   * Auto-scroll to bottom on new messages
+   * Check if user is at the bottom of the scroll container
+   */
+  const checkIsAtBottom = useCallback(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return false;
+    
+    const threshold = 50; // 50px threshold for "at bottom"
+    const isAtBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - threshold;
+    return isAtBottom;
+  }, []);
+
+  /**
+   * Handle scroll events to track position
+   */
+  const handleScroll = useCallback(() => {
+    const isCurrentlyAtBottom = checkIsAtBottom();
+    setIsAtBottom(isCurrentlyAtBottom);
+    setShowJumpToLatest(!isCurrentlyAtBottom && messages.length > 0);
+  }, [checkIsAtBottom, messages.length]);
+
+  /**
+   * Scroll to bottom smoothly
+   */
+  const scrollToBottom = useCallback((smooth = true) => {
+    const container = messagesContainerRef.current;
+    if (container) {
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: smooth ? 'smooth' : 'instant'
+      });
+    }
+  }, []);
+
+  /**
+   * Handle jump to latest button click
+   */
+  const handleJumpToLatest = useCallback(() => {
+    scrollToBottom(true);
+    setShowJumpToLatest(false);
+    setIsAtBottom(true);
+  }, [scrollToBottom]);
+
+  /**
+   * Auto-scroll logic for new messages
    */
   useEffect(() => {
-    if (messages.length > 0) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const messageCountChanged = messages.length !== previousMessageCountRef.current;
+    const isNewMessage = messages.length > previousMessageCountRef.current;
+    
+    if (messageCountChanged) {
+      previousMessageCountRef.current = messages.length;
+      
+      if (isNewMessage && (isAtBottom || shouldAutoScroll)) {
+        // Auto-scroll to new messages if user is at bottom or it's their own message
+        setTimeout(() => scrollToBottom(true), 100);
+      }
     }
-  }, [messages.length]);
+  }, [messages.length, isAtBottom, shouldAutoScroll, scrollToBottom]);
+
+  /**
+   * Initial scroll to bottom when messages first load
+   */
+  useEffect(() => {
+    if (messages.length > 0 && previousMessageCountRef.current === 0) {
+      // Scroll to bottom on initial load (without animation for better UX)
+      setTimeout(() => scrollToBottom(false), 100);
+    }
+  }, [messages.length, scrollToBottom]);
 
   /**
    * Simple response validation
@@ -92,14 +160,22 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
         throw new Error('No message to reply to');
       }
       
+      // Enable auto-scroll for user's own message
+      setShouldAutoScroll(true);
+      
       await respondToMessage(latestMessage.id, content);
       setShowResponseInput(false);
+      
+      // Ensure we scroll to the user's new message
+      setTimeout(() => scrollToBottom(true), 200);
     } catch (err) {
       const error = err instanceof Error ? err.message : 'Failed to send response';
       setResponseError(error);
       logger.smsError('Response send failed', err);
+    } finally {
+      setShouldAutoScroll(false);
     }
-  }, [respondToMessage, messages, validateResponse]);
+  }, [respondToMessage, messages, validateResponse, scrollToBottom]);
 
   const handleResponseCancel = useCallback(() => {
     setShowResponseInput(false);
@@ -109,9 +185,17 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
   // Loading state
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <LoadingSpinner size="md" />
-        <span className="ml-3 text-sm text-gray-600">Loading messages...</span>
+      <div className="flex flex-col bg-stone-50 h-[60vh] min-h-[400px] max-h-[600px] md:h-[50vh] md:min-h-[500px] md:max-h-[700px]">
+        <div className="flex-shrink-0 bg-white border-b border-stone-200 px-5 py-4">
+          <div className="flex items-center gap-3">
+            <MessageCircle className="h-5 w-5 text-stone-400" />
+            <h2 className="text-lg font-medium text-stone-800">Event Messages</h2>
+          </div>
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <LoadingSpinner size="md" />
+          <span className="ml-3 text-sm text-gray-600">Loading messages...</span>
+        </div>
       </div>
     );
   }
@@ -119,14 +203,22 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
    // Error state
    if (error) {
      return (
-       <div className="p-6">
-         <EmptyState
-           variant="messages"
-           title="Unable to load messages"
-                       description={error || 'Failed to load messages'}
-           actionText="Try Again"
-           onAction={refetch}
-         />
+       <div className="flex flex-col bg-stone-50 h-[60vh] min-h-[400px] max-h-[600px] md:h-[50vh] md:min-h-[500px] md:max-h-[700px]">
+         <div className="flex-shrink-0 bg-white border-b border-stone-200 px-5 py-4">
+           <div className="flex items-center gap-3">
+             <MessageCircle className="h-5 w-5 text-stone-400" />
+             <h2 className="text-lg font-medium text-stone-800">Event Messages</h2>
+           </div>
+         </div>
+         <div className="flex-1 flex items-center justify-center p-6">
+           <EmptyState
+             variant="messages"
+             title="Unable to load messages"
+             description={error || 'Failed to load messages'}
+             actionText="Try Again"
+             onAction={refetch}
+           />
+         </div>
        </div>
      );
    }
@@ -134,21 +226,37 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
    // Empty state
    if (messages.length === 0) {
      return (
-       <div className="p-6 space-y-4">
-         <EmptyState
-           variant="messages"
-           title="No messages yet"
-           description="Your host hasn&apos;t sent any messages for this event yet. Check back later!"
-         />
-         <ResponseIndicator canRespond={canRespond} />
+       <div className="flex flex-col bg-stone-50 h-[60vh] min-h-[400px] max-h-[600px] md:h-[50vh] md:min-h-[500px] md:max-h-[700px]">
+         <div className="flex-shrink-0 bg-white border-b border-stone-200 px-5 py-4">
+           <div className="flex items-center gap-3">
+             <MessageCircle className="h-5 w-5 text-stone-400" />
+             <h2 className="text-lg font-medium text-stone-800">Event Messages</h2>
+             {isConnected && (
+               <div className="flex items-center gap-1">
+                 <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
+                 <span className="text-xs text-green-600">Live</span>
+               </div>
+             )}
+           </div>
+         </div>
+         <div className="flex-1 flex items-center justify-center p-6">
+           <EmptyState
+             variant="messages"
+             title="No messages yet"
+             description="Your host hasn&apos;t sent any messages for this event yet. Check back later!"
+           />
+         </div>
+         <div className="flex-shrink-0 bg-white border-t border-stone-200 p-5">
+           <ResponseIndicator canRespond={canRespond} />
+         </div>
        </div>
      );
    }
 
   return (
-    <div className="flex flex-col h-full bg-stone-50">
+    <div className="flex flex-col bg-stone-50 h-[60vh] min-h-[400px] max-h-[600px] md:h-[50vh] md:min-h-[500px] md:max-h-[700px]">
       {/* Header */}
-      <div className="bg-white border-b border-stone-200 px-5 py-4">
+      <div className="flex-shrink-0 bg-white border-b border-stone-200 px-5 py-4">
         <div className="flex items-center gap-3">
           <MessageCircle className="h-5 w-5 text-stone-400" />
           <h2 className="text-lg font-medium text-stone-800">Event Messages</h2>
@@ -161,34 +269,57 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
         </div>
       </div>
 
-      {/* Message Thread */}
-      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-        {messages.map((message) => {
-          const isOwnMessage = message.sender_user_id === currentUserId;
+      {/* Message Thread - Scrollable Area */}
+      <div className="flex-1 relative">
+        <div 
+          ref={messagesContainerRef}
+          onScroll={handleScroll}
+          className="absolute inset-0 overflow-y-auto px-5 py-4 space-y-4 scroll-smooth"
+          role="log"
+          aria-label="Event messages"
+          aria-live="polite"
+        >
+          {messages.map((message) => {
+            const isOwnMessage = message.sender_user_id === currentUserId;
+            
+            // Transform message to match MessageBubble interface
+            const messageWithSender = {
+              ...message,
+              sender: null, // For guest view, we don't show sender details
+            };
+            
+            return (
+              <MessageBubble
+                key={message.id}
+                message={messageWithSender}
+                isOwnMessage={isOwnMessage}
+                showSender={!isOwnMessage}
+                className="animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
+              />
+            );
+          })}
           
-          // Transform message to match MessageBubble interface
-          const messageWithSender = {
-            ...message,
-            sender: null, // For guest view, we don't show sender details
-          };
-          
-          return (
-            <MessageBubble
-              key={message.id}
-              message={messageWithSender}
-              isOwnMessage={isOwnMessage}
-              showSender={!isOwnMessage}
-              className="animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
-            />
-          );
-        })}
-        
-        {/* Auto-scroll anchor */}
-        <div ref={messagesEndRef} />
+          {/* Auto-scroll anchor */}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Jump to Latest Button */}
+        {showJumpToLatest && (
+          <div className="absolute bottom-4 right-4 z-10">
+            <button
+              onClick={handleJumpToLatest}
+              className="flex items-center gap-2 px-3 py-2 bg-rose-500 hover:bg-rose-600 text-white text-sm font-medium rounded-full shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2"
+              aria-label="Jump to latest message"
+            >
+              <span>Jump to latest</span>
+              <ChevronDown className="h-4 w-4" />
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Response UI */}
-      <div className="bg-white border-t border-stone-200 p-5 space-y-3">
+      {/* Response UI - Pinned to Bottom */}
+      <div className="flex-shrink-0 bg-white border-t border-stone-200 p-5 space-y-3">
         {/* Response status indicator */}
         <ResponseIndicator canRespond={canRespond} variant="compact" />
         
