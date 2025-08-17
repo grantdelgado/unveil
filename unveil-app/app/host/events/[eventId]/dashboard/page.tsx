@@ -5,9 +5,9 @@ import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/app/reference/supabase.types';
 import {
-  StaticEventHeader,
+  CompactEventHeader,
   EventSummaryCard,
-  DashboardActions,
+  ModernActionList,
 } from '@/components/features/host-dashboard';
 import {
   PageWrapper,
@@ -115,33 +115,47 @@ export default function EventDashboardPage() {
   if (loading) {
     return (
       <PageWrapper centered={false}>
-        {/* Back Navigation skeleton - Consistent with main layout */}
-        <div className="bg-white border-b border-gray-100">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div className="animate-pulse h-10 bg-gray-200 rounded-lg w-32"></div>
+        {/* Compact header skeleton */}
+        <div className="bg-white border-b border-gray-200 shadow-sm">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between py-4">
+              <div className="flex items-center gap-4 min-w-0 flex-1">
+                <div className="animate-pulse h-6 bg-gray-200 rounded w-24"></div>
+                <div className="min-w-0 flex-1">
+                  <div className="animate-pulse h-6 bg-gray-200 rounded w-48 mb-1"></div>
+                  <div className="animate-pulse h-4 bg-gray-200 rounded w-24"></div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 ml-4">
+                <div className="animate-pulse h-8 bg-gray-200 rounded w-16"></div>
+                <div className="animate-pulse h-8 bg-gray-200 rounded w-16"></div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="space-y-6">
-          {/* Header image skeleton */}
-          <div className="w-full h-48 md:h-64 bg-gray-200 animate-pulse"></div>
+        <div className="max-w-4xl mx-auto space-y-6 px-4 sm:px-6 lg:px-8 py-6">
+          {/* Event summary skeleton */}
+          <div className="animate-pulse space-y-4 bg-white rounded-lg border p-6">
+            <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+            <div className="h-16 bg-gray-200 rounded"></div>
+          </div>
           
-          <div className="max-w-4xl mx-auto space-y-6 px-4 sm:px-6 lg:px-8">
-            {/* Event summary skeleton */}
-            <div className="animate-pulse space-y-4 bg-white rounded-lg border p-6">
-              <div className="h-8 bg-gray-200 rounded w-3/4"></div>
-              <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-              <div className="h-20 bg-gray-200 rounded"></div>
-            </div>
-            
-            {/* Actions skeleton */}
-            <div className="animate-pulse space-y-4 bg-white rounded-lg border p-6">
-              <div className="h-6 bg-gray-200 rounded w-1/4"></div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-24 bg-gray-200 rounded"></div>
-                ))}
-              </div>
+          {/* Actions skeleton */}
+          <div className="animate-pulse space-y-4 bg-white rounded-lg border p-6">
+            <div className="h-5 bg-gray-200 rounded w-1/4"></div>
+            <div className="space-y-0">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="flex items-center gap-4 px-0 py-4">
+                  <div className="h-5 w-5 bg-gray-200 rounded"></div>
+                  <div className="flex-1">
+                    <div className="h-4 bg-gray-200 rounded w-32 mb-1"></div>
+                    <div className="h-3 bg-gray-200 rounded w-48"></div>
+                  </div>
+                  <div className="h-4 w-4 bg-gray-200 rounded"></div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -153,20 +167,32 @@ export default function EventDashboardPage() {
   if (error || !event) {
     return (
       <PageWrapper centered={false}>
-        {/* Back Navigation - Consistent with main layout */}
-        <div className="bg-white border-b border-gray-100">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <BackButton 
-              href="/select-event"
-              fallback="/select-event"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-lg border border-gray-200 transition-colors duration-200 font-medium"
-            >
-              Back to Events
-            </BackButton>
+        {/* Compact header with back navigation */}
+        <div className="bg-white border-b border-gray-200 shadow-sm">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between py-4">
+              <div className="flex items-center gap-4 min-w-0 flex-1">
+                <BackButton 
+                  href="/select-event"
+                  fallback="/select-event"
+                  className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                >
+                  Back to Events
+                </BackButton>
+                <div className="min-w-0 flex-1">
+                  <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+                    Event Dashboard
+                  </h1>
+                  <p className="text-sm text-gray-500 mt-0.5">
+                    Unable to load
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
             <div className="text-center py-12 px-6">
               <div className="text-4xl mb-4">⚠️</div>
@@ -184,28 +210,15 @@ export default function EventDashboardPage() {
   // Main dashboard layout - clean overview page
   return (
     <PageWrapper centered={false}>
-      {/* Back Navigation - Above header image */}
-      <div className="bg-white border-b border-gray-100">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <BackButton 
-            href="/select-event"
-            fallback="/select-event"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-lg border border-gray-200 transition-colors duration-200 font-medium"
-          >
-            Back to Events
-          </BackButton>
-        </div>
-      </div>
-
-      {/* Static Event Header Image */}
-      <StaticEventHeader event={event} />
+      {/* Compact Event Header */}
+      <CompactEventHeader event={event} />
       
-      <div className="max-w-4xl mx-auto space-y-8 px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-4xl mx-auto space-y-6 px-4 sm:px-6 lg:px-8 py-6">
         {/* Event Summary Card */}
         <EventSummaryCard event={event} />
 
-        {/* Dashboard Actions */}
-        <DashboardActions 
+        {/* Modern Action List */}
+        <ModernActionList 
           eventId={eventId}
           guestCount={guestCount}
           pendingRSVPs={pendingRSVPs}

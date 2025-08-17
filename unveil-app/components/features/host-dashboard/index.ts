@@ -6,8 +6,10 @@ export { ContextualActionBanner } from './ContextualActionBanner';
 
 // Phase 2 Redesign Components
 export { StaticEventHeader } from './StaticEventHeader';
+export { CompactEventHeader } from './CompactEventHeader';
 export { EventSummaryCard } from './EventSummaryCard';
 export { DashboardActions } from './DashboardActions';
+export { ModernActionList } from './ModernActionList';
 export { EventDetailsEditor } from './EventDetailsEditor';
 
 // Phase 3 Components - Enhanced Guest Management

@@ -72,30 +72,30 @@ export function EventSummaryCard({ event, className }: EventSummaryCardProps) {
 
   return (
     <CardContainer className={cn("bg-white border border-gray-200 shadow-sm", className)}>
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Event Title and Basic Info */}
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
+          <h2 className="text-xl font-bold text-gray-900 mb-2">
             {event.title}
-          </h1>
+          </h2>
           
-          <div className="flex flex-wrap items-center gap-4 text-gray-700">
-            <div className="flex items-center gap-2">
-              <span className="text-lg">📅</span>
+          <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
+            <div className="flex items-center gap-1.5">
+              <span className="text-base">📅</span>
               <span className="font-medium">
                 {formatEventDate(event.event_date)}
               </span>
             </div>
             
             {event.location && (
-              <div className="flex items-center gap-2">
-                <span className="text-lg">📍</span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-base">📍</span>
                 <span className="font-medium">{event.location}</span>
               </div>
             )}
             
-            <div className="flex items-center gap-2">
-              <span className="text-lg">👥</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-base">👥</span>
               <span className="font-medium">
                 {guestStats.total} {guestStats.total === 1 ? 'guest' : 'guests'}
               </span>
@@ -103,19 +103,10 @@ export function EventSummaryCard({ event, className }: EventSummaryCardProps) {
           </div>
         </div>
 
-        {/* Event Description */}
-        {event.description && (
-          <div>
-            <p className="text-gray-600 leading-relaxed">
-              {event.description}
-            </p>
-          </div>
-        )}
-
         {/* RSVP Summary */}
-        <div className="border-t border-gray-200 pt-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">RSVP Status</h3>
+        <div className="border-t border-gray-200 pt-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-base font-semibold text-gray-900">RSVP Status</h3>
             {!loading && guestStats.total > 0 && (
               <span className="text-sm font-medium text-gray-600">
                 {attendancePercentage}% confirmed
@@ -125,23 +116,23 @@ export function EventSummaryCard({ event, className }: EventSummaryCardProps) {
 
           {loading ? (
             <div className="animate-pulse">
-              <div className="h-3 bg-gray-200 rounded-full mb-3"></div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="h-2 bg-gray-200 rounded-full mb-3"></div>
+              <div className="grid grid-cols-3 gap-2">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-16 bg-gray-200 rounded-lg"></div>
+                  <div key={i} className="h-12 bg-gray-200 rounded-lg"></div>
                 ))}
               </div>
             </div>
           ) : guestStats.total === 0 ? (
-            <div className="text-center py-6 text-gray-500">
-              <div className="text-2xl mb-2">👥</div>
-              <p className="font-medium">No guests yet</p>
-              <p className="text-sm">Start by importing your guest list</p>
+            <div className="text-center py-4 text-gray-500">
+              <div className="text-xl mb-1">👥</div>
+              <p className="font-medium text-sm">No guests yet</p>
+              <p className="text-xs">Start by importing your guest list</p>
             </div>
           ) : (
             <>
-              {/* Progress Bar */}
-              <div className="w-full bg-gray-200 rounded-full h-3 mb-4 overflow-hidden">
+              {/* Progress Bar - thinner */}
+              <div className="w-full bg-gray-200 rounded-full h-2 mb-3 overflow-hidden">
                 <div className="h-full flex">
                   {guestStats.attending > 0 && (
                     <div 
@@ -164,10 +155,10 @@ export function EventSummaryCard({ event, className }: EventSummaryCardProps) {
                 </div>
               </div>
 
-              {/* Status Breakdown */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div className="text-center p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <div className="text-lg font-bold text-green-700 mb-1">
+              {/* Status Breakdown - more compact */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <div className="text-center p-2 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="text-base font-bold text-green-700 mb-0.5">
                     {guestStats.attending}
                   </div>
                   <div className="text-xs font-medium text-green-600">
@@ -175,8 +166,8 @@ export function EventSummaryCard({ event, className }: EventSummaryCardProps) {
                   </div>
                 </div>
                 
-                <div className="text-center p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                  <div className="text-lg font-bold text-gray-700 mb-1">
+                <div className="text-center p-2 bg-gray-50 border border-gray-200 rounded-lg">
+                  <div className="text-base font-bold text-gray-700 mb-0.5">
                     {guestStats.pending}
                   </div>
                   <div className="text-xs font-medium text-gray-600">
@@ -185,8 +176,8 @@ export function EventSummaryCard({ event, className }: EventSummaryCardProps) {
                 </div>
                 
                 {guestStats.maybe > 0 && (
-                  <div className="text-center p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <div className="text-lg font-bold text-yellow-700 mb-1">
+                  <div className="text-center p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div className="text-base font-bold text-yellow-700 mb-0.5">
                       {guestStats.maybe}
                     </div>
                     <div className="text-xs font-medium text-yellow-600">
@@ -196,8 +187,8 @@ export function EventSummaryCard({ event, className }: EventSummaryCardProps) {
                 )}
                 
                 {guestStats.declined > 0 && (
-                  <div className="text-center p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <div className="text-lg font-bold text-red-700 mb-1">
+                  <div className="text-center p-2 bg-red-50 border border-red-200 rounded-lg">
+                    <div className="text-base font-bold text-red-700 mb-0.5">
                       {guestStats.declined}
                     </div>
                     <div className="text-xs font-medium text-red-600">
