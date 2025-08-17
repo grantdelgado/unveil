@@ -6,6 +6,7 @@ export { useGuestEvents } from './useGuestEvents';
 export { useEventWithGuest } from './useEventWithGuest';
 export { useUserEvents } from './useUserEvents';
 export { useEventAnalytics } from './useEventAnalytics';
+export { useEventDetails } from './useEventDetails';
 
 // Event creation and management
 // Moved to EventCreationService in lib/services/eventCreation.ts

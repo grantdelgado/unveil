@@ -1,10 +1,10 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef, ReactNode } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Session, User } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
-import { useAutoLinkGuests } from '@/hooks/useLinkGuestsToUser';
+import { useAutoJoinGuests } from '@/hooks/auth/useAutoJoinGuests';
 import { clearCorruptedAuthState, isRefreshTokenError } from './clearAuthState';
 
 interface AuthContextType {
@@ -160,11 +160,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
  * Replaces the individual useAuth hook for better performance
  */
 /**
- * Internal component to manage automatic guest linking
- * Runs guest linking when user sessions are established
+ * Internal component to manage automatic guest joining
+ * Runs auto-join when user sessions are established
  */
 function GuestLinkingManager() {
-  useAutoLinkGuests();
+  const { processAutoJoin } = useAutoJoinGuests();
+  const context = useContext(AuthContext);
+  const hasProcessedRef = useRef(false);
+
+  useEffect(() => {
+    if (context?.isAuthenticated && context?.user && !hasProcessedRef.current) {
+      hasProcessedRef.current = true;
+      processAutoJoin(context.user.id, context.userPhone || undefined);
+    }
+  }, [context?.isAuthenticated, context?.user, context?.userPhone, processAutoJoin]);
+
   return null; // This component has no UI
 }
 

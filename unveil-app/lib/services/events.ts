@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase/client';
+import type { EventDetailsFormData } from '@/lib/validation/events';
 
 // Get event by ID with host information
 export async function getEventById(eventId: string) {
@@ -79,5 +80,68 @@ export async function getEventGuests(eventId: string) {
   } catch (error) {
     console.error('Error fetching event guests:', error);
     return { success: false, error, data: [] };
+  }
+}
+
+// Update event details (MVP fields only)
+export async function updateEventDetails(
+  eventId: string, 
+  formData: EventDetailsFormData
+) {
+  try {
+    // Import transform function to avoid circular dependency
+    const { transformEventDetailsForDB } = await import('@/lib/validation/events');
+    const updateData = transformEventDetailsForDB(formData);
+
+    const { data, error } = await supabase
+      .from('events')
+      .update(updateData)
+      .eq('id', eventId)
+      .select()
+      .single();
+
+    if (error) {
+      // Handle specific error cases
+      if (error.code === 'PGRST116') {
+        throw new Error('Event not found');
+      }
+      if (error.code === '42501' || error.message?.includes('permission denied')) {
+        throw new Error('You don\'t have permission to edit this event');
+      }
+      throw error;
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error('Error updating event details:', error);
+    
+    // Return user-friendly error messages
+    const message = error instanceof Error 
+      ? error.message 
+      : 'Failed to update event details';
+      
+    return { success: false, error: message };
+  }
+}
+
+// Verify host permissions for event editing
+export async function verifyHostPermissions(eventId: string) {
+  try {
+    const { data: isHost, error } = await supabase
+      .rpc('is_event_host', { p_event_id: eventId });
+
+    if (error) {
+      console.error('Host permission check failed:', error);
+      return { success: false, error: 'Failed to verify permissions' };
+    }
+
+    if (!isHost) {
+      return { success: false, error: 'You don\'t have permission to edit this event' };
+    }
+
+    return { success: true, data: true };
+  } catch (error) {
+    console.error('Error verifying host permissions:', error);
+    return { success: false, error: 'Permission verification failed' };
   }
 } 

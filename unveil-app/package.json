@@ -43,6 +43,7 @@
     "test:user-id-trigger": "npx tsx scripts/test-user-id-trigger.ts"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.2.1",
     "@sentry/nextjs": "^9.42.1",
     "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/supabase-js": "^2.49.4",
@@ -55,13 +56,14 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-dropzone": "^14.3.8",
+    "react-hook-form": "^7.62.0",
     "react-window": "^1.8.11",
     "react-window-infinite-loader": "^1.0.10",
     "recharts": "^3.0.2",
     "tailwind-merge": "^3.3.0",
     "web-vitals": "^5.0.3",
     "xlsx": "^0.18.5",
-    "zod": "^3.25.46",
+    "zod": "^3.25.67",
     "zustand": "^5.0.7"
   },
   "devDependencies": {

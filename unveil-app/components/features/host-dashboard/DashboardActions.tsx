@@ -32,6 +32,13 @@ export function DashboardActions({
       badge: guestCount === 0 ? 'Start Here' : undefined,
     },
     {
+      title: 'Edit Event Details',
+      description: 'Update event info, date, location, and settings',
+      icon: '✏️',
+      href: `/host/events/${eventId}/details`,
+      variant: 'secondary' as const,
+    },
+    {
       title: 'Send Messages', 
       description: pendingRSVPs > 0 
         ? `Send reminders to ${pendingRSVPs} pending guests`
@@ -45,7 +52,7 @@ export function DashboardActions({
       title: 'Preview Guest View',
       description: 'See how your event looks to guests',
       icon: '👁️',
-      href: `/host/events/${eventId}`,
+      href: `/guest/events/${eventId}/home`,
       variant: 'secondary' as const,
       external: true,
     },
@@ -61,7 +68,7 @@ export function DashboardActions({
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {actions.map((action) => {
             const Button = action.variant === 'primary' ? PrimaryButton : SecondaryButton;
             

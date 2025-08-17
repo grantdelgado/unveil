@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { formatEventDate } from '@/lib/utils';
+import { formatEventDateTime } from '@/lib/utils/date';
 import { MicroCopy } from '@/components/ui';
 import type { EventFormData } from './CreateEventWizard';
 
@@ -49,7 +49,7 @@ export function EventReviewStep({
               {formData.title}
             </h3>
             <p className="text-lg text-gray-700">
-              {formatEventDate(formData.event_date + 'T' + formData.event_time)}
+              {formatEventDateTime(formData.event_date + 'T' + formData.event_time)}
             </p>
           </div>
 

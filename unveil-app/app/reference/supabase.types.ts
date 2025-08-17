@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -25,7 +25,7 @@ export type Database = {
           id: string
           invited_at: string | null
           notes: string | null
-          phone: string
+          phone: string | null
           phone_number_verified: boolean | null
           preferred_communication: string | null
           role: string
@@ -44,7 +44,7 @@ export type Database = {
           id?: string
           invited_at?: string | null
           notes?: string | null
-          phone: string
+          phone?: string | null
           phone_number_verified?: boolean | null
           preferred_communication?: string | null
           role?: string
@@ -63,7 +63,7 @@ export type Database = {
           id?: string
           invited_at?: string | null
           notes?: string | null
-          phone?: string
+          phone?: string | null
           phone_number_verified?: boolean | null
           preferred_communication?: string | null
           role?: string
@@ -100,8 +100,10 @@ export type Database = {
           id: string
           is_public: boolean | null
           location: string | null
+          time_zone: string | null
           title: string
           updated_at: string | null
+          website_url: string | null
         }
         Insert: {
           allow_open_signup?: boolean
@@ -113,8 +115,10 @@ export type Database = {
           id?: string
           is_public?: boolean | null
           location?: string | null
+          time_zone?: string | null
           title: string
           updated_at?: string | null
+          website_url?: string | null
         }
         Update: {
           allow_open_signup?: boolean
@@ -126,8 +130,10 @@ export type Database = {
           id?: string
           is_public?: boolean | null
           location?: string | null
+          time_zone?: string | null
           title?: string
           updated_at?: string | null
+          website_url?: string | null
         }
         Relationships: [
           {
@@ -284,7 +290,10 @@ export type Database = {
         Row: {
           content: string
           created_at: string | null
+          delivered_at: string | null
+          delivered_count: number | null
           event_id: string
+          failed_count: number | null
           id: string
           message_type: Database["public"]["Enums"]["message_type_enum"] | null
           sender_user_id: string | null
@@ -292,7 +301,10 @@ export type Database = {
         Insert: {
           content: string
           created_at?: string | null
+          delivered_at?: string | null
+          delivered_count?: number | null
           event_id: string
+          failed_count?: number | null
           id?: string
           message_type?: Database["public"]["Enums"]["message_type_enum"] | null
           sender_user_id?: string | null
@@ -300,7 +312,10 @@ export type Database = {
         Update: {
           content?: string
           created_at?: string | null
+          delivered_at?: string | null
+          delivered_count?: number | null
           event_id?: string
+          failed_count?: number | null
           id?: string
           message_type?: Database["public"]["Enums"]["message_type_enum"] | null
           sender_user_id?: string | null
@@ -450,6 +465,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      backfill_user_id_from_phone: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          details: string
+          total_eligible_count: number
+          updated_count: number
+        }[]
+      }
       can_access_event: {
         Args: { p_event_id: string }
         Returns: boolean
@@ -461,41 +484,41 @@ export type Database = {
       create_event_with_host_atomic: {
         Args: { event_data: Json }
         Returns: {
-          success: boolean
-          event_id: string
           created_at: string
           error_message: string
+          event_id: string
+          success: boolean
         }[]
       }
       get_event_guests_with_display_names: {
         Args: { p_event_id: string; p_limit?: number; p_offset?: number }
         Returns: {
-          id: string
-          event_id: string
-          user_id: string
-          guest_name: string
-          guest_email: string
-          phone: string
-          rsvp_status: string
-          notes: string
-          guest_tags: string[]
-          role: string
-          invited_at: string
-          phone_number_verified: boolean
-          sms_opt_out: boolean
-          preferred_communication: string
           created_at: string
-          updated_at: string
           display_name: string
+          event_id: string
           guest_display_name: string
-          user_full_name: string
-          user_email: string
-          user_phone: string
+          guest_email: string
+          guest_name: string
+          guest_tags: string[]
+          id: string
+          invited_at: string
+          notes: string
+          phone: string
+          phone_number_verified: boolean
+          preferred_communication: string
+          role: string
+          rsvp_status: string
+          sms_opt_out: boolean
+          updated_at: string
           user_avatar_url: string
           user_created_at: string
-          user_updated_at: string
+          user_email: string
+          user_full_name: string
+          user_id: string
           user_intended_redirect: string
           user_onboarding_completed: boolean
+          user_phone: string
+          user_updated_at: string
         }[]
       }
       get_guest_display_name: {
@@ -505,13 +528,13 @@ export type Database = {
       get_user_events: {
         Args: { user_id_param?: string }
         Returns: {
-          id: string
-          title: string
           event_date: string
+          id: string
+          is_host: boolean
           location: string
           role: string
           rsvp_status: string
-          is_host: boolean
+          title: string
         }[]
       }
       guest_exists_for_phone: {
@@ -547,15 +570,19 @@ export type Database = {
         Args: { auth_user_id: string }
         Returns: boolean
       }
+      is_valid_phone_for_messaging: {
+        Args: { phone_number: string }
+        Returns: boolean
+      }
       lookup_user_by_phone: {
         Args: { user_phone: string }
         Returns: {
-          id: string
-          phone: string
-          full_name: string
-          email: string
           created_at: string
+          email: string
+          full_name: string
+          id: string
           onboarding_completed: boolean
+          phone: string
         }[]
       }
       normalize_phone_number: {
@@ -565,23 +592,15 @@ export type Database = {
       resolve_message_recipients: {
         Args: {
           msg_event_id: string
-          target_guest_ids?: string[]
-          target_tags?: string[]
           require_all_tags?: boolean
+          target_guest_ids?: string[]
           target_rsvp_statuses?: string[]
+          target_tags?: string[]
         }
         Returns: {
           guest_id: string
-          guest_phone: string
           guest_name: string
-        }[]
-      }
-      backfill_user_id_from_phone: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          updated_count: number
-          total_eligible_count: number
-          details: string
+          guest_phone: string
         }[]
       }
     }

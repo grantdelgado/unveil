@@ -36,7 +36,7 @@ export function useGuestEvents(
       setLoading(true);
       setError(null);
 
-      // Fetch guest events
+      // Fetch guest events - only show events with visibility enabled (is_public=true)
       const { data: guestData, error: guestError } = await supabase
         .from('event_guests')
         .select(
@@ -45,7 +45,8 @@ export function useGuestEvents(
           events:events(*)
         `,
         )
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .eq('events.is_public', true); // Only show visible events
 
       if (guestError) {
         throw guestError;

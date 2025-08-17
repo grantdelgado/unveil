@@ -1,24 +1,25 @@
 'use client';
 
+import { formatEventDate } from '@/lib/utils/date';
+import { getTimezoneLabel, getTimezoneInfo, formatTimeWithTimezone } from '@/lib/utils/timezone';
+
 interface EventScheduleProps {
   eventDate: string;
   location?: string | null;
+  timeZone?: string | null;
 }
 
 export default function EventSchedule({
   eventDate,
   location,
+  timeZone,
 }: EventScheduleProps) {
-  const formatEventDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  };
+  // Get timezone info for display
+  const timeZoneInfo = timeZone ? getTimezoneInfo(timeZone) : null;
+  const timeZoneLabel = getTimezoneLabel(timeZone);
 
   // Sample schedule - in a real app, this would come from the database
+  // For now, these are hardcoded times that will be displayed in event timezone
   const scheduleItems = [
     { time: '2:00 PM', event: 'Guest Arrival & Cocktails', icon: '🥂' },
     { time: '3:00 PM', event: 'Wedding Ceremony', icon: '💒' },
@@ -41,6 +42,13 @@ export default function EventSchedule({
           {formatEventDate(eventDate)}
         </h3>
         {location && <p className="text-gray-600 text-sm">{location}</p>}
+        
+        {/* Timezone label */}
+        <div className="mt-2 px-3 py-1 bg-blue-50 border border-blue-200 rounded-lg inline-block">
+          <p className="text-blue-800 text-xs font-medium">
+            {timeZoneLabel}
+          </p>
+        </div>
       </div>
 
       <div className="space-y-3">
@@ -54,7 +62,7 @@ export default function EventSchedule({
               <div className="flex items-center justify-between">
                 <span className="font-medium text-gray-900">{item.event}</span>
                 <span className="text-sm text-gray-600 font-mono">
-                  {item.time}
+                  {formatTimeWithTimezone(item.time, timeZoneInfo)}
                 </span>
               </div>
             </div>

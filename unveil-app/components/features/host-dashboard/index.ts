@@ -8,6 +8,7 @@ export { ContextualActionBanner } from './ContextualActionBanner';
 export { StaticEventHeader } from './StaticEventHeader';
 export { EventSummaryCard } from './EventSummaryCard';
 export { DashboardActions } from './DashboardActions';
+export { EventDetailsEditor } from './EventDetailsEditor';
 
 // Phase 3 Components - Enhanced Guest Management
 export { GuestStatusSummary } from './GuestStatusSummary';

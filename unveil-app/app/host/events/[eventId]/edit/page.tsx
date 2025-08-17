@@ -6,7 +6,8 @@ import { useDropzone } from 'react-dropzone';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabase/client';
 // Note: Media functionality now handled via domain hooks
-import { cn, formatEventDate } from '@/lib/utils';
+import { cn } from '@/lib/utils';
+import { formatEventDateTime } from '@/lib/utils/date';
 import type { Database } from '@/app/reference/supabase.types';
 import {
   PageWrapper,
@@ -677,7 +678,7 @@ export default function EditEventPage() {
                     </p>
                     <p>
                       <strong>Date:</strong>{' '}
-                      {formatEventDate(
+                      {formatEventDateTime(
                         formData.event_date + 'T' + formData.event_time,
                       )}
                     </p>
