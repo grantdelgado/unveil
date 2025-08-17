@@ -32,7 +32,7 @@ const inter = localFont({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NODE_ENV === 'production' ? 'https://unveil.app' : 'http://localhost:3000'),
+  metadataBase: new URL(process.env.NODE_ENV === 'production' ? (process.env.NEXT_PUBLIC_APP_URL || 'https://app.sendunveil.com') : 'http://localhost:3000'),
   title: APP_CONFIG.name,
   description: APP_CONFIG.description,
   applicationName: 'Unveil Wedding App',
@@ -68,7 +68,7 @@ export const metadata: Metadata = {
     siteName: 'Unveil Wedding App',
     title: 'Unveil - Your Wedding Memories',
     description: 'Beautifully preserve and share your wedding memories',
-    url: 'https://unveil.app',
+    url: process.env.NEXT_PUBLIC_APP_URL || 'https://app.sendunveil.com',
     images: [
       {
         url: '/icons/og-image.png',

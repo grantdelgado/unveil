@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase/client';
 import { logger } from '@/lib/logger';
+import { normalizePhoneNumber } from '@/lib/utils/phone';
 import type { Database } from '@/app/reference/supabase.types';
 
 type Event = Database['public']['Tables']['events']['Row'];
@@ -15,27 +16,10 @@ interface AutoJoinResult {
   error?: string;
 }
 
-/**
- * Normalize phone number to E.164 format for consistent matching
- */
-export function normalizePhoneNumber(phone: string): string {
-  // Remove all non-digit characters
-  const digitsOnly = phone.replace(/\D/g, '');
-  
-  // Add + prefix if not present and assume US number if 10 digits
-  if (digitsOnly.length === 10) {
-    return `+1${digitsOnly}`;
-  } else if (digitsOnly.length === 11 && digitsOnly.startsWith('1')) {
-    return `+${digitsOnly}`;
-  } else if (!phone.startsWith('+')) {
-    return `+${digitsOnly}`;
-  }
-  
-  return phone;
-}
+// Phone normalization moved to lib/utils/phone.ts
 
 /**
- * Auto-join invited guests to events they're eligible for
+ * Auto-join invited guests to events they're eligible for using secure DB-side RPC
  * This should be called after user sign-in to activate their event memberships
  */
 export async function autoJoinInvitedGuests(
@@ -47,92 +31,71 @@ export async function autoJoinInvitedGuests(
       return { success: false, joinedEvents: [], error: 'User ID required' };
     }
 
-    logger.api('Starting auto-join process', { userId, userPhone }, 'guestAutoJoin.autoJoinInvitedGuests');
-
     // Normalize phone for consistent matching
-    const normalizedPhone = userPhone ? normalizePhoneNumber(userPhone) : null;
-
-    // Find all event_guests records that match this user by phone or user_id
-    // but don't have user_id set yet (unlinked invitations)
-    const { data: matchingGuests, error: fetchError } = await supabase
-      .from('event_guests')
-      .select(`
-        id,
-        event_id,
-        phone,
-        user_id,
-        guest_name,
-        events!inner (
-          id,
-          title,
-          is_public,
-          allow_open_signup
-        )
-      `)
-      .or(
-        normalizedPhone 
-          ? `phone.eq.${normalizedPhone},user_id.eq.${userId}`
-          : `user_id.eq.${userId}`
-      );
-
-    if (fetchError) {
-      logger.apiError('Failed to fetch matching guests', fetchError, 'guestAutoJoin.autoJoinInvitedGuests');
-      return { success: false, joinedEvents: [], error: 'Failed to check guest eligibility' };
-    }
-
-    if (!matchingGuests || matchingGuests.length === 0) {
-      logger.api('No matching guest records found', { userId, normalizedPhone }, 'guestAutoJoin.autoJoinInvitedGuests');
-      return { success: true, joinedEvents: [] };
-    }
-
-    const joinedEvents: string[] = [];
-    const updatePromises: Promise<void>[] = [];
-
-    for (const guest of matchingGuests) {
-      // Skip if already linked to this user
-      if (guest.user_id === userId) {
-        logger.api('Guest already linked', { guestId: guest.id, eventId: guest.event_id }, 'guestAutoJoin.autoJoinInvitedGuests');
-        continue;
+    let normalizedPhone: string | undefined;
+    if (userPhone) {
+      const phoneValidation = normalizePhoneNumber(userPhone);
+      if (!phoneValidation.isValid) {
+        logger.apiError('Invalid phone number format', { 
+          userId, 
+          error: phoneValidation.error 
+        }, 'guestAutoJoin.autoJoinInvitedGuests');
+        return { success: false, joinedEvents: [], error: phoneValidation.error || 'Invalid phone number format' };
       }
-
-      // Link the guest record to the authenticated user
-      const updatePromise = supabase
-        .from('event_guests')
-        .update({ 
-          user_id: userId,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', guest.id)
-        .then(({ error: updateError }) => {
-          if (updateError) {
-            logger.apiError('Failed to link guest record', updateError, 'guestAutoJoin.autoJoinInvitedGuests');
-            throw updateError;
-          } else {
-            joinedEvents.push(guest.event_id);
-            logger.api('Successfully linked guest to event', { 
-              guestId: guest.id, 
-              eventId: guest.event_id,
-              eventTitle: guest.events.title 
-            }, 'guestAutoJoin.autoJoinInvitedGuests');
-          }
-        }) as Promise<void>;
-
-      updatePromises.push(updatePromise);
+      normalizedPhone = phoneValidation.normalized!;
     }
 
-    // Execute all updates
-    await Promise.all(updatePromises);
-
-    logger.api('Auto-join process completed', { 
+    logger.api('Starting bulk auto-join process', { 
       userId, 
-      joinedEventsCount: joinedEvents.length,
-      joinedEvents 
+      hasPhone: !!normalizedPhone 
     }, 'guestAutoJoin.autoJoinInvitedGuests');
 
-    return {
-      success: true,
-      joinedEvents,
-    };
+    // Call the secure DB-side RPC function
+    const { data: result, error: rpcError } = await supabase
+      .rpc('bulk_guest_auto_join', {
+        p_phone: normalizedPhone || null
+      });
+
+    if (rpcError) {
+      logger.apiError('Bulk auto-join RPC failed', rpcError, 'guestAutoJoin.autoJoinInvitedGuests');
+      return { success: false, joinedEvents: [], error: 'Database error occurred' };
+    }
+
+    if (!result || typeof result !== 'object') {
+      logger.apiError('Invalid bulk auto-join RPC response', { result }, 'guestAutoJoin.autoJoinInvitedGuests');
+      return { success: false, joinedEvents: [], error: 'Invalid response from database' };
+    }
+
+    // Handle the response
+    if (result.status === 'success') {
+      const linkedEvents = result.linked_events || [];
+      const alreadyLinkedEvents = result.already_linked_events || [];
+      
+      logger.api('Bulk auto-join completed successfully', { 
+        userId, 
+        totalLinked: result.total_linked || 0,
+        totalAlreadyLinked: result.total_already_linked || 0,
+        linkedEvents,
+        alreadyLinkedEvents
+      }, 'guestAutoJoin.autoJoinInvitedGuests');
+
+      return {
+        success: true,
+        joinedEvents: linkedEvents,
+      };
+    } else {
+      logger.apiError('Bulk auto-join failed', { 
+        status: result.status, 
+        message: result.message,
+        errorCode: result.error_code
+      }, 'guestAutoJoin.autoJoinInvitedGuests');
+      
+      return { 
+        success: false, 
+        joinedEvents: [], 
+        error: result.message || 'Bulk auto-join failed' 
+      };
+    }
 
   } catch (error) {
     logger.apiError('Auto-join process failed', error, 'guestAutoJoin.autoJoinInvitedGuests');
@@ -140,6 +103,106 @@ export async function autoJoinInvitedGuests(
       success: false,
       joinedEvents: [],
       error: error instanceof Error ? error.message : 'Auto-join failed'
+    };
+  }
+}
+
+/**
+ * Auto-join a specific event by phone number using secure DB-side RPC
+ * This handles the single event join flow from invitation links
+ */
+export async function autoJoinEventByPhone(
+  eventId: string,
+  userId: string, 
+  phoneNumber: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    if (!eventId || !userId || !phoneNumber) {
+      return { success: false, error: 'Missing required parameters' };
+    }
+
+    // Normalize the phone number
+    const phoneValidation = normalizePhoneNumber(phoneNumber);
+    if (!phoneValidation.isValid) {
+      logger.apiError('Invalid phone number format', { 
+        eventId, 
+        userId, 
+        error: phoneValidation.error 
+      }, 'guestAutoJoin.autoJoinEventByPhone');
+      return { success: false, error: phoneValidation.error || 'Invalid phone number format' };
+    }
+
+    const normalizedPhone = phoneValidation.normalized!;
+
+    logger.api('Starting DB-side auto-join', { 
+      eventId, 
+      userId, 
+      phone: normalizedPhone.slice(0, 6) + '...' 
+    }, 'guestAutoJoin.autoJoinEventByPhone');
+
+    // Call the secure DB-side RPC function
+    const { data: result, error: rpcError } = await supabase
+      .rpc('guest_auto_join', {
+        p_event_id: eventId,
+        p_phone: normalizedPhone
+      });
+
+    if (rpcError) {
+      logger.apiError('RPC call failed', rpcError, 'guestAutoJoin.autoJoinEventByPhone');
+      return { success: false, error: 'Database error occurred' };
+    }
+
+    if (!result || typeof result !== 'object') {
+      logger.apiError('Invalid RPC response', { result }, 'guestAutoJoin.autoJoinEventByPhone');
+      return { success: false, error: 'Invalid response from database' };
+    }
+
+    // Handle the different response statuses
+    switch (result.status) {
+      case 'linked':
+        logger.api('Successfully linked guest to event', { 
+          eventId, 
+          userId, 
+          guestId: result.guest_id 
+        }, 'guestAutoJoin.autoJoinEventByPhone');
+        return { success: true };
+
+      case 'already_linked':
+        logger.api('User already linked to event', { 
+          eventId, 
+          userId 
+        }, 'guestAutoJoin.autoJoinEventByPhone');
+        return { success: false, error: 'already_joined' };
+
+      case 'not_invited':
+        logger.api('No invitation found', { 
+          eventId, 
+          userId, 
+          phone: normalizedPhone.slice(0, 6) + '...' 
+        }, 'guestAutoJoin.autoJoinEventByPhone');
+        return { success: false, error: 'not_invited' };
+
+      case 'conflict':
+        logger.api('Invitation already claimed by different user', { 
+          eventId, 
+          userId 
+        }, 'guestAutoJoin.autoJoinEventByPhone');
+        return { success: false, error: 'already_claimed' };
+
+      case 'error':
+      default:
+        logger.apiError('Auto-join failed', { 
+          status: result.status, 
+          message: result.message 
+        }, 'guestAutoJoin.autoJoinEventByPhone');
+        return { success: false, error: result.message || 'Auto-join failed' };
+    }
+
+  } catch (error) {
+    logger.apiError('Auto-join event process failed', error, 'guestAutoJoin.autoJoinEventByPhone');
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'auto_join_failed'
     };
   }
 }

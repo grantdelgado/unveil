@@ -6,6 +6,7 @@ import { Session, User } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
 import { useAutoJoinGuests } from '@/hooks/auth/useAutoJoinGuests';
 import { clearCorruptedAuthState, isRefreshTokenError } from './clearAuthState';
+import { normalizePhoneNumber } from '@/lib/utils/phone';
 
 interface AuthContextType {
   session: Session | null;
@@ -138,12 +139,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
+  // Extract and normalize phone number from user data
+  const extractedPhone = user?.phone || user?.user_metadata?.phone;
+  const normalizedUserPhone = extractedPhone ? normalizePhoneNumber(extractedPhone) : null;
+
   const value: AuthContextType = {
     session,
     user,
     loading,
     isAuthenticated: !!session,
-    userPhone: user?.phone || user?.user_metadata?.phone,
+    userPhone: normalizedUserPhone?.isValid ? normalizedUserPhone.normalized : extractedPhone,
     signOut,
   };
 
@@ -171,6 +176,16 @@ function GuestLinkingManager() {
   useEffect(() => {
     if (context?.isAuthenticated && context?.user && !hasProcessedRef.current) {
       hasProcessedRef.current = true;
+      
+      // Log auto-join attempt for debugging (can be removed after verification)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('GuestLinkingManager: Starting auto-join', {
+          userId: context.user.id,
+          userPhone: context.userPhone,
+          hasPhone: !!context.userPhone
+        });
+      }
+      
       processAutoJoin(context.user.id, context.userPhone || undefined);
     }
   }, [context?.isAuthenticated, context?.user, context?.userPhone, processAutoJoin]);

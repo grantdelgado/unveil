@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 import { logAuth, logAuthError } from '@/lib/logger';
 import { validatePhoneNumber } from '@/lib/validations';
@@ -24,12 +25,29 @@ import { ModernOTPInput } from '@/components/features/auth/ModernOTPInput';
 type LoginStep = 'phone' | 'otp';
 
 export default function LoginPage() {
+  const searchParams = useSearchParams();
   const [step, setStep] = useState<LoginStep>('phone');
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { handlePostAuthRedirect } = usePostAuthRedirect();
+  
+  // Extract phone from return URL if available (for pre-filling)
+  useEffect(() => {
+    const nextUrl = searchParams.get('next');
+    if (nextUrl) {
+      try {
+        const url = new URL(nextUrl, window.location.origin);
+        const phoneParam = url.searchParams.get('phone');
+        if (phoneParam) {
+          setPhone(decodeURIComponent(phoneParam));
+        }
+      } catch {
+        // Ignore URL parsing errors
+      }
+    }
+  }, [searchParams]);
 
   const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

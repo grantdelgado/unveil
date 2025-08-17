@@ -58,9 +58,16 @@ const formatRSVPStatus = (rsvpStatus: string | null) => {
 
 export default function SelectEventPage() {
   const { events, loading, error, refetch } = useUserEvents();
-  const { user } = useAuth();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const containerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push('/login');
+    }
+  }, [authLoading, isAuthenticated, router]);
 
   // Pull-to-refresh functionality
   const pullToRefresh = usePullToRefresh({
@@ -78,6 +85,20 @@ export default function SelectEventPage() {
       pullToRefresh.bindToElement(containerRef.current);
     }
   }, [pullToRefresh]);
+
+  // Show loading while auth is being checked
+  if (authLoading || (!isAuthenticated && !authLoading)) {
+    return (
+      <PageWrapper>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-500 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading...</p>
+          </div>
+        </div>
+      </PageWrapper>
+    );
+  }
 
   if (loading) {
     return (
@@ -143,10 +164,10 @@ export default function SelectEventPage() {
             <div className="text-center text-sm text-gray-600 pb-6 px-4">
               Need help? Contact us at{' '}
               <a 
-                href="mailto:support@unveil.app" 
+                href="mailto:support@sendunveil.com" 
                 className="text-rose-500 hover:text-rose-600 transition-colors"
               >
-                support@unveil.app
+                support@sendunveil.com
               </a>
             </div>
           </div>
@@ -371,10 +392,10 @@ export default function SelectEventPage() {
           <div className="text-center text-sm text-gray-600 pb-6 px-4">
             Need help? Contact us at{' '}
             <a 
-              href="mailto:support@unveil.app" 
+              href="mailto:support@sendunveil.com" 
               className="text-rose-500 hover:text-rose-600 transition-colors"
             >
-              support@unveil.app
+              support@sendunveil.com
             </a>
           </div>
         </div>

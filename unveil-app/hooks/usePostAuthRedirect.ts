@@ -29,6 +29,10 @@ export function usePostAuthRedirect(): UsePostAuthRedirectReturn {
   const handlePostAuthRedirect = useCallback(async (options: PostAuthRedirectOptions) => {
     const { phone, userId } = options;
     
+    // Check for return URL in query params
+    const urlParams = new URLSearchParams(window.location.search);
+    const returnUrl = urlParams.get('next');
+    
     try {
       logAuth('Starting post-auth redirect flow', { phone, userId });
 
@@ -77,8 +81,11 @@ export function usePostAuthRedirect(): UsePostAuthRedirectReturn {
         userCreated 
       });
 
-      // Route based on user status
-      if (userExists && onboardingCompleted) {
+      // Route based on user status and return URL
+      if (returnUrl) {
+        logAuth('Routing to return URL after auth', { returnUrl });
+        router.replace(returnUrl);
+      } else if (userExists && onboardingCompleted) {
         logAuth('Routing to select-event (existing user, setup complete)');
         router.replace('/select-event');
       } else {
@@ -88,8 +95,13 @@ export function usePostAuthRedirect(): UsePostAuthRedirectReturn {
 
     } catch (error) {
       logAuthError('Post-auth redirect failed', error);
-      // Fallback to setup page for safety
-      router.replace('/setup');
+      // If there was a return URL, try to honor it, otherwise fallback to setup
+      if (returnUrl) {
+        logAuth('Falling back to return URL despite error', { returnUrl });
+        router.replace(returnUrl);
+      } else {
+        router.replace('/setup');
+      }
     }
   }, [router]);
 

@@ -12,6 +12,8 @@ export interface EventInvitation {
   guestName?: string;
 }
 
+import { buildInviteLink } from '@/lib/utils/url';
+
 export interface SMSMessage {
   to: string;
   message: string;
@@ -24,14 +26,14 @@ export interface SMSMessage {
 export const createInvitationMessage = (
   invitation: EventInvitation,
 ): string => {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://unveil.app';
-  const inviteLink = `${baseUrl}/guest/events/${invitation.eventId}?phone=${encodeURIComponent(invitation.guestPhone)}`;
+  // Use guest hub instead of deep link
+  const inviteLink = buildInviteLink({ target: 'hub' });
 
   const guestName = invitation.guestName ? `Hi ${invitation.guestName}! ` : '';
 
   return `${guestName}You're invited to ${invitation.eventTitle} on ${invitation.eventDate}!
 
-View details & RSVP: ${inviteLink}
+View your invite & RSVP: ${inviteLink}
 
 Hosted by ${invitation.hostName} via Unveil
 
@@ -218,13 +220,15 @@ export const sendBatchInvitations = async (
 
 /**
  * Generate deep link for guest access
+ * @deprecated Use buildInviteLink from @/lib/utils/url instead
  */
 export const generateGuestAccessLink = (
   eventId: string,
   guestPhone: string,
 ): string => {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://unveil.app';
-  return `${baseUrl}/guest/events/${eventId}?phone=${encodeURIComponent(guestPhone)}&autoLogin=true`;
+  // Import the new utility function
+  const { generateGuestAccessLink: newGenerateLink } = require('@/lib/utils/url');
+  return newGenerateLink(eventId, guestPhone);
 };
 
 /**
