@@ -136,7 +136,7 @@ export function useMessagesRealtime(eventId: string) {
 
   // Subscribe to real-time changes
   const subscription = supabase
-    .channel(`messages-${eventId}`)
+    .channel(`messages:${eventId}`)
     .on(
       'postgres_changes',
       {
@@ -145,7 +145,7 @@ export function useMessagesRealtime(eventId: string) {
         table: 'messages',
         filter: `event_id=eq.${eventId}`,
       },
-      (payload) => {
+      (payload: any) => {
         // Add new message to cache
         const newMessage = payload.new as MessageWithSender
         

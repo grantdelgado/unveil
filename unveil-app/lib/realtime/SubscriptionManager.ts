@@ -621,24 +621,27 @@ export class SubscriptionManager {
   }
 
   /**
-   * Enhanced connection monitoring with better health checks
+   * Enhanced connection monitoring with reduced logging noise
    */
   private setupConnectionMonitoring(): void {
-    // Monitor connection state changes
+    // Monitor connection state changes with minimal logging
     supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT') {
+        // Only log important auth events
         logger.realtime('🔒 User signed out, cleaning up subscriptions');
         this.destroy();
       } else if (event === 'SIGNED_IN' && session) {
-        logger.realtime('🔑 User signed in, connection monitoring active');
+        // Reduce logging noise - only log on first sign in
+        if (this.connectionState !== 'connected') {
+          logger.realtime('🔑 User authenticated, realtime active');
+        }
         this.connectionState = 'connected';
         
         // Reset error counts on new auth
         this.errorCount = 0;
         this.globalConsecutiveErrors = 0;
-      } else if (event === 'TOKEN_REFRESHED') {
-        logger.realtime('🔄 Token refreshed, subscriptions should continue');
       }
+      // Remove TOKEN_REFRESHED logging to reduce noise
     });
   }
 
@@ -654,14 +657,21 @@ export class SubscriptionManager {
       const stats = this.getStats();
       const details = this.getSubscriptionDetails();
       
-      // Log periodic health check
-      logger.realtime('💓 Enhanced health check', {
-        activeSubscriptions: stats.activeSubscriptions,
-        connectionState: stats.connectionState,
-        errorCount: stats.errorCount,
-        healthScore: stats.healthScore,
-        avgConnectionTime: Math.round(stats.avgConnectionTime),
-      });
+      // Log health check only when there are issues or every 5 minutes
+      const shouldLogHealth = 
+        stats.healthScore < 80 || 
+        stats.errorCount > 5 || 
+        Date.now() % (5 * 60 * 1000) < this.HEARTBEAT_INTERVAL; // Every 5 minutes
+        
+      if (shouldLogHealth) {
+        logger.realtime('💓 Enhanced health check', {
+          activeSubscriptions: stats.activeSubscriptions,
+          connectionState: stats.connectionState,
+          errorCount: stats.errorCount,
+          healthScore: stats.healthScore,
+          avgConnectionTime: Math.round(stats.avgConnectionTime),
+        });
+      }
 
       // Check for unhealthy subscriptions
       const unhealthySubscriptions = details.filter(s => s.healthStatus === 'critical');

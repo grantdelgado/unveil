@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { createApiSupabaseClient } from '@/lib/supabase/server';
 import { sendBatchGuestInvitations } from '@/lib/sms-invitations';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { logger } from '@/lib/logger';
@@ -44,7 +43,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get authenticated user with robust auth handling
-    const supabaseAuth = createRouteHandlerClient({ cookies });
+    const supabaseAuth = createApiSupabaseClient(request);
     
     // Try session from cookies first
     const { data: { session }, error: sessionError } = await supabaseAuth.auth.getSession();

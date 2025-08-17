@@ -184,7 +184,7 @@ export function useRecipientPreview({
     if (!eventId) return;
 
     const subscription = supabase
-      .channel(`guest-updates-${eventId}`)
+      .channel(`event_guests:${eventId}`)
       .on(
         'postgres_changes',
         {

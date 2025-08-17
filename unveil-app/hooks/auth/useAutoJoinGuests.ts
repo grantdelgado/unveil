@@ -49,13 +49,26 @@ export function useAutoJoinGuests(): UseAutoJoinGuestsReturn {
           }, 'useAutoJoinGuests.processAutoJoin');
         }
       } else {
-        setError(result.error || 'Auto-join failed');
-        logger.apiError('Auto-join failed', new Error(result.error), 'useAutoJoinGuests.processAutoJoin');
+        const errorMessage = result.error || 'Auto-join failed';
+        setError(errorMessage);
+        
+        // Log with more context for debugging
+        logger.apiError('Auto-join failed', {
+          error: result.error,
+          userId,
+          hasPhone: !!userPhone
+        }, 'useAutoJoinGuests.processAutoJoin');
+        
+        // Don't throw - just log and continue
+        console.warn(`Auto-join failed for user ${userId}: ${errorMessage}`);
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unexpected error during auto-join';
       setError(errorMessage);
       logger.apiError('Auto-join exception', err, 'useAutoJoinGuests.processAutoJoin');
+      
+      // Log but don't throw - allow the app to continue loading
+      console.warn(`Auto-join exception for user ${userId}: ${errorMessage}`, err);
     } finally {
       setIsProcessing(false);
     }

@@ -5,8 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createApiSupabaseClient } from '@/lib/supabase/server';
 import { linkGuestRecordsToUser } from '@/lib/db/linkGuestRecords';
 import { logger } from '@/lib/logger';
 
@@ -18,7 +17,7 @@ interface LinkUnlinkedRequest {
 export async function POST(request: NextRequest) {
   try {
     // Get authenticated user session with proper cookie handling
-    const supabase = createRouteHandlerClient({ cookies });
+    const supabase = createApiSupabaseClient(request);
     
     // Attempt to get session from cookies first
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();

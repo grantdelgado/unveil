@@ -27,6 +27,15 @@ const nextConfig: NextConfig = {
       // Prevent importing from the website package
       '@unveil-website': false,
     };
+    
+    // Suppress Supabase realtime warnings about dynamic imports
+    config.ignoreWarnings = [
+      {
+        module: /@supabase\/realtime-js/,
+        message: /Critical dependency: the request of a dependency is an expression/,
+      },
+    ];
+    
     return config;
   },
   // PWA and mobile optimizations

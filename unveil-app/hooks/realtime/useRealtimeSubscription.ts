@@ -42,8 +42,8 @@ class SubscriptionPool {
     let pool = this.pools.get(poolKey);
     
     if (!pool) {
-      // Create new pool with shared subscription
-      const sharedSubscriptionId = `pooled-${poolKey}-${Date.now()}`;
+      // Create new pool with shared subscription - STABLE KEY (no timestamp)
+      const sharedSubscriptionId = `pooled-${poolKey}`;
       
       pool = {
         subscriptionId: sharedSubscriptionId,
@@ -217,7 +217,7 @@ export function useRealtimeSubscription({
   const unsubscribeRef = useRef<(() => void) | null>(null);
   const isConnectedRef = useRef(false);
   const errorRef = useRef<Error | null>(null);
-  const componentId = useMemo(() => `${subscriptionId}-${Date.now()}-${Math.random()}`, [subscriptionId]);
+  const componentId = useMemo(() => `${subscriptionId}-${Math.random().toString(36).substr(2, 9)}`, [subscriptionId]);
 
   // Enhanced error handling with reduced noise
   const handleError = useCallback((error: Error) => {

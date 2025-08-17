@@ -186,7 +186,10 @@ function GuestLinkingManager() {
         });
       }
       
-      processAutoJoin(context.user.id, context.userPhone || undefined);
+      // Run auto-join with error handling to prevent page break
+      processAutoJoin(context.user.id, context.userPhone || undefined).catch(error => {
+        console.warn('Auto-join failed but continuing with app load:', error);
+      });
     }
   }, [context?.isAuthenticated, context?.user, context?.userPhone, processAutoJoin]);
 

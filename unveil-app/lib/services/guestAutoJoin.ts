@@ -21,6 +21,7 @@ interface AutoJoinResult {
 /**
  * Auto-join invited guests to events they're eligible for using secure DB-side RPC
  * This should be called after user sign-in to activate their event memberships
+ * Uses bulk_guest_auto_join_from_auth which automatically extracts phone from JWT
  */
 export async function autoJoinInvitedGuests(
   userId: string, 
@@ -29,6 +30,27 @@ export async function autoJoinInvitedGuests(
   try {
     if (!userId) {
       return { success: false, joinedEvents: [], error: 'User ID required' };
+    }
+
+    // First check if user already has linked events - skip auto-join if they do
+    const { data: existingEvents, error: checkError } = await supabase
+      .from('event_guests')
+      .select('event_id')
+      .eq('user_id', userId)
+      .limit(1);
+
+    if (checkError) {
+      logger.apiError('Failed to check existing events', checkError, 'guestAutoJoin.autoJoinInvitedGuests');
+    } else if (existingEvents && existingEvents.length > 0) {
+      logger.api('User already has linked events, skipping auto-join', { 
+        userId, 
+        existingEventsCount: existingEvents.length 
+      }, 'guestAutoJoin.autoJoinInvitedGuests');
+      
+      return {
+        success: true,
+        joinedEvents: [], // No new events joined
+      };
     }
 
     // Normalize phone for consistent matching
@@ -50,15 +72,33 @@ export async function autoJoinInvitedGuests(
       hasPhone: !!normalizedPhone 
     }, 'guestAutoJoin.autoJoinInvitedGuests');
 
-    // Call the secure DB-side RPC function
+    // Call the secure DB-side RPC function that gets auth context automatically
     const { data: result, error: rpcError } = await (supabase as any)
-      .rpc('bulk_guest_auto_join', {
-        p_phone: normalizedPhone || null
-      });
+      .rpc('bulk_guest_auto_join_from_auth');
 
     if (rpcError) {
-      logger.apiError('Bulk auto-join RPC failed', rpcError, 'guestAutoJoin.autoJoinInvitedGuests');
-      return { success: false, joinedEvents: [], error: 'Database error occurred' };
+      logger.apiError('Bulk auto-join RPC failed', { 
+      ...rpcError, 
+      code: rpcError.code,
+      message: rpcError.message,
+      details: rpcError.details,
+      hint: rpcError.hint 
+    }, 'guestAutoJoin.autoJoinInvitedGuests');
+      
+      // Handle specific error codes
+      if (rpcError.code === '42883') {
+        return { 
+          success: false, 
+          joinedEvents: [], 
+          error: 'Function not found - bulk_guest_auto_join may not be deployed' 
+        };
+      }
+      
+      return { 
+        success: false, 
+        joinedEvents: [], 
+        error: `Database error occurred during bulk auto-join` 
+      };
     }
 
     if (!result || typeof result !== 'object') {

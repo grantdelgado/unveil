@@ -129,54 +129,64 @@ export function useGuestMessages({ eventId, guestId }: UseGuestMessagesProps) {
   /**
    * Handle real-time message updates
    */
-  const handleRealtimeUpdate = useCallback(() => {
-    // For realtime updates, only fetch the latest message to avoid full refetch
-    const fetchLatestMessage = async () => {
-      try {
-        const { data, error: fetchError } = await supabase
-          .from('messages')
-          .select(`
-            *,
-            sender:users!messages_sender_user_id_fkey(*)
-          `)
-          .eq('event_id', eventId)
-          .order('created_at', { ascending: false })
-          .limit(1);
-
-        if (fetchError) throw fetchError;
-
-        const latestMessage = data?.[0];
-        if (latestMessage) {
-          setMessages(prevMessages => {
-            // Check if this message already exists (deduplicate)
-            const existingIndex = prevMessages.findIndex(m => m.id === latestMessage.id);
-            if (existingIndex >= 0) {
-              // Update existing message
-              const updated = [...prevMessages];
-              updated[existingIndex] = latestMessage;
-              return updated;
-            } else {
-              // Add new message to the end
-              return [...prevMessages, latestMessage];
-            }
-          });
-        }
-      } catch (err) {
-        console.error('Error fetching latest message:', err);
+  const handleRealtimeUpdate = useCallback((payload: any) => {
+    if (payload.eventType === 'INSERT') {
+      // For INSERT events, add the new message directly from payload
+      const newMessage = payload.new;
+      if (newMessage) {
+        setMessages(prevMessages => {
+          // Check if this message already exists (deduplicate)
+          const existingIndex = prevMessages.findIndex(m => m.id === newMessage.id);
+          if (existingIndex >= 0) {
+            return prevMessages; // Already exists, no change
+          } else {
+            // Add new message to the end
+            return [...prevMessages, newMessage];
+          }
+        });
       }
-    };
+    } else if (payload.eventType === 'UPDATE') {
+      // For UPDATE events, update the existing message
+      const updatedMessage = payload.new;
+      if (updatedMessage) {
+        setMessages(prevMessages => {
+          const existingIndex = prevMessages.findIndex(m => m.id === updatedMessage.id);
+          if (existingIndex >= 0) {
+            const updated = [...prevMessages];
+            updated[existingIndex] = updatedMessage;
+            return updated;
+          }
+          return prevMessages;
+        });
+      }
+    } else if (payload.eventType === 'DELETE') {
+      // For DELETE events, remove the message
+      const deletedMessage = payload.old;
+      if (deletedMessage) {
+        setMessages(prevMessages => prevMessages.filter(m => m.id !== deletedMessage.id));
+      }
+    }
+  }, []); // No dependencies to prevent re-creation
 
-    fetchLatestMessage();
-  }, [eventId]);
+  // Separate effect for initial fetch to avoid subscription re-creation
+  useEffect(() => {
+    if (!eventId) return;
+    fetchInitialMessages();
+  }, [fetchInitialMessages]);
 
+  // Separate effect for realtime subscription to maintain stable connection
   useEffect(() => {
     if (!eventId) return;
 
-    fetchInitialMessages();
-
-    // Set up real-time subscription
+    // Set up real-time subscription with STABLE channel key
+    const channelKey = `messages:${eventId}`;
     const subscription = supabase
-      .channel(`messages:${eventId}`)
+      .channel(channelKey, {
+        config: {
+          broadcast: { self: false, ack: false },
+          presence: { key: channelKey }
+        }
+      })
       .on(
         'postgres_changes',
         {
@@ -192,7 +202,7 @@ export function useGuestMessages({ eventId, guestId }: UseGuestMessagesProps) {
     return () => {
       subscription.unsubscribe();
     };
-  }, [eventId, fetchInitialMessages, handleRealtimeUpdate]);
+  }, [eventId]); // Only eventId dependency to prevent re-subscriptions
 
   const sendMessage = async (content: string) => {
     try {

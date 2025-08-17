@@ -203,7 +203,7 @@ export function useScheduledMessages({
     if (!realTimeUpdates) return;
 
     const channel = supabase
-      .channel(`scheduled_messages_${eventId}`)
+      .channel(`scheduled_messages:${eventId}`)
       .on(
         'postgres_changes',
         {

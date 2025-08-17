@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
-import { Database } from '@/app/reference/supabase.types';
+import { createApiSupabaseClient } from '@/lib/supabase/server';
 
 interface BackfillResult {
   updated_count: number;
@@ -24,10 +22,10 @@ interface BackfillResult {
  * - total_eligible_count: number of rows that were eligible for update
  * - details: human-readable status message
  */
-export async function POST() {
+export async function POST(request: Request) {
   try {
     // Create Supabase client
-    const supabase = createRouteHandlerClient<Database>({ cookies });
+    const supabase = createApiSupabaseClient(request);
 
     // Verify authentication
     const { data: { session }, error: authError } = await supabase.auth.getSession();
@@ -106,9 +104,9 @@ export async function POST() {
 /**
  * GET endpoint to check current state without running backfill
  */
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const supabase = createRouteHandlerClient<Database>({ cookies });
+    const supabase = createApiSupabaseClient(request);
 
     // Verify authentication
     const { data: { session }, error: authError } = await supabase.auth.getSession();

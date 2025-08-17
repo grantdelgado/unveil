@@ -1,25 +1,24 @@
-import { createClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '@supabase/ssr';
 import type { Database } from '@/app/reference/supabase.types';
 import { logger } from '@/lib/logger';
 
-// Create typed Supabase client with enhanced session management and realtime configuration
-export const supabase = createClient<Database>(
+// Client-side only Supabase client - DO NOT use on server
+// For server-side operations, use createServerSupabaseClient from './server'
+export const supabase = createBrowserClient<Database>(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
   {
     auth: {
-      // Persist session in localStorage
-      storage: typeof window !== 'undefined' ? window.localStorage : undefined,
       // Auto refresh tokens
       autoRefreshToken: true,
       // Persist session across browser tabs
       persistSession: true,
       // Detect session in URL (for magic links, etc.)
       detectSessionInUrl: true,
-      // Longer session timeout (24 hours)
+      // PKCE flow for security
       flowType: 'pkce',
-      // Add debug logging for auth events
-      debug: process.env.NODE_ENV === 'development',
+      // Reduce debug logging to minimize console spam
+      debug: false, // Always false to reduce noise
     },
     // Enhanced realtime configuration to prevent timeouts
     realtime: {
@@ -29,12 +28,13 @@ export const supabase = createClient<Database>(
       heartbeatIntervalMs: 30000,
       // Reconnect automatically with exponential backoff
       reconnectAfterMs: (tries: number) => Math.min(1000 * Math.pow(2, tries), 30000),
-      // Log realtime events for debugging - must be a function
-      logger: process.env.NODE_ENV === 'development' 
-        ? (kind: string, msg: string, data?: unknown) => {
-            logger.realtime(`[Realtime ${kind}] ${msg}`, data);
-          }
-        : undefined,
+      // Reduce realtime logging noise - only log errors
+      logger: (kind: string, msg: string, data?: unknown) => {
+        if (kind === 'error' || kind === 'close') {
+          logger.error(`[Realtime ${kind}] ${msg}`, data);
+        }
+        // Suppress other realtime logs to reduce console spam
+      },
       // Custom headers for realtime connection
       headers: {
         'X-Client-Info': 'unveil-realtime-v2',
