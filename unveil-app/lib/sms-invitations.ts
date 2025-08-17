@@ -12,7 +12,7 @@ export interface EventInvitation {
   guestName?: string;
 }
 
-import { buildInviteLink } from '@/lib/utils/url';
+import { buildInviteLink, generateGuestAccessLink as newGenerateGuestAccessLink } from '@/lib/utils/url';
 
 export interface SMSMessage {
   to: string;
@@ -226,9 +226,8 @@ export const generateGuestAccessLink = (
   eventId: string,
   guestPhone: string,
 ): string => {
-  // Import the new utility function
-  const { generateGuestAccessLink: newGenerateLink } = require('@/lib/utils/url');
-  return newGenerateLink(eventId, guestPhone);
+  // Use the imported utility function
+  return newGenerateGuestAccessLink(eventId, guestPhone);
 };
 
 /**
