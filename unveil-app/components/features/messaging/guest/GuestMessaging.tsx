@@ -19,12 +19,15 @@ interface GuestMessagingProps {
 }
 
 export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagingProps) {
-  // Use enhanced guest messaging hook
+  // Use enhanced guest messaging hook with pagination
   const {
     messages,
     loading,
     error,
+    hasMore,
+    isFetchingOlder,
     sendMessage,
+    fetchOlderMessages,
   } = useGuestMessages({
     eventId,
     guestId,
@@ -50,11 +53,15 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [showJumpToLatest, setShowJumpToLatest] = useState(false);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  const [newMessagesCount, setNewMessagesCount] = useState(0);
+  const [hasNewMessages, setHasNewMessages] = useState(false);
   
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const previousMessageCountRef = useRef(messages.length);
+  const scrollHeightBeforePrepend = useRef<number>(0);
+  const shouldPreserveScroll = useRef<boolean>(false);
 
   /**
    * Check if user is at the bottom of the scroll container
@@ -75,6 +82,12 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
     const isCurrentlyAtBottom = checkIsAtBottom();
     setIsAtBottom(isCurrentlyAtBottom);
     setShowJumpToLatest(!isCurrentlyAtBottom && messages.length > 0);
+    
+    // Clear new messages indicator when user reaches bottom
+    if (isCurrentlyAtBottom) {
+      setNewMessagesCount(0);
+      setHasNewMessages(false);
+    }
   }, [checkIsAtBottom, messages.length]);
 
   /**
@@ -97,6 +110,8 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
     scrollToBottom(true);
     setShowJumpToLatest(false);
     setIsAtBottom(true);
+    setNewMessagesCount(0);
+    setHasNewMessages(false);
   }, [scrollToBottom]);
 
   /**
@@ -105,13 +120,20 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
   useEffect(() => {
     const messageCountChanged = messages.length !== previousMessageCountRef.current;
     const isNewMessage = messages.length > previousMessageCountRef.current;
+    const newMessageCount = messages.length - previousMessageCountRef.current;
     
     if (messageCountChanged) {
       previousMessageCountRef.current = messages.length;
       
-      if (isNewMessage && (isAtBottom || shouldAutoScroll)) {
-        // Auto-scroll to new messages if user is at bottom or it's their own message
-        setTimeout(() => scrollToBottom(true), 100);
+      if (isNewMessage) {
+        if (isAtBottom || shouldAutoScroll) {
+          // Auto-scroll to new messages if user is at bottom or it's their own message
+          setTimeout(() => scrollToBottom(true), 100);
+        } else {
+          // User is scrolled up - update new messages indicator
+          setNewMessagesCount(prev => prev + newMessageCount);
+          setHasNewMessages(true);
+        }
       }
     }
   }, [messages.length, isAtBottom, shouldAutoScroll, scrollToBottom]);
@@ -125,6 +147,36 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
       setTimeout(() => scrollToBottom(false), 100);
     }
   }, [messages.length, scrollToBottom]);
+
+  /**
+   * Preserve scroll position when older messages are prepended
+   */
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container || !shouldPreserveScroll.current) return;
+
+    // Calculate the difference in scroll height and adjust scroll position
+    const heightDiff = container.scrollHeight - scrollHeightBeforePrepend.current;
+    if (heightDiff > 0) {
+      container.scrollTop = container.scrollTop + heightDiff;
+    }
+    
+    shouldPreserveScroll.current = false;
+  }, [messages]);
+
+  /**
+   * Enhanced fetch older messages with scroll preservation
+   */
+  const handleFetchOlderMessages = useCallback(async () => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    // Store current scroll height before fetching
+    scrollHeightBeforePrepend.current = container.scrollHeight;
+    shouldPreserveScroll.current = true;
+    
+    await fetchOlderMessages();
+  }, [fetchOlderMessages]);
 
   /**
    * Simple response validation
@@ -240,11 +292,13 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
            </div>
          </div>
          <div className="flex-1 flex items-center justify-center p-6">
-           <EmptyState
-             variant="messages"
-             title="No messages yet"
-             description="Your host hasn&apos;t sent any messages for this event yet. Check back later!"
-           />
+           <div className="text-center space-y-4">
+             <EmptyState
+               variant="messages"
+               title="No messages yet"
+               description="Your host hasn&apos;t sent any messages for this event yet. Check back later!"
+             />
+           </div>
          </div>
          <div className="flex-shrink-0 bg-white border-t border-stone-200 p-5">
            <ResponseIndicator canRespond={canRespond} />
@@ -279,6 +333,43 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
           aria-label="Event messages"
           aria-live="polite"
         >
+          {/* Load Earlier Messages Button */}
+          {hasMore && (
+            <div className="flex flex-col items-center py-3 border-b border-stone-100 mb-4 space-y-2">
+              <button
+                onClick={handleFetchOlderMessages}
+                disabled={isFetchingOlder}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-stone-600 hover:text-stone-700 bg-stone-50 hover:bg-stone-100 rounded-lg border border-stone-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-stone-400 focus:ring-offset-2"
+                aria-label="Load earlier messages"
+              >
+                {isFetchingOlder ? (
+                  <>
+                    <div className="h-4 w-4 border-2 border-stone-400 border-t-transparent rounded-full animate-spin" />
+                    <span>Loading...</span>
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="h-4 w-4 rotate-180" />
+                    <span>Load earlier messages</span>
+                  </>
+                )}
+              </button>
+              
+              {/* Pagination Error State */}
+              {error && error.includes('older messages') && (
+                <div className="text-xs text-red-600 bg-red-50 px-3 py-1 rounded-md border border-red-200">
+                  Failed to load older messages.{' '}
+                  <button
+                    onClick={handleFetchOlderMessages}
+                    className="underline hover:no-underline font-medium"
+                  >
+                    Try again
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           {messages.map((message) => {
             const isOwnMessage = message.sender_user_id === currentUserId;
             
@@ -308,11 +399,28 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
           <div className="absolute bottom-4 right-4 z-10">
             <button
               onClick={handleJumpToLatest}
-              className="flex items-center gap-2 px-3 py-2 bg-rose-500 hover:bg-rose-600 text-white text-sm font-medium rounded-full shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2"
-              aria-label="Jump to latest message"
+              className={`
+                relative flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-full 
+                transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2
+                ${hasNewMessages 
+                  ? 'bg-white hover:bg-stone-50 text-stone-700 shadow-lg ring-1 ring-stone-200 focus:ring-rose-500' 
+                  : 'bg-stone-100 hover:bg-stone-200 text-stone-600 shadow-md focus:ring-stone-400'
+                }
+                motion-safe:${hasNewMessages ? 'animate-pulse' : ''}
+              `}
+              aria-label={`Jump to latest message${newMessagesCount > 0 ? ` (${newMessagesCount} new)` : ''}`}
             >
-              <span>Jump to latest</span>
-              <ChevronDown className="h-4 w-4" />
+              {/* New message count badge */}
+              {newMessagesCount > 0 && (
+                <span className="absolute -top-2 -right-2 min-w-[20px] h-5 px-1.5 bg-rose-500 text-white text-xs font-semibold rounded-full flex items-center justify-center">
+                  {newMessagesCount > 99 ? '99+' : newMessagesCount}
+                </span>
+              )}
+              
+              <span className="text-xs">
+                {hasNewMessages ? 'New messages' : 'Jump to latest'}
+              </span>
+              <ChevronDown className="h-3.5 w-3.5" />
             </button>
           </div>
         )}
