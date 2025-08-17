@@ -40,14 +40,18 @@ export function ModernActionList({
     {
       id: 'manage-guests',
       title: 'Manage Guests',
-      subtitle: 'Manage guests and RSVPs',
+      subtitle: guestCount === 0 
+        ? 'Import your guest list to get started' 
+        : `Manage ${guestCount} guests and RSVPs`,
       icon: Users,
       href: `/host/events/${eventId}/guests`,
     },
     {
       id: 'send-messages',
       title: 'Send Messages',
-      subtitle: 'Send announcements and updates',
+      subtitle: pendingRSVPs > 0 
+        ? `Send reminders to ${pendingRSVPs} pending guests`
+        : 'Send announcements and updates',
       icon: MessageCircle,
       href: `/host/events/${eventId}/messages`,
     },
