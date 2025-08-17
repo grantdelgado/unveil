@@ -64,12 +64,12 @@ export default function GuestEventJoinPage() {
       const result = await autoJoinEventByPhone(eventId, userId, normalizedPhone);
       
       if (result.success) {
-        // Log success telemetry (no PII)
-        console.log('Auto-join success:', {
-          eventId,
-          userId,
-          hasPhone: !!phoneToUse
-        });
+              // Log success telemetry (no PII)
+      console.log('Auto-join success:', {
+        eventId,
+        userId,
+        hasPhone: !!(userPhone || phoneParam)
+      });
         // Successfully joined, redirect to event home
         router.replace(`/guest/events/${eventId}/home`);
       } else if (result.error === 'not_invited') {
@@ -91,7 +91,7 @@ export default function GuestEventJoinPage() {
       console.log('Auto-join telemetry:', {
         eventId,
         userId,
-        hasPhone: !!phoneToUse,
+        hasPhone: !!(userPhone || phoneParam),
         error: err instanceof Error ? err.message : 'Unknown error'
       });
       setError('Something went wrong while joining the event. Please try again.');
