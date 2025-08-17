@@ -9,10 +9,10 @@ import { isValidTimezone } from '@/lib/utils/timezone';
 // URL validation helper - normalize and validate URLs
 const urlSchema = z
   .string()
-  .optional()
+  .nullable()
   .refine(
     (url) => {
-      if (!url) return true; // Optional field
+      if (!url) return true; // Nullable field
       
       // Auto-prepend https:// if missing protocol
       const normalizedUrl = url.startsWith('http://') || url.startsWith('https://') 
@@ -84,9 +84,9 @@ export const eventDetailsSchema = z.object({
   website_url: urlSchema,
   
   // Visibility settings
-  is_public: z.boolean().default(false),
+  is_public: z.boolean(),
   
-  allow_open_signup: z.boolean().default(true),
+  allow_open_signup: z.boolean(),
 });
 
 export type EventDetailsFormData = z.infer<typeof eventDetailsSchema>;

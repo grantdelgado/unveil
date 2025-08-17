@@ -38,7 +38,7 @@ export async function getGuestsNeedingSMS(eventId: string): Promise<string[]> {
       return [];
     }
     
-    return guests?.map(g => g.phone).filter(Boolean) || [];
+    return guests?.map(g => g.phone).filter(Boolean) as string[] || [];
   } catch (error) {
     logger.error('Error in getGuestsNeedingSMS', error);
     return [];

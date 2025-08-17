@@ -42,7 +42,7 @@ export default function GuestEventSchedulePage() {
   }, [router]);
 
   // Use the custom hook to fetch event and guest data
-  const { event, guestInfo, loading, error } = useEventWithGuest(eventId, currentUserId);
+  const { event, loading, error } = useEventWithGuest(eventId, currentUserId);
 
   if (loading) {
     return (

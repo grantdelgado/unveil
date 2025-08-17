@@ -14,8 +14,6 @@ import {
   CardContainer,
   PageTitle,
   SubTitle,
-  SectionTitle,
-
   PrimaryButton,
   SecondaryButton,
   BackButton,

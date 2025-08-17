@@ -302,10 +302,13 @@ async function resolveScheduledMessageRecipients(
         .neq('phone', '');
 
       if (error) throw error;
-      return (guests || []).map(guest => ({
-        ...guest,
-        guest_name: guest.guest_name || 'Guest'
-      }));
+      return (guests || [])
+        .filter(guest => guest.phone) // Filter out guests without phone numbers
+        .map(guest => ({
+          ...guest,
+          phone: guest.phone as string, // Type assertion since we filtered out nulls
+          guest_name: guest.guest_name || 'Guest'
+        }));
     }
 
     // Handle individual guest selection
@@ -319,10 +322,13 @@ async function resolveScheduledMessageRecipients(
         .neq('phone', '');
 
       if (error) throw error;
-      return (guests || []).map(guest => ({
-        ...guest,
-        guest_name: guest.guest_name || 'Guest'
-      }));
+      return (guests || [])
+        .filter(guest => guest.phone) // Filter out guests without phone numbers
+        .map(guest => ({
+          ...guest,
+          phone: guest.phone as string, // Type assertion since we filtered out nulls
+          guest_name: guest.guest_name || 'Guest'
+        }));
     }
 
     // Use Supabase function for complex filtering
@@ -353,10 +359,13 @@ async function resolveScheduledMessageRecipients(
       .neq('phone', '');
 
     if (phoneError) throw phoneError;
-    return (guestsWithPhones || []).map(guest => ({
-      ...guest,
-      guest_name: guest.guest_name || 'Guest'
-    }));
+    return (guestsWithPhones || [])
+      .filter(guest => guest.phone) // Filter out guests without phone numbers
+      .map(guest => ({
+        ...guest,
+        phone: guest.phone as string, // Type assertion since we filtered out nulls
+        guest_name: guest.guest_name || 'Guest'
+      }));
 
   } catch (error) {
     logger.apiError('Error resolving scheduled message recipients', error);

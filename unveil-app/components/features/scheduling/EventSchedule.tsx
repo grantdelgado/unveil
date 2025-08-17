@@ -16,7 +16,7 @@ export default function EventSchedule({
 }: EventScheduleProps) {
   // Get timezone info for display
   const timeZoneInfo = timeZone ? getTimezoneInfo(timeZone) : null;
-  const timeZoneLabel = getTimezoneLabel(timeZone);
+  const timeZoneLabel = getTimezoneLabel(timeZone || null);
 
   // Sample schedule - in a real app, this would come from the database
   // For now, these are hardcoded times that will be displayed in event timezone

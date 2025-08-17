@@ -96,6 +96,9 @@ export function useSendMessage({ onSuccess, onError }: UseSendMessageOptions = {
         content,
         message_type: messageType,
         created_at: new Date().toISOString(),
+        delivered_at: null,
+        delivered_count: 0,
+        failed_count: 0,
         sender: null // Will be populated on success
       }
 

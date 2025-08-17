@@ -942,10 +942,12 @@ export class EventCreationService {
           // Track successfully imported guests for SMS invitations
           if (insertedGuests) {
             insertedGuests.forEach((insertedGuest) => {
-              successfully_imported.push({
-                phone: insertedGuest.phone,
-                guest_name: insertedGuest.guest_name || undefined
-              });
+              if (insertedGuest.phone) { // Only add guests with phone numbers
+                successfully_imported.push({
+                  phone: insertedGuest.phone,
+                  guest_name: insertedGuest.guest_name || undefined
+                });
+              }
             });
           }
         }

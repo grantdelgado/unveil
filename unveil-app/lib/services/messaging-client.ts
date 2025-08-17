@@ -201,14 +201,16 @@ export async function sendMessageToEvent(request: SendMessageRequest, retryCount
         if (phoneError) {
           console.error('Error fetching guest phone numbers:', phoneError);
         } else if (guestsWithPhones && guestsWithPhones.length > 0) {
-          // Prepare SMS messages
-          const smsMessages = guestsWithPhones.map(guest => ({
-            to: guest.phone,
-            message: request.content,
-            eventId: request.eventId,
-            guestId: guest.id,
-            messageType: request.messageType
-          }));
+          // Prepare SMS messages (filter out any guests without phone numbers)
+          const smsMessages = guestsWithPhones
+            .filter(guest => guest.phone) // Additional safety filter
+            .map(guest => ({
+              to: guest.phone as string, // Safe to assert since we filtered
+              message: request.content,
+              eventId: request.eventId,
+              guestId: guest.id,
+              messageType: request.messageType
+            }));
 
           console.log(`Sending SMS to ${smsMessages.length} guests with valid phone numbers`);
 

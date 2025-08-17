@@ -1,5 +1,8 @@
 import { supabase } from '@/lib/supabase/client';
 import { logger } from '@/lib/logger';
+import type { Database } from '@/app/reference/supabase.types';
+
+type Event = Database['public']['Tables']['events']['Row'];
 
 /**
  * Auto-join service for invited guests
@@ -83,7 +86,7 @@ export async function autoJoinInvitedGuests(
     }
 
     const joinedEvents: string[] = [];
-    const updatePromises: Promise<any>[] = [];
+    const updatePromises: Promise<void>[] = [];
 
     for (const guest of matchingGuests) {
       // Skip if already linked to this user
@@ -112,7 +115,7 @@ export async function autoJoinInvitedGuests(
               eventTitle: guest.events.title 
             }, 'guestAutoJoin.autoJoinInvitedGuests');
           }
-        });
+        }) as Promise<void>;
 
       updatePromises.push(updatePromise);
     }
@@ -148,9 +151,8 @@ export async function autoJoinInvitedGuests(
 export async function getVisibleEventsForUser(
   userId: string,
   userPhone?: string
-): Promise<{ success: boolean; events: any[]; error?: string }> {
+): Promise<{ success: boolean; events: Event[]; error?: string }> {
   try {
-    const normalizedPhone = userPhone ? normalizePhoneNumber(userPhone) : null;
 
     // Get events where:
     // 1. User is linked as a guest (user_id match)
@@ -178,7 +180,7 @@ export async function getVisibleEventsForUser(
 
     return {
       success: true,
-      events: visibleEvents?.map(eg => eg.events) || []
+      events: (visibleEvents?.map(eg => eg.events) || []) as Event[]
     };
 
   } catch (error) {
