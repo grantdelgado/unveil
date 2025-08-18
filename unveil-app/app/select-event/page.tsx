@@ -56,7 +56,7 @@ const formatRSVPStatus = (rsvpStatus: string | null) => {
 
 export default function SelectEventPage() {
   const { events, loading, error, refetch } = useUserEvents();
-  const { user, isAuthenticated, loading: authLoading } = useAuth();
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const router = useRouter();
 
   // Redirect to login if not authenticated
