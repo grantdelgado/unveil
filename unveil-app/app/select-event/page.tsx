@@ -226,12 +226,12 @@ export default function SelectEventPage() {
 
   return (
     <PageWrapper>
-      <MobileShell
-        id="select-event"
-        header={header}
-        footer={footer}
-        className="scroll-container"
-      >
+      <div id="select-event">
+        <MobileShell
+          header={header}
+          footer={footer}
+          className="scroll-container"
+        >
         <div className="max-w-md mx-auto px-4 py-8 w-full space-y-8">
           {/* Events List */}
           <div className="space-y-8">
@@ -363,7 +363,8 @@ export default function SelectEventPage() {
             )}
           </div>
         </div>
-      </MobileShell>
+        </MobileShell>
+      </div>
     </PageWrapper>
   );
 }
