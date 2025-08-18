@@ -9,7 +9,6 @@ import { formatEventDate } from '@/lib/utils/date';
 import { GuestMessaging } from '@/components/features/messaging';
 import { 
   PhotoAlbumButton, 
-  CantMakeItButton,
   DeclineEventModal,
   DeclineBanner
 } from '@/components/features/guest';
@@ -262,14 +261,7 @@ export default function GuestEventHomePage() {
         </div>
       )}
 
-      {/* Can't Make It Button - Always show for guests unless declined */}
-      {!hasDeclined && (
-        <div className="max-w-5xl mx-auto px-6 pb-4">
-          <div className="text-center">
-            <CantMakeItButton onClick={handleShowDeclineModal} />
-          </div>
-        </div>
-      )}
+
 
 
 
@@ -473,6 +465,18 @@ export default function GuestEventHomePage() {
           </div>
         </div>
       </div>
+
+      {/* Can't Make It Button - Bottom placement for non-declined guests */}
+      {!hasDeclined && (
+        <div className="max-w-5xl mx-auto px-6 pb-8" style={{ paddingBottom: 'calc(2rem + env(safe-area-inset-bottom))' }}>
+          <PrimaryButton
+            onClick={handleShowDeclineModal}
+            className="w-full bg-stone-600 hover:bg-stone-700 text-white"
+          >
+            Can&apos;t make it?
+          </PrimaryButton>
+        </div>
+      )}
 
       {/* Decline Modal */}
       <DeclineEventModal
