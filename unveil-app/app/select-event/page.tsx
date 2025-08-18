@@ -1,7 +1,7 @@
 'use client';
 
 // External dependencies
-import React, { useRef, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { AlertCircle } from 'lucide-react';
 
@@ -12,10 +12,8 @@ import { cn } from '@/lib/utils';
 // Internal hooks (specific imports for better tree-shaking)
 import { useUserEvents } from '@/hooks/events';
 import { useAuth } from '@/lib/auth/AuthProvider';
-import { usePullToRefresh } from '@/hooks/common/usePullToRefresh';
 
 // Internal components (specific imports)
-import { PullToRefreshIndicator } from '@/components/ui/PullToRefreshIndicator';
 import { PageWrapper, SkeletonLoader } from '@/components/ui';
 
 // Helper function to format RSVP status
@@ -59,7 +57,6 @@ const formatRSVPStatus = (rsvpStatus: string | null) => {
 export default function SelectEventPage() {
   const { events, loading, error, refetch } = useUserEvents();
   const { user, isAuthenticated, loading: authLoading } = useAuth();
-  const containerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
   // Redirect to login if not authenticated
@@ -68,23 +65,6 @@ export default function SelectEventPage() {
       router.push('/login');
     }
   }, [authLoading, isAuthenticated, router]);
-
-  // Pull-to-refresh functionality
-  const pullToRefresh = usePullToRefresh({
-    onRefresh: async () => {
-      await refetch();
-    },
-    threshold: 80,
-    disabled: loading,
-    hapticFeedback: true,
-  });
-
-  // Bind pull-to-refresh to container
-  useEffect(() => {
-    if (containerRef.current) {
-      pullToRefresh.bindToElement(containerRef.current);
-    }
-  }, [pullToRefresh]);
 
   // Show loading while auth is being checked
   if (authLoading || (!isAuthenticated && !authLoading)) {
@@ -164,10 +144,10 @@ export default function SelectEventPage() {
             <div className="text-center text-sm text-gray-600 pb-6 px-4">
               Need help? Contact us at{' '}
               <a 
-                href="mailto:support@sendunveil.com" 
+                href="mailto:grant@sendunveil.com" 
                 className="text-rose-500 hover:text-rose-600 transition-colors"
               >
-                support@sendunveil.com
+                grant@sendunveil.com
               </a>
             </div>
           </div>
@@ -204,22 +184,9 @@ export default function SelectEventPage() {
   return (
     <PageWrapper>
       <div
-        ref={containerRef}
-        className="min-h-screen flex flex-col overflow-auto"
-        style={{ 
-          // Ensure smooth scrolling on iOS
-          WebkitOverflowScrolling: 'touch',
-          overscrollBehavior: 'contain',
-        }}
+        id="select-event"
+        className="min-h-screen flex flex-col overflow-auto overscroll-none touch-pan-x"
       >
-        {/* Pull-to-refresh indicator */}
-        <PullToRefreshIndicator
-          isPulling={pullToRefresh.isPulling}
-          isRefreshing={pullToRefresh.isRefreshing}
-          pullDistance={pullToRefresh.pullDistance}
-          canRefresh={pullToRefresh.canRefresh}
-          refreshProgress={pullToRefresh.refreshProgress}
-        />
 
         {/* TOP SECTION - Fixed near top */}
         <div className="max-w-md mx-auto px-4 pt-6 w-full">
@@ -376,26 +343,18 @@ export default function SelectEventPage() {
             )}
           </div>
 
-          {/* Development Mode Box */}
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-            <h4 className="font-semibold text-blue-900 mb-2">Development Mode</h4>
-            <div className="space-y-1 text-sm text-blue-800">
-              <p><strong>User ID:</strong> {user?.id || 'XXXXXXXXXX'}</p>
-              <p><strong>Event Count:</strong> {events?.length || 0}</p>
-              <p><strong>User Role:</strong> Authenticated</p>
-            </div>
-          </div>
+
         </div>
 
         {/* BOTTOM SECTION - Fixed to bottom */}
         <div className="mt-auto max-w-md mx-auto w-full">
           <div className="text-center text-sm text-gray-600 pb-6 px-4">
-            Need help? Contact us at{' '}
+            Need help? Drop a line to{' '}
             <a 
-              href="mailto:support@sendunveil.com" 
+              href="mailto:grant@sendunveil.com" 
               className="text-rose-500 hover:text-rose-600 transition-colors"
             >
-              support@sendunveil.com
+              grant@sendunveil.com
             </a>
           </div>
         </div>

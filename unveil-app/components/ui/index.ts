@@ -11,7 +11,7 @@ export { LogoContainer } from './LogoContainer';
 export { OptimizedImage } from './OptimizedImage';
 export { PageWrapper } from './PageWrapper';
 export { Pagination } from './Pagination';
-export { PullToRefreshIndicator } from './PullToRefreshIndicator';
+
 export { StorageErrorFallback } from './StorageErrorFallback';
 // Typography components (individual exports)
 export { 

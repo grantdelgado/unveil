@@ -34,6 +34,11 @@
 
 /* Light mode only - dark mode disabled */
 
+html {
+  /* Prevent browser pull-to-refresh */
+  overscroll-behavior-y: none;
+}
+
 body {
   background: var(--color-bg);
   color: var(--color-text);
