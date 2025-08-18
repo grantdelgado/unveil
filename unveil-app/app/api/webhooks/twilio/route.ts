@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     const messageSid = formData.get('MessageSid')?.toString();
     const messageStatus = formData.get('MessageStatus')?.toString();
     const toNumber = formData.get('To')?.toString();
-    const _fromNumber = formData.get('From')?.toString();
+    // const fromNumber = formData.get('From')?.toString(); // Unused for now
     const errorCode = formData.get('ErrorCode')?.toString();
     const errorMessage = formData.get('ErrorMessage')?.toString();
 
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
 
     // Update aggregated message stats if status indicates final delivery result
     if (['delivered', 'undelivered', 'failed'].includes(messageStatus)) {
-      await updateMessageAggregateStats(messageSid, messageStatus);
+      await updateMessageAggregateStats(messageSid);
     }
 
     // Log error details if delivery failed
@@ -170,7 +170,7 @@ function mapTwilioStatus(twilioStatus: string): string {
 /**
  * Update aggregate message statistics when delivery status changes
  */
-async function updateMessageAggregateStats(messageSid: string, _status: string) {
+async function updateMessageAggregateStats(messageSid: string) {
   try {
     // Find the message record associated with this delivery
     const { data: deliveryRecord, error: findError } = await supabase

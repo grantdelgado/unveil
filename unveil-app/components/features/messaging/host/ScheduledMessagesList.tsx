@@ -22,10 +22,12 @@ interface ScheduledMessagesListProps {
  */
 export function ScheduledMessagesList({
   eventId,
-  onEditMessage,
+  onEditMessage: _onEditMessage, // Reserved for future functionality
   showAnalytics = true,
   className
 }: ScheduledMessagesListProps) {
+  // Suppress unused variable warning - reserved for future use
+  void _onEditMessage;
   const [deletingMessageId, setDeletingMessageId] = useState<string | null>(null);
   const [cancellingMessageId, setCancellingMessageId] = useState<string | null>(null);
 
@@ -122,7 +124,7 @@ export function ScheduledMessagesList({
       if (!result.success) {
         alert(`Failed to delete message: ${result.error}`);
       }
-    } catch (error) {
+    } catch {
       alert('Failed to delete message');
     } finally {
       setDeletingMessageId(null);
@@ -140,7 +142,7 @@ export function ScheduledMessagesList({
       if (!result.success) {
         alert(`Failed to cancel message: ${result.error}`);
       }
-    } catch (error) {
+    } catch {
       alert('Failed to cancel message');
     } finally {
       setCancellingMessageId(null);

@@ -21,23 +21,23 @@ const mockEvent: Database['public']['Tables']['events']['Row'] = {
 };
 
 // Mock functions
-const mockOnSave = jest.fn();
-const mockOnCancel = jest.fn();
-const mockOnPreviewGuestView = jest.fn();
+const mockOnSave = vi.fn();
+const mockOnCancel = vi.fn();
+const mockOnPreviewGuestView = vi.fn();
 
 // Mock Next.js router
-jest.mock('next/navigation', () => ({
+vi.mock('next/navigation', () => ({
   useRouter: () => ({
-    push: jest.fn(),
-    back: jest.fn(),
+    push: vi.fn(),
+    back: vi.fn(),
   }),
 }));
 
 // Mock react-hook-form
-jest.mock('react-hook-form', () => ({
+vi.mock('react-hook-form', () => ({
   useForm: () => ({
-    register: jest.fn(() => ({ name: 'test', onChange: jest.fn(), onBlur: jest.fn() })),
-    handleSubmit: (fn: any) => (e: any) => {
+    register: vi.fn(() => ({ name: 'test', onChange: vi.fn(), onBlur: vi.fn() })),
+    handleSubmit: (fn: (data: unknown) => void) => (e: Event) => {
       e.preventDefault();
       fn(mockEvent);
     },
@@ -50,7 +50,7 @@ jest.mock('react-hook-form', () => ({
 
 describe('EventDetailsEditor', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('renders all form sections', () => {

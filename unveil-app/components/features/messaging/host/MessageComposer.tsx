@@ -1,22 +1,18 @@
 'use client';
 
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { FieldLabel } from '@/components/ui/Typography';
 import { cn } from '@/lib/utils';
-import type { Database } from '@/app/reference/supabase.types';
+import { GuestSelectionList } from './GuestSelectionList';
+import { SendConfirmationModal } from './SendConfirmationModal';
+import { useGuestSelection } from '@/hooks/messaging/useGuestSelection';
 import { sendMessageToEvent } from '@/lib/services/messaging';
 import { supabase } from '@/lib/supabase/client';
 
-type Guest = Database['public']['Tables']['event_guests']['Row'];
-
-type MessageType = 'announcement' | 'reminder';
-type RecipientFilterType = 'all' | 'pending_rsvp';
-
 interface MessageComposerProps {
   eventId: string;
-  guests: Guest[];
   onMessageSent?: () => void;
   onClear?: () => void;
   className?: string;
@@ -24,47 +20,64 @@ interface MessageComposerProps {
 
 export function MessageComposer({
   eventId,
-  guests,
   onMessageSent,
   onClear,
   className
 }: MessageComposerProps) {
   const [message, setMessage] = useState('');
-  const [messageType, setMessageType] = useState<MessageType>('announcement');
-  const [recipientFilter, setRecipientFilter] = useState<RecipientFilterType>('all');
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isRichTextMode, setIsRichTextMode] = useState(false);
-  const [isScheduled, setIsScheduled] = useState(false);
-  const [scheduledDate, setScheduledDate] = useState('');
-  const [scheduledTime, setScheduledTime] = useState('');
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+
+  // Use new guest selection hook instead of RSVP filters
+  const {
+    filteredGuests,
+    selectedGuestIds,
+    totalSelected,
+    willReceiveMessage,
+    toggleGuestSelection,
+    selectAllEligible,
+    clearAllSelection,
+    setSearchQuery,
+    loading: guestsLoading,
+    error: guestsError
+  } = useGuestSelection({ eventId });
 
   const characterCount = message.length;
   const maxCharacters = 1000;
   const isValid = message.trim().length > 0 && characterCount <= maxCharacters;
+  const canSend = isValid && selectedGuestIds.length > 0 && !isSending;
 
-  // Calculate recipient count based on filter
-  const recipientCount = useMemo(() => {
-    if (recipientFilter === 'pending_rsvp') {
-      return guests.filter(guest => !guest.rsvp_status || guest.rsvp_status === 'pending').length;
-    }
-    return guests.length;
-  }, [guests, recipientFilter]);
+  // Create preview data for confirmation modal
+  const previewData = {
+    guests: filteredGuests
+      .filter(guest => selectedGuestIds.includes(guest.id))
+      .map(guest => ({
+        id: guest.id,
+        displayName: guest.displayName,
+        tags: guest.guest_tags || [],
+        rsvpStatus: guest.declined_at ? 'declined' : 'pending',
+        hasPhone: guest.hasValidPhone
+      })),
+    totalCount: totalSelected,
+    validRecipientsCount: willReceiveMessage,
+    tagCounts: {},
+    rsvpStatusCounts: {}
+  };
 
-  // Message templates based on type
   const getPlaceholderText = () => {
-    if (messageType === 'reminder') {
-      return "Hi! Just a friendly reminder to RSVP for our upcoming event. We're excited to celebrate with you!";
-    }
     return "Write your message to guests...";
   };
 
-  const handleSend = async () => {
-    if (!isValid || isSending) return;
+  const handleSend = () => {
+    if (!canSend) return;
+    setShowConfirmationModal(true);
+  };
 
+  const handleConfirmedSend = async (options: { sendViaPush: boolean; sendViaSms: boolean }) => {
     setIsSending(true);
     setError(null);
+    setShowConfirmationModal(false);
 
     try {
       // Check authentication first
@@ -73,27 +86,32 @@ export function MessageComposer({
         throw new Error('You must be logged in to send messages. Please refresh the page and try again.');
       }
 
-      console.log('Sending message with authenticated user:', user.id);
+      console.log('Sending message with explicit recipient selection:', {
+        userId: user.id,
+        selectedCount: selectedGuestIds.length,
+        willReceive: willReceiveMessage,
+        sendOptions: options
+      });
 
-      // Convert our UI filter to the service format
-      const serviceRecipientFilter = recipientFilter === 'pending_rsvp' 
-        ? { type: 'rsvp_status' as const, rsvpStatuses: ['pending'] }
-        : { type: 'all' as const };
-
+      // Use explicit recipient list instead of filters
       const result = await sendMessageToEvent({
         eventId,
         content: message.trim(),
-        recipientFilter: serviceRecipientFilter,
-        messageType: messageType === 'reminder' ? 'announcement' : messageType,
+        recipientFilter: { type: 'explicit_selection' }, // Placeholder - server will use recipientEventGuestIds
+        recipientEventGuestIds: selectedGuestIds, // NEW: Explicit guest selection
+        messageType: 'announcement',
         sendVia: {
-          sms: false,
+          sms: options.sendViaSms,
           email: false,
-          push: true
+          push: options.sendViaPush
         }
       });
 
       if (!result.success) {
-        throw new Error(result.error?.message || 'Failed to send message');
+        const errorMessage = result.error && typeof result.error === 'object' && 'message' in result.error 
+          ? (result.error as { message: string }).message 
+          : 'Failed to send message';
+        throw new Error(errorMessage);
       }
 
       console.log('Message sent successfully:', result.data);
@@ -107,269 +125,164 @@ export function MessageComposer({
     }
   };
 
+  const handleCloseConfirmationModal = () => {
+    setShowConfirmationModal(false);
+  };
+
   const handleClear = () => {
     setMessage('');
-    setMessageType('announcement');
-    setRecipientFilter('all');
-    setIsScheduled(false);
-    setScheduledDate('');
-    setScheduledTime('');
-    setIsRichTextMode(false);
+    clearAllSelection(); // Clear guest selection
     setError(null);
     onClear?.();
   };
 
-  const handleUseTemplate = () => {
-    setMessage(getPlaceholderText());
-  };
 
-  // Rich text formatting functions
-  const insertFormatting = (format: 'bold' | 'italic' | 'linebreak') => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = message.substring(start, end);
-    
-    let formattedText = '';
-    let newCursorPos = start;
-
-    switch (format) {
-      case 'bold':
-        formattedText = selectedText ? `**${selectedText}**` : '**text**';
-        newCursorPos = selectedText ? end + 4 : start + 2;
-        break;
-      case 'italic':
-        formattedText = selectedText ? `*${selectedText}*` : '*text*';
-        newCursorPos = selectedText ? end + 2 : start + 1;
-        break;
-      case 'linebreak':
-        formattedText = '\n\n';
-        newCursorPos = start + 2;
-        break;
-    }
-
-    const newMessage = message.substring(0, start) + formattedText + message.substring(end);
-    setMessage(newMessage);
-    
-    // Set cursor position after state update
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(newCursorPos, newCursorPos);
-    }, 0);
-  };
 
   return (
-    <div className={cn('space-y-4', className)}>
-      {/* Message Type and Recipient Selector */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <FieldLabel className="text-gray-700 font-medium mb-2">
-            Message Type
-          </FieldLabel>
-          <select
-            value={messageType}
-            onChange={(e) => {
-              const newType = e.target.value as MessageType;
-              setMessageType(newType);
-              // Auto-select pending RSVPs for reminders
-              if (newType === 'reminder') {
-                setRecipientFilter('pending_rsvp');
-              }
-            }}
-            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-          >
-            <option value="announcement">📢 Announcement</option>
-            <option value="reminder">📧 RSVP Reminder</option>
-          </select>
-        </div>
+    <div className={cn('min-h-screen bg-gray-50', className)} style={{ minHeight: '100svh' }}>
+      {/* Mobile-optimized container */}
+      <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
         
-        <div>
-          <FieldLabel className="text-gray-700 font-medium mb-2">
-            Send To
-          </FieldLabel>
-          <select
-            value={recipientFilter}
-            onChange={(e) => setRecipientFilter(e.target.value as RecipientFilterType)}
-            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-          >
-            <option value="all">👥 All Guests ({guests.length})</option>
-            <option value="pending_rsvp">
-              ⏰ Pending RSVPs ({guests.filter(g => !g.rsvp_status || g.rsvp_status === 'pending').length})
-            </option>
-          </select>
-        </div>
-      </div>
 
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <FieldLabel className="text-gray-700 font-medium">
-            Message ({recipientCount} recipients)
-          </FieldLabel>
-          <div className="flex items-center gap-2">
-            {messageType === 'reminder' && (
-              <button
-                type="button"
-                onClick={handleUseTemplate}
-                className="text-sm text-purple-600 hover:text-purple-700 font-medium"
-              >
-                Use Template
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => setIsRichTextMode(!isRichTextMode)}
-              className={cn(
-                "text-xs px-2 py-1 rounded border transition-colors duration-200",
-                isRichTextMode 
-                  ? "bg-purple-100 text-purple-700 border-purple-300" 
-                  : "bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200"
-              )}
-            >
-              {isRichTextMode ? 'Plain Text' : 'Rich Text'}
-            </button>
-          </div>
-        </div>
 
-        {/* Rich Text Formatting Toolbar */}
-        {isRichTextMode && (
-          <div className="flex items-center gap-1 mb-2 p-2 bg-gray-50 rounded-lg border">
-            <button
-              type="button"
-              onClick={() => insertFormatting('bold')}
-              className="px-2 py-1 text-sm font-bold rounded hover:bg-gray-200 transition-colors duration-200"
-              title="Bold (**text**)"
-            >
-              B
-            </button>
-            <button
-              type="button"
-              onClick={() => insertFormatting('italic')}
-              className="px-2 py-1 text-sm italic rounded hover:bg-gray-200 transition-colors duration-200"
-              title="Italic (*text*)"
-            >
-              I
-            </button>
-            <button
-              type="button"
-              onClick={() => insertFormatting('linebreak')}
-              className="px-2 py-1 text-sm rounded hover:bg-gray-200 transition-colors duration-200"
-              title="Line break"
-            >
-              ¶
-            </button>
-            <div className="text-xs text-gray-500 ml-2">
-              Use **bold** and *italic* for emphasis
+        {/* Guest Selection */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          {guestsError ? (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="text-sm text-red-800">
+                ❌ {guestsError}
+              </div>
             </div>
-          </div>
-        )}
-        
-        <textarea
-          ref={textareaRef}
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          placeholder={isRichTextMode 
-            ? `${getPlaceholderText()}\n\nTip: Use **bold** for emphasis` 
-            : getPlaceholderText()
-          }
-          className={cn(
-            'w-full min-h-[120px] p-3 border rounded-lg resize-none transition-all duration-200',
-            'focus:ring-2 focus:ring-purple-500 focus:border-transparent',
-            'placeholder:text-gray-400',
-            error ? 'border-red-300 bg-red-50' : 'border-gray-300',
-            isRichTextMode && 'font-mono text-sm'
-          )}
-          maxLength={maxCharacters}
-        />
-        
-        <div className="flex items-center justify-between mt-2">
-          <div className="text-sm text-gray-500">
-            {characterCount}/{maxCharacters} characters
-          </div>
-          
-          {error && (
-            <div className="text-sm text-red-600">
-              {error}
-            </div>
-          )}
-        </div>
-      </div>
-
-              {/* Delivery Scheduling - Optional Feature */}
-        <div className="border-t pt-4">
-          <div className="flex items-center gap-3 mb-3">
-            <input
-              type="checkbox"
-              id="schedule-message"
-              checked={isScheduled}
-              onChange={(e) => setIsScheduled(e.target.checked)}
-              className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+          ) : (
+            <GuestSelectionList
+              guests={filteredGuests}
+              selectedGuestIds={selectedGuestIds}
+              onToggleGuest={toggleGuestSelection}
+              onSelectAll={selectAllEligible}
+              onClearAll={clearAllSelection}
+              onSearchChange={setSearchQuery}
+              totalSelected={totalSelected}
+              willReceiveMessage={willReceiveMessage}
+              loading={guestsLoading}
             />
-            <label htmlFor="schedule-message" className="text-sm font-medium text-gray-700">
-              📅 Schedule for later
-            </label>
+          )}
+        </div>
+
+        {/* Guest Tags - Coming Soon */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <FieldLabel className="text-gray-700 font-medium">
+              Guest Tags
+            </FieldLabel>
             <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-              MVP Feature
+              Coming Soon
             </span>
           </div>
-          
-          {isScheduled && (
-            <div className="grid grid-cols-2 gap-3 mb-4 p-3 bg-purple-50 rounded-lg border border-purple-200">
-              <div>
-                <label className="block text-sm font-medium text-purple-900 mb-1">
-                  Date
-                </label>
-                <input
-                  type="date"
-                  value={scheduledDate}
-                  onChange={(e) => setScheduledDate(e.target.value)}
-                  min={new Date().toISOString().split('T')[0]}
-                  className="w-full p-2 border border-purple-300 rounded focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-purple-900 mb-1">
-                  Time
-                </label>
-                <input
-                  type="time"
-                  value={scheduledTime}
-                  onChange={(e) => setScheduledTime(e.target.value)}
-                  className="w-full p-2 border border-purple-300 rounded focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
-                />
-              </div>
-              <div className="col-span-2 text-xs text-purple-700">
-                💡 Scheduled messages will be sent automatically at the specified time
-              </div>
+          <div className="text-sm text-gray-500 mb-3">
+            Tag-based targeting coming soon
+          </div>
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Select tags to target specific groups..."
+              disabled
+              className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-400 cursor-not-allowed text-base"
+            />
+            <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+              <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
             </div>
-          )}
+          </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <Button
-            onClick={handleSend}
-            disabled={!isValid || isSending || (isScheduled && (!scheduledDate || !scheduledTime))}
-            className="flex items-center gap-2"
-          >
-            {isSending ? (
-              <>
-                <LoadingSpinner size="sm" />
-                {isScheduled ? 'Scheduling...' : 'Sending...'}
-              </>
-            ) : (
-              isScheduled ? 'Schedule Message' : 'Send Now'
-            )}
-          </Button>
+        {/* Message Content */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <FieldLabel className="text-gray-700 font-medium mb-3">
+            Message Content
+          </FieldLabel>
+
+
           
-          <Button
-            variant="outline"
-            onClick={handleClear}
-            disabled={isSending}
-          >
-            Clear
-          </Button>
+          <textarea
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder={getPlaceholderText()}
+            className={cn(
+              'w-full min-h-[120px] p-4 border rounded-lg resize-none transition-all duration-200 text-base',
+              'focus:ring-2 focus:ring-purple-500 focus:border-transparent',
+              'placeholder:text-gray-400',
+              error && error.includes('❌') ? 'border-red-300 bg-red-50' : 'border-gray-300'
+            )}
+            maxLength={maxCharacters}
+          />
+          
+          <div className="flex items-center justify-between mt-3">
+            <div className="text-sm text-gray-500">
+              {characterCount}/{maxCharacters} characters
+            </div>
+            
+            {error && (
+              <div className={cn(
+                "text-sm",
+                error.includes('✅') ? 'text-green-600' : 'text-red-600'
+              )}>
+                {error}
+              </div>
+            )}
+          </div>
         </div>
+
+
+
+        {/* Send Actions - Sticky bottom on mobile */}
+        <div className="sticky bottom-0 bg-white border-t border-gray-200 p-4 -mx-4 -mb-6" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={handleSend}
+              disabled={!canSend}
+              className="flex-1 flex items-center justify-center gap-2 py-3 text-base"
+              size="lg"
+            >
+              {isSending ? (
+                <>
+                  <LoadingSpinner size="sm" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <span>Send Now</span>
+                  {willReceiveMessage > 0 && (
+                    <span className="bg-white/20 px-2 py-1 rounded text-sm">
+                      {willReceiveMessage}
+                    </span>
+                  )}
+                </>
+              )}
+            </Button>
+            
+            <Button
+              variant="outline"
+              onClick={handleClear}
+              disabled={isSending}
+              className="px-4 py-3"
+            >
+              Clear
+            </Button>
+          </div>
+        </div>
+
+        {/* Send Confirmation Modal */}
+        <SendConfirmationModal
+          isOpen={showConfirmationModal}
+          onClose={handleCloseConfirmationModal}
+          onConfirm={handleConfirmedSend}
+          previewData={previewData}
+          messageContent={message}
+          messageType="announcement"
+          isLoading={isSending}
+        />
+      </div>
     </div>
   );
 }

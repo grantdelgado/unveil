@@ -5,6 +5,7 @@ export { ValidationIcon, ValidationMessage } from './InputValidation';
 export { TextInput } from './TextInput';
 export { PhoneInput } from './PhoneInput';
 export { OTPInput } from './OTPInput';
+export { SearchInput } from './SearchInput';
 
 // Types
 export type { 

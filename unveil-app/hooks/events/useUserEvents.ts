@@ -14,7 +14,7 @@ interface UserEvent {
   event_date: string;
   location: string | null;
   user_role: string;
-  rsvp_status: string | null;
+
   is_primary_host: boolean;
 }
 
@@ -66,7 +66,7 @@ export function useUserEvents(): UseUserEventsReturn {
       event_date: event.event_date,
       location: event.location,
       user_role: event.role, // Map database 'role' to frontend 'user_role'
-      rsvp_status: event.rsvp_status,
+
       is_primary_host: event.is_host, // Map database 'is_host' to frontend 'is_primary_host'
     }));
 

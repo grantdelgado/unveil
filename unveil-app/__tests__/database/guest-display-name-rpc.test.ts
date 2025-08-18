@@ -136,12 +136,12 @@ describe('Guest Display Name RPC Function Integration', () => {
 
       expect(rpcError).toBeNull();
       expect(rpcData).toBeDefined();
-      expect(rpcData.length).toBe(1);
+      expect(rpcData?.length).toBe(1);
       
-      const guest = rpcData[0];
-      expect(guest.guest_display_name).toBe('Test User Full Name');
-      expect(guest.guest_name).toBe('Guest Import Name');
-      expect(guest.user_full_name).toBe('Test User Full Name');
+      const guest = rpcData?.[0];
+      expect(guest?.guest_display_name).toBe('Test User Full Name');
+      expect(guest?.guest_name).toBe('Guest Import Name');
+      expect(guest?.user_full_name).toBe('Test User Full Name');
     });
 
     it('should return guest_name when guest is linked to user without full_name', async () => {
@@ -190,11 +190,13 @@ describe('Guest Display Name RPC Function Integration', () => {
       expect(rpcError).toBeNull();
       expect(rpcData).toBeDefined();
       
-      const guest = rpcData.find(g => g.id === guestData.id);
-      expect(guest).toBeDefined();
-      expect(guest.guest_display_name).toBe('Guest Fallback Name');
-      expect(guest.guest_name).toBe('Guest Fallback Name');
-      expect(guest.user_full_name).toBeNull();
+      if (rpcData && guestData) {
+        const guest = rpcData.find(g => g.id === guestData.id);
+        expect(guest).toBeDefined();
+        expect(guest?.guest_display_name).toBe('Guest Fallback Name');
+        expect(guest?.guest_name).toBe('Guest Fallback Name');
+        expect(guest?.user_full_name).toBeNull();
+      }
 
       // Clean up the extra user
       await supabase
@@ -235,12 +237,14 @@ describe('Guest Display Name RPC Function Integration', () => {
       expect(rpcError).toBeNull();
       expect(rpcData).toBeDefined();
       
-      const guest = rpcData.find(g => g.id === guestData.id);
-      expect(guest).toBeDefined();
-      expect(guest.guest_display_name).toBe('Unlinked Guest Name');
-      expect(guest.guest_name).toBe('Unlinked Guest Name');
-      expect(guest.user_full_name).toBeNull();
-      expect(guest.user_id).toBeNull();
+      if (rpcData && guestData) {
+        const guest = rpcData.find(g => g.id === guestData.id);
+        expect(guest).toBeDefined();
+        expect(guest?.guest_display_name).toBe('Unlinked Guest Name');
+        expect(guest?.guest_name).toBe('Unlinked Guest Name');
+        expect(guest?.user_full_name).toBeNull();
+        expect(guest?.user_id).toBeNull();
+      }
     });
 
     it('should return "Unnamed Guest" when both guest_name and user full_name are null', async () => {
@@ -275,11 +279,13 @@ describe('Guest Display Name RPC Function Integration', () => {
       expect(rpcError).toBeNull();
       expect(rpcData).toBeDefined();
       
-      const guest = rpcData.find(g => g.id === guestData.id);
-      expect(guest).toBeDefined();
-      expect(guest.guest_display_name).toBe('Unnamed Guest');
-      expect(guest.guest_name).toBeNull();
-      expect(guest.user_full_name).toBeNull();
+      if (rpcData && guestData) {
+        const guest = rpcData.find(g => g.id === guestData.id);
+        expect(guest).toBeDefined();
+        expect(guest?.guest_display_name).toBe('Unnamed Guest');
+        expect(guest?.guest_name).toBeNull();
+        expect(guest?.user_full_name).toBeNull();
+      }
     });
   });
 
@@ -369,7 +375,7 @@ describe('Guest Display Name RPC Function Integration', () => {
 
       expect(rpcError).toBeNull();
       expect(rpcData).toBeDefined();
-      expect(rpcData.length).toBeGreaterThan(0);
+      expect(rpcData?.length).toBeGreaterThan(0);
     });
   });
 

@@ -43,15 +43,15 @@ export async function clearCorruptedAuthState(): Promise<void> {
 /**
  * Check if an error is related to invalid refresh tokens
  */
-export function isRefreshTokenError(error: any): boolean {
+export function isRefreshTokenError(error: unknown): boolean {
   if (!error) return false;
   
-  const message = error.message || error.toString();
+  const message = error instanceof Error ? error.message : String(error);
   return (
     message.includes('Invalid Refresh Token') ||
     message.includes('Refresh Token Not Found') ||
     message.includes('refresh_token_not_found') ||
     message.includes('invalid_grant') ||
-    error.status === 400
+    (error && typeof error === 'object' && 'status' in error && (error as { status: number }).status === 400)
   );
 }

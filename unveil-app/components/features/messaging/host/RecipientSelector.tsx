@@ -29,11 +29,9 @@ export function RecipientSelector({
   const [activeTab, setActiveTab] = useState<'rsvp' | 'tags' | 'combined'>('rsvp');
   const { tags: availableTags, tagCounts, loading: tagsLoading } = useAvailableTags(eventId);
 
-  // RSVP status options with display names and emojis
+  // RSVP-Lite status options (attending/declined only)
   const rsvpOptions = [
     { value: 'attending', label: 'Attending', emoji: '✅', color: 'text-green-700' },
-    { value: 'pending', label: 'Pending', emoji: '⏰', color: 'text-yellow-700' },
-    { value: 'maybe', label: 'Maybe', emoji: '🤔', color: 'text-blue-700' },
     { value: 'declined', label: 'Declined', emoji: '❌', color: 'text-red-700' }
   ];
 
@@ -275,7 +273,7 @@ export function RecipientSelector({
           {activeTab === 'rsvp' && (
             <div className="space-y-3">
               <div className="text-xs text-gray-500">
-                Select one or more RSVP statuses
+                Select attendance status
               </div>
               
               {/* Mobile-optimized RSVP selection */}
@@ -315,6 +313,29 @@ export function RecipientSelector({
                   </div>
                 </div>
               )}
+
+              {/* RSVP-Lite: Include Declined Toggle */}
+              <div className="pt-3 border-t border-gray-200">
+                <label className="flex items-center space-x-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={filter.includeDeclined || false}
+                    onChange={(e) => onFilterChange({
+                      ...filter,
+                      includeDeclined: e.target.checked
+                    })}
+                    className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                  />
+                  <div>
+                    <div className="text-sm font-medium text-gray-700">
+                      Include declined guests
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      Send to guests who marked &quot;can&apos;t make it&quot;
+                    </div>
+                  </div>
+                </label>
+              </div>
             </div>
           )}
 

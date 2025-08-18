@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { formatEventDate } from '@/lib/utils';
 import { CardContainer } from '@/components/ui';
+
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import type { Database } from '@/app/reference/supabase.types';
@@ -37,21 +38,25 @@ export function EventSummaryCard({ event, className }: EventSummaryCardProps) {
       try {
         const { data, error } = await supabase
           .from('event_guests')
-          .select('rsvp_status')
+          .select('declined_at')
           .eq('event_id', event.id);
 
         if (error) throw error;
 
         const stats = data?.reduce((acc, guest) => {
-          const status = guest.rsvp_status || 'pending';
-          acc[status as keyof Omit<GuestStats, 'total'>] = (acc[status as keyof Omit<GuestStats, 'total'>] || 0) + 1;
+          // RSVP-Lite logic: attending = not declined
+          if (guest.declined_at) {
+            acc.declined += 1;
+          } else {
+            acc.attending += 1;
+          }
           acc.total += 1;
           return acc;
         }, {
           attending: 0,
           declined: 0,
-          pending: 0,
-          maybe: 0,
+          pending: 0,  // Always 0 in RSVP-Lite
+          maybe: 0,    // Always 0 in RSVP-Lite
           total: 0,
         }) || { attending: 0, declined: 0, pending: 0, maybe: 0, total: 0 };
 
@@ -66,9 +71,9 @@ export function EventSummaryCard({ event, className }: EventSummaryCardProps) {
     fetchGuestStats();
   }, [event.id]);
 
-  const attendancePercentage = guestStats.total > 0 
-    ? Math.round((guestStats.attending / guestStats.total) * 100) 
-    : 0;
+
+
+
 
   return (
     <CardContainer className={cn("bg-white border border-gray-200 shadow-sm", className)}>
@@ -103,13 +108,15 @@ export function EventSummaryCard({ event, className }: EventSummaryCardProps) {
           </div>
         </div>
 
-        {/* RSVP Summary */}
+        {/* Guest Attendance */}
         <div className="border-t border-gray-200 pt-4">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-base font-semibold text-gray-900">RSVP Status</h3>
+            <h3 className="text-base font-semibold text-gray-900">
+              Guest Attendance
+            </h3>
             {!loading && guestStats.total > 0 && (
               <span className="text-sm font-medium text-gray-600">
-                {attendancePercentage}% confirmed
+                {guestStats.attending} attending
               </span>
             )}
           </div>
@@ -131,7 +138,7 @@ export function EventSummaryCard({ event, className }: EventSummaryCardProps) {
             </div>
           ) : (
             <>
-              {/* Progress Bar - thinner */}
+              {/* Progress Bar - RSVP-Lite format */}
               <div className="w-full bg-gray-200 rounded-full h-2 mb-3 overflow-hidden">
                 <div className="h-full flex">
                   {guestStats.attending > 0 && (
@@ -140,23 +147,18 @@ export function EventSummaryCard({ event, className }: EventSummaryCardProps) {
                       style={{ width: `${(guestStats.attending / guestStats.total) * 100}%` }}
                     />
                   )}
-                  {guestStats.maybe > 0 && (
-                    <div 
-                      className="bg-yellow-500" 
-                      style={{ width: `${(guestStats.maybe / guestStats.total) * 100}%` }}
-                    />
-                  )}
                   {guestStats.declined > 0 && (
                     <div 
                       className="bg-red-500" 
                       style={{ width: `${(guestStats.declined / guestStats.total) * 100}%` }}
                     />
                   )}
+                  {/* RSVP-Lite: Remove maybe/pending sections */}
                 </div>
               </div>
 
-              {/* Status Breakdown - more compact */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              {/* Status Breakdown - RSVP-Lite format */}
+              <div className="grid grid-cols-2 gap-2">
                 <div className="text-center p-2 bg-green-50 border border-green-200 rounded-lg">
                   <div className="text-base font-bold text-green-700 mb-0.5">
                     {guestStats.attending}
@@ -166,36 +168,14 @@ export function EventSummaryCard({ event, className }: EventSummaryCardProps) {
                   </div>
                 </div>
                 
-                <div className="text-center p-2 bg-gray-50 border border-gray-200 rounded-lg">
-                  <div className="text-base font-bold text-gray-700 mb-0.5">
-                    {guestStats.pending}
+                <div className="text-center p-2 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="text-base font-bold text-red-700 mb-0.5">
+                    {guestStats.declined}
                   </div>
-                  <div className="text-xs font-medium text-gray-600">
-                    Pending
+                  <div className="text-xs font-medium text-red-600">
+                    Can&apos;t make it
                   </div>
                 </div>
-                
-                {guestStats.maybe > 0 && (
-                  <div className="text-center p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <div className="text-base font-bold text-yellow-700 mb-0.5">
-                      {guestStats.maybe}
-                    </div>
-                    <div className="text-xs font-medium text-yellow-600">
-                      Maybe
-                    </div>
-                  </div>
-                )}
-                
-                {guestStats.declined > 0 && (
-                  <div className="text-center p-2 bg-red-50 border border-red-200 rounded-lg">
-                    <div className="text-base font-bold text-red-700 mb-0.5">
-                      {guestStats.declined}
-                    </div>
-                    <div className="text-xs font-medium text-red-600">
-                      Declined
-                    </div>
-                  </div>
-                )}
               </div>
             </>
           )}

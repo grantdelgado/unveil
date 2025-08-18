@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body: SendMessageRequest = await request.json();
-    const { eventId, content, messageType, recipientFilter, sendVia } = body;
+    const { eventId, content, messageType, recipientFilter, recipientEventGuestIds, sendVia } = body;
 
     // Validation
     if (!content?.trim()) {
@@ -63,32 +63,67 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Resolve recipients based on filter
+    // Resolve recipients - prioritize explicit selection over filters
     let guestIds: string[] = [];
     
-    if (recipientFilter.type === 'all') {
+    if (recipientEventGuestIds && recipientEventGuestIds.length > 0) {
+      // NEW: Use explicit recipient list when provided
+      console.log('Using explicit recipient selection:', recipientEventGuestIds.length);
+      
+      // Validate that all provided guest IDs belong to this event and filter out opted-out guests
+      const { data: validGuests, error: validationError } = await supabase
+        .from('event_guests')
+        .select('id, sms_opt_out')
+        .eq('event_id', eventId)
+        .in('id', recipientEventGuestIds);
+      
+      if (validationError) throw validationError;
+      
+      // Filter out opted-out guests as a defensive measure
+      const eligibleGuests = validGuests?.filter(guest => !guest.sms_opt_out) || [];
+      
+      if (eligibleGuests.length === 0) {
+        return NextResponse.json(
+          { error: 'No eligible recipients found (all selected guests have opted out of SMS)' },
+          { status: 400 }
+        );
+      }
+      
+      guestIds = eligibleGuests.map(guest => guest.id);
+      
+      // Log if any opted-out guests were filtered out
+      const filteredCount = recipientEventGuestIds.length - eligibleGuests.length;
+      if (filteredCount > 0) {
+        logger.api(`Filtered out ${filteredCount} opted-out guests from message delivery`);
+      }
+    } else if (recipientFilter.type === 'all') {
+      // Legacy: All guests (eligible = declined_at IS NULL and not opted out)
       const { data: guests, error: guestsError } = await supabase
         .from('event_guests')
         .select('id')
         .eq('event_id', eventId)
+        .is('declined_at', null) // RSVP-Lite: Only eligible guests
+        .eq('sms_opt_out', false) // Exclude opted-out guests
         .not('phone', 'is', null);
       
       if (guestsError) throw guestsError;
       guestIds = guests?.map(g => g.id) || [];
     } else if (recipientFilter.type === 'individual' && recipientFilter.guestIds) {
+      // Legacy: Individual selection
       guestIds = recipientFilter.guestIds;
     } else {
-      // Use RPC function for complex filtering
+      // Legacy: Use RPC function for complex filtering (deprecated)
       const { data: recipients, error: recipientsError } = await supabase.rpc('resolve_message_recipients', {
         msg_event_id: eventId,
         target_guest_ids: recipientFilter.guestIds || undefined,
         target_tags: recipientFilter.tags || undefined,
         require_all_tags: recipientFilter.requireAllTags || false,
-        target_rsvp_statuses: recipientFilter.rsvpStatuses || undefined
+        target_rsvp_statuses: recipientFilter.rsvpStatuses || undefined,
+        include_declined: recipientFilter.includeDeclined || false
       });
 
       if (recipientsError) throw recipientsError;
-      guestIds = recipients?.map((r: any) => r.guest_id) || [];
+      guestIds = recipients?.map((r: Record<string, unknown>) => r.guest_id as string) || [];
     }
 
     if (guestIds.length === 0) {
@@ -120,25 +155,38 @@ export async function POST(request: NextRequest) {
     // Initialize delivery tracking variables
     let smsDelivered = 0;
     let smsFailed = 0;
-    let deliveryRecords: any[] = [];
+    let deliveryRecords: Record<string, unknown>[] = [];
 
     // SMS Delivery
     if (sendVia.sms && guestIds.length > 0) {
       try {
-        // Fetch guest phone numbers
+        // Fetch guest phone numbers - check both guest.phone and users.phone for authenticated users
+        // Also filter out opted-out guests as an additional defensive measure
         const { data: guestsWithPhones, error: phoneError } = await supabase
           .from('event_guests')
-          .select('id, phone, guest_name')
+          .select(`
+            id, 
+            phone, 
+            guest_name,
+            sms_opt_out,
+            users (
+              phone
+            )
+          `)
           .in('id', guestIds)
-          .not('phone', 'is', null)
-          .neq('phone', '');
+          .eq('sms_opt_out', false); // Defensive filter: only non-opted-out guests
 
         if (phoneError) {
           logger.apiError('Error fetching guest phone numbers', phoneError);
         } else if (guestsWithPhones && guestsWithPhones.length > 0) {
-          // Prepare SMS messages
-          const smsMessages = guestsWithPhones.map(guest => ({
-            to: guest.phone as string,
+          // Prepare SMS messages - use effective phone number (users.phone for authenticated, guest.phone for non-authenticated)
+          const validGuestsWithPhones = guestsWithPhones.filter(guest => {
+            const effectivePhone = (guest.users as { phone?: string })?.phone || guest.phone;
+            return effectivePhone && effectivePhone.trim();
+          });
+
+          const smsMessages = validGuestsWithPhones.map(guest => ({
+            to: ((guest.users as { phone?: string })?.phone || guest.phone) as string,
             message: content,
             eventId: eventId,
             guestId: guest.id,
@@ -159,17 +207,17 @@ export async function POST(request: NextRequest) {
             messageId: messageData.id
           });
 
-          // Create delivery records for all guests (regardless of SMS success)
-          deliveryRecords = guestsWithPhones.map(guest => ({
+          // Create delivery records for all guests with valid phone numbers
+          deliveryRecords = validGuestsWithPhones.map(guest => ({
             message_id: messageData.id,
             guest_id: guest.id,
-            phone_number: guest.phone,
+            phone_number: ((guest.users as { phone?: string })?.phone || guest.phone) as string,
             sms_status: 'sent', // Will be updated by webhook
             push_status: 'not_applicable',
             email_status: 'not_applicable'
           }));
         }
-      } catch (smsError: any) {
+      } catch (smsError: unknown) {
         logger.apiError('SMS delivery failed', smsError);
         smsFailed = guestIds.length;
       }
@@ -216,15 +264,16 @@ export async function POST(request: NextRequest) {
       }
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to send message';
     logger.apiError('Error sending message', {
-      error: error.message,
-      stack: error.stack
+      error: errorMessage,
+      stack: error instanceof Error ? error.stack : undefined
     });
     
     return NextResponse.json({
       success: false,
-      error: error.message || 'Failed to send message'
+      error: errorMessage
     }, { status: 500 });
   }
 }

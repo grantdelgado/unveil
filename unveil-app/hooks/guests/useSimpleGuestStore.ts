@@ -9,7 +9,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { logger } from '@/lib/logger';
 import { createEventRequestManager } from '@/lib/utils/requestThrottling';
-import { getGuestStatusCounts, normalizeRSVPStatus, type RSVPStatus } from '@/lib/types/rsvp';
+import { calculateAttendanceCounts } from '@/lib/guests/attendance';
 
 // Simplified guest type
 interface SimpleGuest {
@@ -19,12 +19,15 @@ interface SimpleGuest {
   guest_name: string | null;
   guest_email: string | null;
   phone: string;
-  rsvp_status: RSVPStatus | null;
+
   notes: string | null;
   guest_tags: string[] | null;
   role: string;
   created_at: string | null;
   updated_at: string | null;
+  // RSVP-Lite fields
+  declined_at: string | null;
+  decline_reason: string | null;
   /** Computed display name from COALESCE(users.full_name, event_guests.guest_name) */
   guest_display_name: string;
   users?: {
@@ -39,11 +42,7 @@ interface SimpleGuest {
 interface SimpleGuestStatusCounts {
   total: number;
   attending: number;
-  maybe: number;
   declined: number;
-  pending: number;
-  confirmed: number;
-  responded: number;
 }
 
 interface SimpleGuestStoreReturn {
@@ -74,15 +73,11 @@ export function useSimpleGuestStore(eventId: string): SimpleGuestStoreReturn {
       return {
         total: 0,
         attending: 0,
-        maybe: 0,
         declined: 0,
-        pending: 0,
-        confirmed: 0,
-        responded: 0,
       };
     }
 
-    return getGuestStatusCounts(guestsList);
+    return calculateAttendanceCounts(guestsList);
   }, []);
 
   // Fetch guests from database (core function without throttling)
@@ -122,12 +117,15 @@ export function useSimpleGuestStore(eventId: string): SimpleGuestStoreReturn {
         guest_name: guest.guest_name,
         guest_email: guest.guest_email,
         phone: guest.phone || '',
-        rsvp_status: normalizeRSVPStatus(guest.rsvp_status),
+
         notes: guest.notes,
         guest_tags: guest.guest_tags,
         role: guest.role,
         created_at: guest.created_at,
         updated_at: guest.updated_at,
+        // RSVP-Lite fields
+        declined_at: guest.declined_at,
+        decline_reason: guest.decline_reason,
         guest_display_name: guest.guest_display_name,
         users: guest.user_id ? {
           id: guest.user_id,

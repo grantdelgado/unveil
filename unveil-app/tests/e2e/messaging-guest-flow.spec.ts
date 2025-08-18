@@ -130,7 +130,7 @@ test.describe('Guest Messaging Flow', () => {
       // Open host page in another browser context
       const hostPage = await browserContext.newPage();
       await authenticateAsHost(hostPage, context.hostUserId);
-      await hostPage.goto(`/host/events/${context.eventId}/messages/compose`);
+      await hostPage.goto(`/host/events/${context.eventId}/messages`);
       
       // Send real-time message from host
       const realtimeContent = 'Just posted: Updated timeline for tomorrow\'s events!';
@@ -352,7 +352,7 @@ test.describe('Guest Messaging Flow', () => {
       await authenticateAsGuest(page, context.guest1Phone);
       
       // Try to access host compose page
-      await page.goto(`/host/events/${context.eventId}/messages/compose`);
+      await page.goto(`/host/events/${context.eventId}/messages`);
       
       // Should be redirected or show access denied
       await expect(page.getByText(/access denied|not authorized|404/i)).toBeVisible();

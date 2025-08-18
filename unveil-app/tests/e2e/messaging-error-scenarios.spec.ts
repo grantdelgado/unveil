@@ -35,7 +35,7 @@ test.describe('Messaging Error Scenarios', () => {
   test.describe('SMS Delivery Failures', () => {
     test('handles SMS delivery failure with proper error tracking', async ({ page }) => {
       await authenticateAsHost(page, context.hostUserId);
-      await page.goto(`/host/events/${context.eventId}/messages/compose`);
+      await page.goto(`/host/events/${context.eventId}/messages`);
       
       // Compose message to invalid phone number
       const failureTestMessage = 'This message should fail SMS delivery due to invalid phone';
@@ -73,7 +73,7 @@ test.describe('Messaging Error Scenarios', () => {
       const testMessage = 'Testing push failure fallback to SMS';
       
       await authenticateAsHost(page, context.hostUserId);
-      await page.goto(`/host/events/${context.eventId}/messages/compose`);
+      await page.goto(`/host/events/${context.eventId}/messages`);
       
       await page.getByLabel(/message content/i).fill(testMessage);
       await page.getByRole('button', { name: /send now/i }).click();
@@ -135,7 +135,7 @@ test.describe('Messaging Error Scenarios', () => {
     test('SMS rate limiting is handled gracefully', async ({ page }) => {
       // Send multiple messages rapidly to trigger rate limiting
       await authenticateAsHost(page, context.hostUserId);
-      await page.goto(`/host/events/${context.eventId}/messages/compose`);
+      await page.goto(`/host/events/${context.eventId}/messages`);
       
       const rapidMessages = 5;
       for (let i = 0; i < rapidMessages; i++) {
@@ -165,7 +165,7 @@ test.describe('Messaging Error Scenarios', () => {
   test.describe('Network Interruption Handling', () => {
     test('handles network failure during message composition', async ({ page }) => {
       await authenticateAsHost(page, context.hostUserId);
-      await page.goto(`/host/events/${context.eventId}/messages/compose`);
+      await page.goto(`/host/events/${context.eventId}/messages`);
       
       // Fill message
       await page.getByLabel(/message content/i).fill('Network interruption test message');
@@ -199,7 +199,7 @@ test.describe('Messaging Error Scenarios', () => {
       
       // Send initial message to verify connection
       await authenticateAsHost(page, context.hostUserId);
-      await page.goto(`/host/events/${context.eventId}/messages/compose`);
+      await page.goto(`/host/events/${context.eventId}/messages`);
       
       const beforeInterruptionMessage = 'Before network interruption';
       await page.getByLabel(/message content/i).fill(beforeInterruptionMessage);
@@ -284,7 +284,7 @@ test.describe('Messaging Error Scenarios', () => {
 
     test('validates message content before sending', async ({ page }) => {
       await authenticateAsHost(page, context.hostUserId);
-      await page.goto(`/host/events/${context.eventId}/messages/compose`);
+      await page.goto(`/host/events/${context.eventId}/messages`);
       
       // Try to send empty message
       await page.getByRole('button', { name: /send now/i }).click();
@@ -317,14 +317,14 @@ test.describe('Messaging Error Scenarios', () => {
       await expect(page.getByText(/not found|access denied|unauthorized/i)).toBeVisible();
       
       // Try to send message to unauthorized event
-      await page.goto(`/host/events/${unauthorizedEventId}/messages/compose`);
+      await page.goto(`/host/events/${unauthorizedEventId}/messages`);
       
       await expect(page.getByText(/not found|access denied|unauthorized/i)).toBeVisible();
     });
 
     test('validates tag targeting with non-existent tags', async ({ page }) => {
       await authenticateAsHost(page, context.hostUserId);
-      await page.goto(`/host/events/${context.eventId}/messages/compose`);
+      await page.goto(`/host/events/${context.eventId}/messages`);
       
       await page.getByLabel(/message content/i).fill('Tag targeting test');
       
@@ -552,7 +552,7 @@ test.describe('Messaging Error Scenarios', () => {
       await expect(page.getByText(/analytics.*unavailable|unable to load analytics/i)).toBeVisible({ timeout: 10000 });
       
       // Basic message functionality should still work
-      await page.goto(`/host/events/${context.eventId}/messages/compose`);
+      await page.goto(`/host/events/${context.eventId}/messages`);
       
       await page.getByLabel(/message content/i).fill('Graceful degradation test');
       await page.getByRole('button', { name: /send now/i }).click();
@@ -562,7 +562,7 @@ test.describe('Messaging Error Scenarios', () => {
 
     test('user-friendly error messages for common scenarios', async ({ page }) => {
       await authenticateAsHost(page, context.hostUserId);
-      await page.goto(`/host/events/${context.eventId}/messages/compose`);
+      await page.goto(`/host/events/${context.eventId}/messages`);
       
       // Test various validation errors
       const errorScenarios = [

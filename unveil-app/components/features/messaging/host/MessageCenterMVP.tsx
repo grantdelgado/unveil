@@ -29,8 +29,11 @@ export function MessageCenterMVP({
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  // Recipient filtering state
-  const [recipientFilter, setRecipientFilter] = useState<RecipientFilter>({ type: 'all' });
+  // Recipient filtering state - default to eligible guests only (declined excluded)
+  const [recipientFilter, setRecipientFilter] = useState<RecipientFilter>({ 
+    type: 'all', 
+    includeDeclined: false 
+  });
   
   // Confirmation modal state
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
@@ -100,7 +103,7 @@ export function MessageCenterMVP({
       // Success - clear form and notify parent
       setMessage('');
       setError(null);
-      setRecipientFilter({ type: 'all' });
+      setRecipientFilter({ type: 'all', includeDeclined: false });
       onMessageSent?.();
       
       // Show success message briefly
@@ -139,57 +142,16 @@ export function MessageCenterMVP({
           Select Recipients
         </h2>
         
-        {/* RSVP Status Filter */}
+        {/* Guest Selection replaced RSVP Status Filter */}
         <div>
           <h3 className="text-sm font-medium text-gray-700 mb-3">
-            RSVP Status
+            Select Recipients
           </h3>
-          <div className="grid grid-cols-2 gap-2">
-            {[
-              { value: 'attending', label: 'Attending', emoji: '✅' },
-              { value: 'pending', label: 'Pending', emoji: '⏰' },
-              { value: 'maybe', label: 'Maybe', emoji: '🤔' },
-              { value: 'declined', label: 'Declined', emoji: '❌' }
-            ].map((option) => (
-              <label
-                key={option.value}
-                className={cn(
-                  "flex items-center space-x-3 p-3 cursor-pointer rounded-lg border-2 transition-all",
-                  "hover:bg-gray-50 focus-within:ring-2 focus-within:ring-purple-500",
-                  recipientFilter.rsvpStatuses?.includes(option.value)
-                    ? "border-purple-300 bg-purple-50"
-                    : "border-gray-200 bg-white"
-                )}
-              >
-                <input
-                  type="checkbox"
-                  checked={recipientFilter.rsvpStatuses?.includes(option.value) || false}
-                  onChange={(e) => {
-                    const currentStatuses = recipientFilter.rsvpStatuses || [];
-                    let newStatuses: string[];
-                    
-                    if (e.target.checked) {
-                      newStatuses = [...currentStatuses, option.value];
-                    } else {
-                      newStatuses = currentStatuses.filter(s => s !== option.value);
-                    }
-
-                    const newFilter: RecipientFilter = {
-                      ...recipientFilter,
-                      type: newStatuses.length === 0 && (!recipientFilter.tags?.length) ? 'all' : 'combined',
-                      rsvpStatuses: newStatuses.length > 0 ? newStatuses : undefined
-                    };
-
-                    handleFilterChange(newFilter);
-                  }}
-                  className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
-                />
-                <span className="text-lg">{option.emoji}</span>
-                <span className="text-sm font-medium text-gray-700">
-                  {option.label}
-                </span>
-              </label>
-            ))}
+          <div className="bg-stone-50 border border-stone-200 rounded-lg p-3">
+            <div className="text-xs text-stone-600">
+              Individual guest selection now available in the new composer interface.
+              This MVP version defaults to all eligible guests (declined guests excluded).
+            </div>
           </div>
         </div>
 

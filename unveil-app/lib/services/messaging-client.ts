@@ -52,12 +52,13 @@ export async function resolveMessageRecipients(
       target_guest_ids: filter.guestIds || undefined,
       target_tags: filter.tags || undefined,
       require_all_tags: filter.requireAllTags || false,
-      target_rsvp_statuses: filter.rsvpStatuses || undefined
+      target_rsvp_statuses: filter.rsvpStatuses || undefined, // Will be deprecated post-cutover
+      include_declined: filter.includeDeclined || false
     });
 
     if (error) throw error;
 
-    const guestIds = recipients?.map((r: any) => r.guest_id) || [];
+    const guestIds = recipients?.map((r: Record<string, unknown>) => r.guest_id as string) || [];
     return { guestIds, recipientCount: guestIds.length };
   } catch (error) {
     console.error('Error resolving message recipients:', error);
@@ -68,16 +69,17 @@ export async function resolveMessageRecipients(
 /**
  * Enhanced send message service - now uses dedicated API route for server-side processing
  * This ensures proper RLS policy handling and delivery record creation
+ * Supports both legacy filters and new explicit recipient selection
  */
 export async function sendMessageToEvent(request: SendMessageRequest, retryCount = 0): Promise<{
   success: boolean;
   data?: {
-    message: any;
+    message: Record<string, unknown>;
     recipientCount: number;
     guestIds: string[];
     deliveryChannels: string[];
   };
-  error?: any;
+  error?: Record<string, unknown>;
 }> {
   const MAX_RETRIES = 1;
   
@@ -99,6 +101,8 @@ export async function sendMessageToEvent(request: SendMessageRequest, retryCount
       eventId: request.eventId,
       messageType: request.messageType,
       recipientFilter: request.recipientFilter,
+      recipientEventGuestIds: request.recipientEventGuestIds,
+      explicitSelection: !!request.recipientEventGuestIds,
       sendVia: request.sendVia
     });
 
@@ -125,11 +129,17 @@ export async function sendMessageToEvent(request: SendMessageRequest, retryCount
         return sendMessageToEvent(request, retryCount + 1);
       }
       
-      throw new Error(result.error || `HTTP ${response.status}: Failed to send message`);
+      const errorMsg = (result.error && typeof result.error === 'object' && 'message' in result.error) 
+        ? (result.error as { message: string }).message 
+        : `HTTP ${response.status}: Failed to send message`;
+      throw new Error(errorMsg);
     }
 
     if (!result.success) {
-      throw new Error(result.error || 'Failed to send message');
+      const errorMsg = (result.error && typeof result.error === 'object' && 'message' in result.error) 
+        ? (result.error as { message: string }).message 
+        : 'Failed to send message';
+      throw new Error(errorMsg);
     }
 
     console.log(`Message sent successfully via API:`, {
@@ -141,9 +151,9 @@ export async function sendMessageToEvent(request: SendMessageRequest, retryCount
 
     return result;
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error sending message:', {
-      error: error.message,
+      error: error instanceof Error ? error.message : String(error),
       eventId: request.eventId,
       recipientFilter: request.recipientFilter,
       retryCount
@@ -151,7 +161,7 @@ export async function sendMessageToEvent(request: SendMessageRequest, retryCount
     
     return { 
       success: false, 
-      error: error instanceof Error ? error : new Error('Failed to send message') 
+      error: { message: error instanceof Error ? error.message : 'Failed to send message' } 
     };
   }
 }
@@ -194,8 +204,8 @@ export async function getScheduledMessages(filters: ScheduledMessageFilters) {
  */
 export async function createScheduledMessage(messageData: CreateScheduledMessageData): Promise<{
   success: boolean;
-  data?: any;
-  error?: any;
+  data?: Record<string, unknown>;
+  error?: Record<string, unknown>;
 }> {
   try {
     const currentUser = await supabase.auth.getUser();
@@ -234,6 +244,10 @@ export async function createScheduledMessage(messageData: CreateScheduledMessage
         break;
       case 'individual':
         targetGuestIds = recipientFilter.guestIds || [];
+        break;
+      case 'explicit_selection':
+        // NEW: Use explicit guest selection
+        targetGuestIds = recipientFilter.selectedGuestIds || [];
         break;
       case 'rsvp_status':
         // For RSVP filtering, we'll store as tags for now
@@ -291,11 +305,11 @@ export async function createScheduledMessage(messageData: CreateScheduledMessage
     });
 
     return { success: true, data };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error creating scheduled message:', error);
     return { 
       success: false, 
-      error: error instanceof Error ? error : new Error('Failed to create scheduled message') 
+      error: { message: error instanceof Error ? error.message : 'Failed to create scheduled message' } 
     };
   }
 }
@@ -305,7 +319,7 @@ export async function createScheduledMessage(messageData: CreateScheduledMessage
  */
 export async function cancelScheduledMessage(messageId: string): Promise<{
   success: boolean;
-  error?: any;
+  error?: Record<string, unknown>;
 }> {
   try {
     const { error } = await supabase
@@ -318,11 +332,11 @@ export async function cancelScheduledMessage(messageId: string): Promise<{
 
     console.log(`Scheduled message cancelled: ${messageId}`);
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error cancelling scheduled message:', error);
     return { 
       success: false, 
-      error: error instanceof Error ? error : new Error('Failed to cancel scheduled message') 
+      error: { message: error instanceof Error ? error.message : 'Failed to cancel scheduled message' } 
     };
   }
 }
@@ -332,7 +346,7 @@ export async function cancelScheduledMessage(messageId: string): Promise<{
  */
 export async function deleteScheduledMessage(messageId: string): Promise<{
   success: boolean;
-  error?: any;
+  error?: Record<string, unknown>;
 }> {
   try {
     const { error } = await supabase
@@ -345,11 +359,11 @@ export async function deleteScheduledMessage(messageId: string): Promise<{
 
     console.log(`Scheduled message deleted: ${messageId}`);
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error deleting scheduled message:', error);
     return { 
       success: false, 
-      error: error instanceof Error ? error : new Error('Failed to delete scheduled message') 
+      error: { message: error instanceof Error ? error.message : 'Failed to delete scheduled message' } 
     };
   }
 }

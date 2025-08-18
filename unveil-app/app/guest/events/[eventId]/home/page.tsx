@@ -7,7 +7,14 @@ import { useEventWithGuest } from '@/hooks/events';
 import { formatEventDate } from '@/lib/utils/date';
 
 import { GuestMessaging } from '@/components/features/messaging';
-import { PhotoAlbumButton, GuestRSVPBadge, GuestRSVPSection } from '@/components/features/guest';
+import { 
+  PhotoAlbumButton, 
+  CantMakeItButton,
+  DeclineEventModal,
+  DeclineBanner
+} from '@/components/features/guest';
+import { useGuestDecline } from '@/hooks/guests';
+
 import { throttle } from '@/lib/utils/throttle';
 import {
   PageWrapper,
@@ -29,7 +36,11 @@ export default function GuestEventHomePage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isUpdatingRSVP, setIsUpdatingRSVP] = useState(false);
+
+  
+  // RSVP-Lite state
+  const [showDeclineModal, setShowDeclineModal] = useState(false);
+  const [showDeclineBanner, setShowDeclineBanner] = useState(false);
 
   // Get session first
   useEffect(() => {
@@ -72,24 +83,44 @@ export default function GuestEventHomePage() {
   }, [throttledScrollHandler]);
 
   // Use the custom hook to fetch event and guest data
-  const { event, guestInfo, loading, error, updateRSVP } =
+  const { event, guestInfo, loading, error } =
     useEventWithGuest(eventId, currentUserId);
 
-  const handleRSVPUpdate = async (status: string) => {
-    setIsUpdatingRSVP(true);
-    try {
-      const result = await updateRSVP(status);
+  // Check if guest has declined (from database)
+  const hasDeclined = !!(guestInfo as { declined_at?: string | null })?.declined_at;
 
-      if (!result.success) {
-        alert(result.error || 'Something went wrong. Please try again.');
-      }
-    } catch (error) {
-      console.error('RSVP update error:', error);
-      alert('Something went wrong. Please try again.');
-    } finally {
-      setIsUpdatingRSVP(false);
+  // RSVP-Lite decline functionality
+  const { declineEvent } = useGuestDecline({
+    eventId,
+    onDeclineSuccess: () => {
+      setShowDeclineBanner(true);
+      // Refetch guest data to get updated decline status
+      // The hasDeclined state will update automatically when guestInfo refreshes
+    }
+  });
+
+  // RSVP-Lite handlers
+  const handleShowDeclineModal = () => {
+    setShowDeclineModal(true);
+  };
+
+  const handleDeclineConfirm = async (reason?: string) => {
+    const result = await declineEvent(reason);
+    if (result.success) {
+      setShowDeclineModal(false);
+      // Show success toast - could use a toast library here
+      console.log('✅ Marked as not attending');
+    } else {
+      // Show error - could use a toast library here  
+      alert(result.error || 'Something went wrong. Please try again.');
     }
   };
+
+  const handleDismissBanner = () => {
+    setShowDeclineBanner(false);
+  };
+
+
 
 
 
@@ -186,19 +217,9 @@ export default function GuestEventHomePage() {
         <div
           className={`transition-all duration-300 ${isScrolled ? 'py-3' : 'py-6'}`}
         >
-          {/* Header with RSVP button positioned top-right */}
+          {/* Main header content */}
           <div className="relative">
-            {/* RSVP Button - Top Right Corner */}
-            <div className="absolute top-0 right-0">
-              <GuestRSVPBadge
-                currentStatus={guestInfo?.rsvp_status || null}
-                onStatusUpdate={handleRSVPUpdate}
-                isScrolled={isScrolled}
-              />
-            </div>
-            
-            {/* Main header content */}
-            <div className={`transition-all duration-300 ${isScrolled ? 'pr-40' : 'pr-44'}`}> {/* Responsive padding for button size */}
+            <div className="transition-all duration-300">
               <div className={`mb-3 transition-all duration-300 ${isScrolled ? 'text-sm' : ''}`}>
                 <BackButton 
                   href="/select-event"
@@ -230,12 +251,24 @@ export default function GuestEventHomePage() {
         scrollable={true}
       >
 
-      {/* RSVP Section - Only show if guest hasn't RSVP'd */}
-      {!guestInfo?.rsvp_status && (
-        <GuestRSVPSection 
-          onStatusUpdate={handleRSVPUpdate}
-          isUpdating={isUpdatingRSVP}
-        />
+      {/* Decline Banner - Show if guest has declined */}
+      {(hasDeclined || showDeclineBanner) && (
+        <div className="max-w-5xl mx-auto px-6 pt-4">
+          <DeclineBanner
+            eventTitle={event?.title || 'this event'}
+            hostEmail={event?.host?.email || undefined}
+            onDismiss={handleDismissBanner}
+          />
+        </div>
+      )}
+
+      {/* Can't Make It Button - Always show for guests unless declined */}
+      {!hasDeclined && (
+        <div className="max-w-5xl mx-auto px-6 pb-4">
+          <div className="text-center">
+            <CantMakeItButton onClick={handleShowDeclineModal} />
+          </div>
+        </div>
       )}
 
 
@@ -440,6 +473,15 @@ export default function GuestEventHomePage() {
           </div>
         </div>
       </div>
+
+      {/* Decline Modal */}
+      <DeclineEventModal
+        isOpen={showDeclineModal}
+        onClose={() => setShowDeclineModal(false)}
+        onConfirm={handleDeclineConfirm}
+        eventTitle={event?.title || 'this event'}
+      />
+
       </MobileShell>
     </ErrorBoundary>
   );

@@ -5,11 +5,12 @@ import { supabase } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 // Remove unused imports - only keep what's needed
 import { useRealtimeSubscription } from '@/hooks/realtime';
-import { RSVPProgressChart } from './RSVPProgressChart';
+
 import { StatusPill } from './StatusPill';
 
 import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
+
 
 interface GuestStatusSummaryProps {
   eventId: string;
@@ -34,53 +35,7 @@ interface RSVPActivity {
   timestamp: string;
 }
 
-const statusConfig = [
-  {
-    key: 'all',
-    label: 'All',
-    icon: '👥',
-    bgColor: 'bg-gray-100',
-    activeColor: 'bg-[#FF6B6B]',
-    textColor: 'text-gray-700',
-    activeTextColor: 'text-white',
-  },
-  {
-    key: 'attending',
-    label: 'Attending',
-    icon: '✅',
-    bgColor: 'bg-green-50',
-    activeColor: 'bg-green-500',
-    textColor: 'text-green-700',
-    activeTextColor: 'text-white',
-  },
-  {
-    key: 'pending',
-    label: 'Pending',
-    icon: '⏳',
-    bgColor: 'bg-orange-50',
-    activeColor: 'bg-orange-500',
-    textColor: 'text-orange-700',
-    activeTextColor: 'text-white',
-  },
-  {
-    key: 'maybe',
-    label: 'Maybe',
-    icon: '🤷‍♂️',
-    bgColor: 'bg-yellow-50',
-    activeColor: 'bg-yellow-500',
-    textColor: 'text-yellow-700',
-    activeTextColor: 'text-white',
-  },
-  {
-    key: 'declined',
-    label: 'Declined',
-    icon: '❌',
-    bgColor: 'bg-red-50',
-    activeColor: 'bg-red-500',
-    textColor: 'text-red-700',
-    activeTextColor: 'text-white',
-  },
-] as const;
+
 
 function RecentActivityFeed({ activities }: { activities: RSVPActivity[] }) {
   if (activities.length === 0) {
@@ -139,12 +94,45 @@ export const GuestStatusSummary = memo<GuestStatusSummaryProps>(({
   const [showActivity, setShowActivity] = useState(false);
   const [realtimeConnected, setRealtimeConnected] = useState(true);
 
+  // RSVP-Lite status configuration
+  const statusConfig = [
+    {
+      key: 'all',
+      label: 'All',
+      icon: '👥',
+      bgColor: 'bg-gray-100',
+      activeColor: 'bg-[#FF6B6B]',
+      textColor: 'text-gray-700',
+      activeTextColor: 'text-white',
+    },
+    {
+      key: 'attending',
+      label: 'Attending',
+      icon: '✅',
+      bgColor: 'bg-green-50',
+      activeColor: 'bg-green-500',
+      textColor: 'text-green-700',
+      activeTextColor: 'text-white',
+    },
+    {
+      key: 'declined',
+      label: 'Declined',
+      icon: '❌',
+      bgColor: 'bg-red-50',
+      activeColor: 'bg-red-500',
+      textColor: 'text-red-700',
+      activeTextColor: 'text-white',
+    },
+  ] as const;
+
+
+
   const fetchStatusCounts = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('event_guests')
         .select(`
-          rsvp_status,
+          declined_at,
           users:user_id(full_name)
         `)
         .eq('event_id', eventId);
@@ -163,9 +151,11 @@ export const GuestStatusSummary = memo<GuestStatusSummaryProps>(({
       };
 
       data?.forEach((guest) => {
-        const status = guest.rsvp_status || 'pending';
-        if (status in counts) {
-          counts[status as keyof Omit<StatusCount, 'total'>]++;
+        // RSVP-Lite logic: attending = not declined
+        if (guest.declined_at) {
+          counts.declined++;
+        } else {
+          counts.attending++;
         }
       });
 
@@ -193,22 +183,22 @@ export const GuestStatusSummary = memo<GuestStatusSummaryProps>(({
       if (payload.eventType === 'UPDATE' && payload.new && payload.old) {
         const oldData = payload.old as Record<string, unknown>;
         const newData = payload.new as Record<string, unknown>;
-        const oldRsvp = oldData?.rsvp_status;
-        const newRsvp = newData?.rsvp_status;
+        const oldDeclined = oldData?.declined_at;
+        const newDeclined = newData?.declined_at;
         
-        if (oldRsvp !== newRsvp) {
-          logger.realtime('Real-time RSVP update', { 
+        if (oldDeclined !== newDeclined) {
+          logger.realtime('Real-time attendance update', { 
             eventType: payload.eventType, 
             guestId: payload.new && 'id' in payload.new ? payload.new.id : null,
-            oldStatus: oldRsvp,
-            newStatus: newRsvp,
+            oldDeclined: !!oldDeclined,
+            newDeclined: !!newDeclined,
           });
           
           const activity: RSVPActivity = {
-            id: `rsvp-${Date.now()}`,
+            id: `attendance-${Date.now()}`,
             user_name: (newData?.guest_name as string) || 'Unknown Guest',
-            old_status: (oldRsvp as string) || null,
-            new_status: (newRsvp as string) || 'pending',
+            old_status: oldDeclined ? 'declined' : 'attending',
+            new_status: newDeclined ? 'declined' : 'attending',
             timestamp: new Date().toISOString(),
           };
           
@@ -278,9 +268,9 @@ export const GuestStatusSummary = memo<GuestStatusSummaryProps>(({
         
         {/* Status filters skeleton */}
         <div className="flex gap-2 overflow-x-auto scrollbar-hide py-2">
-          {statusConfig.map((status) => (
+          {['all', 'attending', 'declined'].map((status) => (
             <div 
-              key={status.key}
+              key={status}
               className="flex-shrink-0 bg-gray-100 rounded-full px-4 py-2 animate-pulse"
               style={{ minWidth: '88px', height: '44px' }}
             >
@@ -294,18 +284,23 @@ export const GuestStatusSummary = memo<GuestStatusSummaryProps>(({
 
   return (
     <div className={cn('space-y-4', className)}>
-      {/* RSVP Progress Chart */}
+      {/* Guest Attendance Summary */}
       <div className="bg-white rounded-lg p-4 border border-gray-200">
         <div className="flex items-center gap-4">
-          <RSVPProgressChart
-            statusCounts={statusCounts}
-          />
+          <div className="w-20 h-20 bg-gradient-to-br from-green-100 to-green-200 rounded-full flex items-center justify-center">
+            <div className="text-center">
+              <div className="text-lg font-bold text-green-700">
+                {statusCounts.total > 0 ? Math.round((statusCounts.attending / statusCounts.total) * 100) : 0}%
+              </div>
+              <div className="text-xs text-green-600">attending</div>
+            </div>
+          </div>
           <div className="flex-1">
             <h3 className="text-lg font-semibold text-gray-900">
-              RSVP Progress
+              Guest Attendance
             </h3>
             <p className="text-sm text-gray-600">
-              {statusCounts.attending} of {statusCounts.total} guests confirmed
+              {statusCounts.attending} attending, {statusCounts.declined} can&apos;t make it
             </p>
             {!realtimeConnected && (
               <p className="text-xs text-yellow-600 mt-1">

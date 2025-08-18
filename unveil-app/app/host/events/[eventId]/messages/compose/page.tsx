@@ -1,5 +1,4 @@
-import React from 'react';
-import { ComposePageClient } from './ComposePageClient';
+import { redirect } from 'next/navigation';
 
 interface ComposePageProps {
   params: Promise<{
@@ -9,6 +8,7 @@ interface ComposePageProps {
 
 export default async function ComposePage({ params }: ComposePageProps) {
   const { eventId } = await params;
-
-  return <ComposePageClient eventId={eventId} />;
-} 
+  
+  // Redirect to the main messages page
+  redirect(`/host/events/${eventId}/messages`);
+}

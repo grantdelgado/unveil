@@ -452,8 +452,8 @@ export class EventCreationService {
         guest_name: hostProfile.full_name || 'Host',
         role: 'host',
         rsvp_status: 'attending',
-        preferred_communication: 'email',
-        sms_opt_out: true, // Hosts opt out of SMS by default
+        preferred_communication: 'sms',
+        sms_opt_out: false, // Hosts should be opted into SMS for their own events
       };
 
       const { error: guestError } = await supabase

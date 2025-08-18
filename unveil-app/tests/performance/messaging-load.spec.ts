@@ -53,7 +53,7 @@ test.describe('Messaging Performance & Load Tests', () => {
       
       // Navigate to host compose
       await authenticateAsHost(page, context.hostUserId);
-      await page.goto(`/host/events/${context.eventId}/messages/compose`);
+      await page.goto(`/host/events/${context.eventId}/messages`);
       
       // Compose message for all guests
       const bulkMessageContent = 'This is a bulk message test for 100+ guests to validate delivery performance.';
@@ -101,7 +101,7 @@ test.describe('Messaging Performance & Load Tests', () => {
       for (let i = 0; i < concurrentTabs; i++) {
         const newPage = await browserContext.newPage();
         await authenticateAsHost(newPage, context.hostUserId);
-        await newPage.goto(`/host/events/${context.eventId}/messages/compose`);
+        await newPage.goto(`/host/events/${context.eventId}/messages`);
         concurrentPages.push(newPage);
       }
       
@@ -215,7 +215,7 @@ test.describe('Messaging Performance & Load Tests', () => {
       const propagationStartTime = performance.now();
       const realtimeTestMessage = 'Real-time load test message';
       
-      await page.goto(`/host/events/${context.eventId}/messages/compose`);
+      await page.goto(`/host/events/${context.eventId}/messages`);
       await page.getByLabel(/message content/i).fill(realtimeTestMessage);
       await page.getByRole('button', { name: /send now/i }).click();
       
@@ -252,7 +252,7 @@ test.describe('Messaging Performance & Load Tests', () => {
       await guestPage.getByRole('button', { name: /messages/i }).click();
       
       // Send rapid burst of messages from host
-      await page.goto(`/host/events/${context.eventId}/messages/compose`);
+      await page.goto(`/host/events/${context.eventId}/messages`);
       
       const burstCount = 10;
       const burstMessages = [];

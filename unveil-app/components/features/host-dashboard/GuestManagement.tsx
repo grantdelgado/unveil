@@ -2,7 +2,8 @@
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
 // Core dependencies
-import { useGuestMutations } from '@/hooks/guests';
+import { useHostGuestDecline } from '@/hooks/guests';
+
 import { useSimpleGuestStore } from '@/hooks/guests/useSimpleGuestStore';
 
 // Local components
@@ -28,29 +29,31 @@ function GuestManagementContent({
 }: GuestManagementProps) {
   const { showError, showSuccess } = useFeedback();
 
-  // Simplified state management - removed complex filters
+  // Simplified state management - RSVP-Lite filters
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterByRSVP, setFilterByRSVP] = useState<'all' | 'attending' | 'pending'>('all');
+  const [filterByRSVP, setFilterByRSVP] = useState<'all' | 'attending' | 'declined'>('all');
 
   // Data hooks
   const { 
     guests, 
     statusCounts, 
     loading,
-    updateGuestOptimistically,
-    rollbackOptimisticUpdate,
     refreshGuests
   } = useSimpleGuestStore(eventId);
   
-  const {
-    handleRSVPUpdate,
-    handleRemoveGuest,
-    handleMarkAllPendingAsAttending,
-  } = useGuestMutations({ 
-    eventId, 
-    onGuestUpdated,
-    onOptimisticRollback: rollbackOptimisticUpdate
+  // Note: Legacy RSVP mutations removed as part of RSVP-Lite hard cutover
+
+  // RSVP-Lite: Host decline management
+  const { clearGuestDecline } = useHostGuestDecline({
+    eventId,
+    onDeclineClearSuccess: () => {
+      showSuccess('Guest decline status cleared successfully');
+      refreshGuests(); // Refresh to get updated data
+      onGuestUpdated?.();
+    }
   });
+
+
 
   // Listen for guest data refresh events (e.g., after guest import)
   useEffect(() => {
@@ -100,13 +103,16 @@ function GuestManagementContent({
       });
     }
     
-    // Apply simplified RSVP filter (3 options only)
+    // Apply RSVP-Lite filter (3 options: all, attending, declined)
     if (filterByRSVP !== 'all') {
       filtered = filtered.filter(guest => {
-        if (filterByRSVP === 'pending') {
-          return !guest.rsvp_status || guest.rsvp_status === 'pending';
+        if (filterByRSVP === 'attending') {
+          return !guest.declined_at; // Attending = not declined
         }
-        return guest.rsvp_status === filterByRSVP;
+        if (filterByRSVP === 'declined') {
+          return !!guest.declined_at; // Declined = has declined_at
+        }
+        return true; // 'all' case
       });
     }
     
@@ -125,68 +131,39 @@ function GuestManagementContent({
     });
   }, [guests, searchTerm, filterByRSVP, getFirstName]);
 
-  // Enhanced handlers with user feedback
-  const handleRSVPUpdateWithFeedback = useCallback(async (guestId: string, newStatus: string) => {
-    try {
-      // Immediately update the UI for instant feedback
-      updateGuestOptimistically(guestId, { rsvp_status: newStatus as 'attending' | 'declined' | 'maybe' | 'pending' });
-      
-      // Then perform the actual database update
-      await handleRSVPUpdate(guestId, newStatus);
-      showSuccess('RSVP Updated', 'Guest status has been updated successfully.');
-    } catch {
-      // If the mutation fails, the mutation hook will handle rollback
-      showError('Update Failed', 'Failed to update RSVP status. Please try again.');
-    }
-  }, [handleRSVPUpdate, updateGuestOptimistically, showSuccess, showError]);
+  // Note: RSVP updates now handled through decline/clear decline actions only
+  // Legacy RSVP dropdown removed as part of RSVP-Lite hard cutover
 
-  const handleRemoveGuestWithFeedback = useCallback(async (guestId: string) => {
-    const guest = guests.find(g => g.id === guestId);
+  // Note: Guest removal functionality deferred to post-RSVP-Lite implementation
+  const handleRemoveGuestWithFeedback = useCallback(async () => {
+    showError('Feature Unavailable', 'Guest removal will be available in the next update.');
+  }, [showError]);
+
+  // RSVP-Lite: Clear guest decline handler
+  const handleClearGuestDecline = useCallback(async (guestUserId: string) => {
+    const guest = guests.find(g => g.user_id === guestUserId);
     const guestName = guest?.guest_display_name || guest?.guest_name || guest?.users?.full_name || 'Guest';
     
-    if (!confirm(`Are you sure you want to remove ${guestName} from the guest list?`)) {
+    if (!confirm(`Clear decline status for ${guestName}? They will be able to receive day-of logistics again.`)) {
       return;
     }
 
     try {
-      await handleRemoveGuest(guestId);
-      showSuccess('Guest Removed', `${guestName} has been removed from the guest list.`);
+      await clearGuestDecline(guestUserId);
     } catch {
-      showError('Remove Failed', 'Failed to remove guest. Please try again.');
+      showError('Clear Failed', 'Failed to clear decline status. Please try again.');
     }
-  }, [handleRemoveGuest, guests, showSuccess, showError]);
+  }, [clearGuestDecline, guests, showError]);
 
-  // Simplified bulk action - single "Confirm All Pending" button
-  const handleConfirmAllPending = useCallback(async () => {
-    const pendingGuests = guests.filter(guest => 
-      !guest.rsvp_status || guest.rsvp_status === 'pending'
-    );
-    
-    if (pendingGuests.length === 0) {
-      showError('No Pending Guests', 'There are no pending RSVPs to confirm.');
-      return;
-    }
+  // Note: Bulk RSVP actions removed as part of RSVP-Lite hard cutover
+  // Guests are either attending (default) or declined (via "Can't make it" button)
 
-    if (!confirm(`Confirm all ${pendingGuests.length} pending RSVPs as attending?`)) {
-      return;
-    }
-
-    try {
-      await handleMarkAllPendingAsAttending();
-      showSuccess('RSVPs Confirmed', `Marked ${pendingGuests.length} guests as attending.`);
-    } catch {
-      showError('Bulk Update Failed', 'Failed to update pending RSVPs. Please try again.');
-    }
-  }, [guests, handleMarkAllPendingAsAttending, showSuccess, showError]);
-
-  // Calculate counts for simplified status summary
+  // Calculate counts for RSVP-Lite status summary
   const simplifiedCounts: GuestStatusCounts = useMemo(() => ({
     total: statusCounts?.total || 0,
     attending: statusCounts?.attending || 0,
-    pending: statusCounts?.pending || 0,
+    declined: statusCounts?.declined || 0,
   }), [statusCounts]);
-
-  const pendingCount = guests.filter(g => !g.rsvp_status || g.rsvp_status === 'pending').length;
 
   if (loading) {
     return (
@@ -220,18 +197,7 @@ function GuestManagementContent({
       />
 
       {/* Bulk Actions (if applicable) */}
-      {pendingCount > 0 && (
-        <div className="flex justify-center">
-          <SecondaryButton
-            onClick={handleConfirmAllPending}
-            className="flex items-center justify-center gap-2 min-h-[44px]"
-            fullWidth={false}
-          >
-            <span>✅</span>
-            Confirm All Pending ({pendingCount})
-          </SecondaryButton>
-        </div>
-      )}
+      {/* Note: Bulk actions removed as part of RSVP-Lite hard cutover */}
 
       {/* Guest List */}
       {filteredGuests.length === 0 ? (
@@ -274,8 +240,8 @@ function GuestManagementContent({
             <GuestListItem
               key={guest.id}
               guest={guest}
-              onRSVPUpdate={handleRSVPUpdateWithFeedback}
               onRemove={handleRemoveGuestWithFeedback}
+              onClearDecline={handleClearGuestDecline}
             />
           ))}
         </div>

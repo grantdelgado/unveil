@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase/client';
 import { logger } from '@/lib/logger';
 import type { OptimizedGuest } from '@/hooks/guests/useGuestData';
 
+
 interface UseGuestsOptions {
   eventId: string;
   pageSize?: number;
@@ -73,7 +74,7 @@ export function useGuests({
       guest_name: guest.guest_name,
       guest_email: guest.guest_email,
       phone: guest.phone,
-      rsvp_status: guest.rsvp_status,
+
       notes: guest.notes,
       guest_tags: guest.guest_tags,
       role: guest.role,
@@ -83,6 +84,9 @@ export function useGuests({
       preferred_communication: guest.preferred_communication,
       created_at: guest.created_at,
       updated_at: guest.updated_at,
+      // RSVP-Lite fields
+      declined_at: guest.declined_at,
+      decline_reason: guest.decline_reason,
       display_name: guest.display_name,
       guest_display_name: guest.guest_display_name,
       users: guest.user_id ? {

@@ -64,6 +64,7 @@ export type SendMessageRequest = {
   eventId: string;
   content: string;
   recipientFilter: RecipientFilter;
+  recipientEventGuestIds?: string[]; // NEW: Explicit recipient list (takes precedence over recipientFilter)
   messageType: 'direct' | 'announcement' | 'channel';
   sendVia: {
     sms: boolean;
@@ -86,11 +87,13 @@ export type CreateScheduledMessageData = {
 
 // Filter types - unified across all components  
 export type RecipientFilter = {
-  type: 'all' | 'tags' | 'rsvp_status' | 'individual' | 'combined';
+  type: 'all' | 'tags' | 'rsvp_status' | 'individual' | 'combined' | 'explicit_selection';
   tags?: string[];
-  rsvpStatuses?: string[];
+  rsvpStatuses?: string[]; // DEPRECATED: Will be removed in favor of explicit selection
   guestIds?: string[];
+  selectedGuestIds?: string[]; // NEW: Explicit guest selection by event_guest_id
   requireAllTags?: boolean; // For AND/OR logic when using tags
+  includeDeclined?: boolean; // DEPRECATED: Will be removed in favor of explicit selection
   [key: string]: unknown; // Allow additional properties for flexibility
 };
 
@@ -170,6 +173,7 @@ export type Guest = Database['public']['Tables']['event_guests']['Row'] & {
 export type GuestWithDisplayName = Guest & {
   displayName: string;
   hasValidPhone: boolean;
+  isOptedOut: boolean;
 };
 
 // Tag management types

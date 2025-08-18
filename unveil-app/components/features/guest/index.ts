@@ -1,4 +1,5 @@
 export { InstructionalBanner } from './InstructionalBanner';
 export { PhotoAlbumButton } from './PhotoAlbumButton';
-export { GuestRSVPBadge } from './GuestRSVPBadge';
-export { GuestRSVPSection } from './GuestRSVPSection';
+export { DeclineEventModal } from './DeclineEventModal';
+export { CantMakeItButton } from './CantMakeItButton';
+export { DeclineBanner } from './DeclineBanner';

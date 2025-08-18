@@ -6,6 +6,7 @@ import { useEventSubscription } from '@/hooks/realtime';
 import { useDebounce } from '@/hooks/common';
 import type { Database } from '@/app/reference/supabase.types';
 
+
 // Optimized guest type - compatible with existing components  
 export type OptimizedGuest = {
   id: string;
@@ -14,7 +15,7 @@ export type OptimizedGuest = {
   guest_name: string | null;
   guest_email: string | null;
   phone: string;
-  rsvp_status: string | null;
+
   notes: string | null;
   guest_tags: string[] | null;
   role: string;
@@ -24,6 +25,9 @@ export type OptimizedGuest = {
   preferred_communication: string | null;
   created_at: string | null;
   updated_at: string | null;
+  // RSVP-Lite fields
+  declined_at: string | null;
+  decline_reason: string | null;
   /** 
    * Stored display name (automatically synced with users.full_name)
    */
@@ -70,16 +74,11 @@ interface UseGuestDataReturn {
   previousPage: () => Promise<void>;
   goToPage: (page: number) => Promise<void>;
   // Existing functionality
-  handleRSVPUpdate: (guestId: string, newStatus: string) => Promise<void>;
   handleRemoveGuest: (guestId: string) => Promise<void>;
-  handleMarkAllPendingAsAttending: () => Promise<void>;
-  handleBulkRSVPUpdate: (guestIds: string[], newStatus: string) => Promise<void>;
   filteredGuests: OptimizedGuest[];
   statusCounts: {
     total: number;
     attending: number;
-    pending: number;
-    maybe: number;
     declined: number;
   };
   searchTerm: string;
@@ -138,7 +137,7 @@ export function useGuestData({
       guest_name: guest.guest_name,
       guest_email: guest.guest_email,
       phone: guest.phone,
-      rsvp_status: guest.rsvp_status as OptimizedGuest['rsvp_status'],
+
       notes: guest.notes,
       guest_tags: guest.guest_tags,
       role: guest.role,
@@ -148,6 +147,9 @@ export function useGuestData({
       preferred_communication: guest.preferred_communication,
       created_at: guest.created_at,
       updated_at: guest.updated_at,
+      // RSVP-Lite fields
+      declined_at: guest.declined_at,
+      decline_reason: guest.decline_reason,
       // Add stored and computed display names from RPC function
       display_name: guest.display_name,
       guest_display_name: guest.guest_display_name,
@@ -238,31 +240,7 @@ export function useGuestData({
     }, [])
   });
 
-  // Optimized RSVP update with single query instead of optimistic + revert pattern
-  const handleRSVPUpdate = useCallback(async (guestId: string, newStatus: string) => {
-    try {
-      const { error } = await supabase
-        .from('event_guests')
-        .update({ rsvp_status: newStatus })
-        .eq('id', guestId);
-
-      if (error) throw error;
-      
-      // Update local state efficiently
-      setGuests(prev => 
-        prev.map(guest => 
-          guest.id === guestId 
-            ? { ...guest, rsvp_status: newStatus as OptimizedGuest['rsvp_status'] }
-            : guest
-        )
-      );
-      
-      onGuestUpdated?.();
-    } catch (updateError) {
-      logger.databaseError('Error updating RSVP', updateError);
-      throw updateError;
-    }
-  }, [onGuestUpdated]);
+  // Note: Legacy RSVP update removed as part of RSVP-Lite hard cutover
 
   const handleRemoveGuest = useCallback(async (guestId: string) => {
     try {
@@ -284,62 +262,9 @@ export function useGuestData({
     }
   }, [onGuestUpdated]);
 
-  // Optimized bulk operations using single UPDATE query instead of multiple
-  const handleMarkAllPendingAsAttending = useCallback(async () => {
-    const pendingGuests = guests.filter(guest => guest.rsvp_status === 'pending');
-    if (pendingGuests.length === 0) return;
+  // Note: Legacy bulk RSVP operations removed as part of RSVP-Lite hard cutover
 
-    try {
-      // Single bulk update query instead of multiple individual updates
-      const { error } = await supabase
-        .from('event_guests')
-        .update({ rsvp_status: 'attending' })
-        .eq('event_id', eventId)
-        .eq('rsvp_status', 'pending');
-
-      if (error) throw error;
-      
-      // Update local state
-      setGuests(prev => 
-        prev.map(guest => 
-          guest.rsvp_status === 'pending' 
-            ? { ...guest, rsvp_status: 'attending' }
-            : guest
-        )
-      );
-      
-      onGuestUpdated?.();
-    } catch (bulkError) {
-      logger.databaseError('Error updating pending RSVPs', bulkError);
-      throw bulkError;
-    }
-  }, [guests, eventId, onGuestUpdated]);
-
-  const handleBulkRSVPUpdate = useCallback(async (guestIds: string[], newStatus: string) => {
-    try {
-      // Single bulk update query instead of multiple individual updates
-      const { error } = await supabase
-        .from('event_guests')
-        .update({ rsvp_status: newStatus })
-        .in('id', guestIds);
-
-      if (error) throw error;
-      
-      // Update local state
-      setGuests(prev => 
-        prev.map(guest => 
-          guestIds.includes(guest.id)
-            ? { ...guest, rsvp_status: newStatus as OptimizedGuest['rsvp_status'] }
-            : guest
-        )
-      );
-      
-      onGuestUpdated?.();
-    } catch (bulkError) {
-      logger.databaseError('Error updating RSVPs', bulkError);
-      throw bulkError;
-    }
-  }, [onGuestUpdated]);
+  // Note: Legacy bulk RSVP operations removed as part of RSVP-Lite hard cutover
 
   // Enhanced filtering with memoization
   const filteredGuests = useMemo(() => {
@@ -350,18 +275,18 @@ export function useGuestData({
         guest.phone.includes(debouncedSearchTerm) ||
         guest.users?.phone?.includes(debouncedSearchTerm);
 
-      const matchesRSVP = filterByRSVP === 'all' || guest.rsvp_status === filterByRSVP;
+      const matchesRSVP = filterByRSVP === 'all' || 
+        (filterByRSVP === 'attending' && !guest.declined_at) ||
+        (filterByRSVP === 'declined' && guest.declined_at);
       return matchesSearch && matchesRSVP;
     });
   }, [guests, debouncedSearchTerm, filterByRSVP]);
 
-  // Status counts with memoization
+  // Status counts with memoization (RSVP-Lite)
   const statusCounts = useMemo(() => ({
     total: totalCount, // Use actual total count from database
-    attending: guests.filter(guest => guest.rsvp_status === 'attending').length,
-    pending: guests.filter(guest => guest.rsvp_status === 'pending').length,
-    maybe: guests.filter(guest => guest.rsvp_status === 'maybe').length,
-    declined: guests.filter(guest => guest.rsvp_status === 'declined').length,
+    attending: guests.filter(guest => !guest.declined_at).length,
+    declined: guests.filter(guest => guest.declined_at).length,
   }), [guests, totalCount]);
 
   return {
@@ -378,10 +303,7 @@ export function useGuestData({
     previousPage,
     goToPage,
     // Existing functionality
-    handleRSVPUpdate,
     handleRemoveGuest,
-    handleMarkAllPendingAsAttending,
-    handleBulkRSVPUpdate,
     filteredGuests,
     statusCounts,
     searchTerm,

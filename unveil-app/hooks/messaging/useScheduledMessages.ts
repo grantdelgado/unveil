@@ -96,7 +96,9 @@ export function useScheduledMessages({
       const result = await createScheduledMessage(data);
       
       if (!result.success) {
-        const errorMessage = result.error?.message || 'Failed to create scheduled message';
+        const errorMessage = (result.error && typeof result.error === 'object' && 'message' in result.error) 
+          ? (result.error as { message: string }).message 
+          : 'Failed to create scheduled message';
         setError(errorMessage);
         return { success: false, error: errorMessage };
       }
@@ -122,7 +124,9 @@ export function useScheduledMessages({
       const result = await deleteScheduledMessage(messageId);
       
       if (!result.success) {
-        const errorMessage = result.error?.message || 'Failed to delete scheduled message';
+        const errorMessage = (result.error && typeof result.error === 'object' && 'message' in result.error) 
+          ? (result.error as { message: string }).message 
+          : 'Failed to delete scheduled message';
         setError(errorMessage);
         return { success: false, error: errorMessage };
       }
@@ -148,7 +152,9 @@ export function useScheduledMessages({
       const result = await cancelScheduledMessage(messageId);
       
       if (!result.success) {
-        const errorMessage = result.error?.message || 'Failed to cancel scheduled message';
+        const errorMessage = (result.error && typeof result.error === 'object' && 'message' in result.error) 
+          ? (result.error as { message: string }).message 
+          : 'Failed to cancel scheduled message';
         setError(errorMessage);
         return { success: false, error: errorMessage };
       }

@@ -29,12 +29,13 @@ export async function POST(request: NextRequest) {
       success: true,
       data: result
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to send SMS message';
     logger.apiError('Single SMS API error', error);
     return NextResponse.json(
       { 
         success: false, 
-        error: error.message || 'Failed to send SMS message' 
+        error: errorMessage
       },
       { status: 500 }
     );

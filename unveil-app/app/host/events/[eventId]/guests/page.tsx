@@ -221,7 +221,7 @@ export default function EventGuestsPage() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Guest Management</h1>
           <p className="text-gray-600">
-            Manage RSVPs, send invitations, and organize guests for <span className="font-medium text-gray-800">{event.title}</span>
+            Manage guest attendance, send invitations, and organize guests for <span className="font-medium text-gray-800">{event.title}</span>
           </p>
         </div>
 

@@ -36,57 +36,7 @@ function NotificationCenterComponent({ eventId }: NotificationCenterProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  const getRSVPTitle = useCallback((status: string) => {
-    switch (status.toLowerCase()) {
-      case 'attending':
-        return 'RSVP: Yes! 🎉';
-      case 'declined':
-        return "RSVP: Can't Make It";
-      case 'maybe':
-        return 'RSVP: Maybe';
-      default:
-        return 'RSVP Update';
-    }
-  }, []);
-
-  const getRSVPDescription = useCallback((status: string) => {
-    switch (status.toLowerCase()) {
-      case 'attending':
-        return 'will be attending your special day!';
-      case 'declined':
-        return "won't be able to attend";
-      case 'maybe':
-        return 'might be able to attend';
-      default:
-        return 'updated their RSVP';
-    }
-  }, []);
-
-  const getRSVPIcon = useCallback((status: string) => {
-    switch (status.toLowerCase()) {
-      case 'attending':
-        return '✅';
-      case 'declined':
-        return '❌';
-      case 'maybe':
-        return '❓';
-      default:
-        return '📝';
-    }
-  }, []);
-
-  const getRSVPColor = useCallback((status: string) => {
-    switch (status.toLowerCase()) {
-      case 'attending':
-        return 'text-emerald-600';
-      case 'declined':
-        return 'text-red-600';
-      case 'maybe':
-        return 'text-yellow-600';
-      default:
-        return 'text-gray-600';
-    }
-  }, []);
+  // Note: Legacy RSVP helper functions removed as part of RSVP-Lite hard cutover
 
   // Memoize notification processing to avoid recalculating on every render
   const processedNotifications = useMemo(() => {
@@ -94,22 +44,21 @@ function NotificationCenterComponent({ eventId }: NotificationCenterProps) {
     const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     const notificationItems: NotificationItem[] = [];
 
-    // Process guest updates (RSVP changes) - using hook data
+    // Process guest updates (decline changes) - using hook data
     guests?.forEach((guest) => {
       if (
-        guest.rsvp_status &&
-        guest.created_at &&
-        guest.created_at > dayAgo.toISOString()
+        guest.declined_at &&
+        guest.declined_at > dayAgo.toISOString()
       ) {
         notificationItems.push({
           id: `guest-${guest.id}`,
           type: 'rsvp',
-          title: getRSVPTitle(guest.rsvp_status),
-          description: `${guest.guest_display_name || guest.users?.full_name || guest.guest_name || 'A guest'} ${getRSVPDescription(guest.rsvp_status)}`,
-          timestamp: guest.created_at,
+          title: 'Guest Declined',
+          description: `${guest.guest_display_name || guest.users?.full_name || guest.guest_name || 'A guest'} can't make it to the event`,
+          timestamp: guest.declined_at,
           isRead: false,
-          icon: getRSVPIcon(guest.rsvp_status),
-          color: getRSVPColor(guest.rsvp_status),
+          icon: '❌',
+          color: 'text-red-600',
         });
       }
     });
@@ -167,10 +116,6 @@ function NotificationCenterComponent({ eventId }: NotificationCenterProps) {
     guests,
     media,
     messages,
-    getRSVPTitle,
-    getRSVPDescription,
-    getRSVPIcon,
-    getRSVPColor,
   ]);
 
   const fetchNotifications = useCallback(async () => {
@@ -209,17 +154,18 @@ function NotificationCenterComponent({ eventId }: NotificationCenterProps) {
           setUnreadCount((prev) => prev + 1);
         } else if (payload.eventType === 'UPDATE') {
           console.log('Guest updated:', payload);
-          if (payload.new.rsvp_status !== payload.old?.rsvp_status) {
+          if (payload.new.declined_at !== payload.old?.declined_at) {
+            const hasDeclined = !!payload.new.declined_at;
             setNotifications((prev) => [
               {
                 id: Date.now().toString(),
                 type: 'rsvp' as const,
-                title: getRSVPTitle(payload.new.rsvp_status),
-                description: `Guest ${getRSVPDescription(payload.new.rsvp_status)}`,
+                title: hasDeclined ? 'Guest Declined' : 'Decline Cleared',
+                description: hasDeclined ? 'Guest marked as unable to attend' : 'Guest decline status cleared',
                 timestamp: new Date().toISOString(),
                 isRead: false,
-                icon: getRSVPIcon(payload.new.rsvp_status),
-                color: getRSVPColor(payload.new.rsvp_status),
+                icon: hasDeclined ? '❌' : '✅',
+                color: hasDeclined ? 'text-red-600' : 'text-green-600',
               },
               ...prev,
             ]);
@@ -227,7 +173,7 @@ function NotificationCenterComponent({ eventId }: NotificationCenterProps) {
           }
         }
       },
-      [getRSVPTitle, getRSVPDescription, getRSVPIcon, getRSVPColor],
+      [],
     ),
     enabled: Boolean(eventId),
   });

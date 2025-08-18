@@ -241,21 +241,21 @@ export async function POST(request: NextRequest) {
 /**
  * Reconstruct RecipientFilter from scheduled message database format
  */
-function reconstructRecipientFilter(scheduledMessage: any): RecipientFilter {
+function reconstructRecipientFilter(scheduledMessage: Record<string, unknown>): RecipientFilter {
   if (scheduledMessage.target_all_guests) {
     return { type: 'all' };
   }
 
-  if (scheduledMessage.target_guest_ids && scheduledMessage.target_guest_ids.length > 0) {
+  if (scheduledMessage.target_guest_ids && Array.isArray(scheduledMessage.target_guest_ids) && scheduledMessage.target_guest_ids.length > 0) {
     return {
-      type: 'individual',
-      guestIds: scheduledMessage.target_guest_ids
+      type: 'explicit_selection',
+      selectedGuestIds: scheduledMessage.target_guest_ids as string[]
     };
   }
 
-  if (scheduledMessage.target_guest_tags && scheduledMessage.target_guest_tags.length > 0) {
-    const tags = scheduledMessage.target_guest_tags.filter((tag: string) => !tag.startsWith('rsvp:'));
-    const rsvpStatuses = scheduledMessage.target_guest_tags
+  if (scheduledMessage.target_guest_tags && Array.isArray(scheduledMessage.target_guest_tags) && scheduledMessage.target_guest_tags.length > 0) {
+    const tags = (scheduledMessage.target_guest_tags as string[]).filter((tag: string) => !tag.startsWith('rsvp:'));
+    const rsvpStatuses = (scheduledMessage.target_guest_tags as string[])
       .filter((tag: string) => tag.startsWith('rsvp:'))
       .map((tag: string) => tag.replace('rsvp:', ''));
 
@@ -298,6 +298,7 @@ async function resolveScheduledMessageRecipients(
         .from('event_guests')
         .select('id, phone, guest_name')
         .eq('event_id', eventId)
+        .eq('sms_opt_out', false) // Exclude opted-out guests
         .not('phone', 'is', null)
         .neq('phone', '');
 
@@ -311,13 +312,35 @@ async function resolveScheduledMessageRecipients(
         }));
     }
 
-    // Handle individual guest selection
+    // Handle explicit guest selection (NEW)
+    if (filter.type === 'explicit_selection' && filter.selectedGuestIds) {
+      const { data: guests, error } = await supabase
+        .from('event_guests')
+        .select('id, phone, guest_name')
+        .eq('event_id', eventId)
+        .in('id', filter.selectedGuestIds)
+        .eq('sms_opt_out', false) // Exclude opted-out guests
+        .not('phone', 'is', null)
+        .neq('phone', '');
+
+      if (error) throw error;
+      return (guests || [])
+        .filter(guest => guest.phone) // Filter out guests without phone numbers
+        .map(guest => ({
+          ...guest,
+          phone: guest.phone as string, // Type assertion since we filtered out nulls
+          guest_name: guest.guest_name || 'Guest'
+        }));
+    }
+
+    // Handle individual guest selection (legacy)
     if (filter.type === 'individual' && filter.guestIds) {
       const { data: guests, error } = await supabase
         .from('event_guests')
         .select('id, phone, guest_name')
         .eq('event_id', eventId)
         .in('id', filter.guestIds)
+        .eq('sms_opt_out', false) // Exclude opted-out guests
         .not('phone', 'is', null)
         .neq('phone', '');
 
@@ -337,24 +360,26 @@ async function resolveScheduledMessageRecipients(
       target_guest_ids: filter.guestIds || undefined,
       target_tags: filter.tags || undefined,
       require_all_tags: filter.requireAllTags || false,
-      target_rsvp_statuses: filter.rsvpStatuses || undefined
+      target_rsvp_statuses: filter.rsvpStatuses || undefined,
+      include_declined: filter.includeDeclined || false
     });
 
     if (error) throw error;
 
     // Convert to format expected by SMS sender
-    const guestIds = recipients?.map((r: any) => r.guest_id) || [];
+          const guestIds = recipients?.map((r: Record<string, unknown>) => r.guest_id as string) || [];
     
     if (guestIds.length === 0) {
       return [];
     }
 
-    // Fetch phone numbers for resolved guests
+    // Fetch phone numbers for resolved guests (exclude opted-out as defensive measure)
     const { data: guestsWithPhones, error: phoneError } = await supabase
       .from('event_guests')
       .select('id, phone, guest_name')
       .eq('event_id', eventId)
       .in('id', guestIds)
+      .eq('sms_opt_out', false) // Exclude opted-out guests
       .not('phone', 'is', null)
       .neq('phone', '');
 

@@ -38,7 +38,7 @@ export function SendConfirmationModal({
   className
 }: SendConfirmationModalProps) {
   const [sendViaPush, setSendViaPush] = useState(true);
-  const [sendViaSms, setSendViaSms] = useState(false);
+  const [sendViaSms, setSendViaSms] = useState(true);
   const [showFullMessage, setShowFullMessage] = useState(false);
   const [hasConfirmedLargeGroup, setHasConfirmedLargeGroup] = useState(false);
 

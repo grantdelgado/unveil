@@ -4,7 +4,7 @@
  */
 
 import type { Database } from '@/app/reference/supabase.types';
-import type { RSVPStatus } from '@/lib/types/rsvp';
+
 
 // Base guest type from database
 export type GuestRow = Database['public']['Tables']['event_guests']['Row'];
@@ -17,11 +17,14 @@ export interface OptimizedGuest {
   guest_name: string | null;
   guest_email: string | null;
   phone: string;
-  rsvp_status: RSVPStatus | null;
+
   notes: string | null;
   role: string;
   created_at: string | null;
   updated_at: string | null;
+  // RSVP-Lite fields
+  declined_at: string | null;
+  decline_reason: string | null;
   /** 
    * Computed display name from COALESCE(users.full_name, event_guests.guest_name)
    * Prefer this over guest_name for UI display
@@ -36,20 +39,17 @@ export interface OptimizedGuest {
   } | null;
 }
 
-// Simplified status counts (reduced from complex original)
+// RSVP-Lite status counts
 export interface GuestStatusCounts {
   total: number;
   attending: number;
-  pending: number;
-  // Removed: maybe, declined, confirmed, responded (MVP simplification)
+  declined: number;
 }
 
-// Simplified loading states (reduced from 7 to 3 states)
+// Simplified loading states
 export interface LoadingStates {
   guests: boolean;
-  rsvpUpdate: boolean;
   bulkAction: boolean;
-  // Removed: import, export (defer to post-MVP)
 }
 
 // Component props interfaces

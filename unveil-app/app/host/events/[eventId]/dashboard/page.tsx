@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+
 import type { Database } from '@/app/reference/supabase.types';
 import {
   CompactEventHeader,
@@ -26,7 +27,9 @@ export default function EventDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [guestCount, setGuestCount] = useState(0);
-  const [pendingRSVPs, setPendingRSVPs] = useState(0);
+
+
+
 
   // Fetch event data and guest stats
   useEffect(() => {
@@ -74,7 +77,7 @@ export default function EventDashboardPage() {
             .single(),
           supabase
             .from('event_guests')
-            .select('rsvp_status')
+            .select('declined_at')
             .eq('event_id', eventId)
         ]);
 
@@ -95,11 +98,7 @@ export default function EventDashboardPage() {
         setEvent(eventData);
         setGuestCount(guestData?.length || 0);
         
-        // Calculate pending RSVPs
-        const pending = guestData?.filter(
-          (guest) => !guest.rsvp_status || guest.rsvp_status === 'pending'
-        ).length || 0;
-        setPendingRSVPs(pending);
+        // Note: Declined guest count calculation removed (not used in dashboard)
       } catch (err) {
         console.error('Unexpected error:', err);
         setError('An unexpected error occurred');
@@ -221,7 +220,7 @@ export default function EventDashboardPage() {
         <ModernActionList 
           eventId={eventId}
           guestCount={guestCount}
-          pendingRSVPs={pendingRSVPs}
+          pendingRSVPs={0} // RSVP-Lite: No pending RSVPs concept
         />
       </div>
     </PageWrapper>

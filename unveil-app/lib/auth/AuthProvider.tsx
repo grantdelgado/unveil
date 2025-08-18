@@ -65,7 +65,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setSession(session);
           setUser(session?.user ?? null);
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         if (!isMounted) return;
         logger.error('Failed to initialize auth:', error);
         

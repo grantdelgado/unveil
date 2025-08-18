@@ -73,20 +73,19 @@ export async function autoJoinInvitedGuests(
     }, 'guestAutoJoin.autoJoinInvitedGuests');
 
     // Call the secure DB-side RPC function that gets auth context automatically
-    const { data: result, error: rpcError } = await (supabase as any)
+    const { data: result, error: rpcError } = await (supabase as unknown as { rpc: (name: string) => Promise<{ data: unknown; error: unknown }> })
       .rpc('bulk_guest_auto_join_from_auth');
 
     if (rpcError) {
       logger.apiError('Bulk auto-join RPC failed', { 
-      ...rpcError, 
-      code: rpcError.code,
-      message: rpcError.message,
-      details: rpcError.details,
-      hint: rpcError.hint 
-    }, 'guestAutoJoin.autoJoinInvitedGuests');
+        error: rpcError
+      }, 'guestAutoJoin.autoJoinInvitedGuests');
       
       // Handle specific error codes
-      if (rpcError.code === '42883') {
+      const errorCode = (rpcError && typeof rpcError === 'object' && 'code' in rpcError) 
+        ? (rpcError as { code: string }).code 
+        : null;
+      if (errorCode === '42883') {
         return { 
           success: false, 
           joinedEvents: [], 
@@ -107,10 +106,10 @@ export async function autoJoinInvitedGuests(
     }
 
     // Handle the response
-    const resultData = result as any;
+    const resultData = result as Record<string, unknown>;
     if (resultData.status === 'success') {
-      const linkedEvents = resultData.linked_events || [];
-      const alreadyLinkedEvents = resultData.already_linked_events || [];
+      const linkedEvents = Array.isArray(resultData.linked_events) ? resultData.linked_events : [];
+      const alreadyLinkedEvents = Array.isArray(resultData.already_linked_events) ? resultData.already_linked_events : [];
       
       logger.api('Bulk auto-join completed successfully', { 
         userId, 
@@ -134,7 +133,7 @@ export async function autoJoinInvitedGuests(
       return { 
         success: false, 
         joinedEvents: [], 
-        error: resultData.message || 'Bulk auto-join failed' 
+        error: (typeof resultData.message === 'string' ? resultData.message : 'Bulk auto-join failed') 
       };
     }
 
@@ -182,7 +181,7 @@ export async function autoJoinEventByPhone(
     }, 'guestAutoJoin.autoJoinEventByPhone');
 
     // Call the secure DB-side RPC function
-    const { data: result, error: rpcError } = await (supabase as any)
+    const { data: result, error: rpcError } = await (supabase as unknown as { rpc: (name: string, params: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }> })
       .rpc('guest_auto_join', {
         p_event_id: eventId,
         p_phone: normalizedPhone
@@ -199,7 +198,7 @@ export async function autoJoinEventByPhone(
     }
 
     // Handle the different response statuses
-    const resultData = result as any;
+    const resultData = result as Record<string, unknown>;
     switch (resultData.status) {
       case 'linked':
         logger.api('Successfully linked guest to event', { 
@@ -237,7 +236,7 @@ export async function autoJoinEventByPhone(
           status: resultData.status, 
           message: resultData.message 
         }, 'guestAutoJoin.autoJoinEventByPhone');
-        return { success: false, error: resultData.message || 'Auto-join failed' };
+        return { success: false, error: (typeof resultData.message === 'string' ? resultData.message : 'Auto-join failed') };
     }
 
   } catch (error) {

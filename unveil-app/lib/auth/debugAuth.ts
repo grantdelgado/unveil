@@ -1,5 +1,4 @@
 import { supabase } from '@/lib/supabase/client';
-import { logger } from '@/lib/logger';
 
 /**
  * Debug utility for authentication issues
@@ -54,7 +53,7 @@ export async function debugAuthState(): Promise<void> {
       error: userError?.message || 'none'
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('❌ Error debugging auth state:', error);
   }
   
@@ -100,7 +99,7 @@ export async function clearAllAuthData(): Promise<void> {
 
 // Make functions available globally in development
 if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-  (window as any).debugAuthState = debugAuthState;
-  (window as any).clearAllAuthData = clearAllAuthData;
+  (window as unknown as Record<string, unknown>).debugAuthState = debugAuthState;
+  (window as unknown as Record<string, unknown>).clearAllAuthData = clearAllAuthData;
   console.log('🛠️ Auth debug functions available: debugAuthState(), clearAllAuthData()');
 }

@@ -34,7 +34,7 @@ describe('Guest Display Name in UI Components', () => {
     guest_name: 'Default Guest Name',
     guest_email: 'guest@example.com',
     phone: '+1234567890',
-    rsvp_status: 'pending',
+
     notes: null,
     guest_tags: null,
     role: 'guest',
@@ -70,8 +70,7 @@ describe('Guest Display Name in UI Components', () => {
       render(
         <GuestListItem 
           guest={guest}
-          onUpdateRSVP={vi.fn()}
-          onRemoveGuest={vi.fn()}
+          onRemove={vi.fn()}
         />
       );
 
@@ -100,8 +99,7 @@ describe('Guest Display Name in UI Components', () => {
       render(
         <GuestListItem 
           guest={guest}
-          onUpdateRSVP={vi.fn()}
-          onRemoveGuest={vi.fn()}
+          onRemove={vi.fn()}
         />
       );
 
@@ -119,8 +117,7 @@ describe('Guest Display Name in UI Components', () => {
       render(
         <GuestListItem 
           guest={guest}
-          onUpdateRSVP={vi.fn()}
-          onRemoveGuest={vi.fn()}
+          onRemove={vi.fn()}
         />
       );
 
@@ -138,8 +135,7 @@ describe('Guest Display Name in UI Components', () => {
       render(
         <GuestListItem 
           guest={guest}
-          onUpdateRSVP={vi.fn()}
-          onRemoveGuest={vi.fn()}
+          onRemove={vi.fn()}
         />
       );
 
@@ -167,8 +163,7 @@ describe('Guest Display Name in UI Components', () => {
       render(
         <GuestListItem 
           guest={guest}
-          onUpdateRSVP={vi.fn()}
-          onRemoveGuest={vi.fn()}
+          onRemove={vi.fn()}
         />
       );
 
@@ -199,8 +194,7 @@ describe('Guest Display Name in UI Components', () => {
       render(
         <GuestListItem 
           guest={guest}
-          onUpdateRSVP={vi.fn()}
-          onRemoveGuest={vi.fn()}
+          onRemove={vi.fn()}
         />
       );
 
@@ -220,8 +214,7 @@ describe('Guest Display Name in UI Components', () => {
       render(
         <GuestListItem 
           guest={guest}
-          onUpdateRSVP={vi.fn()}
-          onRemoveGuest={vi.fn()}
+          onRemove={vi.fn()}
         />
       );
 
@@ -265,8 +258,7 @@ describe('Guest Display Name in UI Components', () => {
       render(
         <GuestListItem 
           guest={guest}
-          onUpdateRSVP={vi.fn()}
-          onRemoveGuest={vi.fn()}
+          onRemove={vi.fn()}
         />
       );
 
@@ -286,8 +278,7 @@ describe('Guest Display Name in UI Components', () => {
       render(
         <GuestListItem 
           guest={guest}
-          onUpdateRSVP={vi.fn()}
-          onRemoveGuest={vi.fn()}
+          onRemove={vi.fn()}
         />
       );
 
@@ -305,8 +296,7 @@ describe('Guest Display Name in UI Components', () => {
       render(
         <GuestListItem 
           guest={guest}
-          onUpdateRSVP={vi.fn()}
-          onRemoveGuest={vi.fn()}
+          onRemove={vi.fn()}
         />
       );
 

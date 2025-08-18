@@ -3,10 +3,11 @@
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useMessages } from '@/hooks/useMessages';
-import { useGuests } from '@/hooks/useGuests';
+import { useGuests } from '@/hooks/guests';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { MessageComposer } from './MessageComposer';
 import { RecentMessages } from './RecentMessages';
+import { ScheduleComposer } from './ScheduleComposer';
 
 interface MessageCenterProps {
   eventId: string;
@@ -14,11 +15,11 @@ interface MessageCenterProps {
 }
 
 export function MessageCenter({ eventId, className }: MessageCenterProps) {
-  const [activeView, setActiveView] = useState<'compose' | 'history'>('compose');
+  const [activeView, setActiveView] = useState<'compose' | 'schedule' | 'history'>('compose');
 
   // Domain hooks - direct data access
   const { messages, loading: messagesLoading, error: messagesError, refreshMessages } = useMessages(eventId);
-  const { guests, loading: guestsLoading, error: guestsError } = useGuests(eventId);
+  const { loading: guestsLoading, error: guestsError } = useGuests({ eventId });
 
   // Combined loading state
   const loading = messagesLoading || guestsLoading;
@@ -31,6 +32,13 @@ export function MessageCenter({ eventId, className }: MessageCenterProps) {
 
   const handleClear = () => {
     // Reset any form state if needed
+  };
+
+  const handleMessageScheduled = async () => {
+    // Refresh messages after scheduling
+    await refreshMessages(eventId);
+    // Switch back to compose view
+    setActiveView('compose');
   };
 
   if (loading) {
@@ -67,6 +75,17 @@ export function MessageCenter({ eventId, className }: MessageCenterProps) {
           Compose Message
         </button>
         <button
+          onClick={() => setActiveView('schedule')}
+          className={cn(
+            'flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors',
+            activeView === 'schedule'
+              ? 'bg-white text-gray-900 shadow-sm'
+              : 'text-gray-600 hover:text-gray-900'
+          )}
+        >
+          Schedule Message
+        </button>
+        <button
           onClick={() => setActiveView('history')}
           className={cn(
             'flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors',
@@ -83,9 +102,14 @@ export function MessageCenter({ eventId, className }: MessageCenterProps) {
       {activeView === 'compose' ? (
         <MessageComposer
           eventId={eventId}
-          guests={guests || []}
           onMessageSent={handleMessageSent}
           onClear={handleClear}
+        />
+      ) : activeView === 'schedule' ? (
+        <ScheduleComposer
+          eventId={eventId}
+          onMessageScheduled={handleMessageScheduled}
+          onCancel={() => setActiveView('compose')}
         />
       ) : (
         <RecentMessages

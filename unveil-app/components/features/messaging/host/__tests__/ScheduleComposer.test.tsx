@@ -1,12 +1,10 @@
-/**
- * @jest-environment jsdom
- */
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { vi } from 'vitest';
 import { ScheduleComposer } from '../ScheduleComposer';
 
 // Mock hooks and services
-jest.mock('@/hooks/messaging/useRecipientPreview', () => ({
+vi.mock('@/hooks/messaging/useRecipientPreview', () => ({
   useRecipientPreview: () => ({
     previewData: {
       guests: [
@@ -79,9 +77,9 @@ describe('ScheduleComposer', () => {
     expect(screen.getByLabelText(/Push Notification/)).toBeInTheDocument();
     expect(screen.getByLabelText(/SMS Text Message/)).toBeInTheDocument();
     
-    // Push should be checked by default
+    // Both Push and SMS should be checked by default
     expect(screen.getByLabelText(/Push Notification/)).toBeChecked();
-    expect(screen.getByLabelText(/SMS Text Message/)).not.toBeChecked();
+    expect(screen.getByLabelText(/SMS Text Message/)).toBeChecked();
   });
 
   it('validates required fields before allowing schedule', () => {

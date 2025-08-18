@@ -75,24 +75,26 @@ export function RecipientPreview({
   };
 
   /**
-   * Get RSVP status emoji and color
+   * Get attendance status emoji and color (RSVP-Lite)
+   * In RSVP-Lite: attending by default unless explicitly declined
    */
-  const getRsvpDisplay = (status: string | null) => {
-    const statusMap: Record<string, { emoji: string; color: string }> = {
-      'attending': { emoji: '✅', color: 'text-green-600' },
-      'pending': { emoji: '⏰', color: 'text-yellow-600' },
-      'maybe': { emoji: '🤔', color: 'text-blue-600' },
-      'declined': { emoji: '❌', color: 'text-red-600' }
-    };
+  const getAttendanceDisplay = (guest: FilteredGuest) => {
+    // Check if guest has declined (RSVP-Lite)
+    const isDeclined = !!(guest as FilteredGuest & { declined_at?: string | null }).declined_at;
     
-    return statusMap[status || 'pending'] || statusMap.pending;
+    if (isDeclined) {
+      return { emoji: '❌', color: 'text-red-600', label: 'Declined' };
+    }
+    
+    // Default: attending
+    return { emoji: '✅', color: 'text-green-600', label: 'Attending' };
   };
 
   /**
    * Render individual guest item with enhanced layout
    */
-  const GuestItem = ({ guest, index }: { guest: FilteredGuest; index: number }) => {
-    const rsvpDisplay = getRsvpDisplay(guest.rsvpStatus);
+  const GuestItem = ({ guest }: { guest: FilteredGuest }) => {
+    const attendanceDisplay = getAttendanceDisplay(guest);
     
     return (
       <div 
@@ -106,12 +108,12 @@ export function RecipientPreview({
         }}
       >
         <div className="flex items-center space-x-3 flex-1 min-w-0">
-          {/* RSVP Status */}
+          {/* Attendance Status (RSVP-Lite) */}
           <span 
-            className={cn('text-sm flex-shrink-0', rsvpDisplay.color)} 
-            title={`RSVP: ${guest.rsvpStatus || 'pending'}`}
+            className={cn('text-sm flex-shrink-0', attendanceDisplay.color)} 
+            title={`Status: ${attendanceDisplay.label}`}
           >
-            {rsvpDisplay.emoji}
+            {attendanceDisplay.emoji}
           </span>
           
           {/* Guest Name */}
@@ -282,11 +284,10 @@ export function RecipientPreview({
               )}
               
               {/* Visible items */}
-              {visibleGuests.map((guest, index) => (
+              {visibleGuests.map((guest) => (
                 <GuestItem 
                   key={guest.id} 
-                  guest={guest} 
-                  index={startIndex + index}
+                  guest={guest}
                 />
               ))}
               

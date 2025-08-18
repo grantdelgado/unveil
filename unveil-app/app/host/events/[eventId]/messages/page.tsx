@@ -11,8 +11,8 @@ import {
   LoadingSpinner
 } from '@/components/ui';
 
-// Lazy load MVP messaging center with simplified UI
-const LazyMessageCenter = lazy(() => import('@/components/features/messaging/host/MessageCenterMVP').then(m => ({ default: m.MessageCenterMVP })));
+// Lazy load enhanced messaging center with selection and scheduling
+const LazyMessageCenter = lazy(() => import('@/components/features/messaging/host/MessageCenter').then(m => ({ default: m.MessageCenter })));
 
 type Event = Database['public']['Tables']['events']['Row'];
 

@@ -17,8 +17,8 @@ describe('Messaging Routes - Phase 1', () => {
       expect(true).toBe(true); // Placeholder
     });
 
-    it('should render compose message page', () => {
-      // TODO: Test /host/events/[eventId]/messages/compose renders
+    it('should render messages page with compose and schedule tabs', () => {
+      // TODO: Test /host/events/[eventId]/messages renders with compose and schedule functionality
       expect(true).toBe(true); // Placeholder
     });
 

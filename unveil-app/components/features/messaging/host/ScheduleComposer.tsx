@@ -5,11 +5,10 @@ import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { FieldLabel } from '@/components/ui/Typography';
 import { cn } from '@/lib/utils';
-import { RecipientSelector } from './RecipientSelector';
-import { RecipientPreview } from './RecipientPreview';
-import { useRecipientPreview } from '@/hooks/messaging/useRecipientPreview';
 import { useScheduledMessages } from '@/hooks/messaging/useScheduledMessages';
-import type { RecipientFilter, CreateScheduledMessageData } from '@/lib/types/messaging';
+import { useGuestSelection } from '@/hooks/messaging/useGuestSelection';
+import { GuestSelectionList } from './GuestSelectionList';
+import type { CreateScheduledMessageData } from '@/lib/types/messaging';
 
 type MessageType = 'announcement' | 'reminder' | 'thank_you';
 
@@ -32,24 +31,30 @@ export function ScheduleComposer({
   // Message composition state
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<MessageType>('announcement');
-  const [recipientFilter, setRecipientFilter] = useState<RecipientFilter>({ type: 'all' });
   
   // Scheduling state
   const [scheduledDate, setScheduledDate] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
   const [sendViaPush, setSendViaPush] = useState(true);
-  const [sendViaSms, setSendViaSms] = useState(false);
+  const [sendViaSms, setSendViaSms] = useState(true);
   
   // UI state
   const [error, setError] = useState<string | null>(null);
   const [isScheduling, setIsScheduling] = useState(false);
 
   // Hooks
-  const { previewData, loading: previewLoading } = useRecipientPreview({
-    eventId,
-    filter: recipientFilter,
-    debounceMs: 300
-  });
+  const {
+    filteredGuests,
+    selectedGuestIds,
+    totalSelected,
+    willReceiveMessage,
+    toggleGuestSelection,
+    selectAllEligible,
+    clearAllSelection,
+    setSearchQuery,
+    loading: guestsLoading,
+    error: guestsError
+  } = useGuestSelection({ eventId });
 
   const { createScheduledMessage } = useScheduledMessages({ eventId });
 
@@ -69,7 +74,7 @@ export function ScheduleComposer({
     if (!message.trim()) return false;
     if (!scheduledDate || !scheduledTime) return false;
     if (!sendViaPush && !sendViaSms) return false;
-    if ((previewData?.validRecipientsCount || 0) === 0) return false;
+    if (selectedGuestIds.length === 0) return false;
     
     // Check if scheduled time is in the future
     const scheduledDateTime = new Date(`${scheduledDate}T${scheduledTime}`);
@@ -77,10 +82,10 @@ export function ScheduleComposer({
     if (scheduledDateTime <= now) return false;
     
     return true;
-  }, [message, scheduledDate, scheduledTime, sendViaPush, sendViaSms, previewData]);
+  }, [message, scheduledDate, scheduledTime, sendViaPush, sendViaSms, selectedGuestIds]);
 
-  const validRecipientCount = previewData?.validRecipientsCount || 0;
-  const totalCount = previewData?.totalCount || 0;
+  const validRecipientCount = willReceiveMessage;
+  const totalCount = totalSelected;
   const skippedCount = totalCount - validRecipientCount;
 
   const getMessageTypeEmoji = () => {
@@ -127,8 +132,11 @@ export function ScheduleComposer({
         eventId,
         content: message.trim(),
         sendAt: scheduledDateTime,
-        recipientFilter,
-        messageType: messageType === 'reminder' ? 'announcement' : messageType as any,
+        recipientFilter: {
+          type: 'explicit_selection',
+          selectedGuestIds: selectedGuestIds
+        },
+        messageType: messageType === 'reminder' ? 'announcement' : messageType as 'announcement',
         sendViaSms,
         sendViaEmail: false,
         sendViaPush
@@ -144,7 +152,7 @@ export function ScheduleComposer({
       setMessage('');
       setScheduledDate('');
       setScheduledTime('');
-      setRecipientFilter({ type: 'all' });
+      clearAllSelection(); // Clear guest selection
       setError(null);
       onMessageScheduled?.();
 
@@ -158,7 +166,7 @@ export function ScheduleComposer({
   const handleClear = () => {
     setMessage('');
     setMessageType('announcement');
-    setRecipientFilter({ type: 'all' });
+    clearAllSelection(); // Clear guest selection
     setScheduledDate('');
     setScheduledTime('');
     setError(null);
@@ -227,28 +235,27 @@ export function ScheduleComposer({
         </div>
       </div>
 
-      {/* Recipient Selection */}
-      <div>
-        <FieldLabel className="text-gray-700 font-medium mb-2">
-          Recipients
-        </FieldLabel>
-        <RecipientSelector
-          eventId={eventId}
-          filter={recipientFilter}
-          onFilterChange={setRecipientFilter}
-        />
-      </div>
-
-      {/* Recipient Preview */}
-      <div>
-        <FieldLabel className="text-gray-700 font-medium mb-2">
-          Message Recipients
-        </FieldLabel>
-        <RecipientPreview
-          previewData={previewData}
-          loading={previewLoading}
-          error={null}
-        />
+      {/* Guest Selection */}
+      <div className="bg-white rounded-lg border border-gray-200 p-4">
+        {guestsError ? (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="text-sm text-red-800">
+              ❌ {guestsError}
+            </div>
+          </div>
+        ) : (
+          <GuestSelectionList
+            guests={filteredGuests}
+            selectedGuestIds={selectedGuestIds}
+            onToggleGuest={toggleGuestSelection}
+            onSelectAll={selectAllEligible}
+            onClearAll={clearAllSelection}
+            onSearchChange={setSearchQuery}
+            totalSelected={totalSelected}
+            willReceiveMessage={willReceiveMessage}
+            loading={guestsLoading}
+          />
+        )}
       </div>
 
       {/* Delivery Schedule */}

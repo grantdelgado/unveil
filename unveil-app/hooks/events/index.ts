@@ -5,7 +5,7 @@ export { useGuestEvents } from './useGuestEvents';
 // New modern replacements for deprecated hooks
 export { useEventWithGuest } from './useEventWithGuest';
 export { useUserEvents } from './useUserEvents';
-export { useEventAnalytics } from './useEventAnalytics';
+
 export { useEventDetails } from './useEventDetails';
 
 // Event creation and management

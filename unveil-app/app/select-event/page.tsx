@@ -3,7 +3,7 @@
 // External dependencies
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { AlertCircle } from 'lucide-react';
+
 
 // Internal utilities
 import { formatEventDate } from '@/lib/utils/date';
@@ -17,43 +17,7 @@ import { useAuth } from '@/lib/auth/AuthProvider';
 import { SkeletonLoader } from '@/components/ui';
 import { MobileShell } from '@/components/layout';
 
-// Helper function to format RSVP status
-const formatRSVPStatus = (rsvpStatus: string | null) => {
-  if (!rsvpStatus) {
-    return {
-      text: 'RSVP Needed',
-      className: 'text-xs text-rose-500 font-medium mt-1 flex items-center gap-1',
-      showIcon: true
-    };
-  }
 
-  switch (rsvpStatus.toLowerCase()) {
-    case 'attending':
-      return {
-        text: 'Your RSVP: Attending',
-        className: 'text-xs text-stone-500 mt-1',
-        showIcon: false
-      };
-    case 'maybe':
-      return {
-        text: 'Your RSVP: Maybe',
-        className: 'text-xs text-stone-500 mt-1',
-        showIcon: false
-      };
-    case 'declined':
-      return {
-        text: 'Your RSVP: Not Attending',
-        className: 'text-xs text-stone-500 mt-1',
-        showIcon: false
-      };
-    default:
-      return {
-        text: 'Tap to RSVP',
-        className: 'text-xs text-rose-500 font-medium mt-1 flex items-center gap-1',
-        showIcon: true
-      };
-  }
-};
 
 export default function SelectEventPage() {
   const { events, loading, error, refetch } = useUserEvents();
@@ -294,7 +258,6 @@ export default function SelectEventPage() {
                 <div className="space-y-3">
                   {guestEvents.map((event) => {
                     const formattedDate = formatEventDate(event.event_date);
-                    const rsvpStatus = formatRSVPStatus(event.rsvp_status);
                     
                     return (
                       <button
@@ -322,10 +285,6 @@ export default function SelectEventPage() {
                             <div className="flex items-center gap-2 text-gray-600 mb-1">
                               <span>📅</span>
                               <span className="font-medium break-words">{formattedDate}</span>
-                            </div>
-                            <div className={rsvpStatus.className}>
-                              {rsvpStatus.showIcon && <AlertCircle className="w-3 h-3 flex-shrink-0" />}
-                              <span className="truncate">{rsvpStatus.text}</span>
                             </div>
                           </div>
                           

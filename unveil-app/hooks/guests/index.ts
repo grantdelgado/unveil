@@ -1,18 +1,10 @@
-// Focused guest management hooks for better performance and maintainability
+// RSVP-Lite guest management hooks
 export { useGuests } from './useGuests';
-export { useGuestFiltering } from './useGuestFiltering';
-export { useGuestStatusCounts } from './useGuestStatusCounts';
-export { useGuestMutations } from './useGuestMutations';
+export { useGuestDecline } from './useGuestDecline';
+export { useHostGuestDecline } from './useHostGuestDecline';
 
-// Legacy hook - consider migrating to focused hooks
+// Legacy hook - still used by some components
 export { useGuestData } from './useGuestData';
 
-// Cached guest hooks (React Query based)
-export { 
-  useEventGuestsCached, 
-  useGuestDataCached, 
-  useUpdateGuestRSVP, 
-  useRemoveGuest, 
-  useBulkUpdateGuestRSVP, 
-  useGuestRealtime 
-} from './useGuestsCached';
+// Simplified guest store (primary hook for guest management)
+export { useSimpleGuestStore } from './useSimpleGuestStore';

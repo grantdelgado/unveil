@@ -17,6 +17,8 @@ export type Database = {
       event_guests: {
         Row: {
           created_at: string | null
+          declined_at: string | null
+          decline_reason: string | null
           display_name: string | null
           event_id: string
           guest_email: string | null
@@ -36,6 +38,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          declined_at?: string | null
+          decline_reason?: string | null
           display_name?: string | null
           event_id: string
           guest_email?: string | null
@@ -55,6 +59,8 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          declined_at?: string | null
+          decline_reason?: string | null
           display_name?: string | null
           event_id?: string
           guest_email?: string | null
@@ -494,6 +500,8 @@ export type Database = {
         Args: { p_event_id: string; p_limit?: number; p_offset?: number }
         Returns: {
           created_at: string
+          declined_at: string | null
+          decline_reason: string | null
           display_name: string
           event_id: string
           guest_display_name: string
@@ -596,12 +604,34 @@ export type Database = {
           target_guest_ids?: string[]
           target_rsvp_statuses?: string[]
           target_tags?: string[]
+          include_declined?: boolean
         }
         Returns: {
           guest_id: string
           guest_name: string
           guest_phone: string
         }[]
+      }
+      guest_decline_event: {
+        Args: {
+          p_event_id: string
+          p_decline_reason?: string
+        }
+        Returns: Json
+      }
+      host_clear_guest_decline: {
+        Args: {
+          p_event_id: string
+          p_guest_user_id: string
+        }
+        Returns: Json
+      }
+      is_guest_attending_rsvp_lite: {
+        Args: {
+          guest_event_id: string
+          guest_user_id: string
+        }
+        Returns: boolean
       }
     }
     Enums: {

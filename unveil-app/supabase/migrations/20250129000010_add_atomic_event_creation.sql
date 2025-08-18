@@ -78,8 +78,8 @@ BEGIN
             COALESCE(host_profile_name, 'Host'),
             'host',
             'attending',
-            'email',
-            true
+            'sms',
+            false
         );
         
         -- Return success

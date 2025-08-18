@@ -48,18 +48,25 @@ export function useRecipientPreview({
         .from('event_guests')
         .select(`
           *,
-          users(*)
+          users(*),
+          declined_at,
+          decline_reason
         `)
         .eq('event_id', eventId);
 
       if (guestsError) throw guestsError;
 
       // Transform guests with computed display names
-      const guestsWithDisplayNames: GuestWithDisplayName[] = guests?.map(guest => ({
-        ...guest,
-        displayName: getGuestDisplayName(guest),
-        hasValidPhone: Boolean(guest.phone && guest.phone.trim())
-      })) || [];
+      const guestsWithDisplayNames: GuestWithDisplayName[] = guests?.map(guest => {
+        // For authenticated users, check users.phone; for non-authenticated guests, check guest.phone
+        const effectivePhone = guest.users?.phone || guest.phone;
+        return {
+          ...guest,
+          displayName: getGuestDisplayName(guest),
+          hasValidPhone: Boolean(effectivePhone && effectivePhone.trim()),
+          isOptedOut: Boolean(guest.sms_opt_out)
+        };
+      }) || [];
 
       setAllGuests(guestsWithDisplayNames);
     } catch (err) {
@@ -99,9 +106,19 @@ export function useRecipientPreview({
 
     let filteredGuests = allGuests;
 
+    // RSVP-Lite: Exclude declined guests by default unless explicitly included
+    // Check if filter specifically includes declined guests
+    const includeDeclined = filter.rsvpStatuses?.includes('declined') || 
+                           filter.type === 'individual' ||
+                           (filter as any).includeDeclined === true;
+    
+    if (!includeDeclined) {
+      filteredGuests = filteredGuests.filter(guest => !guest.declined_at);
+    }
+
     // Apply filtering logic
     if (filter.type === 'all') {
-      // No additional filtering needed
+      // No additional filtering needed (declined already handled above)
     } else if (filter.type === 'individual' && filter.guestIds) {
       filteredGuests = allGuests.filter(guest => 
         filter.guestIds!.includes(guest.id)
@@ -109,9 +126,11 @@ export function useRecipientPreview({
     } else {
       // Apply RSVP status filter
       if (filter.rsvpStatuses && filter.rsvpStatuses.length > 0) {
-        filteredGuests = filteredGuests.filter(guest => 
-          filter.rsvpStatuses!.includes(guest.rsvp_status || 'pending')
-        );
+        filteredGuests = filteredGuests.filter(guest => {
+          // RSVP-Lite: Map attendance status to filter
+          const attendanceStatus = guest.declined_at ? 'declined' : 'attending';
+          return filter.rsvpStatuses!.includes(attendanceStatus);
+        });
       }
 
       // Apply tag filter
@@ -135,12 +154,12 @@ export function useRecipientPreview({
       id: guest.id,
       displayName: guest.displayName,
       tags: guest.guest_tags || [],
-      rsvpStatus: guest.rsvp_status,
+      rsvpStatus: guest.declined_at ? 'declined' : 'attending',
       hasPhone: guest.hasValidPhone
     }));
 
-    // Calculate statistics
-    const validRecipientsCount = guests.filter(g => g.hasPhone).length;
+    // Calculate statistics - exclude opted-out guests from valid recipients
+    const validRecipientsCount = filteredGuests.filter(g => g.hasValidPhone && !g.isOptedOut).length;
     
     const tagCounts: Record<string, number> = {};
     const rsvpStatusCounts: Record<string, number> = {};

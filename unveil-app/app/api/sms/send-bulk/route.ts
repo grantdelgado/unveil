@@ -36,12 +36,13 @@ export async function POST(request: NextRequest) {
       success: true,
       data: result
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to send SMS messages';
     logger.apiError('Bulk SMS API error', error);
     return NextResponse.json(
       { 
         success: false, 
-        error: error.message || 'Failed to send SMS messages' 
+        error: errorMessage
       },
       { status: 500 }
     );

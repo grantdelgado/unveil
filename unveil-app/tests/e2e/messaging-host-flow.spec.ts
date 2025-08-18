@@ -70,7 +70,7 @@ test.describe('Host Messaging Flow', () => {
     });
 
     test('host can compose message with tag-based targeting', async ({ page }) => {
-      await page.goto(`/host/events/${context.eventId}/messages/compose`);
+      await page.goto(`/host/events/${context.eventId}/messages`);
       
       // Fill message content
       const vipMessage = 'Special VIP reception details will be shared closer to the date.';
@@ -94,7 +94,7 @@ test.describe('Host Messaging Flow', () => {
     });
 
     test('host can preview message recipients before sending', async ({ page }) => {
-      await page.goto(`/host/events/${context.eventId}/messages/compose`);
+      await page.goto(`/host/events/${context.eventId}/messages`);
       
       // Fill message
       await page.getByLabel(/message content/i).fill('Test preview message');
@@ -117,7 +117,7 @@ test.describe('Host Messaging Flow', () => {
 
   test.describe('Schedule Message Flow', () => {
     test('host can schedule message for future delivery', async ({ page }) => {
-      await page.goto(`/host/events/${context.eventId}/messages/compose`);
+      await page.goto(`/host/events/${context.eventId}/messages`);
       
       // Fill message content
       const scheduledContent = 'Reminder: Our wedding is tomorrow! We can\'t wait to celebrate with you.';
@@ -369,7 +369,7 @@ test.describe('Host Messaging Flow', () => {
 
   test.describe('Error Handling', () => {
     test('host sees appropriate error messages for failed actions', async ({ page }) => {
-      await page.goto(`/host/events/${context.eventId}/messages/compose`);
+      await page.goto(`/host/events/${context.eventId}/messages`);
       
       // Try to send empty message
       await page.getByRole('button', { name: /send now/i }).click();

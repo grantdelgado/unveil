@@ -8,8 +8,8 @@ import type { GuestStatusCounts } from './types';
 interface GuestControlPanelProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
-  filterByRSVP: 'all' | 'attending' | 'pending';
-  onFilterChange: (filter: 'all' | 'attending' | 'pending') => void;
+  filterByRSVP: 'all' | 'attending' | 'declined';
+  onFilterChange: (filter: 'all' | 'attending' | 'declined') => void;
   statusCounts: GuestStatusCounts;
   onImportGuests: () => void;
   onAddIndividualGuest?: () => void;
@@ -18,7 +18,7 @@ interface GuestControlPanelProps {
 }
 
 interface FilterButtonProps {
-  filter: 'all' | 'attending' | 'pending';
+  filter: 'all' | 'attending' | 'declined';
   isActive: boolean;
   count: number;
   onClick: () => void;
@@ -28,7 +28,7 @@ const FilterButton = memo<FilterButtonProps>(({ filter, isActive, count, onClick
   const config = {
     all: { label: 'All', emoji: '👥' },
     attending: { label: 'Attending', emoji: '✅' },
-    pending: { label: 'Pending', emoji: '⏳' },
+    declined: { label: 'Declined', emoji: '❌' },
   };
 
   const { label, emoji } = config[filter];
@@ -140,10 +140,10 @@ export const GuestControlPanel = memo<GuestControlPanelProps>(({
             onClick={() => onFilterChange('attending')}
           />
           <FilterButton
-            filter="pending"
-            isActive={filterByRSVP === 'pending'}
-            count={statusCounts.pending}
-            onClick={() => onFilterChange('pending')}
+            filter="declined"
+            isActive={filterByRSVP === 'declined'}
+            count={statusCounts.declined}
+            onClick={() => onFilterChange('declined')}
           />
         </div>
 
