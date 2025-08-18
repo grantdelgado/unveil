@@ -127,12 +127,21 @@ const config: Config = {
       },
       // Mobile-first responsive design
       screens: {
-        'xs': '375px',
+        'xs': '360px',  // Extra small phones
         'sm': '640px',
         'md': '768px',
         'lg': '1024px',
         'xl': '1280px',
         '2xl': '1536px',
+      },
+      // Mobile utilities
+      minHeight: {
+        'mobile': ['100svh', '100dvh'],
+        'screen': '100vh', // Fallback for older browsers
+      },
+      height: {
+        'mobile': ['100svh', '100dvh'],
+        'screen': '100vh', // Fallback for older browsers
       },
     },
   },

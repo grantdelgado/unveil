@@ -86,6 +86,47 @@ body {
 }
 
 /* Safe area support for devices with home indicators */
+:root {
+  /* Safe area insets - available on all devices, fallback to 0 */
+  --sat: env(safe-area-inset-top, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+}
+
+/* Safe area utility classes */
+.safe-top { 
+  padding-top: max(var(--sat), 0px); 
+}
+
+.safe-bottom { 
+  padding-bottom: max(var(--sab), 0px); 
+}
+
+.safe-x { 
+  padding-left: max(var(--sal), 0px); 
+  padding-right: max(var(--sar), 0px); 
+}
+
+.safe-all {
+  padding-top: max(var(--sat), 0px);
+  padding-right: max(var(--sar), 0px);
+  padding-bottom: max(var(--sab), 0px);
+  padding-left: max(var(--sal), 0px);
+}
+
+/* Mobile viewport height fixes - handles iOS 100vh bug */
+.min-h-mobile { 
+  min-height: 100svh; /* Small viewport height - excludes UI */
+  min-height: 100dvh; /* Dynamic viewport height - adjusts with keyboard */
+}
+
+.h-mobile { 
+  height: 100svh; 
+  height: 100dvh; 
+}
+
+/* Legacy support classes for backward compatibility */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   .h-safe-area-inset-bottom {
     height: env(safe-area-inset-bottom);
@@ -244,6 +285,28 @@ button, [role="button"] {
   user-select: none;
   /* Native haptic feedback on supported devices */
   touch-action: manipulation;
+  /* Minimum touch target size for accessibility */
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Keyboard and scroll optimizations */
+.scroll-container {
+  /* Prevent rubber band scrolling on iOS */
+  overscroll-behavior-y: contain;
+  /* Smooth scrolling with momentum on iOS */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Keyboard handling for input containers */
+.keyboard-adjust {
+  /* Adjust for virtual keyboard on mobile */
+  padding-bottom: env(keyboard-inset-height, 0px);
+}
+
+/* Scroll padding for sticky elements */
+.scroll-pb-safe {
+  scroll-padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem);
 }
 
 /* High contrast mode support */

@@ -15,12 +15,12 @@ export const PageWrapper: React.FC<PageWrapperProps> = ({
   return (
     <div
       className={cn(
-        'min-h-[100dvh] bg-[#FAFAFA]',
+        'min-h-mobile bg-[#FAFAFA]',
         centered && 'flex items-center justify-center',
-        // Enhanced responsive padding with iPhone optimizations
+        // Enhanced responsive padding with mobile optimizations
         'p-3 xs:p-4 sm:p-6 md:p-8',
-        // iPhone 12/13/14 specific width handling (390px)
-        'max-w-[390px] mx-auto sm:max-w-none',
+        // Mobile-first responsive width handling
+        'max-w-md mx-auto sm:max-w-none',
         className,
       )}
     >

@@ -20,6 +20,7 @@ import {
 } from '@/components/ui';
 import { UnveilHeader, AuthCard } from '@/components/shared';
 import { ModernOTPInput } from '@/components/features/auth/ModernOTPInput';
+import { MobileShell } from '@/components/layout';
 
 // Login flow steps
 type LoginStep = 'phone' | 'otp';
@@ -212,40 +213,45 @@ export default function LoginPage() {
   if (loading && step === 'phone' && phone) {
     return (
       <PageWrapper>
-        <LoadingSpinner size="lg" text="Authenticating..." />
+        <MobileShell>
+          <div className="flex items-center justify-center min-h-[50vh]">
+            <LoadingSpinner size="lg" text="Authenticating..." />
+          </div>
+        </MobileShell>
       </PageWrapper>
     );
   }
 
   return (
     <PageWrapper>
-      <div className="px-4 sm:px-6 lg:px-8">
-        <AuthCard 
-          variant="auth" 
-          maxWidth="md"
-          className="mx-auto"
-        >
+      <MobileShell>
+        <div className="flex items-center justify-center min-h-[50vh] px-4 sm:px-6 lg:px-8">
+          <AuthCard 
+            variant="auth" 
+            maxWidth="md"
+            className="w-full max-w-md"
+          >
           {/* Shared Header with consistent branding */}
           <div className="text-center mb-6 sm:mb-8">
             <UnveilHeader 
               size="md" 
               className="mb-4 sm:mb-6"
             />
-            <div className="space-y-2 sm:space-y-3">
-              <PageTitle className="text-xl sm:text-2xl">Welcome to Unveil</PageTitle>
-              {step === 'phone' ? (
-                <div className="space-y-2">
-                  <SubTitle className="text-base sm:text-lg">Enter your phone number to continue</SubTitle>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <SubTitle className="mb-2 text-base sm:text-lg">
-                    Enter the verification code sent to
-                  </SubTitle>
-                  <p className="text-gray-900 font-medium text-sm sm:text-base">{phone}</p>
-                </div>
-              )}
-            </div>
+                          <div className="space-y-2 sm:space-y-3">
+                <PageTitle className="text-xl sm:text-2xl break-words">Welcome to Unveil</PageTitle>
+                {step === 'phone' ? (
+                  <div className="space-y-2">
+                    <SubTitle className="text-base sm:text-lg break-words">Enter your phone number to continue</SubTitle>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <SubTitle className="mb-2 text-base sm:text-lg break-words">
+                      Enter the verification code sent to
+                    </SubTitle>
+                    <p className="text-gray-900 font-medium text-sm sm:text-base break-words">{phone}</p>
+                  </div>
+                )}
+              </div>
           </div>
 
           {step === 'phone' ? (
@@ -314,15 +320,16 @@ export default function LoginPage() {
 
           {/* Enhanced Microcopy */}
           <div className="mt-6 sm:mt-8">
-            <MicroCopy>
+            <MicroCopy className="break-words">
               {step === 'phone' 
                 ? "First time here? Just enter your phone — we'll set everything up for you automatically."
                 : "Code will verify automatically when entered. Didn't receive it? Wait 60 seconds and try again."
               }
             </MicroCopy>
           </div>
-        </AuthCard>
-      </div>
+          </AuthCard>
+        </div>
+      </MobileShell>
     </PageWrapper>
   );
 }

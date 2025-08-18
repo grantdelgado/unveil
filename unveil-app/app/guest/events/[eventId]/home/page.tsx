@@ -20,6 +20,7 @@ import {
   SkeletonLoader
 } from '@/components/ui';
 import { ErrorBoundary, MessagingErrorFallback } from '@/components/ui/ErrorBoundary';
+import { MobileShell } from '@/components/layout';
 
 export default function GuestEventHomePage() {
   const params = useParams();
@@ -175,53 +176,59 @@ export default function GuestEventHomePage() {
 
 
 
-  return (
-    <ErrorBoundary fallback={MessagingErrorFallback}>
-      <div className="min-h-screen bg-[#FAFAFA]">
-      {/* Sticky Header */}
-      <div
-        className={`sticky top-0 z-40 bg-[#FAFAFA]/95 backdrop-blur-sm border-b border-gray-200/50 transition-all duration-300 ${
-          isScrolled ? 'shadow-lg' : 'shadow-sm'
-        }`}
-      >
-        <div className="max-w-5xl mx-auto px-6 transition-all duration-300">
-          <div
-            className={`transition-all duration-300 ${isScrolled ? 'py-3' : 'py-6'}`}
-          >
-            {/* Header with RSVP button positioned top-right */}
-            <div className="relative">
-              {/* RSVP Button - Top Right Corner */}
-              <div className="absolute top-0 right-0">
-                <GuestRSVPBadge
-                  currentStatus={guestInfo?.rsvp_status || null}
-                  onStatusUpdate={handleRSVPUpdate}
-                  isScrolled={isScrolled}
-                />
-              </div>
-              
-              {/* Main header content */}
-              <div className={`transition-all duration-300 ${isScrolled ? 'pr-40' : 'pr-44'}`}> {/* Responsive padding for button size */}
-                <div className={`mb-3 transition-all duration-300 ${isScrolled ? 'text-sm' : ''}`}>
-                  <BackButton 
-                    href="/select-event"
-                    variant="subtle"
-                    className={isScrolled ? 'text-xs py-1 px-2' : ''}
-                  >
-                    Your Events
-                  </BackButton>
-                </div>
-                <h1
-                  className={`font-semibold text-gray-900 transition-all duration-300 tracking-tight ${
-                    isScrolled ? 'text-xl' : 'text-3xl'
-                  }`}
+  const header = (
+    <div
+      className={`bg-[#FAFAFA]/95 backdrop-blur-sm border-b border-gray-200/50 transition-all duration-300 ${
+        isScrolled ? 'shadow-lg' : 'shadow-sm'
+      }`}
+    >
+      <div className="max-w-5xl mx-auto px-6 transition-all duration-300">
+        <div
+          className={`transition-all duration-300 ${isScrolled ? 'py-3' : 'py-6'}`}
+        >
+          {/* Header with RSVP button positioned top-right */}
+          <div className="relative">
+            {/* RSVP Button - Top Right Corner */}
+            <div className="absolute top-0 right-0">
+              <GuestRSVPBadge
+                currentStatus={guestInfo?.rsvp_status || null}
+                onStatusUpdate={handleRSVPUpdate}
+                isScrolled={isScrolled}
+              />
+            </div>
+            
+            {/* Main header content */}
+            <div className={`transition-all duration-300 ${isScrolled ? 'pr-40' : 'pr-44'}`}> {/* Responsive padding for button size */}
+              <div className={`mb-3 transition-all duration-300 ${isScrolled ? 'text-sm' : ''}`}>
+                <BackButton 
+                  href="/select-event"
+                  variant="subtle"
+                  className={isScrolled ? 'text-xs py-1 px-2' : ''}
                 >
-                  {event.title}
-                </h1>
+                  Your Events
+                </BackButton>
               </div>
+              <h1
+                className={`font-semibold text-gray-900 transition-all duration-300 tracking-tight break-words ${
+                  isScrolled ? 'text-xl' : 'text-3xl'
+                }`}
+              >
+                {event.title}
+              </h1>
             </div>
           </div>
         </div>
       </div>
+    </div>
+  );
+
+  return (
+    <ErrorBoundary fallback={MessagingErrorFallback}>
+      <MobileShell 
+        header={header}
+        className="bg-[#FAFAFA]"
+        scrollable={true}
+      >
 
       {/* RSVP Section - Only show if guest hasn't RSVP'd */}
       {!guestInfo?.rsvp_status && (
@@ -262,7 +269,7 @@ export default function GuestEventHomePage() {
                     </div>
                     <div>
                       <h3 className="font-medium text-stone-800 mb-1">When</h3>
-                      <p className="text-stone-700 text-base">
+                      <p className="text-stone-700 text-base break-words">
                         {formatEventDate(event.event_date)}
                       </p>
                     </div>
@@ -291,7 +298,7 @@ export default function GuestEventHomePage() {
                       </div>
                       <div>
                         <h3 className="font-medium text-stone-800 mb-1">Where</h3>
-                        <p className="text-stone-700 text-base">{event.location}</p>
+                        <p className="text-stone-700 text-base break-words">{event.location}</p>
                       </div>
                     </div>
                   )}
@@ -329,7 +336,7 @@ export default function GuestEventHomePage() {
                             Wedding website
                           </h3>
                           <div className="flex items-center space-x-2">
-                            <p className="text-stone-700 group-hover:text-stone-800 transition-colors duration-200">
+                            <p className="text-stone-700 group-hover:text-stone-800 transition-colors duration-200 break-words">
                               {domain}
                             </p>
                             <div className="w-3 h-3 text-stone-400 group-hover:text-stone-600 transition-colors duration-200">
@@ -419,10 +426,10 @@ export default function GuestEventHomePage() {
                       {event.host.full_name?.charAt(0) || '?'}
                     </div>
                     <div>
-                      <h4 className="font-medium text-stone-800 text-base">
+                      <h4 className="font-medium text-stone-800 text-base break-words">
                         {event.host.full_name || 'Your hosts'}
                       </h4>
-                      <p className="text-sm text-stone-600">
+                      <p className="text-sm text-stone-600 break-words">
                         Looking forward to celebrating with you
                       </p>
                     </div>
@@ -433,9 +440,7 @@ export default function GuestEventHomePage() {
           </div>
         </div>
       </div>
-
-
-      </div>
+      </MobileShell>
     </ErrorBoundary>
   );
 }
