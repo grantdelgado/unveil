@@ -14,7 +14,7 @@ import { useUserEvents } from '@/hooks/events';
 import { useAuth } from '@/lib/auth/AuthProvider';
 
 // Internal components (specific imports)
-import { PageWrapper, SkeletonLoader } from '@/components/ui';
+import { SkeletonLoader } from '@/components/ui';
 import { MobileShell } from '@/components/layout';
 
 // Helper function to format RSVP status
@@ -70,16 +70,14 @@ export default function SelectEventPage() {
   // Show loading while auth is being checked
   if (authLoading || (!isAuthenticated && !authLoading)) {
     return (
-      <PageWrapper>
-        <MobileShell>
-          <div className="flex items-center justify-center min-h-[50vh]">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-500 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading...</p>
-            </div>
+      <MobileShell>
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-500 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading...</p>
           </div>
-        </MobileShell>
-      </PageWrapper>
+        </div>
+      </MobileShell>
     );
   }
 
@@ -105,13 +103,11 @@ export default function SelectEventPage() {
     );
 
     return (
-      <PageWrapper>
-        <MobileShell header={header} footer={footer}>
-          <div className="max-w-md mx-auto px-4 py-8 w-full">
-            <SkeletonLoader variant="card" count={3} />
-          </div>
-        </MobileShell>
-      </PageWrapper>
+      <MobileShell header={header} footer={footer}>
+        <div className="max-w-md mx-auto px-4 py-8 w-full">
+          <SkeletonLoader variant="card" count={3} />
+        </div>
+      </MobileShell>
     );
   }
 
@@ -140,24 +136,22 @@ export default function SelectEventPage() {
     );
 
     return (
-      <PageWrapper>
-        <MobileShell header={header} footer={footer}>
-          <div className="max-w-md mx-auto px-4 py-8 w-full flex items-center justify-center">
-            <div className="text-center space-y-4">
-              <div className="text-6xl">⚠️</div>
-              <p className="text-gray-600 break-words">
-                {error?.message || 'An unexpected error occurred'}
-              </p>
-              <button 
-                onClick={refetch}
-                className="px-6 py-3 bg-rose-500 text-white rounded-xl font-semibold hover:bg-rose-600 transition-colors min-h-[44px] min-w-[44px]"
-              >
-                Try Again
-              </button>
-            </div>
+      <MobileShell header={header} footer={footer}>
+        <div className="max-w-md mx-auto px-4 py-8 w-full flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <div className="text-6xl">⚠️</div>
+            <p className="text-gray-600 break-words">
+              {error?.message || 'An unexpected error occurred'}
+            </p>
+            <button 
+              onClick={refetch}
+              className="px-6 py-3 bg-rose-500 text-white rounded-xl font-semibold hover:bg-rose-600 transition-colors min-h-[44px] min-w-[44px]"
+            >
+              Try Again
+            </button>
           </div>
-        </MobileShell>
-      </PageWrapper>
+        </div>
+      </MobileShell>
     );
   }
 
@@ -225,13 +219,12 @@ export default function SelectEventPage() {
   );
 
   return (
-    <PageWrapper>
-      <div id="select-event">
-        <MobileShell
-          header={header}
-          footer={footer}
-          className="scroll-container"
-        >
+    <div id="select-event">
+      <MobileShell
+        header={header}
+        footer={footer}
+        className="scroll-container"
+      >
         <div className="max-w-md mx-auto px-4 py-8 w-full space-y-8">
           {/* Events List */}
           <div className="space-y-8">
@@ -251,6 +244,7 @@ export default function SelectEventPage() {
                       <div key={event.event_id} className="relative">
                         <button
                           onClick={() => handleEventSelect(event)}
+                          data-testid="event-card"
                           className={cn(
                             'w-full p-5 bg-white border border-gray-200 rounded-xl shadow-sm',
                             'transition-all duration-200 hover:shadow-md hover:border-rose-300',
@@ -306,6 +300,7 @@ export default function SelectEventPage() {
                       <button
                         key={event.event_id}
                         onClick={() => handleEventSelect(event)}
+                        data-testid="event-card"
                         className={cn(
                           'w-full p-5 bg-white border border-gray-200 rounded-xl shadow-sm',
                           'transition-all duration-200 hover:shadow-md hover:border-rose-300',
@@ -363,8 +358,7 @@ export default function SelectEventPage() {
             )}
           </div>
         </div>
-        </MobileShell>
-      </div>
-    </PageWrapper>
+      </MobileShell>
+    </div>
   );
 }
