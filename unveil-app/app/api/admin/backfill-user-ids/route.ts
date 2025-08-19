@@ -27,7 +27,7 @@ import { requireAdmin } from '@/lib/auth/adminAuth';
 export async function POST(request: Request) {
   try {
     // Verify admin privileges first
-    const adminCheck = await requireAdmin(request);
+    const adminCheck = await requireAdmin();
     if (adminCheck instanceof Response) {
       return adminCheck; // Return 403 if not admin
     }
@@ -80,18 +80,20 @@ export async function POST(request: Request) {
       );
     }
 
-    const result = data[0] as { processed: number; linked: number; errors: number };
+    const result = data[0] as { updated_count: number; total_eligible_count: number; details: string };
 
     console.log('✅ Backfill completed:', {
-      processed: result.processed,
-      linked: result.linked,
-      errors: result.errors,
+      updated_count: result.updated_count,
+      total_eligible_count: result.total_eligible_count,
+      details: result.details,
       userId: session.user.id
     });
 
     return NextResponse.json({
       success: true,
-      ...result,
+      updated_count: result.updated_count,
+      total_eligible_count: result.total_eligible_count,
+      details: result.details,
       timestamp: new Date().toISOString(),
       executed_by: session.user.id
     });
@@ -115,7 +117,7 @@ export async function POST(request: Request) {
 export async function GET(request: Request) {
   try {
     // Verify admin privileges first
-    const adminCheck = await requireAdmin(request);
+    const adminCheck = await requireAdmin();
     if (adminCheck instanceof Response) {
       return adminCheck; // Return 403 if not admin
     }

@@ -208,10 +208,11 @@ export function GuestImportWizard({
 
       // Invalidate user events cache to update "Choose an event" list
       // This ensures newly added guests can see the event immediately
-      const queryClient = (window as any).__queryClient;
-      if (queryClient) {
-        queryClient.invalidateQueries({ queryKey: ['events'] });
-        queryClient.invalidateQueries({ queryKey: ['user-events'] });
+      const queryClient = (window as unknown as Record<string, unknown>).__queryClient;
+      if (queryClient && typeof queryClient === 'object' && 'invalidateQueries' in queryClient) {
+        const qc = queryClient as { invalidateQueries: (options: { queryKey: string[] }) => void };
+        qc.invalidateQueries({ queryKey: ['events'] });
+        qc.invalidateQueries({ queryKey: ['user-events'] });
       }
 
       // Complete the import first, then send SMS invitations asynchronously

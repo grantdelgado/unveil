@@ -107,9 +107,9 @@ export function useGuests(eventId?: string): UseGuestsReturn {
         const { data: result, error } = await supabase
           .rpc('add_or_restore_guest', {
             p_event_id: eventId,
-            p_phone: guest.phone,
-            p_name: guest.guest_name,
-            p_email: guest.guest_email,
+            p_phone: guest.phone || '',
+            p_name: guest.guest_name || undefined,
+            p_email: guest.guest_email || undefined,
             p_role: guest.role || 'guest'
           });
 
@@ -117,11 +117,17 @@ export function useGuests(eventId?: string): UseGuestsReturn {
           throw new Error(`Failed to add guest ${guest.guest_name || guest.phone}: ${error.message}`);
         }
 
+        const resultData = result as { success: boolean; guest_id: string; operation: string };
+        
+        if (!result || !resultData.guest_id) {
+          throw new Error(`Invalid result from add_or_restore_guest: ${JSON.stringify(result)}`);
+        }
+
         // Fetch the created/updated guest record to return
         const { data: guestRecord, error: fetchError } = await supabase
           .from('event_guests')
           .select('*')
-          .eq('id', result.guest_id)
+          .eq('id', resultData.guest_id)
           .single();
 
         if (fetchError) {

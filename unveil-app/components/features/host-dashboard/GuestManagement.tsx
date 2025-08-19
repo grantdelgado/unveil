@@ -217,10 +217,11 @@ function GuestManagementContent({
       
       // Invalidate user events to update "Choose an event" list immediately
       // This ensures removed guests no longer see the event
-      const queryClient = (window as any).__queryClient;
-      if (queryClient) {
-        queryClient.invalidateQueries({ queryKey: ['events'] });
-        queryClient.invalidateQueries({ queryKey: ['user-events'] });
+      const queryClient = (window as unknown as Record<string, unknown>).__queryClient;
+      if (queryClient && typeof queryClient === 'object' && 'invalidateQueries' in queryClient) {
+        const qc = queryClient as { invalidateQueries: (options: { queryKey: string[] }) => void };
+        qc.invalidateQueries({ queryKey: ['events'] });
+        qc.invalidateQueries({ queryKey: ['user-events'] });
       }
     } catch (err) {
       console.error('Failed to remove guest:', err);

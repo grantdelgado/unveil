@@ -26,10 +26,10 @@ export async function verifyAdminRole(userId?: string): Promise<AdminVerificatio
       userId = user.id;
     }
 
-    // Check user role in database
+    // Check user exists in database
     const { data: userData, error: dbError } = await supabase
       .from('users')
-      .select('id, role')
+      .select('id, email, phone')
       .eq('id', userId)
       .single();
 
@@ -37,9 +37,13 @@ export async function verifyAdminRole(userId?: string): Promise<AdminVerificatio
       return { isAdmin: false, error: 'User not found' };
     }
 
-    // For now, check if user role is 'admin'
-    // This can be extended to check specific permissions later
-    const isAdmin = userData.role === 'admin';
+    // For now, check if user is in admin list (can be moved to env var later)
+    // TODO: Add proper role system to users table
+    const adminEmails = ['grant@sendunveil.com', 'admin@sendunveil.com'];
+    const adminPhones = ['+15712364686']; // Add your admin phone numbers
+    
+    const isAdmin = adminEmails.includes(userData.email || '') || 
+                   adminPhones.includes(userData.phone || '');
 
     return {
       isAdmin,
@@ -67,10 +71,10 @@ export async function verifyAdminRoleServer(): Promise<AdminVerificationResult> 
       return { isAdmin: false, error: 'Authentication required' };
     }
 
-    // Check user role in database using server client
+    // Check user exists in database using server client
     const { data: userData, error: dbError } = await supabase
       .from('users')
-      .select('id, role')
+      .select('id, email, phone')
       .eq('id', user.id)
       .single();
 
@@ -78,7 +82,13 @@ export async function verifyAdminRoleServer(): Promise<AdminVerificationResult> 
       return { isAdmin: false, error: 'User not found' };
     }
 
-    const isAdmin = userData.role === 'admin';
+    // For now, check if user is in admin list (can be moved to env var later)
+    // TODO: Add proper role system to users table
+    const adminEmails = ['grant@sendunveil.com', 'admin@sendunveil.com'];
+    const adminPhones = ['+15712364686']; // Add your admin phone numbers
+    
+    const isAdmin = adminEmails.includes(userData.email || '') || 
+                   adminPhones.includes(userData.phone || '');
 
     return {
       isAdmin,
@@ -97,7 +107,7 @@ export async function verifyAdminRoleServer(): Promise<AdminVerificationResult> 
  * Middleware-style admin guard for API routes
  * Returns 403 response if user is not admin
  */
-export async function requireAdmin(_request?: Request): Promise<{ isAdmin: true; userId: string } | Response> {
+export async function requireAdmin(): Promise<{ isAdmin: true; userId: string } | Response> {
   const verification = await verifyAdminRoleServer();
   
   if (!verification.isAdmin) {

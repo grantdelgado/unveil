@@ -432,7 +432,9 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
               id: message.message_id,
               content: message.content,
               created_at: message.created_at,
-              message_type: message.message_type as "direct" | "announcement" | "welcome" | "custom" | "rsvp_reminder" | "channel" | null,
+              message_type: (message.message_type === "welcome" || message.message_type === "custom" || message.message_type === "rsvp_reminder") 
+                ? "announcement" 
+                : message.message_type as "direct" | "announcement" | "channel" | null,
               sender_user_id: isOwnMessage ? currentUserId : null,
               event_id: eventId,
               delivered_at: null,
@@ -446,7 +448,7 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
                 email: null,
                 created_at: null,
                 updated_at: null,
-                onboarding_completed: null,
+                onboarding_completed: false,
                 intended_redirect: null,
               } : null,
             };

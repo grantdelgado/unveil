@@ -2,8 +2,8 @@ import { z } from 'zod';
 import {
   isValidEmail,
   isValidPhoneNumber,
-  normalizePhoneNumber,
-} from './utils';
+} from './utils/validation';
+import { normalizePhoneNumberSimple as normalizePhoneNumber } from './utils/phone';
 import type { EventGuestInsert } from './supabase';
 
 // Guest import validation schema - phone is now required, name is optional

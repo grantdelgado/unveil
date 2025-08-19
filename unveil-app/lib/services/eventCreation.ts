@@ -871,9 +871,9 @@ export class EventCreationService {
         const { data: result, error } = await supabase
           .rpc('add_or_restore_guest', {
             p_event_id: eventId,
-            p_phone: guest.phone,
-            p_name: guest.guest_name,
-            p_email: guest.guest_email || null,
+            p_phone: guest.phone || '',
+            p_name: guest.guest_name || undefined,
+            p_email: guest.guest_email || undefined,
             p_role: guest.role || 'guest'
           });
 
@@ -884,6 +884,19 @@ export class EventCreationService {
             guest_data: guest,
             error_code: error.code || 'RPC_ERROR',
             error_message: error.message || 'Unknown error during guest creation'
+          });
+          continue;
+        }
+
+        const resultData = result as { success: boolean; guest_id: string; operation: string };
+        
+        if (!result || !resultData.guest_id) {
+          failed_count++;
+          failed_rows.push({
+            row_index: i,
+            guest_data: guest,
+            error_code: 'INVALID_RESULT',
+            error_message: 'Invalid result from add_or_restore_guest'
           });
           continue;
         }
@@ -899,8 +912,8 @@ export class EventCreationService {
           operationId,
           guestIndex: i + 1,
           phone: guest.phone,
-          operation: result.operation, // 'created', 'restored', or 'updated'
-          guestId: result.guest_id
+          operation: resultData.operation, // 'created', 'restored', or 'updated'
+          guestId: resultData.guest_id
         });
 
       } catch (guestError) {
