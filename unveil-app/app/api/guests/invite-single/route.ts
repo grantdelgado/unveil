@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
       eventTitle: event.title,
       eventDate: formattedDate,
       guestPhone: guest.phone,
-      guestName,
+      guestName: guestName || undefined,
       hostName
     };
 
@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Update invitation tracking
-    const { data: trackingResult, error: trackingError } = await supabase
+    const { error: trackingError } = await supabase
       .rpc('update_guest_invitation_tracking', {
         p_event_id: eventId,
         p_guest_ids: [guestId]

@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { sendBulkSMS } from '@/lib/sms';
 import { logger } from '@/lib/logger';
 import type { SendMessageRequest } from '@/lib/types/messaging';
+import type { Database } from '@/app/reference/supabase.types';
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest) {
     const { eventId, content, messageType, recipientFilter, recipientEventGuestIds, sendVia } = body;
     
     // Check if this is an invitation send (based on preset or message content)
-    const isInvitationSend = body.messageType === 'invitation' || 
+    const isInvitationSend = body.messageType === 'announcement' || 
                            (recipientEventGuestIds && recipientEventGuestIds.length > 0 && 
                             content.toLowerCase().includes('invited'));
 
@@ -165,7 +166,7 @@ export async function POST(request: NextRequest) {
       .insert({
         event_id: eventId,
         content: content.trim(),
-        message_type: messageType,
+        message_type: messageType === 'invitation' ? 'announcement' : messageType as Database['public']['Enums']['message_type_enum'],
         sender_user_id: user.id,
       })
       .select()
@@ -296,7 +297,7 @@ export async function POST(request: NextRequest) {
         } else {
           logger.api('Invitation tracking updated', {
             eventId,
-            updatedCount: trackingResult?.updated_count || 0
+            updatedCount: Array.isArray(trackingResult) ? trackingResult.length : 0
           });
         }
       } catch (trackingErr) {

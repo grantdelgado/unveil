@@ -34,6 +34,7 @@ interface SimpleGuest {
   invite_attempts: number | null;
   joined_at: string | null;
   removed_at: string | null;
+  sms_opt_out: boolean | null;
   /** Computed display name from COALESCE(users.full_name, event_guests.guest_name) */
   guest_display_name: string;
   users?: {
@@ -132,12 +133,13 @@ export function useSimpleGuestStore(eventId: string): SimpleGuestStoreReturn {
         // RSVP-Lite fields
         declined_at: guest.declined_at,
         decline_reason: guest.decline_reason,
-        // Invitation tracking fields
+        // Invitation tracking fields (using correct RPC field names)
         invited_at: guest.invited_at,
         last_invited_at: guest.last_invited_at,
         invite_attempts: guest.invite_attempts,
         joined_at: guest.joined_at,
         removed_at: guest.removed_at,
+        sms_opt_out: guest.sms_opt_out,
         guest_display_name: guest.guest_display_name,
         users: guest.user_id ? {
           id: guest.user_id,

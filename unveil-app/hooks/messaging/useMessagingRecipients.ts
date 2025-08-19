@@ -59,7 +59,7 @@ export function useMessagingRecipients(eventId: string): UseMessagingRecipientsR
         throw new Error(`Failed to fetch messaging recipients: ${rpcError.message}`);
       }
 
-      const processedRecipients = (data || []).map(recipient => ({
+      const processedRecipients = (Array.isArray(data) ? data : []).map((recipient: any) => ({
         event_guest_id: recipient.event_guest_id,
         guest_name: recipient.guest_name,
         guest_email: recipient.guest_email,

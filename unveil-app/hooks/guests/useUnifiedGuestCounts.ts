@@ -56,7 +56,7 @@ export function useUnifiedGuestCounts(eventId: string): UseUnifiedGuestCountsRet
         throw new Error(`Failed to fetch guest counts: ${rpcError.message}`);
       }
 
-      if (data && data.length > 0) {
+      if (data && Array.isArray(data) && data.length > 0) {
         const result = data[0];
         setCounts({
           total_guests: result.total_guests || 0,
@@ -78,7 +78,7 @@ export function useUnifiedGuestCounts(eventId: string): UseUnifiedGuestCountsRet
 
       logger.info('Successfully fetched unified guest counts', { 
         eventId, 
-        counts: data?.[0] 
+        counts: Array.isArray(data) ? data[0] : null
       });
 
     } catch (err) {

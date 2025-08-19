@@ -12,7 +12,7 @@ export interface EventInvitation {
   guestName?: string;
 }
 
-import { buildInviteLink, generateGuestAccessLink as newGenerateGuestAccessLink } from '@/lib/utils/url';
+import { generateGuestAccessLink as newGenerateGuestAccessLink } from '@/lib/utils/url';
 import { formatEventDate } from '@/lib/utils/date';
 
 export interface SMSMessage {

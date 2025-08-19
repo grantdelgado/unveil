@@ -31,6 +31,7 @@ export interface OptimizedGuest {
   invite_attempts: number | null;
   joined_at: string | null; // Keep for DB compatibility but don't use in UI
   removed_at: string | null; // Soft delete support
+  sms_opt_out: boolean | null;
   /** 
    * Computed display name from COALESCE(users.full_name, event_guests.guest_name)
    * Prefer this over guest_name for UI display

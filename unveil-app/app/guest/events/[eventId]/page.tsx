@@ -40,6 +40,36 @@ export default function GuestEventJoinPage() {
   const [error, setError] = useState<string>('');
   const [, setCurrentUser] = useState<{ id: string; phone?: string } | null>(null);
 
+  const checkExistingAccess = useCallback(async (userId: string) => {
+    try {
+      // Check if user already has access to this event
+      const { data: existingGuest, error } = await supabase
+        .from('event_guests')
+        .select('id, user_id')
+        .eq('event_id', eventId)
+        .eq('user_id', userId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error checking existing access:', error);
+        return;
+      }
+
+      if (existingGuest) {
+        // User already has access, redirect to event
+        router.replace(`/guest/events/${eventId}/home`);
+      } else {
+        // No access found, show error
+        setError('We couldn&apos;t find your invitation to this event. Please check with the host.');
+        setJoinState('error');
+      }
+    } catch (err) {
+      console.error('Error checking existing access:', err);
+      setError('Something went wrong. Please try again.');
+      setJoinState('error');
+    }
+  }, [eventId, router]);
+
   const handleAutoJoin = useCallback(async (userId: string, userPhone?: string | null) => {
     try {
       const phoneToUse = userPhone || phoneParam;
@@ -97,35 +127,9 @@ export default function GuestEventJoinPage() {
       setError('Something went wrong while joining the event. Please try again.');
       setJoinState('error');
     }
-  }, [eventId, phoneParam, router]);
+  }, [eventId, phoneParam, router, checkExistingAccess]);
 
-  const checkExistingAccess = useCallback(async (userId: string) => {
-    try {
-      // Check if user already has access to this event
-      const { data: existingGuest, error } = await supabase
-        .from('event_guests')
-        .select('id, user_id')
-        .eq('event_id', eventId)
-        .eq('user_id', userId)
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        throw error;
-      }
-
-      if (existingGuest) {
-        // User already has access
-        router.replace(`/guest/events/${eventId}/home`);
-      } else {
-        setError('We couldn&apos;t find your invitation to this event. Please check with the host.');
-        setJoinState('error');
-      }
-    } catch (err) {
-      console.error('Error checking existing access:', err);
-      setError('Unable to verify event access. Please try again.');
-      setJoinState('error');
-    }
-  }, [eventId, router]);
+  // checkExistingAccess now defined above handleAutoJoin
 
   // Check authentication and event access on mount
   const checkAuthAndEvent = useCallback(async () => {

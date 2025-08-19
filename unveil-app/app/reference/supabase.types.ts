@@ -25,11 +25,15 @@ export type Database = {
           guest_name: string | null
           guest_tags: string[] | null
           id: string
+          invite_attempts: number | null
           invited_at: string | null
+          joined_at: string | null
+          last_invited_at: string | null
           notes: string | null
           phone: string | null
           phone_number_verified: boolean | null
           preferred_communication: string | null
+          removed_at: string | null
           role: string
           rsvp_status: string | null
           sms_opt_out: boolean | null
@@ -46,11 +50,15 @@ export type Database = {
           guest_name?: string | null
           guest_tags?: string[] | null
           id?: string
+          invite_attempts?: number | null
           invited_at?: string | null
+          joined_at?: string | null
+          last_invited_at?: string | null
           notes?: string | null
           phone?: string | null
           phone_number_verified?: boolean | null
           preferred_communication?: string | null
+          removed_at?: string | null
           role?: string
           rsvp_status?: string | null
           sms_opt_out?: boolean | null
@@ -67,11 +75,15 @@ export type Database = {
           guest_name?: string | null
           guest_tags?: string[] | null
           id?: string
+          invite_attempts?: number | null
           invited_at?: string | null
+          joined_at?: string | null
+          last_invited_at?: string | null
           notes?: string | null
           phone?: string | null
           phone_number_verified?: boolean | null
           preferred_communication?: string | null
+          removed_at?: string | null
           role?: string
           rsvp_status?: string | null
           sms_opt_out?: boolean | null
@@ -495,6 +507,10 @@ export type Database = {
         Args: { p_message_id: string }
         Returns: boolean
       }
+      check_phone_exists_for_event: {
+        Args: { p_event_id: string; p_phone: string }
+        Returns: boolean
+      }
       create_event_with_host_atomic: {
         Args: { event_data: Json }
         Returns: {
@@ -504,24 +520,37 @@ export type Database = {
           success: boolean
         }[]
       }
+      get_event_guest_counts: {
+        Args: { p_event_id: string }
+        Returns: {
+          attending: number
+          declined: number
+          not_invited: number
+          total_guests: number
+          total_invited: number
+        }[]
+      }
       get_event_guests_with_display_names: {
         Args: { p_event_id: string; p_limit?: number; p_offset?: number }
         Returns: {
           created_at: string
           decline_reason: string
           declined_at: string
-          display_name: string
           event_id: string
           guest_display_name: string
           guest_email: string
           guest_name: string
           guest_tags: string[]
           id: string
+          invite_attempts: number
           invited_at: string
+          joined_at: string
+          last_invited_at: string
           notes: string
           phone: string
           phone_number_verified: boolean
           preferred_communication: string
+          removed_at: string
           role: string
           rsvp_status: string
           sms_opt_out: boolean
@@ -541,9 +570,36 @@ export type Database = {
         Args: { p_guest_name: string; p_user_full_name: string }
         Returns: string
       }
+      get_guest_invitation_status: {
+        Args: {
+          p_declined_at: string
+          p_invited_at: string
+          p_joined_at: string
+        }
+        Returns: string
+      }
       get_guest_join_timestamp: {
         Args: { p_event_id: string }
         Returns: string
+      }
+      get_messaging_recipients: {
+        Args: { p_event_id: string }
+        Returns: {
+          declined_at: string
+          event_guest_id: string
+          guest_display_name: string
+          guest_email: string
+          guest_name: string
+          guest_tags: string[]
+          has_valid_phone: boolean
+          invited_at: string
+          phone: string
+          role: string
+          sms_opt_out: boolean
+          user_email: string
+          user_full_name: string
+          user_phone: string
+        }[]
       }
       get_user_events: {
         Args: { user_id_param?: string }
@@ -651,6 +707,18 @@ export type Database = {
           guest_name: string
           guest_phone: string
         }[]
+      }
+      restore_guest: {
+        Args: { p_guest_id: string }
+        Returns: Json
+      }
+      soft_delete_guest: {
+        Args: { p_guest_id: string }
+        Returns: Json
+      }
+      update_guest_invitation_tracking: {
+        Args: { p_event_id: string; p_guest_ids: string[] }
+        Returns: Json
       }
     }
     Enums: {

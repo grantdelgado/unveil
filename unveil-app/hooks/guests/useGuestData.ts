@@ -151,7 +151,7 @@ export function useGuestData({
       declined_at: guest.declined_at,
       decline_reason: guest.decline_reason,
       // Add stored and computed display names from RPC function
-      display_name: guest.display_name,
+      display_name: guest.guest_display_name, // Use guest_display_name as display_name
       guest_display_name: guest.guest_display_name,
       // Maintain compatibility with existing components expecting nested users object
       users: guest.user_id ? {
