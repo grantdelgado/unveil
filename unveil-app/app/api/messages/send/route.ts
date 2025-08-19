@@ -182,7 +182,7 @@ export async function POST(request: NextRequest) {
     // Initialize delivery tracking variables
     let smsDelivered = 0;
     let smsFailed = 0;
-    let deliveryRecords: Record<string, unknown>[] = [];
+    let deliveryRecords: Database['public']['Tables']['message_deliveries']['Insert'][] = [];
 
     // SMS Delivery
     if (sendVia.sms && guestIds.length > 0) {

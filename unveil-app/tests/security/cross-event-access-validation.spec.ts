@@ -22,8 +22,8 @@ const TEST_USERS = {
 
 describe('🛡️ Cross-Event Access Validation', () => {
   let supabase: ReturnType<typeof createClient<Database>>;
-  let testEventIds: Record<string, string> = {};
-  let testUserIds: Record<string, string> = {};
+  const testEventIds: Record<string, string> = {};
+  const testUserIds: Record<string, string> = {};
 
   beforeAll(async () => {
     supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);

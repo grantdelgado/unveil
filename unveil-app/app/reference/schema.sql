@@ -108,10 +108,11 @@ CREATE TABLE scheduled_messages (
 );
 
 -- Message delivery tracking
+-- NOTE: message_id is NOT NULL with DEFERRABLE constraint to allow same-transaction creation
 CREATE TABLE message_deliveries (
     id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
     scheduled_message_id uuid REFERENCES scheduled_messages(id) ON DELETE CASCADE,
-    message_id uuid REFERENCES messages(id) ON DELETE CASCADE,
+    message_id uuid NOT NULL REFERENCES messages(id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED,
     guest_id uuid REFERENCES event_guests(id) ON DELETE CASCADE,
     phone_number varchar,
     email varchar,

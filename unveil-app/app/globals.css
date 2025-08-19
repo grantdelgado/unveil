@@ -1,5 +1,11 @@
 @import 'tailwindcss';
 
+/* Message preview link breaking */
+.messagePreview a {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 :root {
   /* Brand Colors - Unveil Palette */
   --color-bg: #fdfffc; /* Soft off-white background */

@@ -78,6 +78,8 @@ export async function sendMessageToEvent(request: SendMessageRequest, retryCount
     recipientCount: number;
     guestIds: string[];
     deliveryChannels: string[];
+    smsDelivered?: number;
+    smsFailed?: number;
   };
   error?: Record<string, unknown>;
 }> {

@@ -97,16 +97,41 @@ export function useGuests(eventId?: string): UseGuestsReturn {
     },
   });
 
-  // Import multiple guests
+  // Import multiple guests using canonical add_or_restore_guest RPC
   const importGuestsMutation = useMutation({
     mutationFn: async ({ eventId, guests }: { eventId: string; guests: EventGuestInsert[] }): Promise<EventGuest[]> => {
-      const { data, error } = await supabase
-        .from('event_guests')
-        .insert(guests)
-        .select('*');
+      const results: EventGuest[] = [];
       
-      if (error) throw new Error(error.message);
-      return data;
+      // Process each guest individually using canonical RPC
+      for (const guest of guests) {
+        const { data: result, error } = await supabase
+          .rpc('add_or_restore_guest', {
+            p_event_id: eventId,
+            p_phone: guest.phone,
+            p_name: guest.guest_name,
+            p_email: guest.guest_email,
+            p_role: guest.role || 'guest'
+          });
+
+        if (error) {
+          throw new Error(`Failed to add guest ${guest.guest_name || guest.phone}: ${error.message}`);
+        }
+
+        // Fetch the created/updated guest record to return
+        const { data: guestRecord, error: fetchError } = await supabase
+          .from('event_guests')
+          .select('*')
+          .eq('id', result.guest_id)
+          .single();
+
+        if (fetchError) {
+          throw new Error(`Failed to fetch guest record: ${fetchError.message}`);
+        }
+
+        results.push(guestRecord);
+      }
+      
+      return results;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['guests', variables.eventId] });

@@ -856,98 +856,76 @@ export class EventCreationService {
     failed_rows: GuestImportError[];
     successfully_imported: Array<{ phone: string; guest_name?: string }>;
   }> {
-    const batchSize = 100; // Process in smaller batches for better performance
     let imported_count = 0;
     let failed_count = 0;
     const failed_rows: GuestImportError[] = [];
     const successfully_imported: Array<{ phone: string; guest_name?: string }> = [];
 
-    // Process guests in batches
-    for (let i = 0; i < guests.length; i += batchSize) {
-      const batch = guests.slice(i, i + batchSize);
+    // Process guests individually using canonical add_or_restore_guest RPC
+    // This handles duplicates, restores removed guests, and preserves history
+    for (let i = 0; i < guests.length; i++) {
+      const guest = guests[i];
       
       try {
-        // ✅ NEW: Check for existing users during import for immediate linking
-        const { findUserByPhone } = await import('@/lib/db/linkGuestRecords');
-        
-        const guestInserts: EventGuestInsert[] = await Promise.all(
-          batch.map(async (guest) => {
-            const existingUserId = await findUserByPhone(guest.phone);
-            
-            return {
-              event_id: eventId,
-              guest_name: guest.guest_name,
-              phone: guest.phone,
-              guest_email: guest.guest_email || null,
-              role: guest.role || 'guest',
-              notes: guest.notes || null,
-              guest_tags: guest.guest_tags || null,
-              rsvp_status: 'pending',
-              preferred_communication: 'sms',
-              sms_opt_out: false,
-              user_id: existingUserId // ✅ Set user_id if user exists!
-            };
-          })
-        );
-
-        const { data: insertedGuests, error } = await supabase
-          .from('event_guests')
-          .insert(guestInserts)
-          .select('id, phone, guest_name');
+        // Use canonical add_or_restore_guest RPC
+        const { data: result, error } = await supabase
+          .rpc('add_or_restore_guest', {
+            p_event_id: eventId,
+            p_phone: guest.phone,
+            p_name: guest.guest_name,
+            p_email: guest.guest_email || null,
+            p_role: guest.role || 'guest'
+          });
 
         if (error) {
-          // Handle batch failure - add all guests in this batch to failed
-          batch.forEach((guest, batchIndex) => {
-            failed_rows.push({
-              row_index: i + batchIndex,
-              guest_data: guest,
-              error_code: error.code || 'BATCH_INSERT_ERROR',
-              error_message: this.mapGuestInsertError(error)
-            });
+          failed_count++;
+          failed_rows.push({
+            row_index: i,
+            guest_data: guest,
+            error_code: error.code || 'RPC_ERROR',
+            error_message: error.message || 'Unknown error during guest creation'
           });
-          failed_count += batch.length;
-        } else {
-          imported_count += batch.length;
-          
-          // Track successfully imported guests for SMS invitations
-          if (insertedGuests) {
-            insertedGuests.forEach((insertedGuest) => {
-              if (insertedGuest.phone) { // Only add guests with phone numbers
-                successfully_imported.push({
-                  phone: insertedGuest.phone,
-                  guest_name: insertedGuest.guest_name || undefined
-                });
-              }
-            });
-          }
+          continue;
         }
 
-      } catch (batchError) {
-        // Handle unexpected batch error
-        batch.forEach((guest, batchIndex) => {
-          failed_rows.push({
-            row_index: i + batchIndex,
-            guest_data: guest,
-            error_code: 'UNEXPECTED_BATCH_ERROR',
-            error_message: batchError instanceof Error ? batchError.message : 'Unknown batch error'
-          });
+        // Success - RPC returns operation details
+        imported_count++;
+        successfully_imported.push({
+          phone: guest.phone,
+          guest_name: guest.guest_name
         });
-        failed_count += batch.length;
+
+        logger.info('Guest added/restored successfully', {
+          operationId,
+          guestIndex: i + 1,
+          phone: guest.phone,
+          operation: result.operation, // 'created', 'restored', or 'updated'
+          guestId: result.guest_id
+        });
+
+      } catch (guestError) {
+        // Handle unexpected error for individual guest
+        failed_count++;
+        failed_rows.push({
+          row_index: i,
+          guest_data: guest,
+          error_code: 'UNEXPECTED_ERROR',
+          error_message: `Unexpected error: ${guestError instanceof Error ? guestError.message : 'Unknown error'}`
+        });
       }
 
-      // Add small delay between batches to prevent overwhelming the database
-      if (i + batchSize < guests.length) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+      // Add small delay between individual calls to prevent overwhelming
+      if (i < guests.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 50));
       }
     }
 
-    logger.info('Batch guest import completed', {
+    logger.info('Canonical guest import completed', {
       operationId,
       eventId,
       totalGuests: guests.length,
       imported_count,
-      failed_count,
-      batches: Math.ceil(guests.length / batchSize)
+      failed_count
     });
 
     return {

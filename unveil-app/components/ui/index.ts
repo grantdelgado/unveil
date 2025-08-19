@@ -52,5 +52,6 @@ export * from './inputs';
 
 // Toast functionality
 export { useToast } from './useToast';
+export { ToastProvider, useToast as useEnhancedToast } from './Toast';
 
 // Note: Typography, Button, and Loading components are exported above

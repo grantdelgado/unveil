@@ -179,6 +179,31 @@ export default function GuestEventHomePage() {
     );
   }
 
+  // Check if user is no longer a guest of this event (has been removed)
+  if (event && !guestInfo && currentUserId) {
+    return (
+      <PageWrapper>
+        <CardContainer>
+          <div className="text-center space-y-6">
+            <div className="text-4xl">🚫</div>
+            <div className="space-y-2">
+              <PageTitle>No longer invited</PageTitle>
+              <SubTitle>
+                You are no longer a guest of this event. Please contact the host if you believe this is an error.
+              </SubTitle>
+            </div>
+            <PrimaryButton
+              onClick={() => router.push('/select-event')}
+              fullWidth={false}
+            >
+              View Your Other Events
+            </PrimaryButton>
+          </div>
+        </CardContainer>
+      </PageWrapper>
+    );
+  }
+
 
 
   // Utility functions for website URL handling

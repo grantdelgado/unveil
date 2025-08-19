@@ -217,7 +217,7 @@ export type Database = {
           guest_id: string | null
           has_responded: boolean | null
           id: string
-          message_id: string | null
+          message_id: string
           phone_number: string | null
           push_provider_id: string | null
           push_status: string | null
@@ -236,7 +236,7 @@ export type Database = {
           guest_id?: string | null
           has_responded?: boolean | null
           id?: string
-          message_id?: string | null
+          message_id: string
           phone_number?: string | null
           push_provider_id?: string | null
           push_status?: string | null
@@ -255,7 +255,7 @@ export type Database = {
           guest_id?: string | null
           has_responded?: boolean | null
           id?: string
-          message_id?: string | null
+          message_id?: string
           phone_number?: string | null
           push_provider_id?: string | null
           push_status?: string | null
@@ -442,6 +442,64 @@ export type Database = {
           },
         ]
       }
+      user_link_audit: {
+        Row: {
+          created_at: string | null
+          event_id: string
+          id: string
+          linked_user_id: string | null
+          matched_guest_id: string | null
+          normalized_phone: string
+          outcome: Database["public"]["Enums"]["user_link_outcome_enum"]
+          record_id: string
+          table_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          event_id: string
+          id?: string
+          linked_user_id?: string | null
+          matched_guest_id?: string | null
+          normalized_phone: string
+          outcome: Database["public"]["Enums"]["user_link_outcome_enum"]
+          record_id: string
+          table_name: string
+        }
+        Update: {
+          created_at?: string | null
+          event_id?: string
+          id?: string
+          linked_user_id?: string | null
+          matched_guest_id?: string | null
+          normalized_phone?: string
+          outcome?: Database["public"]["Enums"]["user_link_outcome_enum"]
+          record_id?: string
+          table_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_link_audit_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_link_audit_linked_user_id_fkey"
+            columns: ["linked_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_link_audit_matched_guest_id_fkey"
+            columns: ["matched_guest_id"]
+            isOneToOne: false
+            referencedRelation: "event_guests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
           avatar_url: string | null
@@ -483,12 +541,37 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_or_restore_guest: {
+        Args: {
+          p_email?: string
+          p_event_id: string
+          p_name?: string
+          p_phone: string
+          p_role?: string
+        }
+        Returns: Json
+      }
       backfill_user_id_from_phone: {
         Args: Record<PropertyKey, never>
         Returns: {
           details: string
           total_eligible_count: number
           updated_count: number
+        }[]
+      }
+      backfill_user_links: {
+        Args: {
+          p_batch_size?: number
+          p_dry_run?: boolean
+          p_table_name?: string
+        }
+        Returns: {
+          ambiguous_count: number
+          linked_count: number
+          no_match_count: number
+          processed_count: number
+          sample_results: Json
+          skipped_count: number
         }[]
       }
       bulk_guest_auto_join: {
@@ -566,9 +649,26 @@ export type Database = {
           user_updated_at: string
         }[]
       }
+      get_feature_flag: {
+        Args: { flag_name: string }
+        Returns: boolean
+      }
       get_guest_display_name: {
         Args: { p_guest_name: string; p_user_full_name: string }
         Returns: string
+      }
+      get_guest_event_messages: {
+        Args: { p_before?: string; p_event_id: string; p_limit?: number }
+        Returns: {
+          content: string
+          created_at: string
+          delivery_status: string
+          is_own_message: boolean
+          message_id: string
+          message_type: string
+          sender_avatar_url: string
+          sender_name: string
+        }[]
       }
       get_guest_invitation_status: {
         Args: {
@@ -670,6 +770,14 @@ export type Database = {
         Args: { phone_number: string }
         Returns: boolean
       }
+      link_user_by_phone: {
+        Args: { p_event_id: string; p_normalized_phone: string }
+        Returns: {
+          guest_id: string
+          outcome: Database["public"]["Enums"]["user_link_outcome_enum"]
+          user_id: string
+        }[]
+      }
       lookup_user_by_phone: {
         Args: { user_phone: string }
         Returns: {
@@ -680,6 +788,10 @@ export type Database = {
           onboarding_completed: boolean
           phone: string
         }[]
+      }
+      normalize_phone: {
+        Args: { phone_input: string }
+        Returns: string
       }
       normalize_phone_number: {
         Args: { input_phone: string }
@@ -712,6 +824,17 @@ export type Database = {
         Args: { p_guest_id: string }
         Returns: Json
       }
+      rollback_user_links: {
+        Args: {
+          p_dry_run?: boolean
+          p_since_timestamp: string
+          p_table_name?: string
+        }
+        Returns: {
+          rolled_back_count: number
+          sample_records: Json
+        }[]
+      }
       soft_delete_guest: {
         Args: { p_guest_id: string }
         Returns: Json
@@ -724,6 +847,7 @@ export type Database = {
     Enums: {
       media_type_enum: "image" | "video"
       message_type_enum: "direct" | "announcement" | "channel"
+      user_link_outcome_enum: "linked" | "no_match" | "ambiguous" | "skipped"
       user_role_enum: "guest" | "host" | "admin"
     }
     CompositeTypes: {
@@ -854,6 +978,7 @@ export const Constants = {
     Enums: {
       media_type_enum: ["image", "video"],
       message_type_enum: ["direct", "announcement", "channel"],
+      user_link_outcome_enum: ["linked", "no_match", "ambiguous", "skipped"],
       user_role_enum: ["guest", "host", "admin"],
     },
   },

@@ -46,18 +46,15 @@ export function useGuestRejoin({
         throw new Error(rpcError.message);
       }
 
-      const result = data as { success?: boolean; error?: string; declined_at?: string | null; sms_opt_out?: boolean };
+      const success = data as boolean;
       
-      if (!result?.success) {
-        const errorMsg = result?.error || 'Failed to rejoin event';
+      if (!success) {
         logger.error('RPC returned failure', { data });
-        throw new Error(errorMsg);
+        throw new Error('Failed to rejoin event');
       }
 
       logger.api('Successfully rejoined event', { 
-        eventId,
-        declined_at: result.declined_at,
-        sms_opt_out: result.sms_opt_out
+        eventId
       });
 
       onRejoinSuccess?.();

@@ -35,19 +35,7 @@ export const formatPhoneNumber = (value: string): string => {
   return `+${truncated.slice(0, 1)} (${truncated.slice(1, 4)}) ${truncated.slice(4, 7)}-${truncated.slice(7)}`;
 };
 
-export const normalizePhoneNumber = (phone: string): string => {
-  // Convert to international format for database storage
-  const digitsOnly = phone.replace(/\D/g, '');
-
-  if (digitsOnly.length === 10) {
-    return `+1${digitsOnly}`;
-  }
-  if (digitsOnly.length === 11 && digitsOnly.startsWith('1')) {
-    return `+${digitsOnly}`;
-  }
-
-  return phone; // Return as-is if not a recognized format
-};
+// REMOVED: normalizePhoneNumber - use lib/utils/phone.ts instead for consistency
 
 export const isValidUUID = (uuid: string): boolean => {
   const uuidRegex =

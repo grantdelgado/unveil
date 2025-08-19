@@ -9,7 +9,7 @@ import { ResponseIndicator } from './ResponseIndicator';
 import { SMSNotificationToggle } from './SMSNotificationToggle';
 import { MessageCircle, Send, ChevronDown } from 'lucide-react';
 import { logger } from '@/lib/logger';
-import { useGuestMessages } from '@/hooks/messaging/useGuestMessages';
+import { useGuestMessagesRPC } from '@/hooks/messaging/useGuestMessagesRPC';
 import { useGuestSMSStatus } from '@/hooks/messaging/useGuestSMSStatus';
 import { MessageDebugOverlay } from '@/components/dev/MessageDebugOverlay';
 
@@ -31,7 +31,8 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
     isFetchingOlder,
     sendMessage,
     fetchOlderMessages,
-  } = useGuestMessages({
+    refetch,
+  } = useGuestMessagesRPC({
     eventId,
     guestId,
   });
@@ -48,10 +49,6 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
   }, [sendMessage]);
   
   const isConnected = !loading;
-  const refetch = () => {
-    // Refetch would trigger a reload in the real implementation
-    console.log('Refetch requested');
-  };
 
   // Response UI state
   const [showResponseInput, setShowResponseInput] = useState(false);
@@ -224,7 +221,7 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
       // Enable auto-scroll for user's own message
       setShouldAutoScroll(true);
       
-      await respondToMessage(latestMessage.id, content);
+      await respondToMessage(latestMessage.message_id, content);
       setShowResponseInput(false);
       
       // Ensure we scroll to the user's new message
@@ -428,17 +425,35 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
           )}
 
           {messages.map((message) => {
-            const isOwnMessage = message.sender_user_id === currentUserId;
+            const isOwnMessage = message.is_own_message;
             
-            // Transform message to match MessageBubble interface
+            // Transform RPC message format to MessageBubble interface
             const messageWithSender = {
-              ...message,
-              sender: null, // For guest view, we don't show sender details
+              id: message.message_id,
+              content: message.content,
+              created_at: message.created_at,
+              message_type: message.message_type as "direct" | "announcement" | "welcome" | "custom" | "rsvp_reminder" | "channel" | null,
+              sender_user_id: isOwnMessage ? currentUserId : null,
+              event_id: eventId,
+              delivered_at: null,
+              delivered_count: null,
+              failed_count: null,
+              sender: message.sender_name ? {
+                id: 'unknown', // We don't have the actual user ID from RPC
+                full_name: message.sender_name,
+                avatar_url: message.sender_avatar_url,
+                phone: '',
+                email: null,
+                created_at: null,
+                updated_at: null,
+                onboarding_completed: null,
+                intended_redirect: null,
+              } : null,
             };
             
             return (
               <MessageBubble
-                key={message.id}
+                key={message.message_id}
                 message={messageWithSender}
                 isOwnMessage={isOwnMessage}
                 showSender={!isOwnMessage}

@@ -13,7 +13,7 @@ import {
   validateGuestField, 
   type FieldValidation 
 } from '@/lib/utils/guestHelpers';
-import { normalizePhoneNumber } from '@/lib/utils/validation';
+import { normalizePhoneNumberSimple as normalizePhoneNumber } from '@/lib/utils/phone';
 import { cn } from '@/lib/utils';
 // Note: Guest functionality handled via domain hooks
 
@@ -205,6 +205,14 @@ export function GuestImportWizard({
 
       // Clear duplicate check cache after successful import
       clearGuestExistsCache(eventId);
+
+      // Invalidate user events cache to update "Choose an event" list
+      // This ensures newly added guests can see the event immediately
+      const queryClient = (window as any).__queryClient;
+      if (queryClient) {
+        queryClient.invalidateQueries({ queryKey: ['events'] });
+        queryClient.invalidateQueries({ queryKey: ['user-events'] });
+      }
 
       // Complete the import first, then send SMS invitations asynchronously
       onImportComplete();

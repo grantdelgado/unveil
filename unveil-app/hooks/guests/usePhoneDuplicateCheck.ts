@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase/client';
-import { normalizePhoneNumber } from '@/lib/utils/validation';
+import { normalizePhoneNumberSimple as normalizePhoneNumber } from '@/lib/utils/phone';
 
 export interface PhoneDuplicateCheckResult {
   isDuplicate: boolean;

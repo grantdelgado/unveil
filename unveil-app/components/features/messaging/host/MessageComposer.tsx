@@ -2,15 +2,24 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { FieldLabel } from '@/components/ui/Typography';
 import { cn } from '@/lib/utils';
 import { GuestSelectionList } from './GuestSelectionList';
-import { SendConfirmationModal } from './SendConfirmationModal';
+import { SendFlowModal } from './SendFlowModal';
 import { useGuestSelection } from '@/hooks/messaging/useGuestSelection';
 import { sendMessageToEvent } from '@/lib/services/messaging';
 import { supabase } from '@/lib/supabase/client';
 import { formatEventDate } from '@/lib/utils/date';
+
+// Type for the enhanced API response that includes SMS delivery counts
+interface SendMessageResult {
+  message: Record<string, unknown>;
+  recipientCount: number;
+  guestIds: string[];
+  deliveryChannels: string[];
+  smsDelivered?: number;
+  smsFailed?: number;
+}
 
 interface MessageComposerProps {
   eventId: string;
@@ -31,9 +40,8 @@ export function MessageComposer({
 }: MessageComposerProps) {
   const [message, setMessage] = useState('');
   const [eventDetails, setEventDetails] = useState<{title: string, event_date: string, hostName: string} | null>(null);
-  const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+  const [showSendFlowModal, setShowSendFlowModal] = useState(false);
 
   // Use new guest selection hook instead of RSVP filters
   const {
@@ -56,7 +64,7 @@ export function MessageComposer({
   const characterCount = message.length;
   const maxCharacters = 1000;
   const isValid = message.trim().length > 0 && characterCount <= maxCharacters;
-  const canSend = isValid && selectedGuestIds.length > 0 && !isSending;
+  const canSend = isValid && selectedGuestIds.length > 0;
 
   // Create preview data for confirmation modal
   const previewData = {
@@ -123,14 +131,10 @@ export function MessageComposer({
 
   const handleSend = () => {
     if (!canSend) return;
-    setShowConfirmationModal(true);
+    setShowSendFlowModal(true);
   };
 
-  const handleConfirmedSend = async (options: { sendViaPush: boolean; sendViaSms: boolean }) => {
-    setIsSending(true);
-    setError(null);
-    setShowConfirmationModal(false);
-
+  const handleSendFlowSend = async (options: { sendViaPush: boolean; sendViaSms: boolean }) => {
     try {
       // Check authentication first
       const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -166,22 +170,44 @@ export function MessageComposer({
         const errorMessage = result.error && typeof result.error === 'object' && 'message' in result.error 
           ? (result.error as { message: string }).message 
           : 'Failed to send message';
-        throw new Error(errorMessage);
+        return {
+          success: false,
+          sentCount: 0,
+          failedCount: willReceiveMessage,
+          error: errorMessage
+        };
       }
 
       console.log('Message sent successfully:', result.data);
+      
+      // Clear form state on success
       setMessage('');
+      setError(null);
+      
+      // Trigger data refresh
       onMessageSent?.();
+      
+      // Return success result
+      return {
+        success: true,
+        sentCount: result.data?.recipientCount || 0,
+        failedCount: (result.data as SendMessageResult)?.smsFailed || 0,
+        messageId: result.data?.message?.id ? String(result.data.message.id) : undefined
+      };
+      
     } catch (err) {
       console.error('Message send error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to send message');
-    } finally {
-      setIsSending(false);
+      return {
+        success: false,
+        sentCount: 0,
+        failedCount: willReceiveMessage,
+        error: err instanceof Error ? err.message : 'Failed to send message'
+      };
     }
   };
 
-  const handleCloseConfirmationModal = () => {
-    setShowConfirmationModal(false);
+  const handleCloseSendFlowModal = () => {
+    setShowSendFlowModal(false);
   };
 
   const handleClear = () => {
@@ -299,27 +325,17 @@ export function MessageComposer({
               className="flex-1 flex items-center justify-center gap-2 py-3 text-base"
               size="lg"
             >
-              {isSending ? (
-                <>
-                  <LoadingSpinner size="sm" />
-                  Sending...
-                </>
-              ) : (
-                <>
-                  <span>Send Now</span>
-                  {willReceiveMessage > 0 && (
-                    <span className="bg-white/20 px-2 py-1 rounded text-sm">
-                      {willReceiveMessage}
-                    </span>
-                  )}
-                </>
+              <span>Send Now</span>
+              {willReceiveMessage > 0 && (
+                <span className="bg-white/20 px-2 py-1 rounded text-sm">
+                  {willReceiveMessage}
+                </span>
               )}
             </Button>
             
             <Button
               variant="outline"
               onClick={handleClear}
-              disabled={isSending}
               className="px-4 py-3"
             >
               Clear
@@ -327,15 +343,14 @@ export function MessageComposer({
           </div>
         </div>
 
-        {/* Send Confirmation Modal */}
-        <SendConfirmationModal
-          isOpen={showConfirmationModal}
-          onClose={handleCloseConfirmationModal}
-          onConfirm={handleConfirmedSend}
+        {/* Send Flow Modal */}
+        <SendFlowModal
+          isOpen={showSendFlowModal}
+          onClose={handleCloseSendFlowModal}
+          onSend={handleSendFlowSend}
           previewData={previewData}
           messageContent={message}
-          messageType="announcement"
-          isLoading={isSending}
+          messageType={preselectionPreset === 'not_invited' ? 'invitation' : 'announcement'}
         />
       </div>
     </div>

@@ -209,9 +209,19 @@ function GuestManagementContent({
       if (error) throw error;
 
       showSuccess(`${guestName} has been removed from the guest list`);
-      refreshGuests(); // Refresh to get updated data
+      
+      // Comprehensive cache invalidation for membership changes
+      refreshGuests(); // Refresh guest data
       refreshCounts(); // Refresh unified counts
-      onGuestUpdated?.();
+      onGuestUpdated?.(); // Notify parent components
+      
+      // Invalidate user events to update "Choose an event" list immediately
+      // This ensures removed guests no longer see the event
+      const queryClient = (window as any).__queryClient;
+      if (queryClient) {
+        queryClient.invalidateQueries({ queryKey: ['events'] });
+        queryClient.invalidateQueries({ queryKey: ['user-events'] });
+      }
     } catch (err) {
       console.error('Failed to remove guest:', err);
       showError('Remove Failed', 'Failed to remove guest. Please try again.');

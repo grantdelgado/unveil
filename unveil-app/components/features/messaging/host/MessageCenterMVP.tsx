@@ -6,8 +6,18 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { cn } from '@/lib/utils';
 import { sendMessageToEvent } from '@/lib/services/messaging';
 import { useRecipientPreview, useAvailableTags } from '@/hooks/messaging/useRecipientPreview';
-import { SendConfirmationModal } from './SendConfirmationModal';
+import { SendFlowModal } from './SendFlowModal';
 import type { RecipientFilter } from '@/lib/types/messaging';
+
+// Type for the enhanced API response that includes SMS delivery counts
+interface SendMessageResult {
+  message: Record<string, unknown>;
+  recipientCount: number;
+  guestIds: string[];
+  deliveryChannels: string[];
+  smsDelivered?: number;
+  smsFailed?: number;
+}
 
 interface MessageCenterMVPProps {
   eventId: string;
@@ -26,7 +36,6 @@ export function MessageCenterMVP({
 }: MessageCenterMVPProps) {
   // Message state
   const [message, setMessage] = useState('');
-  const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
   // Recipient filtering state - default to eligible guests only (declined excluded)
@@ -35,8 +44,8 @@ export function MessageCenterMVP({
     includeDeclined: false 
   });
   
-  // Confirmation modal state
-  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+  // Send flow modal state
+  const [showSendFlowModal, setShowSendFlowModal] = useState(false);
   
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -55,7 +64,7 @@ export function MessageCenterMVP({
   const maxCharacters = 1000;
   const isValid = message.trim().length > 0 && characterCount <= maxCharacters;
   const validRecipientCount = previewData?.validRecipientsCount || 0;
-  const canSend = isValid && validRecipientCount > 0 && !isSending;
+  const canSend = isValid && validRecipientCount > 0;
 
   /**
    * Handle recipient filter changes
@@ -66,23 +75,17 @@ export function MessageCenterMVP({
   }, []);
 
   /**
-   * Handle send button click - shows confirmation modal
+   * Handle send button click - shows send flow modal
    */
   const handleSend = () => {
     if (!canSend) return;
-    setShowConfirmationModal(true);
+    setShowSendFlowModal(true);
   };
 
   /**
-   * Handle confirmed send after modal confirmation
+   * Handle send via modal flow
    */
-  const handleConfirmedSend = async (options: { sendViaPush: boolean; sendViaSms: boolean }) => {
-    if (!canSend) return;
-
-    setIsSending(true);
-    setError(null);
-    setShowConfirmationModal(false);
-
+  const handleSendFlowSend = async (options: { sendViaPush: boolean; sendViaSms: boolean }) => {
     try {
       const result = await sendMessageToEvent({
         eventId,
@@ -97,31 +100,46 @@ export function MessageCenterMVP({
       });
 
       if (!result.success) {
-        throw new Error(result.error instanceof Error ? result.error.message : 'Failed to send message');
+        const errorMessage = result.error instanceof Error ? result.error.message : 'Failed to send message';
+        return {
+          success: false,
+          sentCount: 0,
+          failedCount: validRecipientCount,
+          error: errorMessage
+        };
       }
 
-      // Success - clear form and notify parent
+      // Clear form state on success
       setMessage('');
       setError(null);
       setRecipientFilter({ type: 'all', includeDeclined: false });
+      
+      // Trigger data refresh
       onMessageSent?.();
       
-      // Show success message briefly
-      setError(`✅ Message sent successfully to ${validRecipientCount} recipients!`);
-      setTimeout(() => setError(null), 5000);
+      // Return success result
+      return {
+        success: true,
+        sentCount: result.data?.recipientCount || 0,
+        failedCount: (result.data as SendMessageResult)?.smsFailed || 0,
+        messageId: result.data?.message?.id ? String(result.data.message.id) : undefined
+      };
       
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to send message');
-    } finally {
-      setIsSending(false);
+      return {
+        success: false,
+        sentCount: 0,
+        failedCount: validRecipientCount,
+        error: err instanceof Error ? err.message : 'Failed to send message'
+      };
     }
   };
 
   /**
    * Handle modal close
    */
-  const handleCloseConfirmationModal = () => {
-    setShowConfirmationModal(false);
+  const handleCloseSendFlowModal = () => {
+    setShowSendFlowModal(false);
   };
 
   return (
@@ -360,33 +378,23 @@ export function MessageCenterMVP({
           className="w-full flex items-center justify-center gap-2 py-3"
           size="lg"
         >
-          {isSending ? (
-            <>
-              <LoadingSpinner size="sm" />
-              Sending...
-            </>
-          ) : (
-            <>
-              <span>Send Now</span>
-              {validRecipientCount > 0 && (
-                <span className="bg-white/20 px-2 py-1 rounded text-sm">
-                  {validRecipientCount}
-                </span>
-              )}
-            </>
+          <span>Send Now</span>
+          {validRecipientCount > 0 && (
+            <span className="bg-white/20 px-2 py-1 rounded text-sm">
+              {validRecipientCount}
+            </span>
           )}
         </Button>
       </div>
 
-      {/* Send Confirmation Modal */}
-      <SendConfirmationModal
-        isOpen={showConfirmationModal}
-        onClose={handleCloseConfirmationModal}
-        onConfirm={handleConfirmedSend}
+      {/* Send Flow Modal */}
+      <SendFlowModal
+        isOpen={showSendFlowModal}
+        onClose={handleCloseSendFlowModal}
+        onSend={handleSendFlowSend}
         previewData={previewData}
         messageContent={message}
         messageType="announcement"
-        isLoading={isSending}
       />
     </div>
   );

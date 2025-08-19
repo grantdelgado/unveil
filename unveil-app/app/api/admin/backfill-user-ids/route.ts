@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server';
 import { createApiSupabaseClient } from '@/lib/supabase/server';
+import { requireAdmin } from '@/lib/auth/adminAuth';
 
-interface BackfillResult {
-  updated_count: number;
-  total_eligible_count: number;
-  details: string;
-}
+// Removed unused interface - using inline type instead
+// interface BackfillResult {
+//   updated_count: number;
+//   total_eligible_count: number;
+//   details: string;
+// }
 
 /**
  * Admin endpoint to trigger user_id backfill in event_guests table
@@ -24,6 +26,12 @@ interface BackfillResult {
  */
 export async function POST(request: Request) {
   try {
+    // Verify admin privileges first
+    const adminCheck = await requireAdmin(request);
+    if (adminCheck instanceof Response) {
+      return adminCheck; // Return 403 if not admin
+    }
+
     // Create Supabase client
     const supabase = createApiSupabaseClient(request);
 
@@ -72,12 +80,12 @@ export async function POST(request: Request) {
       );
     }
 
-    const result = data[0] as BackfillResult;
+    const result = data[0] as { processed: number; linked: number; errors: number };
 
     console.log('✅ Backfill completed:', {
-      updated_count: result.updated_count,
-      total_eligible_count: result.total_eligible_count,
-      details: result.details,
+      processed: result.processed,
+      linked: result.linked,
+      errors: result.errors,
       userId: session.user.id
     });
 
@@ -106,17 +114,13 @@ export async function POST(request: Request) {
  */
 export async function GET(request: Request) {
   try {
-    const supabase = createApiSupabaseClient(request);
-
-    // Verify authentication
-    const { data: { session }, error: authError } = await supabase.auth.getSession();
-    
-    if (authError || !session) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      );
+    // Verify admin privileges first
+    const adminCheck = await requireAdmin(request);
+    if (adminCheck instanceof Response) {
+      return adminCheck; // Return 403 if not admin
     }
+
+    const supabase = createApiSupabaseClient(request);
 
     // Count rows that would be eligible for backfill
     const { data, error } = await supabase

@@ -1,4 +1,4 @@
-import { normalizePhoneNumber } from './utils';
+import { normalizePhoneNumberSimple as normalizePhoneNumber } from './utils/phone';
 import { logger } from '@/lib/logger';
 import { buildInviteLink } from '@/lib/utils/url';
 

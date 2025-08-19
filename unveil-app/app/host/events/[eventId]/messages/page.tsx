@@ -16,7 +16,10 @@ const LazyMessageCenter = lazy(() => import('@/components/features/messaging/hos
 
 type Event = Database['public']['Tables']['events']['Row'];
 
-export default function EventMessagesPage() {
+/**
+ * Inner component that handles the messages page content
+ */
+function MessagesPageContent() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -26,10 +29,18 @@ export default function EventMessagesPage() {
   const preset = searchParams.get('preset'); // 'not_invited', 'custom', etc.
   const guestsParam = searchParams.get('guests'); // comma-separated guest IDs
 
+  // Get confirmation parameters from URL (REMOVED - now handled by in-modal flow)
+  // const sent = searchParams.get('sent');
+  // const messageId = searchParams.get('messageId');
+  // const sentCount = searchParams.get('sentCount');
+  // const failedCount = searchParams.get('failedCount');
+  // const scheduledAt = searchParams.get('scheduledAt');
+
   // Core state
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // const [hasShownToast, setHasShownToast] = useState(false); // REMOVED - no longer needed
 
   // Fetch event data
   useEffect(() => {
@@ -79,6 +90,68 @@ export default function EventMessagesPage() {
 
     fetchEventData();
   }, [eventId, router]);
+
+  // REMOVED: Handle send confirmation toast - now handled by in-modal flow
+  // useEffect(() => {
+  //   if (sent === '1' && !hasShownToast && event) {
+  //     const sentCountNum = parseInt(sentCount || '0', 10);
+  //     const failedCountNum = parseInt(failedCount || '0', 10);
+  //     
+  //     if (scheduledAt) {
+  //       // Scheduled message
+  //       const scheduledDate = new Date(scheduledAt);
+  //       const formattedDate = scheduledDate.toLocaleDateString();
+  //       const formattedTime = scheduledDate.toLocaleTimeString([], { 
+  //         hour: '2-digit', 
+  //         minute: '2-digit' 
+  //       });
+  //       
+  //       showSuccess(
+  //         'Message scheduled',
+  //         `Message scheduled for ${formattedDate} at ${formattedTime}.`
+  //       );
+  //     } else if (failedCountNum > 0) {
+  //       // Partial failures
+  //       showError(
+  //         'Message sent with issues',
+  //         `Sent to ${sentCountNum} guests; ${failedCountNum} failed.`,
+  //         messageId ? {
+  //           label: 'View deliveries',
+  //           onClick: () => {
+  //             // TODO: Navigate to message detail/history if available
+  //             console.log('Navigate to message deliveries:', messageId);
+  //           }
+  //         } : undefined
+  //       );
+  //     } else {
+  //       // Full success
+  //       showSuccess(
+  //         'Message sent',
+  //         `Message sent to ${sentCountNum} guest${sentCountNum === 1 ? '' : 's'}.`,
+  //         messageId ? {
+  //           label: 'View deliveries',
+  //           onClick: () => {
+  //             // TODO: Navigate to message detail/history if available
+  //             console.log('Navigate to message deliveries:', messageId);
+  //           }
+  //         } : undefined
+  //       );
+  //     }
+  //     
+  //     setHasShownToast(true);
+  //     
+  //     // Clear query params to prevent duplicate toasts
+  //     const newUrl = new URL(window.location.href);
+  //     newUrl.searchParams.delete('sent');
+  //     newUrl.searchParams.delete('messageId');
+  //     newUrl.searchParams.delete('sentCount');
+  //     newUrl.searchParams.delete('failedCount');
+  //     newUrl.searchParams.delete('scheduledAt');
+  //     
+  //     // Use router.replace to update URL without triggering navigation
+  //     router.replace(newUrl.pathname + (newUrl.search ? `?${newUrl.searchParams.toString()}` : ''));
+  //   }
+  // }, [sent, messageId, sentCount, failedCount, scheduledAt, hasShownToast, event, showSuccess, showError, router]);
 
   // Loading state
   if (loading) {
@@ -154,4 +227,11 @@ export default function EventMessagesPage() {
       </div>
     </PageWrapper>
   );
+}
+
+/**
+ * Main page component - no longer needs ToastProvider wrapper
+ */
+export default function EventMessagesPage() {
+  return <MessagesPageContent />;
 }

@@ -48,18 +48,16 @@ export function useGuestDecline({
         throw new Error(rpcError.message);
       }
 
-      const result = data as { success?: boolean; error?: string; declined_at?: string; decline_reason?: string };
+      const success = data as boolean;
       
-      if (!result?.success) {
-        const errorMsg = result?.error || 'Failed to decline event';
+      if (!success) {
         logger.error('RPC returned failure', { data });
-        throw new Error(errorMsg);
+        throw new Error('Failed to decline event');
       }
 
       logger.api('Successfully declined event', { 
         eventId, 
-        declined_at: result.declined_at,
-        hasReason: !!result.decline_reason 
+        declineReason: reason || null
       });
 
       onDeclineSuccess?.();

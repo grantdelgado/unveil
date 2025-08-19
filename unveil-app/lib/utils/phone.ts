@@ -51,6 +51,15 @@ export function normalizePhoneNumber(phone: string): PhoneValidationResult {
 }
 
 /**
+ * Simple phone normalization that returns just the normalized string
+ * For backward compatibility with existing code
+ */
+export function normalizePhoneNumberSimple(phone: string): string {
+  const result = normalizePhoneNumber(phone);
+  return result.isValid ? result.normalized! : phone;
+}
+
+/**
  * Format phone number for display (US format)
  */
 export function formatPhoneForDisplay(phone: string): string {

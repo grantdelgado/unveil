@@ -57,6 +57,7 @@ export function useEventWithGuest(
       }
 
       // Fetch guest information with proper RLS handling
+      // Only include guests who haven't been removed from the event
       const { data: guestData, error: guestError } = await supabase
         .from('event_guests')
         .select(`
@@ -65,6 +66,7 @@ export function useEventWithGuest(
         `)
         .eq('event_id', eventId)
         .eq('user_id', userId)
+        .is('removed_at', null) // Only include guests who haven't been removed
         .maybeSingle(); // Use maybeSingle to handle case where guest doesn't exist
 
       if (guestError) {
@@ -102,7 +104,7 @@ export function useEventWithGuest(
     event: '*',
     // Scope realtime at the channel level for efficiency
     // Note: We still guard in the handler as a safety net
-    // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+     
     filter: eventId ? `event_id=eq.${eventId}` : undefined,
     onDataChange: useCallback((payload) => {
       try {

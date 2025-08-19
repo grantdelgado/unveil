@@ -189,8 +189,14 @@ BEGIN
     eg.rsvp_status,
     (e.host_user_id = COALESCE(user_id_param, auth.uid()))
   FROM public.events e
-  LEFT JOIN public.event_guests eg ON eg.event_id = e.id AND eg.user_id = COALESCE(user_id_param, auth.uid())
-  WHERE e.host_user_id = COALESCE(user_id_param, auth.uid()) OR eg.user_id = COALESCE(user_id_param, auth.uid())
+  LEFT JOIN public.event_guests eg ON (
+    eg.event_id = e.id 
+    AND eg.user_id = COALESCE(user_id_param, auth.uid())
+    AND eg.removed_at IS NULL  -- Only include active memberships
+  )
+  WHERE 
+    e.host_user_id = COALESCE(user_id_param, auth.uid()) 
+    OR (eg.user_id = COALESCE(user_id_param, auth.uid()) AND eg.removed_at IS NULL)
   ORDER BY e.event_date DESC;
 END;
 $$;

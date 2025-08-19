@@ -16,7 +16,7 @@ export interface OptimizedGuest {
   user_id: string | null;
   guest_name: string | null;
   guest_email: string | null;
-  phone: string;
+  phone: string | null;
 
   notes: string | null;
   role: string;

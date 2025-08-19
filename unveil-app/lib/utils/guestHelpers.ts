@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase/client';
 import { logger } from '@/lib/logger';
-import { normalizePhoneNumber } from './validation';
+import { normalizePhoneNumberSimple as normalizePhoneNumber } from './phone';
 
 /**
  * Cache for duplicate checks to avoid unnecessary Supabase hits

@@ -48,18 +48,16 @@ export function useHostGuestDecline({
         throw new Error(rpcError.message);
       }
 
-      const result = data as { success?: boolean; error?: string; message?: string };
+      const success = data as boolean;
       
-      if (!result?.success) {
-        const errorMsg = result?.error || 'Failed to clear guest decline';
+      if (!success) {
         logger.error('RPC returned failure', { data });
-        throw new Error(errorMsg);
+        throw new Error('Failed to clear guest decline');
       }
 
       logger.api('Successfully cleared guest decline', { 
         eventId, 
-        guestUserId,
-        message: result.message 
+        guestUserId
       });
 
       onDeclineClearSuccess?.(guestUserId);

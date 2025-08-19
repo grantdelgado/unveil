@@ -55,7 +55,7 @@ export function usePostAuthRedirect(): UsePostAuthRedirectReturn {
 
       if (existingUser) {
         userExists = true;
-        onboardingCompleted = existingUser.onboarding_completed;
+        onboardingCompleted = existingUser.onboarding_completed ?? false;
       } else {
         // Create new user
         const { error: insertError } = await supabase

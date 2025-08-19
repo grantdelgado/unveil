@@ -14,7 +14,7 @@ export type OptimizedGuest = {
   user_id: string | null;
   guest_name: string | null;
   guest_email: string | null;
-  phone: string;
+  phone: string | null;
 
   notes: string | null;
   guest_tags: string[] | null;
@@ -42,7 +42,7 @@ export type OptimizedGuest = {
   users: {
     id: string;
     full_name: string | null;
-    phone: string;
+    phone: string | null;
     email: string | null;
     avatar_url: string | null;
     created_at: string | null;
@@ -272,7 +272,7 @@ export function useGuestData({
       const displayName = guest.users?.full_name || guest.guest_name || '';
       const matchesSearch = !debouncedSearchTerm || 
         displayName.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-        guest.phone.includes(debouncedSearchTerm) ||
+        guest.phone?.includes(debouncedSearchTerm) ||
         guest.users?.phone?.includes(debouncedSearchTerm);
 
       const matchesRSVP = filterByRSVP === 'all' || 
