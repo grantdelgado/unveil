@@ -185,19 +185,7 @@ export function useGuestSelection({
     setInternalSearchQuery(query);
   }, []);
 
-  /**
-   * Manual refresh
-   */
-  const refresh = useCallback(async () => {
-    await fetchGuests();
-  }, [fetchGuests]);
-
-  // Initial fetch
-  useEffect(() => {
-    if (eventId) {
-      fetchGuests();
-    }
-  }, [eventId, fetchGuests]);
+  // Manual refresh now handled by useMessagingRecipients
 
   // Handle preselection or auto-select all eligible guests on first load
   useEffect(() => {

@@ -158,19 +158,7 @@ export function useRecipientPreview({
     };
   }, [allGuests, filter]);
 
-  /**
-   * Refresh guest data
-   */
-  const refresh = useCallback(async () => {
-    await fetchGuests();
-  }, [fetchGuests]);
-
-  // Initial data fetch
-  useEffect(() => {
-    if (eventId) {
-      fetchGuests();
-    }
-  }, [eventId, fetchGuests]);
+  // Refresh and initial fetch now handled by useMessagingRecipients
 
   // Set up real-time subscription for guest updates
   useEffect(() => {
@@ -194,7 +182,7 @@ export function useRecipientPreview({
           }
           
           const timeout = setTimeout(() => {
-            fetchGuests();
+            refresh();
           }, debounceMs);
           
           setDebounceTimeout(timeout);
