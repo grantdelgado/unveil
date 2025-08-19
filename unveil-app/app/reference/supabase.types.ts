@@ -17,8 +17,8 @@ export type Database = {
       event_guests: {
         Row: {
           created_at: string | null
-          declined_at: string | null
           decline_reason: string | null
+          declined_at: string | null
           display_name: string | null
           event_id: string
           guest_email: string | null
@@ -38,8 +38,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
-          declined_at?: string | null
           decline_reason?: string | null
+          declined_at?: string | null
           display_name?: string | null
           event_id: string
           guest_email?: string | null
@@ -59,8 +59,8 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
-          declined_at?: string | null
           decline_reason?: string | null
+          declined_at?: string | null
           display_name?: string | null
           event_id?: string
           guest_email?: string | null
@@ -479,6 +479,14 @@ export type Database = {
           updated_count: number
         }[]
       }
+      bulk_guest_auto_join: {
+        Args: { p_phone?: string }
+        Returns: Json
+      }
+      bulk_guest_auto_join_from_auth: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       can_access_event: {
         Args: { p_event_id: string }
         Returns: boolean
@@ -500,8 +508,8 @@ export type Database = {
         Args: { p_event_id: string; p_limit?: number; p_offset?: number }
         Returns: {
           created_at: string
-          declined_at: string | null
-          decline_reason: string | null
+          decline_reason: string
+          declined_at: string
           display_name: string
           event_id: string
           guest_display_name: string
@@ -533,6 +541,10 @@ export type Database = {
         Args: { p_guest_name: string; p_user_full_name: string }
         Returns: string
       }
+      get_guest_join_timestamp: {
+        Args: { p_event_id: string }
+        Returns: string
+      }
       get_user_events: {
         Args: { user_id_param?: string }
         Returns: {
@@ -545,6 +557,14 @@ export type Database = {
           title: string
         }[]
       }
+      guest_auto_join: {
+        Args: { p_event_id: string; p_phone: string }
+        Returns: Json
+      }
+      guest_decline_event: {
+        Args: { p_decline_reason?: string; p_event_id: string }
+        Returns: Json
+      }
       guest_exists_for_phone: {
         Args: { p_event_id: string; p_phone: string }
         Returns: boolean
@@ -556,6 +576,14 @@ export type Database = {
       guest_has_any_tags: {
         Args: { guest_id: string; target_tags: string[] }
         Returns: boolean
+      }
+      guest_rejoin_event: {
+        Args: { p_event_id: string }
+        Returns: Json
+      }
+      host_clear_guest_decline: {
+        Args: { p_event_id: string; p_guest_user_id: string }
+        Returns: Json
       }
       insert_event_guest: {
         Args: {
@@ -572,6 +600,10 @@ export type Database = {
       }
       is_event_host: {
         Args: { p_event_id: string }
+        Returns: boolean
+      }
+      is_guest_attending_rsvp_lite: {
+        Args: { guest_event_id: string; guest_user_id: string }
         Returns: boolean
       }
       is_valid_auth_session: {
@@ -598,40 +630,27 @@ export type Database = {
         Returns: string
       }
       resolve_message_recipients: {
-        Args: {
-          msg_event_id: string
-          require_all_tags?: boolean
-          target_guest_ids?: string[]
-          target_rsvp_statuses?: string[]
-          target_tags?: string[]
-          include_declined?: boolean
-        }
+        Args:
+          | {
+              include_declined?: boolean
+              msg_event_id: string
+              require_all_tags?: boolean
+              target_guest_ids?: string[]
+              target_rsvp_statuses?: string[]
+              target_tags?: string[]
+            }
+          | {
+              msg_event_id: string
+              require_all_tags?: boolean
+              target_guest_ids?: string[]
+              target_rsvp_statuses?: string[]
+              target_tags?: string[]
+            }
         Returns: {
           guest_id: string
           guest_name: string
           guest_phone: string
         }[]
-      }
-      guest_decline_event: {
-        Args: {
-          p_event_id: string
-          p_decline_reason?: string
-        }
-        Returns: Json
-      }
-      host_clear_guest_decline: {
-        Args: {
-          p_event_id: string
-          p_guest_user_id: string
-        }
-        Returns: Json
-      }
-      is_guest_attending_rsvp_lite: {
-        Args: {
-          guest_event_id: string
-          guest_user_id: string
-        }
-        Returns: boolean
       }
     }
     Enums: {
