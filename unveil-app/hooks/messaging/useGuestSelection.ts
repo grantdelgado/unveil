@@ -7,7 +7,6 @@ import type { GuestWithDisplayName } from '@/lib/types/messaging';
 export interface UseGuestSelectionOptions {
   eventId: string;
   searchQuery?: string;
-  debounceMs?: number;
   preselectionPreset?: string | null;
   preselectedGuestIds?: string[];
 }
@@ -44,7 +43,6 @@ export interface UseGuestSelectionReturn {
 export function useGuestSelection({
   eventId,
   searchQuery = '',
-  debounceMs = 300,
   preselectionPreset,
   preselectedGuestIds
 }: UseGuestSelectionOptions): UseGuestSelectionReturn {
@@ -60,31 +58,47 @@ export function useGuestSelection({
   // Transform recipients to GuestWithDisplayName format for compatibility
   const allGuests: GuestWithDisplayName[] = useMemo(() => {
     return recipients.map(recipient => ({
+      // Base Guest fields
       id: recipient.event_guest_id,
+      event_id: eventId, // Add missing field
+      user_id: null, // Not needed for messaging
       guest_name: recipient.guest_name,
       guest_email: recipient.guest_email,
       phone: recipient.phone,
-      guest_tags: recipient.guest_tags,
-      declined_at: recipient.declined_at,
       rsvp_status: recipient.declined_at ? 'declined' : 'attending', // RSVP-Lite logic
-      display_name: recipient.guest_display_name,
-      sms_opt_out: recipient.sms_opt_out,
+      notes: null, // Not needed for messaging
+      guest_tags: recipient.guest_tags,
+      created_at: null, // Not needed for messaging
+      updated_at: null, // Not needed for messaging
       role: recipient.role,
       invited_at: recipient.invited_at,
       last_invited_at: null, // Not needed for messaging
       invite_attempts: null, // Not needed for messaging
       joined_at: null, // Not needed for messaging
+      declined_at: recipient.declined_at,
+      decline_reason: null, // Not included in RPC
+      removed_at: null, // Not included since we filter these out
+      phone_number_verified: null, // Not needed for messaging
+      sms_opt_out: recipient.sms_opt_out,
+      preferred_communication: null, // Not needed for messaging
+      display_name: recipient.guest_display_name,
       users: recipient.user_full_name ? {
         id: '', // Not needed for messaging
         full_name: recipient.user_full_name,
-        phone: recipient.user_phone,
-        email: recipient.user_email
+        phone: recipient.user_phone || '',
+        email: recipient.user_email,
+        avatar_url: null,
+        created_at: null,
+        updated_at: null,
+        intended_redirect: null,
+        onboarding_completed: false
       } : null,
+      // Computed fields
       displayName: recipient.guest_display_name,
       hasValidPhone: recipient.has_valid_phone,
       isOptedOut: recipient.sms_opt_out
     }));
-  }, [recipients]);
+  }, [recipients, eventId]);
 
   /**
    * Derived data - eligible guests (declined_at IS NULL)
@@ -199,7 +213,6 @@ export function useGuestSelection({
             guestIdsToSelect = allGuests
               .filter(guest => 
                 !guest.invited_at && 
-                !guest.joined_at && 
                 !guest.declined_at && 
                 !guest.sms_opt_out &&
                 guest.role !== 'host'
@@ -210,7 +223,6 @@ export function useGuestSelection({
             guestIdsToSelect = allGuests
               .filter(guest => 
                 guest.invited_at && 
-                !guest.joined_at && 
                 !guest.declined_at && 
                 !guest.sms_opt_out
               )
@@ -241,32 +253,7 @@ export function useGuestSelection({
     }
   }, [allGuests, selectedGuestIds.length, hasUserInteracted, preselectionPreset, preselectedGuestIds]);
 
-  // Set up real-time subscription for guest updates
-  useEffect(() => {
-    if (!eventId) return;
-
-    const subscription = supabase
-      .channel(`guest_selection:${eventId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'event_guests',
-          filter: `event_id=eq.${eventId}`
-        },
-        (payload) => {
-          console.log('Guest data updated for selection:', payload);
-          // Refresh guest data when changes occur
-          refresh();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [eventId, refresh]);
+  // Real-time updates now handled by useMessagingRecipients
 
   return {
     allGuests,

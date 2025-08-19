@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useMessagingRecipients } from './useMessagingRecipients';
+import { supabase } from '@/lib/supabase/client';
 import { resolveMessageRecipients } from '@/lib/services/messaging';
 import type { 
   RecipientFilter, 
@@ -160,43 +161,7 @@ export function useRecipientPreview({
 
   // Refresh and initial fetch now handled by useMessagingRecipients
 
-  // Set up real-time subscription for guest updates
-  useEffect(() => {
-    if (!eventId) return;
-
-    const subscription = supabase
-      .channel(`event_guests:${eventId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'event_guests',
-          filter: `event_id=eq.${eventId}`
-        },
-        (payload) => {
-          console.log('Guest data updated:', payload);
-          // Debounce the refresh to avoid excessive re-renders
-          if (debounceTimeout) {
-            clearTimeout(debounceTimeout);
-          }
-          
-          const timeout = setTimeout(() => {
-            refresh();
-          }, debounceMs);
-          
-          setDebounceTimeout(timeout);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      if (debounceTimeout) {
-        clearTimeout(debounceTimeout);
-      }
-      subscription.unsubscribe();
-    };
-  }, [eventId, debounceMs, debounceTimeout, refresh]);
+  // Real-time updates now handled by useMessagingRecipients
 
   return {
     previewData,
@@ -232,6 +197,7 @@ export function useAvailableTags(eventId: string) {
             .from('event_guests')
             .select('guest_tags')
             .eq('event_id', eventId)
+            .is('removed_at', null) // Use canonical scope
             .not('guest_tags', 'is', null);
 
           if (fallbackError) throw fallbackError;
