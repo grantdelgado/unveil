@@ -42,7 +42,6 @@ function GuestManagementContent({
   // Data hooks
   const { 
     guests, 
-    statusCounts, 
     loading,
     refreshGuests
   } = useSimpleGuestStore(eventId);
@@ -159,7 +158,6 @@ function GuestManagementContent({
       filtered = filtered.filter(guest => {
         // Determine guest status based on timestamps
         const hasDeclined = !!guest.declined_at;
-        const hasJoined = !!guest.joined_at;
         const hasBeenInvited = !!guest.invited_at;
         
         switch (filterByRSVP) {
@@ -205,7 +203,7 @@ function GuestManagementContent({
     }
 
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .rpc('soft_delete_guest', { p_guest_id: guestId });
 
       if (error) throw error;
