@@ -199,7 +199,7 @@ function GuestLinkingManager() {
         });
       }
     }
-  }, [context?.isAuthenticated, context?.user?.id, context?.userPhone, processAutoJoin]);
+  }, [context?.isAuthenticated, context?.user?.id, context?.userPhone, context?.user, processAutoJoin]);
 
   return null; // This component has no UI
 }

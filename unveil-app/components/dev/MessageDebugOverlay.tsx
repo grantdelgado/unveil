@@ -9,8 +9,45 @@ interface MessageDebugOverlayProps {
   guestId?: string;
 }
 
+interface DebugInfo {
+  userId?: string | null;
+  eventId: string;
+  guestId?: string;
+  deliveries: Array<{
+    id: string;
+    message_id: string | null;
+    user_id: string | null;
+    guest_id: string | null;
+    sms_status: string | null;
+    created_at: string | null;
+    message: {
+      id: string;
+      content: string;
+      event_id: string;
+      created_at: string | null;
+    } | null;
+  }>;
+  eventGuest: {
+    id: string;
+    display_name: string | null;
+    user_id: string | null;
+    phone: string | null;
+    sms_opt_out: boolean | null;
+  } | null;
+  allMessages: Array<{
+    id: string;
+    content: string;
+    created_at: string | null;
+  }>;
+  errors: {
+    deliveryError?: string;
+    guestError?: string;
+    messagesError?: string;
+  };
+}
+
 export function MessageDebugOverlay({ eventId, userId, guestId }: MessageDebugOverlayProps) {
-  const [debugInfo, setDebugInfo] = useState<any>(null);
+  const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
   const [loading, setLoading] = useState(false);
   const [showOverlay, setShowOverlay] = useState(false);
 
@@ -76,7 +113,17 @@ export function MessageDebugOverlay({ eventId, userId, guestId }: MessageDebugOv
       });
     } catch (error) {
       console.error('Debug info fetch error:', error);
-      setDebugInfo({ error: error instanceof Error ? error.message : 'Unknown error' });
+      setDebugInfo({
+        userId,
+        eventId,
+        guestId,
+        deliveries: [],
+        eventGuest: null,
+        allMessages: [],
+        errors: {
+          deliveryError: error instanceof Error ? error.message : 'Unknown error'
+        }
+      });
     } finally {
       setLoading(false);
     }
