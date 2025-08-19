@@ -2,6 +2,7 @@ export { useMessages } from './useMessages';
 export { useGuestMessages } from './useGuestMessages';
 export { useGuestJoinTimestamp } from './useGuestJoinTimestamp';
 export { useGuestSMSStatus } from './useGuestSMSStatus';
+export { useMessagingRecipients } from './useMessagingRecipients';
 
 // Note: Cached versions removed - use useMessages domain hook instead
 

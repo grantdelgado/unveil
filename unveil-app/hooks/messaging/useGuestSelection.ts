@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { supabase } from '@/lib/supabase/client';
+import { useMessagingRecipients } from './useMessagingRecipients';
 import type { GuestWithDisplayName } from '@/lib/types/messaging';
 
 export interface UseGuestSelectionOptions {
@@ -50,79 +50,41 @@ export function useGuestSelection({
 }: UseGuestSelectionOptions): UseGuestSelectionReturn {
   
   // Core state
-  const [allGuests, setAllGuests] = useState<GuestWithDisplayName[]>([]);
   const [selectedGuestIds, setSelectedGuestIds] = useState<string[]>([]);
   const [internalSearchQuery, setInternalSearchQuery] = useState(searchQuery);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [hasUserInteracted, setHasUserInteracted] = useState(false);
 
-  /**
-   * Fetch all guests for the event with computed display names
-   */
-  const fetchGuests = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  // Use unified messaging recipients hook for canonical scope consistency
+  const { recipients, loading, error, refresh } = useMessagingRecipients(eventId);
 
-      const { data: guests, error: guestsError } = await supabase
-        .from('event_guests')
-        .select(`
-          id,
-          guest_name,
-          phone,
-          guest_email,
-          guest_tags,
-          declined_at,
-          rsvp_status,
-          display_name,
-          sms_opt_out,
-          role,
-          invited_at,
-          last_invited_at,
-          invite_attempts,
-          joined_at,
-          users (
-            id,
-            full_name,
-            phone,
-            email
-          )
-        `)
-        .eq('event_id', eventId)
-        .order('guest_name', { ascending: true });
-
-      if (guestsError) throw guestsError;
-
-      // Transform to GuestWithDisplayName format
-      const transformedGuests: GuestWithDisplayName[] = (guests || []).map(guest => {
-        const displayName = guest.display_name || 
-                          guest.guest_name || 
-                          guest.users?.full_name || 
-                          'Unnamed Guest';
-        
-        // For authenticated users, check users.phone; for non-authenticated guests, check guest.phone
-        const effectivePhone = guest.users?.phone || guest.phone;
-        const hasValidPhone = !!(effectivePhone && effectivePhone.trim());
-        const isOptedOut = !!guest.sms_opt_out;
-
-        return {
-          ...guest,
-          displayName,
-          hasValidPhone,
-          isOptedOut
-        } as GuestWithDisplayName;
-      });
-
-      setAllGuests(transformedGuests);
-
-    } catch (err) {
-      console.error('Error fetching guests:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch guests');
-    } finally {
-      setLoading(false);
-    }
-  }, [eventId]);
+  // Transform recipients to GuestWithDisplayName format for compatibility
+  const allGuests: GuestWithDisplayName[] = useMemo(() => {
+    return recipients.map(recipient => ({
+      id: recipient.event_guest_id,
+      guest_name: recipient.guest_name,
+      guest_email: recipient.guest_email,
+      phone: recipient.phone,
+      guest_tags: recipient.guest_tags,
+      declined_at: recipient.declined_at,
+      rsvp_status: recipient.declined_at ? 'declined' : 'attending', // RSVP-Lite logic
+      display_name: recipient.guest_display_name,
+      sms_opt_out: recipient.sms_opt_out,
+      role: recipient.role,
+      invited_at: recipient.invited_at,
+      last_invited_at: null, // Not needed for messaging
+      invite_attempts: null, // Not needed for messaging
+      joined_at: null, // Not needed for messaging
+      users: recipient.user_full_name ? {
+        id: '', // Not needed for messaging
+        full_name: recipient.user_full_name,
+        phone: recipient.user_phone,
+        email: recipient.user_email
+      } : null,
+      displayName: recipient.guest_display_name,
+      hasValidPhone: recipient.has_valid_phone,
+      isOptedOut: recipient.sms_opt_out
+    }));
+  }, [recipients]);
 
   /**
    * Derived data - eligible guests (declined_at IS NULL)
@@ -308,7 +270,7 @@ export function useGuestSelection({
         (payload) => {
           console.log('Guest data updated for selection:', payload);
           // Refresh guest data when changes occur
-          fetchGuests();
+          refresh();
         }
       )
       .subscribe();
@@ -316,7 +278,7 @@ export function useGuestSelection({
     return () => {
       subscription.unsubscribe();
     };
-  }, [eventId, fetchGuests]);
+  }, [eventId, refresh]);
 
   return {
     allGuests,

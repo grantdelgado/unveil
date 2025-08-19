@@ -298,6 +298,7 @@ async function resolveScheduledMessageRecipients(
         .from('event_guests')
         .select('id, phone, guest_name')
         .eq('event_id', eventId)
+        .is('removed_at', null) // Use canonical scope - exclude removed guests
         .eq('sms_opt_out', false) // Exclude opted-out guests
         .not('phone', 'is', null)
         .neq('phone', '');
@@ -319,6 +320,7 @@ async function resolveScheduledMessageRecipients(
         .select('id, phone, guest_name')
         .eq('event_id', eventId)
         .in('id', filter.selectedGuestIds)
+        .is('removed_at', null) // Use canonical scope - exclude removed guests
         .eq('sms_opt_out', false) // Exclude opted-out guests
         .not('phone', 'is', null)
         .neq('phone', '');
@@ -340,6 +342,7 @@ async function resolveScheduledMessageRecipients(
         .select('id, phone, guest_name')
         .eq('event_id', eventId)
         .in('id', filter.guestIds)
+        .is('removed_at', null) // Use canonical scope - exclude removed guests
         .eq('sms_opt_out', false) // Exclude opted-out guests
         .not('phone', 'is', null)
         .neq('phone', '');
@@ -379,6 +382,7 @@ async function resolveScheduledMessageRecipients(
       .select('id, phone, guest_name')
       .eq('event_id', eventId)
       .in('id', guestIds)
+      .is('removed_at', null) // Use canonical scope - exclude removed guests
       .eq('sms_opt_out', false) // Exclude opted-out guests
       .not('phone', 'is', null)
       .neq('phone', '');

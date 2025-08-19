@@ -75,14 +75,26 @@ export async function POST(request: NextRequest) {
       // NEW: Use explicit recipient list when provided
       console.log('Using explicit recipient selection:', recipientEventGuestIds.length);
       
-      // Validate that all provided guest IDs belong to this event and filter out opted-out guests
+      // Validate that all provided guest IDs belong to this event using canonical scope
       const { data: validGuests, error: validationError } = await supabase
         .from('event_guests')
         .select('id, sms_opt_out')
         .eq('event_id', eventId)
-        .in('id', recipientEventGuestIds);
+        .in('id', recipientEventGuestIds)
+        .is('removed_at', null); // Use canonical scope - reject removed guests
       
       if (validationError) throw validationError;
+      
+      // Check for removed/stale guest IDs
+      const validGuestIds = validGuests?.map(g => g.id) || [];
+      const removedGuestIds = recipientEventGuestIds.filter(id => !validGuestIds.includes(id));
+      
+      if (removedGuestIds.length > 0) {
+        return NextResponse.json(
+          { error: `Cannot send to ${removedGuestIds.length} removed or invalid guest(s). Please refresh the page and try again.` },
+          { status: 400 }
+        );
+      }
       
       // Filter out opted-out guests as a defensive measure
       const eligibleGuests = validGuests?.filter(guest => !guest.sms_opt_out) || [];
@@ -102,11 +114,12 @@ export async function POST(request: NextRequest) {
         logger.api(`Filtered out ${filteredCount} opted-out guests from message delivery`);
       }
     } else if (recipientFilter.type === 'all') {
-      // Legacy: All guests (eligible = declined_at IS NULL and not opted out)
+      // Legacy: All guests using canonical scope
       const { data: guests, error: guestsError } = await supabase
         .from('event_guests')
         .select('id')
         .eq('event_id', eventId)
+        .is('removed_at', null) // Use canonical scope - exclude removed guests
         .is('declined_at', null) // RSVP-Lite: Only eligible guests
         .eq('sms_opt_out', false) // Exclude opted-out guests
         .not('phone', 'is', null);
@@ -114,8 +127,16 @@ export async function POST(request: NextRequest) {
       if (guestsError) throw guestsError;
       guestIds = guests?.map(g => g.id) || [];
     } else if (recipientFilter.type === 'individual' && recipientFilter.guestIds) {
-      // Legacy: Individual selection
-      guestIds = recipientFilter.guestIds;
+      // Legacy: Individual selection - validate against canonical scope
+      const { data: validGuests, error: validationError } = await supabase
+        .from('event_guests')
+        .select('id')
+        .eq('event_id', eventId)
+        .in('id', recipientFilter.guestIds)
+        .is('removed_at', null); // Use canonical scope - reject removed guests
+      
+      if (validationError) throw validationError;
+      guestIds = validGuests?.map(g => g.id) || [];
     } else {
       // Legacy: Use RPC function for complex filtering (deprecated)
       const { data: recipients, error: recipientsError } = await supabase.rpc('resolve_message_recipients', {

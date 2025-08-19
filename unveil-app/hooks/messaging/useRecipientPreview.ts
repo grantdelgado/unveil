@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { supabase } from '@/lib/supabase/client';
+import { useMessagingRecipients } from './useMessagingRecipients';
 import { resolveMessageRecipients } from '@/lib/services/messaging';
 import type { 
   RecipientFilter, 
@@ -31,63 +31,37 @@ export function useRecipientPreview({
   filter, 
   debounceMs = 300 
 }: UseRecipientPreviewOptions): UseRecipientPreviewReturn {
-  const [allGuests, setAllGuests] = useState<GuestWithDisplayName[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(null);
 
-  /**
-   * Fetch all event guests with computed display names
-   */
-  const fetchGuests = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  // Use unified messaging recipients hook for canonical scope consistency
+  const { recipients, loading, error, refresh } = useMessagingRecipients(eventId);
 
-      const { data: guests, error: guestsError } = await supabase
-        .from('event_guests')
-        .select(`
-          *,
-          users(*),
-          declined_at,
-          decline_reason
-        `)
-        .eq('event_id', eventId);
+  // Transform recipients to GuestWithDisplayName format for compatibility
+  const allGuests: GuestWithDisplayName[] = useMemo(() => {
+    return recipients.map(recipient => ({
+      id: recipient.event_guest_id,
+      guest_name: recipient.guest_name,
+      guest_email: recipient.guest_email,
+      phone: recipient.phone,
+      guest_tags: recipient.guest_tags,
+      declined_at: recipient.declined_at,
+      decline_reason: null, // Not included in RPC
+      users: recipient.user_full_name ? {
+        id: '', // Not needed for preview
+        full_name: recipient.user_full_name,
+        phone: recipient.user_phone,
+        email: recipient.user_email
+      } : null,
+      displayName: recipient.guest_display_name,
+      hasValidPhone: recipient.has_valid_phone,
+      isOptedOut: recipient.sms_opt_out,
+      role: recipient.role,
+      invited_at: recipient.invited_at,
+      sms_opt_out: recipient.sms_opt_out
+    }));
+  }, [recipients]);
 
-      if (guestsError) throw guestsError;
-
-      // Transform guests with computed display names
-      const guestsWithDisplayNames: GuestWithDisplayName[] = guests?.map(guest => {
-        // For authenticated users, check users.phone; for non-authenticated guests, check guest.phone
-        const effectivePhone = guest.users?.phone || guest.phone;
-        return {
-          ...guest,
-          displayName: getGuestDisplayName(guest),
-          hasValidPhone: Boolean(effectivePhone && effectivePhone.trim()),
-          isOptedOut: Boolean(guest.sms_opt_out)
-        };
-      }) || [];
-
-      setAllGuests(guestsWithDisplayNames);
-    } catch (err) {
-      console.error('Error fetching guests for preview:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch guests');
-    } finally {
-      setLoading(false);
-    }
-  }, [eventId]);
-
-  /**
-   * Get guest display name with fallback logic
-   */
-  const getGuestDisplayName = (guest: any): string => {
-    // Priority: user full_name → guest_name → phone (last resort)
-    return guest.users?.full_name || 
-           guest.guest_name || 
-           guest.display_name ||
-           guest.phone?.slice(-4) || 
-           'Unknown Guest';
-  };
+  // getGuestDisplayName now handled by RPC
 
   /**
    * Filter guests based on current filter criteria
@@ -234,7 +208,7 @@ export function useRecipientPreview({
       }
       subscription.unsubscribe();
     };
-  }, [eventId, debounceMs, debounceTimeout, fetchGuests]);
+  }, [eventId, debounceMs, debounceTimeout, refresh]);
 
   return {
     previewData,
