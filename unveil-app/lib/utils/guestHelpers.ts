@@ -34,6 +34,7 @@ export async function checkGuestExists(eventId: string, phone: string): Promise<
       .select('id')
       .eq('event_id', eventId)
       .eq('phone', normalizedPhone)
+      .is('removed_at', null) // Only check active (non-removed) guests
       .limit(1);
 
     if (error) {

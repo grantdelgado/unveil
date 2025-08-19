@@ -19,6 +19,11 @@ export async function POST(request: NextRequest) {
 
     const body: SendMessageRequest = await request.json();
     const { eventId, content, messageType, recipientFilter, recipientEventGuestIds, sendVia } = body;
+    
+    // Check if this is an invitation send (based on preset or message content)
+    const isInvitationSend = body.messageType === 'invitation' || 
+                           (recipientEventGuestIds && recipientEventGuestIds.length > 0 && 
+                            content.toLowerCase().includes('invited'));
 
     // Validation
     if (!content?.trim()) {
@@ -251,6 +256,36 @@ export async function POST(request: NextRequest) {
       messageType: messageType,
       eventId: eventId
     });
+
+    // Update invitation tracking if this is an invitation send
+    if (isInvitationSend && guestIds.length > 0) {
+      try {
+        const { data: trackingResult, error: trackingError } = await supabase
+          .rpc('update_guest_invitation_tracking', {
+            p_event_id: eventId,
+            p_guest_ids: guestIds
+          });
+
+        if (trackingError) {
+          logger.apiError('Failed to update invitation tracking', {
+            error: trackingError.message,
+            eventId,
+            guestIds
+          });
+        } else {
+          logger.api('Invitation tracking updated', {
+            eventId,
+            updatedCount: trackingResult?.updated_count || 0
+          });
+        }
+      } catch (trackingErr) {
+        logger.apiError('Error updating invitation tracking', {
+          error: trackingErr instanceof Error ? trackingErr.message : 'Unknown error',
+          eventId,
+          guestIds
+        });
+      }
+    }
 
     return NextResponse.json({
       success: true,

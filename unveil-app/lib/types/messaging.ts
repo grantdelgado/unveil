@@ -65,7 +65,7 @@ export type SendMessageRequest = {
   content: string;
   recipientFilter: RecipientFilter;
   recipientEventGuestIds?: string[]; // NEW: Explicit recipient list (takes precedence over recipientFilter)
-  messageType: 'direct' | 'announcement' | 'channel';
+  messageType: 'direct' | 'announcement' | 'channel' | 'invitation';
   sendVia: {
     sms: boolean;
     email: boolean;

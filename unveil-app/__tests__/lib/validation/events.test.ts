@@ -74,6 +74,7 @@ describe('Event Details Validation', () => {
         event_date: '2025-08-15',
         time_zone: 'America/Los_Angeles',
         location: '',
+        website_url: null, // Include the required website_url field
         is_public: false,
         allow_open_signup: true,
       };

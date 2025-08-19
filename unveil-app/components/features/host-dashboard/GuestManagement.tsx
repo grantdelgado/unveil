@@ -1,10 +1,14 @@
 'use client';
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 // Core dependencies
 import { useHostGuestDecline } from '@/hooks/guests';
+import { supabase } from '@/lib/supabase/client';
+import { sendSingleGuestInvite } from '@/lib/services/singleInvite';
 
 import { useSimpleGuestStore } from '@/hooks/guests/useSimpleGuestStore';
+import { useUnifiedGuestCounts } from '@/hooks/guests';
 
 // Local components
 import { SecondaryButton, PrimaryButton } from '@/components/ui';
@@ -28,10 +32,12 @@ function GuestManagementContent({
   onAddIndividualGuest,
 }: GuestManagementProps) {
   const { showError, showSuccess } = useFeedback();
+  const router = useRouter();
 
-  // Simplified state management - RSVP-Lite filters
+  // Enhanced state management with invitation status filters
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterByRSVP, setFilterByRSVP] = useState<'all' | 'attending' | 'declined'>('all');
+  const [filterByRSVP, setFilterByRSVP] = useState<'all' | 'attending' | 'declined' | 'not_invited' | 'invited'>('all');
+  const [invitingGuestId, setInvitingGuestId] = useState<string | null>(null);
 
   // Data hooks
   const { 
@@ -41,6 +47,9 @@ function GuestManagementContent({
     refreshGuests
   } = useSimpleGuestStore(eventId);
   
+  // Use unified counts for consistency with dashboard
+  const { counts: unifiedCounts, refresh: refreshCounts } = useUnifiedGuestCounts(eventId);
+  
   // Note: Legacy RSVP mutations removed as part of RSVP-Lite hard cutover
 
   // RSVP-Lite: Host decline management
@@ -49,9 +58,51 @@ function GuestManagementContent({
     onDeclineClearSuccess: () => {
       showSuccess('Guest decline status cleared successfully');
       refreshGuests(); // Refresh to get updated data
+      refreshCounts(); // Refresh unified counts
       onGuestUpdated?.();
     }
   });
+
+  // Handler for Send Invitations button
+  const handleSendInvitations = useCallback(() => {
+    // Route to composer with not_invited guests preselected
+    const searchParams = new URLSearchParams({
+      preset: 'not_invited'
+    });
+    router.push(`/host/events/${eventId}/messages?${searchParams.toString()}`);
+  }, [eventId, router]);
+
+  // Handler for one-tap invite action
+  const handleInviteGuest = useCallback(async (guestId: string) => {
+    const guest = guests.find(g => g.id === guestId);
+    const guestName = guest?.guest_display_name || guest?.guest_name || guest?.users?.full_name || 'Guest';
+
+    try {
+      setInvitingGuestId(guestId);
+      
+      const result = await sendSingleGuestInvite({
+        eventId,
+        guestId
+      });
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to send invitation');
+      }
+
+      showSuccess(`Invitation sent to ${guestName}!`);
+      refreshGuests(); // Refresh to get updated invitation status
+      refreshCounts(); // Refresh unified counts
+      onGuestUpdated?.();
+      
+    } catch (err) {
+      console.error('Failed to send invitation:', err);
+      showError('Invitation Failed', err instanceof Error ? err.message : 'Failed to send invitation. Please try again.');
+    } finally {
+      setInvitingGuestId(null);
+    }
+  }, [eventId, guests, showSuccess, showError, refreshGuests, refreshCounts, onGuestUpdated]);
+
+
 
 
 
@@ -103,16 +154,26 @@ function GuestManagementContent({
       });
     }
     
-    // Apply RSVP-Lite filter (3 options: all, attending, declined)
+    // Apply invitation status filter
     if (filterByRSVP !== 'all') {
       filtered = filtered.filter(guest => {
-        if (filterByRSVP === 'attending') {
-          return !guest.declined_at; // Attending = not declined
+        // Determine guest status based on timestamps
+        const hasDeclined = !!guest.declined_at;
+        const hasJoined = !!guest.joined_at;
+        const hasBeenInvited = !!guest.invited_at;
+        
+        switch (filterByRSVP) {
+          case 'declined':
+            return hasDeclined;
+          case 'invited':
+            return hasBeenInvited && !hasDeclined;
+          case 'not_invited':
+            return !hasBeenInvited && !hasDeclined;
+          case 'attending':
+            return !hasDeclined; // Legacy attending = not declined
+          default:
+            return true;
         }
-        if (filterByRSVP === 'declined') {
-          return !!guest.declined_at; // Declined = has declined_at
-        }
-        return true; // 'all' case
       });
     }
     
@@ -134,10 +195,30 @@ function GuestManagementContent({
   // Note: RSVP updates now handled through decline/clear decline actions only
   // Legacy RSVP dropdown removed as part of RSVP-Lite hard cutover
 
-  // Note: Guest removal functionality deferred to post-RSVP-Lite implementation
-  const handleRemoveGuestWithFeedback = useCallback(async () => {
-    showError('Feature Unavailable', 'Guest removal will be available in the next update.');
-  }, [showError]);
+  // Guest removal with soft-delete
+  const handleRemoveGuestWithFeedback = useCallback(async (guestId: string) => {
+    const guest = guests.find(g => g.id === guestId);
+    const guestName = guest?.guest_display_name || guest?.guest_name || guest?.users?.full_name || 'Guest';
+    
+    if (!confirm(`Remove ${guestName} from the guest list? They will no longer receive updates about this event.`)) {
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .rpc('soft_delete_guest', { p_guest_id: guestId });
+
+      if (error) throw error;
+
+      showSuccess(`${guestName} has been removed from the guest list`);
+      refreshGuests(); // Refresh to get updated data
+      refreshCounts(); // Refresh unified counts
+      onGuestUpdated?.();
+    } catch (err) {
+      console.error('Failed to remove guest:', err);
+      showError('Remove Failed', 'Failed to remove guest. Please try again.');
+    }
+  }, [guests, showSuccess, showError, refreshGuests, refreshCounts, onGuestUpdated]);
 
   // RSVP-Lite: Clear guest decline handler
   const handleClearGuestDecline = useCallback(async (guestUserId: string) => {
@@ -158,12 +239,14 @@ function GuestManagementContent({
   // Note: Bulk RSVP actions removed as part of RSVP-Lite hard cutover
   // Guests are either attending (default) or declined (via "Can't make it" button)
 
-  // Calculate counts for RSVP-Lite status summary
+  // Use unified counts for consistency with dashboard
   const simplifiedCounts: GuestStatusCounts = useMemo(() => ({
-    total: statusCounts?.total || 0,
-    attending: statusCounts?.attending || 0,
-    declined: statusCounts?.declined || 0,
-  }), [statusCounts]);
+    total: unifiedCounts.total_guests,
+    attending: unifiedCounts.attending,
+    declined: unifiedCounts.declined,
+    not_invited: unifiedCounts.not_invited,
+    invited: unifiedCounts.total_invited,
+  }), [unifiedCounts]);
 
   if (loading) {
     return (
@@ -193,6 +276,7 @@ function GuestManagementContent({
         statusCounts={simplifiedCounts}
         onImportGuests={onImportGuests || (() => {})}
         onAddIndividualGuest={onAddIndividualGuest}
+        onSendInvitations={handleSendInvitations}
         hasGuests={guests.length > 0}
       />
 
@@ -240,8 +324,10 @@ function GuestManagementContent({
             <GuestListItem
               key={guest.id}
               guest={guest}
-              onRemove={handleRemoveGuestWithFeedback}
+              onRemove={() => handleRemoveGuestWithFeedback(guest.id)}
               onClearDecline={handleClearGuestDecline}
+              onInvite={handleInviteGuest}
+              inviteLoading={invitingGuestId === guest.id}
             />
           ))}
         </div>

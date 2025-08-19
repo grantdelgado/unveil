@@ -8,6 +8,8 @@ export interface UseGuestSelectionOptions {
   eventId: string;
   searchQuery?: string;
   debounceMs?: number;
+  preselectionPreset?: string | null;
+  preselectedGuestIds?: string[];
 }
 
 export interface UseGuestSelectionReturn {
@@ -42,7 +44,9 @@ export interface UseGuestSelectionReturn {
 export function useGuestSelection({
   eventId,
   searchQuery = '',
-  debounceMs = 300
+  debounceMs = 300,
+  preselectionPreset,
+  preselectedGuestIds
 }: UseGuestSelectionOptions): UseGuestSelectionReturn {
   
   // Core state
@@ -51,6 +55,7 @@ export function useGuestSelection({
   const [internalSearchQuery, setInternalSearchQuery] = useState(searchQuery);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hasUserInteracted, setHasUserInteracted] = useState(false);
 
   /**
    * Fetch all guests for the event with computed display names
@@ -72,6 +77,11 @@ export function useGuestSelection({
           rsvp_status,
           display_name,
           sms_opt_out,
+          role,
+          invited_at,
+          last_invited_at,
+          invite_attempts,
+          joined_at,
           users (
             id,
             full_name,
@@ -106,21 +116,13 @@ export function useGuestSelection({
 
       setAllGuests(transformedGuests);
 
-      // Auto-select all eligible guests on first load (if no selection exists), excluding opted-out
-      if (selectedGuestIds.length === 0) {
-        const eligibleGuestIds = transformedGuests
-          .filter(guest => !guest.declined_at && !guest.sms_opt_out)
-          .map(guest => guest.id);
-        setSelectedGuestIds(eligibleGuestIds);
-      }
-
     } catch (err) {
       console.error('Error fetching guests:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch guests');
     } finally {
       setLoading(false);
     }
-  }, [eventId, selectedGuestIds.length]);
+  }, [eventId]);
 
   /**
    * Derived data - eligible guests (declined_at IS NULL)
@@ -166,6 +168,7 @@ export function useGuestSelection({
    * Toggle individual guest selection
    */
   const toggleGuestSelection = useCallback((guestId: string) => {
+    setHasUserInteracted(true);
     setSelectedGuestIds(prev => {
       const newSelection = prev.includes(guestId) 
         ? prev.filter(id => id !== guestId)
@@ -187,6 +190,7 @@ export function useGuestSelection({
    * Select all eligible guests (excluding opted-out)
    */
   const selectAllEligible = useCallback(() => {
+    setHasUserInteracted(true);
     const eligibleIds = eligibleGuests
       .filter(guest => !guest.isOptedOut)
       .map(guest => guest.id);
@@ -203,6 +207,7 @@ export function useGuestSelection({
    * Clear all selection
    */
   const clearAllSelection = useCallback(() => {
+    setHasUserInteracted(true);
     setSelectedGuestIds([]);
     
     // Analytics: Track clear all
@@ -231,6 +236,60 @@ export function useGuestSelection({
       fetchGuests();
     }
   }, [eventId, fetchGuests]);
+
+  // Handle preselection or auto-select all eligible guests on first load
+  useEffect(() => {
+    if (allGuests.length > 0 && selectedGuestIds.length === 0 && !hasUserInteracted) {
+      let guestIdsToSelect: string[] = [];
+
+      if (preselectionPreset && preselectionPreset !== 'custom') {
+        // Handle preset-based selection
+        switch (preselectionPreset) {
+          case 'not_invited':
+            guestIdsToSelect = allGuests
+              .filter(guest => 
+                !guest.invited_at && 
+                !guest.joined_at && 
+                !guest.declined_at && 
+                !guest.sms_opt_out &&
+                guest.role !== 'host'
+              )
+              .map(guest => guest.id);
+            break;
+          case 'invited':
+            guestIdsToSelect = allGuests
+              .filter(guest => 
+                guest.invited_at && 
+                !guest.joined_at && 
+                !guest.declined_at && 
+                !guest.sms_opt_out
+              )
+              .map(guest => guest.id);
+            break;
+
+          default:
+            // Default to all eligible
+            guestIdsToSelect = allGuests
+              .filter(guest => !guest.declined_at && !guest.sms_opt_out)
+              .map(guest => guest.id);
+        }
+      } else if (preselectedGuestIds && preselectedGuestIds.length > 0) {
+        // Handle explicit guest ID selection
+        guestIdsToSelect = preselectedGuestIds.filter(id => 
+          allGuests.some(guest => guest.id === id && !guest.declined_at && !guest.sms_opt_out)
+        );
+      } else {
+        // Default: auto-select all eligible guests
+        guestIdsToSelect = allGuests
+          .filter(guest => !guest.declined_at && !guest.sms_opt_out)
+          .map(guest => guest.id);
+      }
+
+      if (guestIdsToSelect.length > 0) {
+        setSelectedGuestIds(guestIdsToSelect);
+      }
+    }
+  }, [allGuests, selectedGuestIds.length, hasUserInteracted, preselectionPreset, preselectedGuestIds]);
 
   // Set up real-time subscription for guest updates
   useEffect(() => {

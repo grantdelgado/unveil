@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, Suspense, lazy } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/app/reference/supabase.types';
 import {
@@ -19,11 +19,12 @@ type Event = Database['public']['Tables']['events']['Row'];
 export default function EventMessagesPage() {
   const params = useParams();
   const router = useRouter();
-  // const searchParams = useSearchParams();
+  const searchParams = useSearchParams();
   const eventId = params.eventId as string;
   
-  // Get pre-selected message type from URL params (for future use)
-  // const messageType = searchParams.get('type');
+  // Get preselection parameters from URL
+  const preset = searchParams.get('preset'); // 'not_invited', 'custom', etc.
+  const guestsParam = searchParams.get('guests'); // comma-separated guest IDs
 
   // Core state
   const [event, setEvent] = useState<Event | null>(null);
@@ -144,7 +145,11 @@ export default function EventMessagesPage() {
             </div>
           }
         >
-          <LazyMessageCenter eventId={eventId} />
+          <LazyMessageCenter 
+            eventId={eventId} 
+            preselectionPreset={preset}
+            preselectedGuestIds={guestsParam ? guestsParam.split(',') : undefined}
+          />
         </Suspense>
       </div>
     </PageWrapper>

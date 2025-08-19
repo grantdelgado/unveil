@@ -4,27 +4,27 @@
  * Tests the complete flow from UI to Twilio SMS delivery
  */
 
-import { jest } from '@jest/globals';
+import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { sendMessageToEvent } from '@/lib/services/messaging';
 import { sendBulkSMS } from '@/lib/sms';
 import type { SendMessageRequest } from '@/lib/types/messaging';
 
 // Mock the dependencies
-jest.mock('@/lib/sms');
-jest.mock('@/lib/supabase/client');
+vi.mock('@/lib/sms');
+vi.mock('@/lib/supabase/client');
 
-const mockSendBulkSMS = sendBulkSMS as jest.MockedFunction<typeof sendBulkSMS>;
+const mockSendBulkSMS = vi.mocked(sendBulkSMS);
 
 // Mock Supabase client
 const mockSupabase = {
   auth: {
-    getUser: jest.fn()
+    getUser: vi.fn()
   },
-  from: jest.fn(() => ({
-    select: jest.fn(() => ({
-      in: jest.fn(() => ({
-        not: jest.fn(() => ({
-          neq: jest.fn(() => ({
+  from: vi.fn(() => ({
+    select: vi.fn(() => ({
+      in: vi.fn(() => ({
+        not: vi.fn(() => ({
+          neq: vi.fn(() => ({
             data: [
               { id: 'guest1', phone: '+12345678901', guest_name: 'John Doe' },
               { id: 'guest2', phone: '+12345678902', guest_name: 'Jane Smith' }
@@ -34,34 +34,34 @@ const mockSupabase = {
         }))
       }))
     })),
-    insert: jest.fn(() => ({
-      select: jest.fn(() => ({
-        single: jest.fn(() => ({
+    insert: vi.fn(() => ({
+      select: vi.fn(() => ({
+        single: vi.fn(() => ({
           data: { id: 'msg1', content: 'Test message' },
           error: null
         }))
       }))
     })),
-    update: jest.fn(() => ({
-      eq: jest.fn(() => ({
+    update: vi.fn(() => ({
+      eq: vi.fn(() => ({
         data: null,
         error: null
       }))
     }))
   })),
-  rpc: jest.fn(() => ({
+  rpc: vi.fn(() => ({
     data: [{ guest_id: 'guest1' }, { guest_id: 'guest2' }],
     error: null
   }))
 };
 
-jest.mock('@/lib/supabase/client', () => ({
+vi.mock('@/lib/supabase/client', () => ({
   supabase: mockSupabase
 }));
 
 describe('Messaging Delivery Integration', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     
     // Mock successful authentication
     mockSupabase.auth.getUser.mockResolvedValue({
@@ -149,10 +149,10 @@ describe('Messaging Delivery Integration', () => {
     it('should handle empty recipient list', async () => {
       // Mock empty guest list
       mockSupabase.from.mockReturnValue({
-        select: jest.fn(() => ({
-          in: jest.fn(() => ({
-            not: jest.fn(() => ({
-              neq: jest.fn(() => ({
+        select: vi.fn(() => ({
+          in: vi.fn(() => ({
+            not: vi.fn(() => ({
+              neq: vi.fn(() => ({
                 data: [], // No guests
                 error: null
               }))
@@ -309,10 +309,10 @@ describe('Error Handling', () => {
   it('should handle database connection failures', async () => {
     // Mock database error
     mockSupabase.from.mockReturnValue({
-      select: jest.fn(() => ({
-        in: jest.fn(() => ({
-          not: jest.fn(() => ({
-            neq: jest.fn(() => ({
+      select: vi.fn(() => ({
+        in: vi.fn(() => ({
+          not: vi.fn(() => ({
+            neq: vi.fn(() => ({
               data: null,
               error: new Error('Database connection failed')
             }))

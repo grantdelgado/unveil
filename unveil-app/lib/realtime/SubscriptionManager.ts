@@ -709,6 +709,9 @@ export class SubscriptionManager {
         this.globalConsecutiveErrors = 0;
         logger.realtime('✅ Connection stability restored, resetting error counters');
       }
+
+      // Perform memory cleanup
+      this.cleanupMemoryLeaks();
     }, this.HEARTBEAT_INTERVAL);
   }
 
@@ -734,6 +737,27 @@ export class SubscriptionManager {
       };
 
       checkStatus();
+    });
+  }
+
+  /**
+   * Clean up memory leaks by removing old connection times and error references
+   */
+  private cleanupMemoryLeaks(): void {
+    // Keep only last 10 connection times to prevent memory buildup
+    if (this.connectionTimes.length > 10) {
+      this.connectionTimes = this.connectionTimes.slice(-10);
+    }
+
+    // Clear old error references from subscriptions
+    const now = Date.now();
+    Array.from(this.subscriptions.values()).forEach(subscription => {
+      if (subscription.lastError && subscription.lastActivity) {
+        const timeSinceError = now - subscription.lastActivity.getTime();
+        if (timeSinceError > 10 * 60 * 1000) { // 10 minutes
+          subscription.lastError = null;
+        }
+      }
     });
   }
 }

@@ -12,9 +12,11 @@ import { ScheduleComposer } from './ScheduleComposer';
 interface MessageCenterProps {
   eventId: string;
   className?: string;
+  preselectionPreset?: string | null;
+  preselectedGuestIds?: string[];
 }
 
-export function MessageCenter({ eventId, className }: MessageCenterProps) {
+export function MessageCenter({ eventId, className, preselectionPreset, preselectedGuestIds }: MessageCenterProps) {
   const [activeView, setActiveView] = useState<'compose' | 'schedule' | 'history'>('compose');
 
   // Domain hooks - direct data access
@@ -104,6 +106,8 @@ export function MessageCenter({ eventId, className }: MessageCenterProps) {
           eventId={eventId}
           onMessageSent={handleMessageSent}
           onClear={handleClear}
+          preselectionPreset={preselectionPreset}
+          preselectedGuestIds={preselectedGuestIds}
         />
       ) : activeView === 'schedule' ? (
         <ScheduleComposer

@@ -582,46 +582,16 @@ export class EventCreationService {
         failedCount: importResult.failed_count
       });
 
-      // Step 4: Send SMS invitations to successfully imported guests (server-side only)
-      let smsResults = null;
-      if (importResult.successfully_imported.length > 0 && typeof window === 'undefined') {
-        try {
-          logger.info('Starting SMS invitations for imported guests', {
-            operationId,
-            eventId,
-            guestCount: importResult.successfully_imported.length
-          });
+      // Step 4: SMS invitations removed - guests are now added without auto-invite
+      // This supports the "add now, invite later" flow where hosts manually send invitations
+      logger.info('Guest import completed without auto-invitations', {
+        operationId,
+        eventId,
+        importedCount: importResult.imported_count,
+        note: 'Guests added without invited_at timestamp - use Send Invitations to invite them'
+      });
 
-          // Only import SMS functions on server-side to avoid client-side Twilio imports
-          const { sendBatchGuestInvitations } = await import('../sms-invitations');
-          
-          smsResults = await sendBatchGuestInvitations(
-            importResult.successfully_imported,
-            eventId,
-            {
-              maxConcurrency: 3, // Limit concurrent SMS sends
-              skipRateLimit: false // Respect rate limiting
-            }
-          );
-
-          logger.info('SMS invitations completed', {
-            operationId,
-            eventId,
-            sent: smsResults.sent,
-            failed: smsResults.failed,
-            rateLimited: smsResults.rateLimited
-          });
-
-        } catch (smsError) {
-          // Log SMS errors but don't fail the entire import
-          logger.error('SMS invitation sending failed', {
-            operationId,
-            eventId,
-            error: smsError,
-            guestCount: importResult.successfully_imported.length
-          });
-        }
-      } else if (importResult.successfully_imported.length > 0) {
+      if (importResult.successfully_imported.length > 0) {
         // On client-side, we'll handle SMS via a separate API call after import
         logger.info('Client-side import completed, SMS invitations will be handled separately', {
           operationId,

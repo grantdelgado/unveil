@@ -1,22 +1,13 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { formatEventDate } from '@/lib/utils';
 import { CardContainer } from '@/components/ui';
-
-import { supabase } from '@/lib/supabase';
+import { useUnifiedGuestCounts } from '@/hooks/guests';
 import { cn } from '@/lib/utils';
 import type { Database } from '@/app/reference/supabase.types';
 
 type Event = Database['public']['Tables']['events']['Row'];
-
-interface GuestStats {
-  total: number;
-  attending: number;
-  declined: number;
-  pending: number;
-  maybe: number;
-}
 
 interface EventSummaryCardProps {
   event: Event;
@@ -24,52 +15,12 @@ interface EventSummaryCardProps {
 }
 
 export function EventSummaryCard({ event, className }: EventSummaryCardProps) {
-  const [guestStats, setGuestStats] = useState<GuestStats>({
-    total: 0,
-    attending: 0,
-    declined: 0,
-    pending: 0,
-    maybe: 0,
-  });
-  const [loading, setLoading] = useState(true);
+  // Use unified guest counts for consistency with Guest Management
+  const { counts, loading, error } = useUnifiedGuestCounts(event.id);
 
-  useEffect(() => {
-    const fetchGuestStats = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('event_guests')
-          .select('declined_at')
-          .eq('event_id', event.id);
-
-        if (error) throw error;
-
-        const stats = data?.reduce((acc, guest) => {
-          // RSVP-Lite logic: attending = not declined
-          if (guest.declined_at) {
-            acc.declined += 1;
-          } else {
-            acc.attending += 1;
-          }
-          acc.total += 1;
-          return acc;
-        }, {
-          attending: 0,
-          declined: 0,
-          pending: 0,  // Always 0 in RSVP-Lite
-          maybe: 0,    // Always 0 in RSVP-Lite
-          total: 0,
-        }) || { attending: 0, declined: 0, pending: 0, maybe: 0, total: 0 };
-
-        setGuestStats(stats);
-      } catch (error) {
-        console.error('Error fetching guest stats:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchGuestStats();
-  }, [event.id]);
+  if (error) {
+    console.error('Error fetching guest stats:', error);
+  }
 
 
 
@@ -102,7 +53,7 @@ export function EventSummaryCard({ event, className }: EventSummaryCardProps) {
             <div className="flex items-center gap-1.5">
               <span className="text-base">👥</span>
               <span className="font-medium">
-                {guestStats.total} {guestStats.total === 1 ? 'guest' : 'guests'}
+                {counts.total_invited} {counts.total_invited === 1 ? 'invited' : 'invited'}
               </span>
             </div>
           </div>
@@ -114,9 +65,9 @@ export function EventSummaryCard({ event, className }: EventSummaryCardProps) {
             <h3 className="text-base font-semibold text-gray-900">
               Guest Attendance
             </h3>
-            {!loading && guestStats.total > 0 && (
+            {!loading && counts.total_invited > 0 && (
               <span className="text-sm font-medium text-gray-600">
-                {guestStats.attending} attending
+                {counts.attending} attending
               </span>
             )}
           </div>
@@ -130,10 +81,10 @@ export function EventSummaryCard({ event, className }: EventSummaryCardProps) {
                 ))}
               </div>
             </div>
-          ) : guestStats.total === 0 ? (
+          ) : counts.total_invited === 0 ? (
             <div className="text-center py-4 text-gray-500">
               <div className="text-xl mb-1">👥</div>
-              <p className="font-medium text-sm">No guests yet</p>
+              <p className="font-medium text-sm">No guests invited yet</p>
               <p className="text-xs">Start by importing your guest list</p>
             </div>
           ) : (
@@ -141,16 +92,16 @@ export function EventSummaryCard({ event, className }: EventSummaryCardProps) {
               {/* Progress Bar - RSVP-Lite format */}
               <div className="w-full bg-gray-200 rounded-full h-2 mb-3 overflow-hidden">
                 <div className="h-full flex">
-                  {guestStats.attending > 0 && (
+                  {counts.attending > 0 && (
                     <div 
                       className="bg-green-500" 
-                      style={{ width: `${(guestStats.attending / guestStats.total) * 100}%` }}
+                      style={{ width: `${(counts.attending / counts.total_invited) * 100}%` }}
                     />
                   )}
-                  {guestStats.declined > 0 && (
+                  {counts.declined > 0 && (
                     <div 
                       className="bg-red-500" 
-                      style={{ width: `${(guestStats.declined / guestStats.total) * 100}%` }}
+                      style={{ width: `${(counts.declined / counts.total_invited) * 100}%` }}
                     />
                   )}
                   {/* RSVP-Lite: Remove maybe/pending sections */}
@@ -161,7 +112,7 @@ export function EventSummaryCard({ event, className }: EventSummaryCardProps) {
               <div className="grid grid-cols-2 gap-2">
                 <div className="text-center p-2 bg-green-50 border border-green-200 rounded-lg">
                   <div className="text-base font-bold text-green-700 mb-0.5">
-                    {guestStats.attending}
+                    {counts.attending}
                   </div>
                   <div className="text-xs font-medium text-green-600">
                     Attending
@@ -170,7 +121,7 @@ export function EventSummaryCard({ event, className }: EventSummaryCardProps) {
                 
                 <div className="text-center p-2 bg-red-50 border border-red-200 rounded-lg">
                   <div className="text-base font-bold text-red-700 mb-0.5">
-                    {guestStats.declined}
+                    {counts.declined}
                   </div>
                   <div className="text-xs font-medium text-red-600">
                     Can&apos;t make it

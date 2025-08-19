@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { FieldLabel } from '@/components/ui/Typography';
@@ -10,21 +10,27 @@ import { SendConfirmationModal } from './SendConfirmationModal';
 import { useGuestSelection } from '@/hooks/messaging/useGuestSelection';
 import { sendMessageToEvent } from '@/lib/services/messaging';
 import { supabase } from '@/lib/supabase/client';
+import { formatEventDate } from '@/lib/utils/date';
 
 interface MessageComposerProps {
   eventId: string;
   onMessageSent?: () => void;
   onClear?: () => void;
   className?: string;
+  preselectionPreset?: string | null;
+  preselectedGuestIds?: string[];
 }
 
 export function MessageComposer({
   eventId,
   onMessageSent,
   onClear,
-  className
+  className,
+  preselectionPreset,
+  preselectedGuestIds
 }: MessageComposerProps) {
   const [message, setMessage] = useState('');
+  const [eventDetails, setEventDetails] = useState<{title: string, event_date: string, hostName: string} | null>(null);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
@@ -41,7 +47,11 @@ export function MessageComposer({
     setSearchQuery,
     loading: guestsLoading,
     error: guestsError
-  } = useGuestSelection({ eventId });
+  } = useGuestSelection({ 
+    eventId,
+    preselectionPreset,
+    preselectedGuestIds
+  });
 
   const characterCount = message.length;
   const maxCharacters = 1000;
@@ -64,6 +74,48 @@ export function MessageComposer({
     tagCounts: {},
     rsvpStatusCounts: {}
   };
+
+  // Fetch event details for invitation template
+  useEffect(() => {
+    const fetchEventDetails = async () => {
+      if (!eventId) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('events')
+          .select('title, event_date, host:users!events_host_user_id_fkey(full_name)')
+          .eq('id', eventId)
+          .single();
+        
+        if (error) throw error;
+        setEventDetails({
+          ...data,
+          hostName: (data.host as { full_name?: string } | null)?.full_name || 'Your host'
+        });
+      } catch (err) {
+        console.error('Failed to fetch event details:', err);
+      }
+    };
+    
+    fetchEventDetails();
+  }, [eventId]);
+
+  // Set default invitation message based on preselection
+  useEffect(() => {
+    if (preselectionPreset === 'not_invited' && eventDetails && !message) {
+      const eventTitle = eventDetails.title || 'our event';
+      const eventDate = eventDetails.event_date 
+        ? formatEventDate(eventDetails.event_date) // Use timezone-safe date formatting
+        : 'soon';
+      const hostName = eventDetails.hostName || 'Your host';
+      
+      // Use environment-aware APP_URL
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'app.sendunveil.com';
+      
+      const defaultMessage = `Hi there! You are invited to ${eventTitle} on ${eventDate}!\n\nView the wedding details here: ${appUrl}/select-event.\n\nHosted by ${hostName} via Unveil\n\nReply STOP to opt out.`;
+      setMessage(defaultMessage);
+    }
+  }, [preselectionPreset, eventDetails, eventId, message]);
 
   const getPlaceholderText = () => {
     return "Write your message to guests...";
@@ -93,13 +145,16 @@ export function MessageComposer({
         sendOptions: options
       });
 
+      // Determine message type based on preselection
+      const messageType = preselectionPreset === 'not_invited' ? 'invitation' : 'announcement';
+      
       // Use explicit recipient list instead of filters
       const result = await sendMessageToEvent({
         eventId,
         content: message.trim(),
         recipientFilter: { type: 'explicit_selection' }, // Placeholder - server will use recipientEventGuestIds
         recipientEventGuestIds: selectedGuestIds, // NEW: Explicit guest selection
-        messageType: 'announcement',
+        messageType,
         sendVia: {
           sms: options.sendViaSms,
           email: false,

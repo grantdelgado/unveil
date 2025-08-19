@@ -119,6 +119,12 @@ export default function GuestEventHomePage() {
     setShowDeclineBanner(false);
   };
 
+  const handleRejoin = () => {
+    setShowDeclineBanner(false);
+    // The guest data will refresh automatically via real-time subscriptions
+    // The hasDeclined state will update when guestInfo refreshes
+  };
+
 
 
 
@@ -254,9 +260,11 @@ export default function GuestEventHomePage() {
       {(hasDeclined || showDeclineBanner) && (
         <div className="max-w-5xl mx-auto px-6 pt-4">
           <DeclineBanner
+            eventId={eventId}
             eventTitle={event?.title || 'this event'}
             hostEmail={event?.host?.email || undefined}
             onDismiss={handleDismissBanner}
+            onRejoin={handleRejoin}
           />
         </div>
       )}

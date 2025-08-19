@@ -172,26 +172,34 @@ function GuestLinkingManager() {
   const { processAutoJoin } = useAutoJoinGuests();
   const context = useContext(AuthContext);
   const hasProcessedRef = useRef(false);
+  const lastUserIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (context?.isAuthenticated && context?.user && !hasProcessedRef.current) {
-      hasProcessedRef.current = true;
+    if (context?.isAuthenticated && context?.user) {
+      // Only process if we haven't processed this user yet
+      const currentUserId = context.user.id;
+      const shouldProcess = !hasProcessedRef.current || lastUserIdRef.current !== currentUserId;
       
-      // Log auto-join attempt for debugging (can be removed after verification)
-      if (process.env.NODE_ENV === 'development') {
-        console.log('GuestLinkingManager: Starting auto-join', {
-          userId: context.user.id,
-          userPhone: context.userPhone,
-          hasPhone: !!context.userPhone
+      if (shouldProcess) {
+        hasProcessedRef.current = true;
+        lastUserIdRef.current = currentUserId;
+        
+        // Log auto-join attempt for debugging (can be removed after verification)
+        if (process.env.NODE_ENV === 'development') {
+          console.log('GuestLinkingManager: Starting auto-join', {
+            userId: currentUserId,
+            userPhone: context.userPhone,
+            hasPhone: !!context.userPhone
+          });
+        }
+        
+        // Run auto-join with error handling to prevent page break
+        processAutoJoin(currentUserId, context.userPhone || undefined).catch(error => {
+          console.warn('Auto-join failed but continuing with app load:', error);
         });
       }
-      
-      // Run auto-join with error handling to prevent page break
-      processAutoJoin(context.user.id, context.userPhone || undefined).catch(error => {
-        console.warn('Auto-join failed but continuing with app load:', error);
-      });
     }
-  }, [context?.isAuthenticated, context?.user, context?.userPhone, processAutoJoin]);
+  }, [context?.isAuthenticated, context?.user?.id, context?.userPhone, processAutoJoin]);
 
   return null; // This component has no UI
 }

@@ -109,13 +109,20 @@ class SubscriptionPool {
     
     logger.realtime(`🔌 Removed component ${componentId} from pool ${poolKey} (refs: ${pool.refCount})`);
     
-    // Clean up pool if no more references
+    // Clean up pool if no more references, with delay to prevent thrashing
     if (pool.refCount === 0) {
       logger.realtime(`🧹 Cleaning up empty pool: ${poolKey}`);
-      if ((pool as any).unsubscribe) {
-        (pool as any).unsubscribe();
-      }
-      this.pools.delete(poolKey);
+      
+      // Add small delay to prevent immediate recreation if components are remounting
+      setTimeout(() => {
+        const currentPool = this.pools.get(poolKey);
+        if (currentPool && currentPool.refCount === 0) {
+          if ((currentPool as any).unsubscribe) {
+            (currentPool as any).unsubscribe();
+          }
+          this.pools.delete(poolKey);
+        }
+      }, 1000); // 1 second delay to prevent thrashing
     }
   }
 
@@ -217,6 +224,7 @@ export function useRealtimeSubscription({
   const unsubscribeRef = useRef<(() => void) | null>(null);
   const isConnectedRef = useRef(false);
   const errorRef = useRef<Error | null>(null);
+  // Use stable component ID to prevent unnecessary subscription churn
   const componentId = useMemo(() => `${subscriptionId}-${Math.random().toString(36).substr(2, 9)}`, [subscriptionId]);
 
   // Enhanced error handling with reduced noise
@@ -254,9 +262,15 @@ export function useRealtimeSubscription({
     }
   }, [onDataChange]);
 
-  // Set up subscription with enhanced stability
+  // Set up subscription with enhanced stability and mounting guard
   useEffect(() => {
     if (!enabled || !subscriptionId) {
+      return;
+    }
+
+    // Prevent multiple subscriptions for the same component
+    if (unsubscribeRef.current) {
+      logger.realtime(`⚠️ Subscription already exists for ${subscriptionId}, skipping`);
       return;
     }
 
@@ -323,12 +337,17 @@ export function useRealtimeSubscription({
       handleError(error instanceof Error ? error : new Error(String(error)));
     }
 
-    // Cleanup function
+    // Enhanced cleanup function with memory leak prevention
     return () => {
       if (unsubscribeRef.current) {
         try {
+          logger.realtime(`🧹 Cleaning up subscription: ${subscriptionId}`);
           unsubscribeRef.current();
           unsubscribeRef.current = null;
+          
+          // Clear error state to prevent memory leaks
+          errorRef.current = null;
+          isConnectedRef.current = false;
         } catch (error) {
           logger.warn(`Error during subscription cleanup: ${subscriptionId}`, error);
         }
@@ -341,9 +360,8 @@ export function useRealtimeSubscription({
     event,
     schema,
     filter,
-    handleDataChange,
-    handleError,
-    handleStatusChange,
+    // Remove callback dependencies to prevent unnecessary re-subscriptions
+    // handleDataChange, handleError, handleStatusChange,
     componentId,
     performanceOptions.enablePooling,
     performanceOptions.eventId,

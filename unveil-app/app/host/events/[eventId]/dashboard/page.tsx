@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { useUnifiedGuestCounts } from '@/hooks/guests';
 
 import type { Database } from '@/app/reference/supabase.types';
 import {
@@ -26,7 +27,9 @@ export default function EventDashboardPage() {
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [guestCount, setGuestCount] = useState(0);
+  
+  // Use unified guest counts for consistency
+  const { counts: guestCounts } = useUnifiedGuestCounts(eventId);
 
 
 
@@ -65,21 +68,12 @@ export default function EventDashboardPage() {
           return;
         }
 
-        // Parallel data loading for better performance (user is authorized)
-        const [
-          { data: eventData, error: eventError },
-          { data: guestData, error: guestError }
-        ] = await Promise.all([
-          supabase
-            .from('events')
-            .select('*')
-            .eq('id', eventId)
-            .single(),
-          supabase
-            .from('event_guests')
-            .select('declined_at')
-            .eq('event_id', eventId)
-        ]);
+        // Load event data (guest counts handled by unified hook)
+        const { data: eventData, error: eventError } = await supabase
+          .from('events')
+          .select('*')
+          .eq('id', eventId)
+          .single();
 
         if (eventError) {
           console.error('Event fetch error:', eventError);
@@ -91,14 +85,7 @@ export default function EventDashboardPage() {
           return;
         }
 
-        if (guestError) {
-          console.error('Guest data error:', guestError);
-        }
-
         setEvent(eventData);
-        setGuestCount(guestData?.length || 0);
-        
-        // Note: Declined guest count calculation removed (not used in dashboard)
       } catch (err) {
         console.error('Unexpected error:', err);
         setError('An unexpected error occurred');
@@ -219,7 +206,7 @@ export default function EventDashboardPage() {
         {/* Modern Action List */}
         <ModernActionList 
           eventId={eventId}
-          guestCount={guestCount}
+          guestCount={guestCounts.total_invited}
           pendingRSVPs={0} // RSVP-Lite: No pending RSVPs concept
         />
       </div>

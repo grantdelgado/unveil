@@ -28,9 +28,13 @@ describe('BackButton', () => {
     });
   });
 
-  it('renders with default "Back" text', () => {
+  it('renders with only arrow icon by default', () => {
     render(<BackButton />);
-    expect(screen.getByText('Back')).toBeInTheDocument();
+    const button = screen.getByRole('button');
+    expect(button).toBeInTheDocument();
+    expect(button).toHaveAttribute('aria-label', 'Go back');
+    // Should have an arrow icon but no text by default
+    expect(screen.queryByText('Back')).not.toBeInTheDocument();
   });
 
   it('renders with custom children text', () => {
@@ -42,7 +46,8 @@ describe('BackButton', () => {
     render(<BackButton />);
     const button = screen.getByRole('button');
     expect(button).toHaveAttribute('aria-label', 'Go back');
-    expect(screen.getByText('Back')).toBeInTheDocument();
+    // Should be accessible even without visible text
+    expect(button).toBeInTheDocument();
   });
 
   it('navigates to specific href when provided', () => {
@@ -92,7 +97,8 @@ describe('BackButton', () => {
   it('applies prominent variant styling when specified', () => {
     render(<BackButton variant="prominent" />);
     const button = screen.getByRole('button');
-    expect(button).toHaveClass('text-[#FF6B6B]');
+    expect(button).toHaveClass('text-rose-600');
+    expect(button).toHaveClass('hover:text-rose-700');
   });
 
   it('includes back arrow icon', () => {

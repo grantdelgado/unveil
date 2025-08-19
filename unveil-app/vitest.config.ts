@@ -13,7 +13,20 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     include: ['**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
-    exclude: ['node_modules', 'dist', '.next', 'playwright-tests'],
+    exclude: [
+      'node_modules', 
+      'dist', 
+      '.next', 
+      'playwright-tests/**/*',
+      'tests/**/*', // Exclude Playwright e2e tests
+      'test-results/**/*',
+      '**/*.e2e.*',
+      '**/playwright.config.*'
+    ],
+    env: {
+      NEXT_PUBLIC_SUPABASE_URL: 'https://test.supabase.co',
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: 'test-anon-key',
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
@@ -21,10 +34,11 @@ export default defineConfig({
         'node_modules/',
         'dist/',
         '.next/',
+        'playwright-tests/**/*',
+        'tests/**/*',
         '**/*.d.ts',
         '**/*.config.*',
         '**/test/**',
-        '**/tests/**',
         '**/__tests__/**',
         '**/*.test.*',
         '**/*.spec.*',

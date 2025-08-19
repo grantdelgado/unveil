@@ -209,8 +209,8 @@ export function GuestImportWizard({
       // Complete the import first, then send SMS invitations asynchronously
       onImportComplete();
 
-      // Send SMS invitations in the background (non-blocking)
-      if (result.length > 0) {
+      // SMS invitations removed for "add now, invite later" flow
+      if (false && result.length > 0) { // Disabled auto-SMS
         // Fire and forget - don't block the UI for SMS sending
         setTimeout(async () => {
           try {

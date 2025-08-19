@@ -8,17 +8,18 @@ import type { GuestStatusCounts } from './types';
 interface GuestControlPanelProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
-  filterByRSVP: 'all' | 'attending' | 'declined';
-  onFilterChange: (filter: 'all' | 'attending' | 'declined') => void;
+  filterByRSVP: 'all' | 'attending' | 'declined' | 'not_invited' | 'invited';
+  onFilterChange: (filter: 'all' | 'attending' | 'declined' | 'not_invited' | 'invited') => void;
   statusCounts: GuestStatusCounts;
   onImportGuests: () => void;
   onAddIndividualGuest?: () => void;
+  onSendInvitations?: () => void; // New bulk invitation action
   hasGuests: boolean;
   className?: string;
 }
 
 interface FilterButtonProps {
-  filter: 'all' | 'attending' | 'declined';
+  filter: 'all' | 'attending' | 'declined' | 'not_invited' | 'invited';
   isActive: boolean;
   count: number;
   onClick: () => void;
@@ -27,6 +28,8 @@ interface FilterButtonProps {
 const FilterButton = memo<FilterButtonProps>(({ filter, isActive, count, onClick }) => {
   const config = {
     all: { label: 'All', emoji: '👥' },
+    not_invited: { label: 'Not Invited', emoji: '📝' },
+    invited: { label: 'Invited', emoji: '📬' },
     attending: { label: 'Attending', emoji: '✅' },
     declined: { label: 'Declined', emoji: '❌' },
   };
@@ -71,6 +74,7 @@ export const GuestControlPanel = memo<GuestControlPanelProps>(({
   statusCounts,
   onImportGuests,
   onAddIndividualGuest,
+  onSendInvitations,
   hasGuests,
   className,
 }) => {
@@ -104,6 +108,17 @@ export const GuestControlPanel = memo<GuestControlPanelProps>(({
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-2 sm:w-auto">
+          {/* Send Invitations button - only show when there are uninvited guests */}
+          {onSendInvitations && statusCounts.not_invited > 0 && (
+            <SecondaryButton
+              onClick={onSendInvitations}
+              fullWidth={false}
+              className="flex items-center justify-center gap-2 min-h-[44px] px-4 bg-pink-50 text-pink-700 border-pink-200 hover:bg-pink-100 hover:border-pink-300"
+            >
+              <span>📨</span>
+              Send Invitations ({statusCounts.not_invited})
+            </SecondaryButton>
+          )}
           <SecondaryButton
             onClick={onAddIndividualGuest || (() => {})}
             fullWidth={false}
@@ -134,11 +149,18 @@ export const GuestControlPanel = memo<GuestControlPanelProps>(({
             onClick={() => onFilterChange('all')}
           />
           <FilterButton
-            filter="attending"
-            isActive={filterByRSVP === 'attending'}
-            count={statusCounts.attending}
-            onClick={() => onFilterChange('attending')}
+            filter="not_invited"
+            isActive={filterByRSVP === 'not_invited'}
+            count={statusCounts.not_invited}
+            onClick={() => onFilterChange('not_invited')}
           />
+          <FilterButton
+            filter="invited"
+            isActive={filterByRSVP === 'invited'}
+            count={statusCounts.invited}
+            onClick={() => onFilterChange('invited')}
+          />
+
           <FilterButton
             filter="declined"
             isActive={filterByRSVP === 'declined'}

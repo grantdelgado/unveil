@@ -20,8 +20,8 @@ export const PERFORMANCE_ALERTS = {
   MAX_SUBSCRIPTIONS_PER_PAGE: 2,
   MAX_COMPONENT_RENDER_TIME: 16,   // 16ms for 60fps
   MAX_RE_RENDERS_PER_MINUTE: 30,
-  MEMORY_WARNING_MB: process.env.NODE_ENV === 'production' ? 75 : 150, // More realistic thresholds
-  MEMORY_ERROR_MB: process.env.NODE_ENV === 'production' ? 100 : 200,   // Error threshold for severe leaks
+  MEMORY_WARNING_MB: process.env.NODE_ENV === 'production' ? 75 : 250, // Increased dev threshold
+  MEMORY_ERROR_MB: process.env.NODE_ENV === 'production' ? 100 : 300,   // Increased dev threshold for severe leaks
 } as const;
 
 interface PerformanceAlert {
@@ -225,7 +225,7 @@ class DevelopmentAlerts {
 
           // Only alert if memory exceeds threshold AND we haven't alerted recently
           const timeSinceLastAlert = now - this.lastMemoryAlert;
-          const shouldCheckAlert = timeSinceLastAlert > 5 * 60 * 1000; // 5 minute cooldown
+          const shouldCheckAlert = timeSinceLastAlert > 10 * 60 * 1000; // 10 minute cooldown (increased)
 
           if (shouldCheckAlert) {
             // Check for severe memory issues (error threshold)

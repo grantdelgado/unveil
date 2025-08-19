@@ -25,6 +25,12 @@ export interface OptimizedGuest {
   // RSVP-Lite fields
   declined_at: string | null;
   decline_reason: string | null;
+  // New invitation tracking fields
+  invited_at: string | null;
+  last_invited_at: string | null;
+  invite_attempts: number | null;
+  joined_at: string | null; // Keep for DB compatibility but don't use in UI
+  removed_at: string | null; // Soft delete support
   /** 
    * Computed display name from COALESCE(users.full_name, event_guests.guest_name)
    * Prefer this over guest_name for UI display
@@ -39,11 +45,14 @@ export interface OptimizedGuest {
   } | null;
 }
 
-// RSVP-Lite status counts
+// Enhanced status counts with invitation tracking (simplified - no joined state)
 export interface GuestStatusCounts {
   total: number;
   attending: number;
   declined: number;
+  // New invitation status counts
+  not_invited: number;
+  invited: number;
 }
 
 // Simplified loading states

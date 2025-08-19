@@ -13,6 +13,7 @@ export interface EventInvitation {
 }
 
 import { buildInviteLink, generateGuestAccessLink as newGenerateGuestAccessLink } from '@/lib/utils/url';
+import { formatEventDate } from '@/lib/utils/date';
 
 export interface SMSMessage {
   to: string;
@@ -22,22 +23,22 @@ export interface SMSMessage {
 
 /**
  * Generate invitation message for new guests
+ * Uses environment-aware APP_URL and proper greeting format
  */
 export const createInvitationMessage = (
   invitation: EventInvitation,
 ): string => {
-  // Use guest hub instead of deep link
-  const inviteLink = buildInviteLink({ target: 'hub' });
+  // Guest name handling: full name → first name → "there"
+  let guestGreeting = 'Hi there! ';
+  if (invitation.guestName) {
+    const firstName = invitation.guestName.split(' ')[0]?.trim();
+    guestGreeting = firstName ? `Hi, ${firstName}! ` : `Hi, ${invitation.guestName}! `;
+  }
 
-  const guestName = invitation.guestName ? `Hi ${invitation.guestName}! ` : '';
+  // Use environment-aware APP_URL
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'app.sendunveil.com';
 
-  return `${guestName}You're invited to ${invitation.eventTitle} on ${invitation.eventDate}!
-
-View your invite & RSVP: ${inviteLink}
-
-Hosted by ${invitation.hostName} via Unveil
-
-Reply STOP to opt out.`;
+  return `${guestGreeting}You are invited to ${invitation.eventTitle} on ${invitation.eventDate}!\n\nView the wedding details here: ${appUrl}/select-event.\n\nHosted by ${invitation.hostName} via Unveil\n\nReply STOP to opt out.`;
 };
 
 /**
@@ -297,11 +298,7 @@ export const sendGuestInvitationSMS = async (
     const invitation: EventInvitation = {
       eventId,
       eventTitle: event.title,
-      eventDate: new Date(event.event_date).toLocaleDateString('en-US', {
-        weekday: 'long',
-        month: 'long',
-        day: 'numeric'
-      }),
+      eventDate: formatEventDate(event.event_date), // Use timezone-safe date formatting
       guestPhone: phone,
       guestName: options.guestName,
       hostName: (event.host as { full_name?: string } | null)?.full_name || 'Your host'

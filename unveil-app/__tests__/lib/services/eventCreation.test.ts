@@ -5,7 +5,7 @@ import type {
   EventCreationResult,
   HostGuestProfile
 } from '@/lib/services/eventCreation';
-import { mockSupabaseClient, mockAuthenticatedUser } from '@/src/test/setup';
+import { mockSupabaseClient, mockAuthenticatedUser, resetMockSupabaseClient } from '@/src/test/setup';
 import { logger } from '@/lib/logger';
 
 // Mock the logger module
@@ -38,7 +38,21 @@ describe('EventCreationService', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockAuthenticatedUser({ id: mockUserId, email: 'test@example.com' });
+    resetMockSupabaseClient();
+    // Set up authenticated user session that will pass validation
+    mockSupabaseClient.auth.getSession.mockResolvedValue({
+      data: { 
+        session: { 
+          user: { id: mockUserId },
+          access_token: 'test-token'
+        } 
+      },
+      error: null
+    });
+    mockSupabaseClient.auth.getUser.mockResolvedValue({
+      data: { user: { id: mockUserId, email: 'test@example.com' } },
+      error: null,
+    });
   });
 
   afterEach(() => {
@@ -47,16 +61,7 @@ describe('EventCreationService', () => {
 
   describe('createEventWithHost - Happy Path', () => {
     it('should successfully create event with host guest entry', async () => {
-      // Mock successful session validation
-      mockSupabaseClient.auth.getSession.mockResolvedValueOnce({
-        data: { 
-          session: { 
-            user: { id: mockUserId },
-            access_token: 'test-token'
-          } 
-        },
-        error: null
-      });
+      // Session validation is handled in beforeEach
 
       // Mock successful event creation
       mockSupabaseClient.from.mockReturnValueOnce({
@@ -208,22 +213,16 @@ describe('EventCreationService', () => {
         header_image: new File(['test'], 'test.jpg', { type: 'image/jpeg' })
       };
 
-      // Mock successful session validation
-      mockSupabaseClient.auth.getSession.mockResolvedValueOnce({
-        data: { 
-          session: { 
-            user: { id: mockUserId },
-            access_token: 'test-token'
-          } 
-        },
-        error: null
-      });
+      // Session validation is handled in beforeEach
 
       // Mock failed image upload
-      mockSupabaseClient.storage.from.mockReturnValueOnce({
-        upload: vi.fn().mockResolvedValueOnce({
+      mockSupabaseClient.storage.from.mockReturnValue({
+        upload: vi.fn().mockResolvedValue({
           data: null,
           error: { message: 'Upload failed' }
+        }),
+        getPublicUrl: vi.fn().mockReturnValue({
+          data: { publicUrl: 'https://example.com/image.jpg' }
         })
       });
 
@@ -238,16 +237,7 @@ describe('EventCreationService', () => {
     });
 
     it('should handle event insert failure', async () => {
-      // Mock successful session validation
-      mockSupabaseClient.auth.getSession.mockResolvedValueOnce({
-        data: { 
-          session: { 
-            user: { id: mockUserId },
-            access_token: 'test-token'
-          } 
-        },
-        error: null
-      });
+      // Session validation is handled in beforeEach
 
       // Mock failed event creation
       mockSupabaseClient.from.mockReturnValueOnce({
