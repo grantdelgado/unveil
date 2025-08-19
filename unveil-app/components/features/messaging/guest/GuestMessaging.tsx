@@ -11,6 +11,7 @@ import { MessageCircle, Send, ChevronDown } from 'lucide-react';
 import { logger } from '@/lib/logger';
 import { useGuestMessages } from '@/hooks/messaging/useGuestMessages';
 import { useGuestSMSStatus } from '@/hooks/messaging/useGuestSMSStatus';
+import { MessageDebugOverlay } from '@/components/dev/MessageDebugOverlay';
 
 // Types - using hook's MessageWithDelivery type directly
 
@@ -509,6 +510,13 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
           />
         )}
       </div>
+
+      {/* Debug overlay for development */}
+      <MessageDebugOverlay 
+        eventId={eventId}
+        userId={currentUserId}
+        guestId={guestId}
+      />
     </div>
   );
 }

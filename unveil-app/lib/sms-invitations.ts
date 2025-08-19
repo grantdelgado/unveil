@@ -1,5 +1,6 @@
 import { normalizePhoneNumber } from './utils';
 import { logger } from '@/lib/logger';
+import { buildInviteLink } from '@/lib/utils/url';
 
 // SMS invitation and notification utilities for phone-based guest management
 
@@ -23,7 +24,7 @@ export interface SMSMessage {
 
 /**
  * Generate invitation message for new guests
- * Uses environment-aware APP_URL and proper greeting format
+ * Uses the standardized public URL helper for outbound SMS links
  */
 export const createInvitationMessage = (
   invitation: EventInvitation,
@@ -35,10 +36,10 @@ export const createInvitationMessage = (
     guestGreeting = firstName ? `Hi, ${firstName}! ` : `Hi, ${invitation.guestName}! `;
   }
 
-  // Use environment-aware APP_URL
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'app.sendunveil.com';
+  // Use standardized public URL helper - this will throw if localhost or unconfigured
+  const inviteUrl = buildInviteLink({ target: 'hub' });
 
-  return `${guestGreeting}You are invited to ${invitation.eventTitle} on ${invitation.eventDate}!\n\nView the wedding details here: ${appUrl}/select-event.\n\nHosted by ${invitation.hostName} via Unveil\n\nReply STOP to opt out.`;
+  return `${guestGreeting}You are invited to ${invitation.eventTitle} on ${invitation.eventDate}!\n\nView the wedding details here: ${inviteUrl}.\n\nHosted by ${invitation.hostName} via Unveil\n\nReply STOP to opt out.`;
 };
 
 /**

@@ -3,6 +3,7 @@ import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase/admin';
 import { sendBulkSMS } from '@/lib/sms';
 import type { RecipientFilter } from '@/lib/types/messaging';
+import type { Database } from '@/app/reference/supabase.types';
 
 export async function POST(request: NextRequest) {
   try {
@@ -105,6 +106,28 @@ export async function POST(request: NextRequest) {
 
         let smsDelivered = 0;
         let smsFailed = 0;
+        let messageRecord: { id: string } | null = null;
+
+        // Create message record first (for delivery tracking)
+        const { data: createdMessage, error: messageError } = await supabase
+          .from('messages')
+          .insert({
+            event_id: message.event_id,
+            content: message.content,
+            message_type: message.message_type as Database['public']['Enums']['message_type_enum'],
+            sender_user_id: message.sender_user_id,
+            created_at: new Date().toISOString()
+          })
+          .select('id')
+          .single();
+
+        if (messageError) {
+          logger.apiError('Error creating message record for scheduled message', messageError);
+          throw messageError;
+        }
+
+        messageRecord = createdMessage;
+        logger.api(`Created message record ${messageRecord.id} for scheduled message ${message.id}`);
 
         // Send SMS if enabled
         if (message.send_via_sms && resolvedRecipients.length > 0) {
@@ -122,10 +145,11 @@ export async function POST(request: NextRequest) {
           smsDelivered = smsResult.sent;
           smsFailed = smsResult.failed;
 
-          // Create delivery tracking records
-          if (resolvedRecipients.length > 0) {
+          // Create delivery tracking records with proper message_id
+          if (resolvedRecipients.length > 0 && messageRecord) {
             const deliveryRecords = resolvedRecipients.map(guest => ({
               scheduled_message_id: message.id,
+              message_id: messageRecord.id, // CRITICAL FIX: Link to message record
               guest_id: guest.id,
               phone_number: guest.phone,
               sms_status: 'sent', // Will be updated by webhook
@@ -139,6 +163,8 @@ export async function POST(request: NextRequest) {
 
             if (deliveryError) {
               logger.apiError('Error creating delivery records', deliveryError);
+            } else {
+              logger.api(`Created ${deliveryRecords.length} delivery records for message ${messageRecord.id}`);
             }
           }
         }

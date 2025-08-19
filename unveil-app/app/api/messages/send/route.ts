@@ -196,7 +196,9 @@ export async function POST(request: NextRequest) {
             phone, 
             guest_name,
             sms_opt_out,
+            user_id,
             users (
+              id,
               phone
             )
           `)
@@ -208,12 +210,12 @@ export async function POST(request: NextRequest) {
         } else if (guestsWithPhones && guestsWithPhones.length > 0) {
           // Prepare SMS messages - use effective phone number (users.phone for authenticated, guest.phone for non-authenticated)
           const validGuestsWithPhones = guestsWithPhones.filter(guest => {
-            const effectivePhone = (guest.users as { phone?: string })?.phone || guest.phone;
+            const effectivePhone = (guest.users as { id?: string; phone?: string })?.phone || guest.phone;
             return effectivePhone && effectivePhone.trim();
           });
 
           const smsMessages = validGuestsWithPhones.map(guest => ({
-            to: ((guest.users as { phone?: string })?.phone || guest.phone) as string,
+            to: ((guest.users as { id?: string; phone?: string })?.phone || guest.phone) as string,
             message: content,
             eventId: eventId,
             guestId: guest.id,
@@ -238,11 +240,24 @@ export async function POST(request: NextRequest) {
           deliveryRecords = validGuestsWithPhones.map(guest => ({
             message_id: messageData.id,
             guest_id: guest.id,
-            phone_number: ((guest.users as { phone?: string })?.phone || guest.phone) as string,
+            user_id: guest.user_id, // CRITICAL FIX: Link to user account for guest message visibility
+            phone_number: ((guest.users as { id?: string; phone?: string })?.phone || guest.phone) as string,
             sms_status: 'sent', // Will be updated by webhook
             push_status: 'not_applicable',
             email_status: 'not_applicable'
           }));
+
+          // DEBUG: Log delivery record creation for troubleshooting
+          logger.api(`Creating delivery records:`, {
+            messageId: messageData.id,
+            recipientCount: deliveryRecords.length,
+            recipients: deliveryRecords.map(r => ({
+              guestId: r.guest_id,
+              userId: r.user_id,
+              hasUserId: !!r.user_id,
+              phone: (r.phone_number as string).slice(0, 6) + '...'
+            }))
+          });
         }
       } catch (smsError: unknown) {
         logger.apiError('SMS delivery failed', smsError);
