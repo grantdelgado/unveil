@@ -460,19 +460,17 @@ export default function GuestEventHomePage() {
               </CardContainer>
             )}
 
-            {/* Event Messages */}
-            <CardContainer className="overflow-hidden">
-              <div className="px-6 py-4 border-b border-stone-200">
-                <h2 className="text-xl font-semibold text-stone-800">Event Messages</h2>
-              </div>
-              <div className="p-0">
-                <GuestMessaging 
-                  eventId={eventId} 
-                  currentUserId={currentUserId} 
-                  guestId={guestInfo?.id || currentUserId || ''} 
-                  showHeader={false}
-                />
-              </div>
+            {/* Event Messages - Header is rendered internally by GuestMessaging component */}
+            <CardContainer 
+              className="p-0 overflow-hidden" 
+              data-testid="event-messages-card"
+              aria-label="Event Messages Section"
+            >
+              <GuestMessaging 
+                eventId={eventId} 
+                currentUserId={currentUserId} 
+                guestId={guestInfo?.id || currentUserId || ''} 
+              />
             </CardContainer>
           </div>
 

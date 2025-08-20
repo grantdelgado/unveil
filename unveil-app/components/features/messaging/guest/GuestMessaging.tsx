@@ -18,10 +18,9 @@ interface GuestMessagingProps {
   eventId: string;
   currentUserId: string | null;
   guestId: string;
-  showHeader?: boolean;
 }
 
-export function GuestMessaging({ eventId, currentUserId, guestId, showHeader = true }: GuestMessagingProps) {
+export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagingProps) {
   // Use enhanced guest messaging hook with pagination
   const {
     messages,
@@ -46,16 +45,21 @@ export function GuestMessaging({ eventId, currentUserId, guestId, showHeader = t
   
   const isConnected = !loading;
 
-  // Consolidated header component to prevent duplicate rendering
-  const MessagingHeader = () => (
-    <div className="flex-shrink-0 bg-white border-b border-stone-200 px-5 py-4">
+  // Single authoritative header component - prevents any duplication
+  const MessagingHeader = useCallback(() => (
+    <div 
+      className="flex-shrink-0 bg-white border-b border-stone-200 px-5 py-4"
+      data-testid="guest-messaging-header"
+      role="banner"
+      aria-label="Event Messages section"
+    >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <MessageCircle className="h-5 w-5 text-stone-400" />
+          <MessageCircle className="h-5 w-5 text-stone-400" aria-hidden="true" />
           <h2 className="text-lg font-medium text-stone-800">Event Messages</h2>
           {isConnected && (
-            <div className="flex items-center gap-1">
-              <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
+            <div className="flex items-center gap-1" aria-live="polite">
+              <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" aria-hidden="true" />
               <span className="text-xs text-green-600">Live</span>
             </div>
           )}
@@ -72,7 +76,7 @@ export function GuestMessaging({ eventId, currentUserId, guestId, showHeader = t
         )}
       </div>
     </div>
-  );
+  ), [isConnected, currentUserId, guestId, smsStatusLoading, eventId, smsOptOut, refreshStatus]);
 
   // MVP: Guest replies disabled - no response state needed
   
@@ -211,7 +215,7 @@ export function GuestMessaging({ eventId, currentUserId, guestId, showHeader = t
   if (loading) {
     return (
       <div className="flex flex-col bg-stone-50 h-[60vh] min-h-[400px] max-h-[600px] md:h-[50vh] md:min-h-[500px] md:max-h-[700px]">
-        {showHeader && <MessagingHeader />}
+        <MessagingHeader />
         <div className="flex-1 flex items-center justify-center">
           <LoadingSpinner size="md" />
           <span className="ml-3 text-sm text-gray-600">Loading messages...</span>
@@ -224,7 +228,7 @@ export function GuestMessaging({ eventId, currentUserId, guestId, showHeader = t
    if (error) {
      return (
        <div className="flex flex-col bg-stone-50 h-[60vh] min-h-[400px] max-h-[600px] md:h-[50vh] md:min-h-[500px] md:max-h-[700px]">
-         {showHeader && <MessagingHeader />}
+         <MessagingHeader />
          <div className="flex-1 flex items-center justify-center p-6">
            <EmptyState
              variant="messages"
@@ -242,7 +246,7 @@ export function GuestMessaging({ eventId, currentUserId, guestId, showHeader = t
    if (messages.length === 0) {
      return (
        <div className="flex flex-col bg-stone-50 h-[60vh] min-h-[400px] max-h-[600px] md:h-[50vh] md:min-h-[500px] md:max-h-[700px]">
-         {showHeader && <MessagingHeader />}
+         <MessagingHeader />
          <div className="flex-1 flex items-center justify-center p-6">
            <div className="text-center space-y-4">
              <EmptyState
@@ -264,8 +268,8 @@ export function GuestMessaging({ eventId, currentUserId, guestId, showHeader = t
 
   return (
     <div className="flex flex-col bg-stone-50 h-[60vh] min-h-[400px] max-h-[600px] md:h-[50vh] md:min-h-[500px] md:max-h-[700px]">
-      {/* Header - Only show when explicitly requested */}
-      {showHeader && <MessagingHeader />}
+      {/* Header - Consolidated to prevent duplicates */}
+      <MessagingHeader />
 
       {/* Message Thread - Scrollable Area */}
       <div className="flex-1 relative">
