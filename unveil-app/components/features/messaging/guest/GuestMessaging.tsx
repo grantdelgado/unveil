@@ -45,6 +45,34 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
   
   const isConnected = !loading;
 
+  // Consolidated header component to prevent duplicate rendering
+  const MessagingHeader = () => (
+    <div className="flex-shrink-0 bg-white border-b border-stone-200 px-5 py-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <MessageCircle className="h-5 w-5 text-stone-400" />
+          <h2 className="text-lg font-medium text-stone-800">Event Messages</h2>
+          {isConnected && (
+            <div className="flex items-center gap-1">
+              <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
+              <span className="text-xs text-green-600">Live</span>
+            </div>
+          )}
+        </div>
+        
+        {/* SMS Notification Toggle - only show for authenticated guests */}
+        {currentUserId && guestId && !smsStatusLoading && (
+          <SMSNotificationToggle
+            eventId={eventId}
+            guestId={guestId}
+            initialOptOut={smsOptOut}
+            onToggle={refreshStatus}
+          />
+        )}
+      </div>
+    </div>
+  );
+
   // MVP: Guest replies disabled - no response state needed
   
   // Scroll management state
@@ -182,24 +210,7 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
   if (loading) {
     return (
       <div className="flex flex-col bg-stone-50 h-[60vh] min-h-[400px] max-h-[600px] md:h-[50vh] md:min-h-[500px] md:max-h-[700px]">
-        <div className="flex-shrink-0 bg-white border-b border-stone-200 px-5 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <MessageCircle className="h-5 w-5 text-stone-400" />
-              <h2 className="text-lg font-medium text-stone-800">Event Messages</h2>
-            </div>
-            
-            {/* SMS Notification Toggle - only show for authenticated guests */}
-            {currentUserId && guestId && !smsStatusLoading && (
-              <SMSNotificationToggle
-                eventId={eventId}
-                guestId={guestId}
-                initialOptOut={smsOptOut}
-                onToggle={refreshStatus}
-              />
-            )}
-          </div>
-        </div>
+        <MessagingHeader />
         <div className="flex-1 flex items-center justify-center">
           <LoadingSpinner size="md" />
           <span className="ml-3 text-sm text-gray-600">Loading messages...</span>
@@ -212,24 +223,7 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
    if (error) {
      return (
        <div className="flex flex-col bg-stone-50 h-[60vh] min-h-[400px] max-h-[600px] md:h-[50vh] md:min-h-[500px] md:max-h-[700px]">
-         <div className="flex-shrink-0 bg-white border-b border-stone-200 px-5 py-4">
-           <div className="flex items-center justify-between">
-             <div className="flex items-center gap-3">
-               <MessageCircle className="h-5 w-5 text-stone-400" />
-               <h2 className="text-lg font-medium text-stone-800">Event Messages</h2>
-             </div>
-             
-             {/* SMS Notification Toggle - only show for authenticated guests */}
-             {currentUserId && guestId && !smsStatusLoading && (
-               <SMSNotificationToggle
-                 eventId={eventId}
-                 guestId={guestId}
-                 initialOptOut={smsOptOut}
-                 onToggle={refreshStatus}
-               />
-             )}
-           </div>
-         </div>
+         <MessagingHeader />
          <div className="flex-1 flex items-center justify-center p-6">
            <EmptyState
              variant="messages"
@@ -247,30 +241,7 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
    if (messages.length === 0) {
      return (
        <div className="flex flex-col bg-stone-50 h-[60vh] min-h-[400px] max-h-[600px] md:h-[50vh] md:min-h-[500px] md:max-h-[700px]">
-         <div className="flex-shrink-0 bg-white border-b border-stone-200 px-5 py-4">
-           <div className="flex items-center justify-between">
-             <div className="flex items-center gap-3">
-               <MessageCircle className="h-5 w-5 text-stone-400" />
-               <h2 className="text-lg font-medium text-stone-800">Event Messages</h2>
-               {isConnected && (
-                 <div className="flex items-center gap-1">
-                   <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
-                   <span className="text-xs text-green-600">Live</span>
-                 </div>
-               )}
-             </div>
-             
-             {/* SMS Notification Toggle - only show for authenticated guests */}
-             {currentUserId && guestId && !smsStatusLoading && (
-               <SMSNotificationToggle
-                 eventId={eventId}
-                 guestId={guestId}
-                 initialOptOut={smsOptOut}
-                 onToggle={refreshStatus}
-               />
-             )}
-           </div>
-         </div>
+         <MessagingHeader />
          <div className="flex-1 flex items-center justify-center p-6">
            <div className="text-center space-y-4">
              <EmptyState
@@ -292,31 +263,8 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
 
   return (
     <div className="flex flex-col bg-stone-50 h-[60vh] min-h-[400px] max-h-[600px] md:h-[50vh] md:min-h-[500px] md:max-h-[700px]">
-      {/* Header */}
-      <div className="flex-shrink-0 bg-white border-b border-stone-200 px-5 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <MessageCircle className="h-5 w-5 text-stone-400" />
-            <h2 className="text-lg font-medium text-stone-800">Event Messages</h2>
-            {isConnected && (
-              <div className="flex items-center gap-1">
-                <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
-                <span className="text-xs text-green-600">Live</span>
-              </div>
-            )}
-          </div>
-          
-          {/* SMS Notification Toggle - only show for authenticated guests */}
-          {currentUserId && guestId && !smsStatusLoading && (
-            <SMSNotificationToggle
-              eventId={eventId}
-              guestId={guestId}
-              initialOptOut={smsOptOut}
-              onToggle={refreshStatus}
-            />
-          )}
-        </div>
-      </div>
+      {/* Header - Consolidated to prevent duplicates */}
+      <MessagingHeader />
 
       {/* Message Thread - Scrollable Area */}
       <div className="flex-1 relative">
