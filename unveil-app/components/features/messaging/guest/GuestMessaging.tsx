@@ -18,9 +18,10 @@ interface GuestMessagingProps {
   eventId: string;
   currentUserId: string | null;
   guestId: string;
+  showHeader?: boolean;
 }
 
-export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagingProps) {
+export function GuestMessaging({ eventId, currentUserId, guestId, showHeader = true }: GuestMessagingProps) {
   // Use enhanced guest messaging hook with pagination
   const {
     messages,
@@ -210,7 +211,7 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
   if (loading) {
     return (
       <div className="flex flex-col bg-stone-50 h-[60vh] min-h-[400px] max-h-[600px] md:h-[50vh] md:min-h-[500px] md:max-h-[700px]">
-        <MessagingHeader />
+        {showHeader && <MessagingHeader />}
         <div className="flex-1 flex items-center justify-center">
           <LoadingSpinner size="md" />
           <span className="ml-3 text-sm text-gray-600">Loading messages...</span>
@@ -223,7 +224,7 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
    if (error) {
      return (
        <div className="flex flex-col bg-stone-50 h-[60vh] min-h-[400px] max-h-[600px] md:h-[50vh] md:min-h-[500px] md:max-h-[700px]">
-         <MessagingHeader />
+         {showHeader && <MessagingHeader />}
          <div className="flex-1 flex items-center justify-center p-6">
            <EmptyState
              variant="messages"
@@ -241,7 +242,7 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
    if (messages.length === 0) {
      return (
        <div className="flex flex-col bg-stone-50 h-[60vh] min-h-[400px] max-h-[600px] md:h-[50vh] md:min-h-[500px] md:max-h-[700px]">
-         <MessagingHeader />
+         {showHeader && <MessagingHeader />}
          <div className="flex-1 flex items-center justify-center p-6">
            <div className="text-center space-y-4">
              <EmptyState
@@ -263,8 +264,8 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
 
   return (
     <div className="flex flex-col bg-stone-50 h-[60vh] min-h-[400px] max-h-[600px] md:h-[50vh] md:min-h-[500px] md:max-h-[700px]">
-      {/* Header - Consolidated to prevent duplicates */}
-      <MessagingHeader />
+      {/* Header - Only show when explicitly requested */}
+      {showHeader && <MessagingHeader />}
 
       {/* Message Thread - Scrollable Area */}
       <div className="flex-1 relative">

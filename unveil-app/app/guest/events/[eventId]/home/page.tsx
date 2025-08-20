@@ -27,6 +27,7 @@ import {
 } from '@/components/ui';
 import { ErrorBoundary, MessagingErrorFallback } from '@/components/ui/ErrorBoundary';
 import { MobileShell } from '@/components/layout';
+import { RealtimeDebugPanel } from '@/components/dev/RealtimeDebugPanel';
 
 export default function GuestEventHomePage() {
   const params = useParams();
@@ -460,15 +461,18 @@ export default function GuestEventHomePage() {
             )}
 
             {/* Event Messages */}
-            <CardContainer className="p-0 overflow-hidden">
-              <div className="p-5 pb-0">
-                <h2 className="text-xl font-semibold text-stone-800 mb-4">Event Messages</h2>
+            <CardContainer className="overflow-hidden">
+              <div className="px-6 py-4 border-b border-stone-200">
+                <h2 className="text-xl font-semibold text-stone-800">Event Messages</h2>
               </div>
-              <GuestMessaging 
-                eventId={eventId} 
-                currentUserId={currentUserId} 
-                guestId={guestInfo?.id || currentUserId || ''} 
-              />
+              <div className="p-0">
+                <GuestMessaging 
+                  eventId={eventId} 
+                  currentUserId={currentUserId} 
+                  guestId={guestInfo?.id || currentUserId || ''} 
+                  showHeader={false}
+                />
+              </div>
             </CardContainer>
           </div>
 
@@ -525,6 +529,9 @@ export default function GuestEventHomePage() {
       />
 
       </MobileShell>
+      
+      {/* Debug Panel - Only in development */}
+      <RealtimeDebugPanel />
     </ErrorBoundary>
   );
 }
