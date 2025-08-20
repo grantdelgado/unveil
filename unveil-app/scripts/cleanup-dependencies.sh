@@ -13,7 +13,7 @@ pnpm remove react-window react-window-infinite-loader recharts zustand
 
 # Remove unused dev dependencies  
 echo "🔧 Removing unused dev dependencies..."
-pnpm remove @sentry/tracing @tailwindcss/postcss @testing-library/user-event @types/react-window @vitest/coverage-v8 autoprefixer eslint-config-next eslint-plugin-prettier
+pnpm remove @sentry/tracing @testing-library/user-event @types/react-window @vitest/coverage-v8 autoprefixer eslint-config-next eslint-plugin-prettier
 
 # Add missing dependencies
 echo "➕ Adding missing dependencies..."

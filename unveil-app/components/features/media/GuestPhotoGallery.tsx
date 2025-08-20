@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, memo, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import Image from 'next/image';
 import type { Database } from '@/app/reference/supabase.types';
-import { PhotoUpload } from './PhotoUpload';
+import PhotoUpload from './PhotoUpload';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 
 type Media = Database['public']['Tables']['media']['Row'];
