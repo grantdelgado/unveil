@@ -50,6 +50,10 @@ export function useGuests(eventId?: string): UseGuestsReturn {
   // Add guest mutation
   const addGuestMutation = useMutation({
     mutationFn: async (guestData: EventGuestInsert): Promise<EventGuest> => {
+      // Ensure user is authenticated
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
       const { data, error } = await supabase
         .from('event_guests')
         .insert(guestData)
@@ -67,6 +71,10 @@ export function useGuests(eventId?: string): UseGuestsReturn {
   // Update guest mutation
   const updateGuestMutation = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: EventGuestUpdate }): Promise<EventGuest> => {
+      // Ensure user is authenticated
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
       const { data, error } = await supabase
         .from('event_guests')
         .update(updates)
@@ -85,6 +93,10 @@ export function useGuests(eventId?: string): UseGuestsReturn {
   // Remove guest mutation
   const removeGuestMutation = useMutation({
     mutationFn: async (id: string): Promise<void> => {
+      // Ensure user is authenticated
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
       const { error } = await supabase
         .from('event_guests')
         .delete()
@@ -100,6 +112,10 @@ export function useGuests(eventId?: string): UseGuestsReturn {
   // Import multiple guests using canonical add_or_restore_guest RPC
   const importGuestsMutation = useMutation({
     mutationFn: async ({ eventId, guests }: { eventId: string; guests: EventGuestInsert[] }): Promise<EventGuest[]> => {
+      // Ensure user is authenticated before making RPC calls
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
       const results: EventGuest[] = [];
       
       // Process each guest individually using canonical RPC
@@ -146,6 +162,10 @@ export function useGuests(eventId?: string): UseGuestsReturn {
 
   // Helper functions
   const getEventGuests = useCallback(async (eventId: string): Promise<EventGuest[]> => {
+    // Ensure user is authenticated
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
     const { data, error } = await supabase
       .from('event_guests')
       .select('*')
@@ -157,6 +177,10 @@ export function useGuests(eventId?: string): UseGuestsReturn {
   }, []);
 
   const updateRSVP = useCallback(async (id: string, status: string): Promise<EventGuest> => {
+    // Ensure user is authenticated
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
     const { data, error } = await supabase
       .from('event_guests')
       .update({ rsvp_status: status })
