@@ -1,5 +1,5 @@
 export { useMessages } from './useMessages';
-export { useGuestMessages } from './useGuestMessages';
+// useGuestMessages removed - replaced by useGuestMessagesRPC with managed subscriptions
 export { useGuestJoinTimestamp } from './useGuestJoinTimestamp';
 export { useGuestSMSStatus } from './useGuestSMSStatus';
 export { useMessagingRecipients } from './useMessagingRecipients';

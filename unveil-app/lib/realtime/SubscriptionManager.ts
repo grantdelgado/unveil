@@ -65,8 +65,55 @@ export interface SubscriptionStats {
 }
 
 /**
- * Enhanced subscription manager for Supabase real-time features
- * Provides automatic cleanup, error handling, timeout management, and debugging utilities
+ * Enhanced Subscription Manager for Supabase Real-time Features
+ * 
+ * This class provides centralized management of Supabase real-time subscriptions with:
+ * - Automatic cleanup and memory leak prevention
+ * - Enhanced error handling with exponential backoff
+ * - Token refresh integration for seamless auth updates
+ * - Network state and visibility change handling
+ * - Health monitoring and debugging utilities
+ * 
+ * ## Key Features:
+ * 
+ * ### Token Refresh Handling
+ * - Automatically updates realtime auth tokens when refreshed
+ * - Listens for 'TOKEN_REFRESHED' events from Supabase auth
+ * - Calls `supabase.realtime.setAuth(newToken)` to maintain connections
+ * 
+ * ### Network State Management
+ * - Monitors online/offline events to trigger reconnection
+ * - Handles visibility changes for mobile Safari backgrounding
+ * - Automatically reconnects when network is restored
+ * 
+ * ### Connection Stability
+ * - Exponential backoff for failed connections (2s → 30s max)
+ * - Global cooldown to prevent overwhelming the server
+ * - Health scoring based on error rates and connection stability
+ * - Automatic cleanup of stale connections and memory leaks
+ * 
+ * ### Error Recovery
+ * - Distinguishes between recoverable and unrecoverable errors
+ * - Logs recoverable errors at warn/info level to reduce noise
+ * - Attempts reconnection up to configurable retry limits
+ * - Graceful degradation when max retries exceeded
+ * 
+ * ## Usage:
+ * ```typescript
+ * const subscriptionManager = getSubscriptionManager();
+ * const unsubscribe = subscriptionManager.subscribe('my-subscription', {
+ *   table: 'messages',
+ *   event: 'INSERT',
+ *   filter: 'event_id=eq.123',
+ *   callback: (payload) => console.log('New message:', payload),
+ *   onError: (error) => console.error('Subscription error:', error),
+ *   enableBackoff: true,
+ *   maxRetries: 3
+ * });
+ * ```
+ * 
+ * @since 2024-01 - Initial implementation
+ * @since 2024-01 - Added token refresh integration and stability improvements
  */
 export class SubscriptionManager {
   private subscriptions = new Map<string, SubscriptionState>();
@@ -227,13 +274,14 @@ export class SubscriptionManager {
             }
             
           } else if (status === 'CHANNEL_ERROR') {
-            logger.error(`❌ Channel error: ${subscriptionId}`);
+            // Downgrade to warn since these often auto-heal
+            logger.warn(`⚠️ Channel error: ${subscriptionId} (will attempt recovery)`);
             this.handleSubscriptionError(
               subscriptionId,
               new Error(`Channel error: ${status}`),
             );
           } else if (status === 'TIMED_OUT') {
-            logger.warn(`⏰ Subscription timeout: ${subscriptionId} - connection issue detected`);
+            logger.info(`⏰ Subscription timeout: ${subscriptionId} - will reconnect`);
             this.handleSubscriptionTimeout(subscriptionId);
           } else if (status === 'CLOSED') {
             logger.realtime(`🔌 Subscription closed: ${subscriptionId}`);
@@ -606,8 +654,14 @@ export class SubscriptionManager {
     // Update global error tracking
     this.globalConsecutiveErrors++;
 
-    // Enhanced error logging with context
-    logger.error(`❌ Subscription error: ${subscriptionId}`, {
+    // Log errors appropriately based on recoverability
+    const isRecoverableError = subscription.retryCount < (subscription.config.maxRetries || this.MAX_RETRIES);
+    const logLevel = isRecoverableError ? 'warn' : 'error';
+    const logMessage = isRecoverableError 
+      ? `⚠️ Subscription error (recoverable): ${subscriptionId}`
+      : `❌ Subscription error (unrecoverable): ${subscriptionId}`;
+    
+    logger[logLevel](logMessage, {
       error: normalizedError.message,
       retryCount: subscription.retryCount,
       consecutiveErrors: subscription.consecutiveErrors,
@@ -615,6 +669,7 @@ export class SubscriptionManager {
       lastActivity: subscription.lastActivity?.toISOString(),
       table: subscription.config.table,
       filter: subscription.config.filter,
+      isRecoverable: isRecoverableError,
     });
 
     // Update global error count
@@ -634,6 +689,7 @@ export class SubscriptionManager {
       this.unsubscribe(subscriptionId);
     } else if (subscription.consecutiveErrors <= 3) {
       // Only attempt reconnection for reasonable error counts
+      logger.info(`🔄 Attempting recovery for ${subscriptionId} (retry ${subscription.retryCount + 1}/${maxRetries})`);
       this.reconnectSubscription(subscriptionId);
     }
   }

@@ -93,6 +93,9 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
   const previousMessageCountRef = useRef(messages.length);
   const scrollHeightBeforePrepend = useRef<number>(0);
   const shouldPreserveScroll = useRef<boolean>(false);
+  
+  // Accessibility state
+  const [ariaLiveMessage, setAriaLiveMessage] = useState<string>('');
 
   /**
    * Check if user is at the bottom of the scroll container
@@ -146,7 +149,7 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
   }, [scrollToBottom]);
 
   /**
-   * Auto-scroll logic for new messages
+   * Auto-scroll logic for new messages with accessibility announcements
    */
   useEffect(() => {
     const messageCountChanged = messages.length !== previousMessageCountRef.current;
@@ -157,6 +160,15 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
       previousMessageCountRef.current = messages.length;
       
       if (isNewMessage) {
+        // Announce new messages for screen readers
+        const announcement = newMessageCount === 1 
+          ? 'New message received' 
+          : `${newMessageCount} new messages received`;
+        setAriaLiveMessage(announcement);
+        
+        // Clear the announcement after a brief delay to allow re-announcements
+        setTimeout(() => setAriaLiveMessage(''), 3000);
+        
         if (isAtBottom || shouldAutoScroll) {
           // Auto-scroll to new messages if user is at bottom or it's their own message
           setTimeout(() => scrollToBottom(true), 100);
@@ -410,6 +422,16 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
         userId={currentUserId}
         guestId={guestId}
       />
+      
+      {/* Accessibility: Screen reader announcements for new messages */}
+      <div 
+        aria-live="polite" 
+        aria-atomic="true"
+        className="sr-only"
+        role="status"
+      >
+        {ariaLiveMessage}
+      </div>
     </div>
   );
 }

@@ -35,7 +35,7 @@ export {
 } from '@/lib/services/media';
 
 // Hook exports
-export { useGuestMessages } from '@/hooks/messaging/useGuestMessages';
+// useGuestMessages removed - replaced by useGuestMessagesRPC with managed subscriptions
 export { useGuestTags } from '@/hooks/messaging/useGuestTags';
 
 // Realtime subscriptions

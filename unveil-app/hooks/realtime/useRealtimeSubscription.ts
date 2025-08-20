@@ -244,10 +244,17 @@ export function useRealtimeSubscription({
 
   // Enhanced error handling with reduced noise
   const handleError = useCallback((error: Error) => {
-    // Only log errors that aren't connection-related or are significant
-    if (!error.message.includes('CHANNEL_ERROR') && !error.message.includes('timeout')) {
-      logger.realtimeError('Subscription error', error);
+    // Only log errors that aren't recoverable connection issues
+    const isRecoverableError = error.message.includes('CHANNEL_ERROR') || 
+                               error.message.includes('timeout') ||
+                               error.message.includes('reconnect');
+    
+    if (!isRecoverableError) {
+      logger.realtimeError('Subscription error (non-recoverable)', error);
+    } else {
+      logger.info(`Subscription issue (recoverable): ${error.message}`);
     }
+    
     errorRef.current = error;
     onError?.(error);
   }, [onError]);

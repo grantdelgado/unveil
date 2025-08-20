@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
 /**
  * Defensive API route - blocks guest replies for MVP
@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
  * This route exists to catch any attempts to send guest replies
  * and redirect them appropriately. MVP is read-only announcements only.
  */
-export async function POST(_request: NextRequest) {
+export async function POST() {
   return NextResponse.json(
     { 
       error: 'Guest replies are not available in this version',
@@ -17,7 +17,7 @@ export async function POST(_request: NextRequest) {
   );
 }
 
-export async function GET(_request: NextRequest) {
+export async function GET() {
   return NextResponse.json(
     { 
       error: 'Guest reply interface not available',

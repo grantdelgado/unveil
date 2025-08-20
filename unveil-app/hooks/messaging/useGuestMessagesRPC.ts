@@ -1,22 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { logger } from '@/lib/logger';
+import { mergeMessages, type GuestMessage } from '@/lib/utils/messageUtils';
 
 // Configuration constants
 const INITIAL_WINDOW_SIZE = 30;
 const OLDER_MESSAGES_BATCH_SIZE = 20;
 
-// Message type from RPC response
-interface GuestMessage {
-  message_id: string;
-  content: string;
-  created_at: string;
-  delivery_status: string;
-  sender_name: string;
-  sender_avatar_url: string | null;
-  message_type: string;
-  is_own_message: boolean;
-}
+// Message type from RPC response (now imported from utils)
+// interface GuestMessage moved to lib/utils/messageUtils.ts
 
 interface UseGuestMessagesRPCProps {
   eventId: string;
@@ -204,17 +196,91 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
   }, [eventId, oldestMessageCursor, isFetchingOlder]);
 
   /**
-   * Handle real-time message updates
+   * Handle real-time message delivery updates (backup path for targeted messages)
    */
-  const handleRealtimeUpdate = useCallback((payload: any) => {
+  const handleRealtimeUpdate = useCallback(async (payload: any) => {
     if (payload.eventType === 'INSERT') {
-      // For new messages, refetch the initial window to ensure we get the complete message data
-      // This is simpler and more reliable than trying to construct the message from the payload
-      fetchInitialMessages();
+      // 🔍 DIAGNOSTIC: Start timing measurement for delivery path
+      const startTime = performance.now();
+      console.time('guest-message-delivery-receive');
+      
+      try {
+        logger.info('🔄 Delivery-path: Message delivery received', { 
+          eventId, 
+          deliveryId: (payload.new as any)?.id,
+          messageId: (payload.new as any)?.message_id 
+        });
+
+        // Get the new message data by fetching just the latest messages
+        // This is more efficient than a full refetch and preserves pagination state
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user) return;
+
+        // Fetch recent deliveries to get the new message in proper format
+        const { data: deliveries, error: deliveryError } = await supabase
+          .from('message_deliveries')
+          .select(`
+            sms_status,
+            message:messages!message_deliveries_message_id_fkey (
+              id,
+              content,
+              created_at,
+              message_type,
+              event_id,
+              sender_user_id,
+              sender:users!messages_sender_user_id_fkey(full_name, avatar_url)
+            )
+          `)
+          .eq('user_id', user.id)
+          .eq('id', (payload.new as any)?.id) // Only fetch this specific delivery
+          .single();
+
+        if (deliveryError || !deliveries) return;
+
+        // Check if this is for our event
+        if (deliveries.message?.event_id !== eventId) return;
+
+        const newMessage = {
+          message_id: deliveries.message!.id,
+          content: deliveries.message!.content,
+          created_at: deliveries.message!.created_at || new Date().toISOString(),
+          delivery_status: deliveries.sms_status || 'delivered',
+          sender_name: deliveries.message!.sender?.full_name || 'Host',
+          sender_avatar_url: deliveries.message!.sender?.avatar_url || '',
+          message_type: deliveries.message!.message_type || 'direct',
+          is_own_message: deliveries.message!.sender_user_id === user.id
+        };
+
+        // 🔍 DIAGNOSTIC: Measure merge timing
+        const mergeStartTime = performance.now();
+        
+        // Use intelligent merge (may be duplicate if fast-path already handled it)
+        setMessages(prevMessages => mergeMessages(prevMessages, [newMessage]));
+        
+        const mergeEndTime = performance.now();
+        const totalTime = mergeEndTime - startTime;
+        
+        // 🔍 DIAGNOSTIC: Log detailed timing
+        console.timeEnd('guest-message-delivery-receive');
+        logger.info('🔄 Delivery-path message merged', { 
+          eventId, 
+          messageId: newMessage.message_id,
+          timing: {
+            totalLatency: `${totalTime.toFixed(1)}ms`,
+            mergeTime: `${(mergeEndTime - mergeStartTime).toFixed(1)}ms`,
+            dbCreatedAt: newMessage.created_at,
+            clientReceiveTime: new Date().toISOString()
+          }
+        });
+      } catch (error) {
+        // Fallback to full refetch on error
+        logger.warn('Real-time delivery merge failed, falling back to refetch', { error, eventId });
+        fetchInitialMessages();
+      }
     }
     // For UPDATE/DELETE events, we could implement more granular updates,
-    // but for MVP, a simple refetch ensures consistency
-  }, [fetchInitialMessages]);
+    // but for MVP, intelligent INSERT handling is the main improvement
+  }, [eventId, fetchInitialMessages]);
 
   // Fetch initial messages
   useEffect(() => {
@@ -228,6 +294,7 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
 
     let deliveryUnsubscribe: (() => void) | null = null;
     let messagesUnsubscribe: (() => void) | null = null;
+    let messagesEventUnsubscribe: (() => void) | null = null;
     let isCleanedUp = false;
 
     const setupManagedRealtimeSubscription = async () => {
@@ -242,7 +309,60 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
         const { getSubscriptionManager } = await import('@/lib/realtime/SubscriptionManager');
         const subscriptionManager = getSubscriptionManager();
 
-        // Subscribe to message deliveries for this user
+        // 🚀 PRIMARY SUBSCRIPTION: All messages for this event (instant broadcast delivery)
+        messagesEventUnsubscribe = subscriptionManager.subscribe(
+          `guest-messages-event-${eventId}`,
+          {
+            table: 'messages',
+            event: 'INSERT',
+            schema: 'public',
+            filter: `event_id=eq.${eventId}`,
+            callback: async (payload) => {
+              if (!isCleanedUp && payload.new) {
+                // 🔍 DIAGNOSTIC: Message created timestamp
+                const messageCreatedAt = (payload.new as any).created_at;
+                const messageId = (payload.new as any).id;
+                
+                logger.info('🚀 Fast-path: New message received via messages INSERT', {
+                  eventId,
+                  messageId,
+                  createdAt: messageCreatedAt,
+                  latencyFromCreation: `${Date.now() - new Date(messageCreatedAt).getTime()}ms`
+                });
+                
+                // Fast-path: Create message object directly from payload
+                const fastMessage: GuestMessage = {
+                  message_id: messageId,
+                  content: (payload.new as any).content,
+                  created_at: messageCreatedAt,
+                  delivery_status: 'delivered', // Assume delivered for broadcast
+                  sender_name: 'Host', // Will be updated if we get sender info
+                  sender_avatar_url: null,
+                  message_type: (payload.new as any).message_type || 'direct',
+                  is_own_message: (payload.new as any).sender_user_id === user.id
+                };
+                
+                // Merge immediately for instant rendering
+                setMessages(prevMessages => mergeMessages(prevMessages, [fastMessage]));
+                
+                logger.info('✅ Fast-path message rendered', { messageId, eventId });
+              }
+            },
+            onError: (error) => {
+              if (!isCleanedUp) {
+                logger.error('Guest messages event subscription error', { error, eventId });
+              }
+            },
+            enableBackoff: true,
+            maxBackoffDelay: 30000,
+            connectionTimeout: 15000,
+            maxRetries: 3,
+            timeoutMs: 30000,
+            retryOnTimeout: true,
+          }
+        );
+
+        // 🔄 BACKUP SUBSCRIPTION: Message deliveries for targeted messages
         deliveryUnsubscribe = subscriptionManager.subscribe(
           `guest-message-deliveries-${user.id}-${eventId}`,
           {
@@ -306,6 +426,16 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
 
     return () => {
       isCleanedUp = true;
+      
+      if (messagesEventUnsubscribe) {
+        try {
+          messagesEventUnsubscribe();
+          logger.info('Guest messages event subscription cleaned up', { eventId });
+        } catch (error) {
+          // Ignore cleanup errors
+        }
+        messagesEventUnsubscribe = null;
+      }
       
       if (deliveryUnsubscribe) {
         try {
