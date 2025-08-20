@@ -181,7 +181,18 @@ export async function POST(request: NextRequest) {
     // Initialize delivery tracking variables
     let smsDelivered = 0;
     let smsFailed = 0;
-    let deliveryRecords: Database['public']['Tables']['message_deliveries']['Insert'][] = [];
+    let deliveryRecords: Array<{
+      message_id: string;
+      guest_id: string;
+      user_id: string | null;
+      phone_number: string;
+      sms_status: string;
+      push_status: string;
+      email_status: string;
+      sms_provider_id?: string;
+      push_provider_id?: string;
+      email_provider_id?: string;
+    }> = [];
 
     // SMS Delivery
     if (sendVia.sms && guestIds.length > 0) {
@@ -236,15 +247,17 @@ export async function POST(request: NextRequest) {
           });
 
           // Create delivery records for all guests with valid phone numbers
-          deliveryRecords = validGuestsWithPhones.map(guest => ({
-            message_id: messageData.id,
-            guest_id: guest.id,
-            user_id: guest.user_id, // CRITICAL FIX: Link to user account for guest message visibility
-            phone_number: ((guest.users as { id?: string; phone?: string })?.phone || guest.phone) as string,
-            sms_status: 'sent', // Will be updated by webhook
-            push_status: 'not_applicable',
-            email_status: 'not_applicable'
-          }));
+          deliveryRecords = validGuestsWithPhones
+            .filter(guest => guest.id) // Ensure guest.id exists
+            .map(guest => ({
+              message_id: messageData.id,
+              guest_id: guest.id as string, // Type assertion safe after filter
+              user_id: guest.user_id, // CRITICAL FIX: Link to user account for guest message visibility
+              phone_number: ((guest.users as { id?: string; phone?: string })?.phone || guest.phone) as string,
+              sms_status: 'sent', // Will be updated by webhook
+              push_status: 'not_applicable',
+              email_status: 'not_applicable'
+            }));
 
           // DEBUG: Log delivery record creation for troubleshooting
           logger.api(`Creating delivery records:`, {
@@ -264,22 +277,38 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create delivery tracking records
+    // Create delivery tracking records using idempotent upsert
     if (deliveryRecords.length > 0) {
-      const { error: deliveryError } = await supabase
-        .from('message_deliveries')
-        .insert(deliveryRecords);
-
-      if (deliveryError) {
-        logger.apiError('Error creating delivery records', {
-          error: deliveryError,
-          messageId: messageData.id,
-          recordCount: deliveryRecords.length
+      const upsertPromises = deliveryRecords.map(async (record) => {
+        const { data: deliveryId, error } = await supabase.rpc('upsert_message_delivery', {
+          p_message_id: record.message_id,
+          p_guest_id: record.guest_id,
+          p_phone_number: record.phone_number,
+          p_user_id: record.user_id || undefined,
+          p_sms_status: record.sms_status,
+          p_push_status: record.push_status,
+          p_email_status: record.email_status,
+          p_sms_provider_id: record.sms_provider_id,
+          p_push_provider_id: record.push_provider_id,
+          p_email_provider_id: record.email_provider_id
         });
-        // Don't fail the request if delivery tracking fails
-      } else {
-        logger.api(`Created ${deliveryRecords.length} delivery tracking records`);
-      }
+
+        if (error) {
+          logger.apiError('Error upserting delivery record', {
+            error,
+            messageId: record.message_id,
+            guestId: record.guest_id
+          });
+          return null;
+        } else {
+          logger.api(`Delivery upserted: ${deliveryId}`);
+          return deliveryId;
+        }
+      });
+
+      const upsertResults = await Promise.all(upsertPromises);
+      const successCount = upsertResults.filter(id => id !== null).length;
+      logger.api(`Upserted ${successCount}/${deliveryRecords.length} delivery tracking records`);
     }
 
     // Log successful send for analytics

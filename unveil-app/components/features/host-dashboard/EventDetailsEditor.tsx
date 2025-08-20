@@ -87,6 +87,7 @@ export function EventDetailsEditor({
       time_zone: event.time_zone || '',
       location: event.location || '',
       website_url: event.website_url || '',
+      photo_album_url: event.photo_album_url || '',
       is_public: event.is_public ?? false,
       allow_open_signup: event.allow_open_signup ?? true,
     },
@@ -156,6 +157,12 @@ export function EventDetailsEditor({
   const handleWebsiteUrlChange = (value: string) => {
     setValue('website_url', value, { shouldValidate: true, shouldDirty: true });
     clearErrors('website_url');
+  };
+
+  // Handle photo album URL input with normalization hint
+  const handlePhotoAlbumUrlChange = (value: string) => {
+    setValue('photo_album_url', value, { shouldValidate: true, shouldDirty: true });
+    clearErrors('photo_album_url');
   };
 
   // Handle cancel with unsaved changes check
@@ -320,6 +327,34 @@ export function EventDetailsEditor({
               />
               <MicroCopy>
                 We&apos;ll add https:// if missing • Optional but recommended
+              </MicroCopy>
+            </div>
+          </div>
+        </CardContainer>
+
+        {/* Photo Album Group */}
+        <CardContainer className="p-6">
+          <div className="space-y-6">
+            <SectionTitle className="flex items-center gap-2">
+              <span className="text-2xl">📸</span>
+              Photo Album
+            </SectionTitle>
+
+            <div className="space-y-2">
+              <FieldLabel htmlFor="photo_album_url">
+                Photo Album Link
+              </FieldLabel>
+              <TextInput
+                type="url"
+                id="photo_album_url"
+                {...register('photo_album_url')}
+                placeholder="e.g., icloud.com/sharedalbum/..., photos.google.com/share/..."
+                error={errors.photo_album_url?.message}
+                disabled={isSubmitting}
+                onChange={(e) => handlePhotoAlbumUrlChange(e.target.value)}
+              />
+              <MicroCopy>
+                Paste a link to your shared album (iCloud, Google Photos, Dropbox, etc.). We&apos;ll add https:// if missing.
               </MicroCopy>
             </div>
           </div>

@@ -446,15 +446,18 @@ export default function GuestEventHomePage() {
               </div>
             </CardContainer>
 
-            {/* Shared Photo Album */}
-            <CardContainer className="p-5">
-              <div className="space-y-4">
-                <h2 className="text-xl font-semibold text-stone-800">Photo Album</h2>
-                <PhotoAlbumButton 
-                  albumUrl={undefined} // TODO: Add shared_album_url field to database
-                />
-              </div>
-            </CardContainer>
+            {/* Shared Photo Album - Only show if URL exists */}
+            {event?.photo_album_url && (
+              <CardContainer className="p-5">
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold text-stone-800">Photo Album</h2>
+                  <PhotoAlbumButton 
+                    albumUrl={event.photo_album_url}
+                    eventId={eventId}
+                  />
+                </div>
+              </CardContainer>
+            )}
 
             {/* Event Messages */}
             <CardContainer className="p-0 overflow-hidden">
@@ -499,15 +502,17 @@ export default function GuestEventHomePage() {
         </div>
       </div>
 
-      {/* Can't Make It Button - Bottom placement for non-declined guests */}
+      {/* Can't Make It Button - Sticky CTA pattern for safe areas */}
       {!hasDeclined && (
-        <div className="max-w-5xl mx-auto px-6 pb-8" style={{ paddingBottom: 'calc(2rem + env(safe-area-inset-bottom))' }}>
-          <PrimaryButton
-            onClick={handleShowDeclineModal}
-            className="w-full bg-stone-600 hover:bg-stone-700 text-white"
-          >
-            Can&apos;t make it?
-          </PrimaryButton>
+        <div className="sticky bottom-0 bg-[#FAFAFA]/95 backdrop-blur-sm border-t border-gray-200/50 safe-bottom">
+          <div className="max-w-5xl mx-auto px-6 py-4">
+            <PrimaryButton
+              onClick={handleShowDeclineModal}
+              className="w-full bg-stone-600 hover:bg-stone-700 text-white"
+            >
+              Can&apos;t make it?
+            </PrimaryButton>
+          </div>
         </div>
       )}
 

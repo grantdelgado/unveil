@@ -37,6 +37,37 @@ const urlSchema = z
       : `https://${url}`;
   });
 
+// Photo Album URL validation helper - same pattern as website URL
+const photoAlbumUrlSchema = z
+  .string()
+  .nullable()
+  .refine(
+    (url) => {
+      if (!url) return true; // Nullable field
+      
+      // Auto-prepend https:// if missing protocol
+      const normalizedUrl = url.startsWith('http://') || url.startsWith('https://') 
+        ? url 
+        : `https://${url}`;
+      
+      try {
+        new URL(normalizedUrl);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    { message: 'Please enter a valid photo album URL' }
+  )
+  .transform((url) => {
+    if (!url) return null;
+    
+    // Auto-prepend https:// if missing
+    return url.startsWith('http://') || url.startsWith('https://') 
+      ? url 
+      : `https://${url}`;
+  });
+
 // Date validation - must be valid calendar date in YYYY-MM-DD format  
 const dateSchema = z
   .string()
@@ -83,6 +114,8 @@ export const eventDetailsSchema = z.object({
     
   website_url: urlSchema,
   
+  photo_album_url: photoAlbumUrlSchema,
+  
   // Visibility settings
   is_public: z.boolean(),
   
@@ -102,6 +135,7 @@ export function transformEventDetailsForDB(data: EventDetailsFormData) {
     time_zone: data.time_zone,
     location: data.location || null,
     website_url: data.website_url || null,
+    photo_album_url: data.photo_album_url || null,
     is_public: data.is_public,
     allow_open_signup: data.allow_open_signup,
   };
@@ -111,6 +145,20 @@ export function transformEventDetailsForDB(data: EventDetailsFormData) {
  * Validates and formats website URL for display
  */
 export function formatWebsiteUrl(url: string | null): string | null {
+  if (!url) return null;
+  
+  try {
+    const urlObj = new URL(url);
+    return urlObj.hostname.replace('www.', '');
+  } catch {
+    return 'Invalid URL';
+  }
+}
+
+/**
+ * Validates and formats photo album URL for display
+ */
+export function formatPhotoAlbumUrl(url: string | null): string | null {
   if (!url) return null;
   
   try {

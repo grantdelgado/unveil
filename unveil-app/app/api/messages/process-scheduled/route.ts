@@ -147,25 +147,35 @@ export async function POST(request: NextRequest) {
 
           // Create delivery tracking records with proper message_id
           if (resolvedRecipients.length > 0 && messageRecord) {
-            const deliveryRecords = resolvedRecipients.map(guest => ({
-              scheduled_message_id: message.id,
-              message_id: messageRecord.id, // CRITICAL FIX: Link to message record
-              guest_id: guest.id,
-              phone_number: guest.phone,
-              sms_status: 'sent', // Will be updated by webhook
-              push_status: 'not_applicable',
-              email_status: 'not_applicable'
-            }));
+            // Create delivery records using idempotent upsert
+            const upsertPromises = resolvedRecipients.map(async (guest) => {
+              const { data: deliveryId, error } = await supabase.rpc('upsert_message_delivery', {
+                p_message_id: messageRecord.id,
+                p_guest_id: guest.id,
+                p_phone_number: guest.phone,
+                p_user_id: undefined, // RPC doesn't return user_id, will be handled by the function
+                p_sms_status: 'sent', // Will be updated by webhook
+                p_push_status: 'not_applicable',
+                p_email_status: 'not_applicable'
+              });
 
-            const { error: deliveryError } = await supabase
-              .from('message_deliveries')
-              .insert(deliveryRecords);
+              if (error) {
+                logger.apiError('Error upserting delivery record for scheduled message', {
+                  error,
+                  messageId: messageRecord.id,
+                  guestId: guest.id,
+                  scheduledMessageId: message.id
+                });
+                return null;
+              } else {
+                logger.api(`Scheduled delivery upserted: ${deliveryId}`);
+                return deliveryId;
+              }
+            });
 
-            if (deliveryError) {
-              logger.apiError('Error creating delivery records', deliveryError);
-            } else {
-              logger.api(`Created ${deliveryRecords.length} delivery records for message ${messageRecord.id}`);
-            }
+            const upsertResults = await Promise.all(upsertPromises);
+            const successCount = upsertResults.filter(id => id !== null).length;
+            logger.api(`Upserted ${successCount}/${resolvedRecipients.length} delivery records for scheduled message ${messageRecord.id}`);
           }
         }
 

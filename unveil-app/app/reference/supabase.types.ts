@@ -124,6 +124,7 @@ export type Database = {
           id: string
           is_public: boolean | null
           location: string | null
+          photo_album_url: string | null
           time_zone: string | null
           title: string
           updated_at: string | null
@@ -139,6 +140,7 @@ export type Database = {
           id?: string
           is_public?: boolean | null
           location?: string | null
+          photo_album_url?: string | null
           time_zone?: string | null
           title: string
           updated_at?: string | null
@@ -154,6 +156,7 @@ export type Database = {
           id?: string
           is_public?: boolean | null
           location?: string | null
+          photo_album_url?: string | null
           time_zone?: string | null
           title?: string
           updated_at?: string | null
@@ -858,6 +861,21 @@ export type Database = {
       update_guest_messaging_activity: {
         Args: { p_event_id: string; p_guest_ids: string[] }
         Returns: Json
+      }
+      upsert_message_delivery: {
+        Args: {
+          p_email_provider_id?: string
+          p_email_status?: string
+          p_guest_id: string
+          p_message_id: string
+          p_phone_number?: string
+          p_push_provider_id?: string
+          p_push_status?: string
+          p_sms_provider_id?: string
+          p_sms_status?: string
+          p_user_id?: string
+        }
+        Returns: string
       }
       validate_guest_phone_not_host: {
         Args: { p_event_id: string; p_phone: string }
