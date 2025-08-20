@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { formatMessageTimestamp } from '@/lib/utils/date';
 import type { Database } from '@/app/reference/supabase.types';
 
 // Use the direct database type for messages - matches useMessages hook return
@@ -64,12 +65,7 @@ export function RecentMessages({
                   
                   <div className="flex items-center gap-4 text-xs text-gray-500">
                     <span>
-                      {new Date(message.created_at || '').toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        hour: 'numeric',
-                        minute: '2-digit'
-                      })}
+                      {formatMessageTimestamp(message.created_at || '')}
                     </span>
                     
                     {message.message_type && (

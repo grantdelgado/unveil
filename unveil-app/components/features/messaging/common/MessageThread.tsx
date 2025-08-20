@@ -2,6 +2,7 @@
 
 import React, { useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { formatMessageDateHeader } from '@/lib/utils/date';
 import { MessageBubble } from './MessageBubble';
 import { EmptyState, LoadingSpinner } from '@/components/ui';
 // MessageCircle import removed - not used in this component
@@ -83,24 +84,7 @@ export function MessageThread({
     return groups;
   };
 
-  const formatDateHeader = (dateString: string) => {
-    const date = new Date(dateString);
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
 
-    if (date.toDateString() === today.toDateString()) {
-      return 'Today';
-    } else if (date.toDateString() === yesterday.toDateString()) {
-      return 'Yesterday';
-    } else {
-      return date.toLocaleDateString('en-US', {
-        weekday: 'long',
-        month: 'long',
-        day: 'numeric',
-      });
-    }
-  };
 
   const groupedMessages = groupMessagesByDate(messages);
 
@@ -111,7 +95,7 @@ export function MessageThread({
           {/* Date header */}
           <div className="flex justify-center">
             <div className="bg-gray-100 text-gray-600 text-xs font-medium px-3 py-1 rounded-full">
-              {formatDateHeader(dateKey)}
+              {formatMessageDateHeader(dateKey)}
             </div>
           </div>
 

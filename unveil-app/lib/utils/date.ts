@@ -66,27 +66,7 @@ export const formatEventDateTime = (dateString: string): string => {
   });
 };
 
-export const formatMessageTime = (timestamp: string): string => {
-  const date = new Date(timestamp);
-  const now = new Date();
-  const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
 
-  if (diffInHours < 24) {
-    return date.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true,
-    });
-  } else {
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true,
-    });
-  }
-};
 
 export const formatRelativeTime = (timestamp: string): string => {
   const date = new Date(timestamp);
@@ -105,4 +85,114 @@ export const formatRelativeTime = (timestamp: string): string => {
   if (diffInDays < 7) return `${diffInDays}d ago`;
 
   return formatEventDate(timestamp);
+};
+
+/**
+ * Formats message timestamps with human-friendly display rules:
+ * - Today: time only (e.g., "11:06 PM")
+ * - Yesterday: "Yesterday"
+ * - Older: "Weekday, Month D" (e.g., "Monday, August 18")
+ * - Different year: "Weekday, Month D, YYYY"
+ * 
+ * Uses user's local timezone for proper day boundary calculations.
+ * 
+ * @param timestamp - UTC timestamp string from database
+ * @returns Formatted string for display
+ */
+export const formatMessageTimestamp = (timestamp: string): string => {
+  if (!timestamp) return '';
+
+  const messageDate = new Date(timestamp);
+  const now = new Date();
+  
+  // Get dates in user's local timezone for proper day comparison
+  const messageDateLocal = new Date(messageDate.getTime());
+  const todayLocal = new Date(now.getTime());
+  const yesterdayLocal = new Date(todayLocal);
+  yesterdayLocal.setDate(yesterdayLocal.getDate() - 1);
+
+  // Compare dates by converting to date strings (removes time component)
+  const messageDateStr = messageDateLocal.toDateString();
+  const todayStr = todayLocal.toDateString();
+  const yesterdayStr = yesterdayLocal.toDateString();
+
+  if (messageDateStr === todayStr) {
+    // Today: show time only
+    return messageDateLocal.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  } else if (messageDateStr === yesterdayStr) {
+    // Yesterday
+    return 'Yesterday';
+  } else {
+    // Older messages: show weekday and date
+    const currentYear = todayLocal.getFullYear();
+    const messageYear = messageDateLocal.getFullYear();
+    
+    if (messageYear === currentYear) {
+      // Same year: "Monday, August 18"
+      return messageDateLocal.toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+      });
+    } else {
+      // Different year: "Monday, August 18, 2024"
+      return messageDateLocal.toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      });
+    }
+  }
+};
+
+/**
+ * Formats date headers for message groups with same rules as formatMessageTimestamp
+ * but optimized for group headers.
+ * 
+ * @param dateString - Date string (typically from toDateString())
+ * @returns Formatted string for date group headers
+ */
+export const formatMessageDateHeader = (dateString: string): string => {
+  if (!dateString) return '';
+
+  const date = new Date(dateString);
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  // Compare using local date strings to handle timezone properly
+  const dateStr = date.toDateString();
+  const todayStr = today.toDateString();
+  const yesterdayStr = yesterday.toDateString();
+
+  if (dateStr === todayStr) {
+    return 'Today';
+  } else if (dateStr === yesterdayStr) {
+    return 'Yesterday';
+  } else {
+    const currentYear = today.getFullYear();
+    const messageYear = date.getFullYear();
+    
+    if (messageYear === currentYear) {
+      // Same year: "Monday, August 18"
+      return date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+      });
+    } else {
+      // Different year: "Monday, August 18, 2024"
+      return date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      });
+    }
+  }
 };
