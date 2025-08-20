@@ -6,13 +6,15 @@ export const revalidate = 0;
 
 interface GuestEventLayoutProps {
   children: ReactNode;
-  params: { eventId: string };
+  params: Promise<{ eventId: string }>;
 }
 
-export default function GuestEventLayout({ 
+export default async function GuestEventLayout({ 
   children,
   params 
 }: GuestEventLayoutProps) {
+  const { eventId } = await params;
+  
   return (
     <>
       <meta name="x-build" content={process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || 'dev'} />
