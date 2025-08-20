@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { formatEventDateTime } from '@/lib/utils/date';
 import { MicroCopy } from '@/components/ui';
-import type { EventFormData } from './CreateEventWizard';
+import type { EventFormData } from './types';
 
 interface EventReviewStepProps {
   formData: EventFormData;

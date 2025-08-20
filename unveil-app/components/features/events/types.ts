@@ -1,0 +1,30 @@
+/**
+ * Event Creation Types
+ * 
+ * Shared types for the event creation wizard to avoid circular dependencies
+ */
+
+export interface EventFormData {
+  title: string;
+  event_date: string;
+  event_time: string;
+  location: string;
+  is_public: boolean;
+}
+
+export interface EventFormErrors {
+  title?: string;
+  event_date?: string;
+  event_time?: string;
+  location?: string;
+  image?: string;
+  general?: string;
+}
+
+export interface EventWizardStep {
+  title: string;
+  isValid: boolean;
+  canProceed: boolean;
+}
+
+export type EventWizardStepName = 'basics' | 'image' | 'review';
