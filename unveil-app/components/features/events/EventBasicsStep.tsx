@@ -2,7 +2,7 @@
 
 import { ChangeEvent } from 'react';
 import { TextInput, MicroCopy } from '@/components/ui';
-import type { EventFormData, EventFormErrors } from './CreateEventWizard';
+import type { EventFormData, EventFormErrors } from './types';
 
 interface EventBasicsStepProps {
   formData: EventFormData;

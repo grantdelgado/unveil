@@ -18,22 +18,9 @@ import {
 import { EventBasicsStep } from './EventBasicsStep';
 import { EventImageStep } from './EventImageStep';
 import { EventReviewStep } from './EventReviewStep';
+import type { EventFormData, EventFormErrors } from './types';
 
-export interface EventFormData {
-  title: string;
-  event_date: string;
-  event_time: string;
-  location: string;
-  is_public: boolean;
-}
 
-export interface EventFormErrors {
-  title?: string;
-  event_date?: string;
-  event_time?: string;
-  location?: string;
-  image?: string;
-}
 
 type WizardStep = 'basics' | 'image' | 'review';
 
