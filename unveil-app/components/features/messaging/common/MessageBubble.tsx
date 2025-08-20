@@ -74,14 +74,6 @@ export function MessageBubble({
           getMessageTypeStyle(),
           isOwnMessage ? 'rounded-br-md' : 'rounded-bl-md'
         )}>
-          {/* Message type indicator for announcements */}
-          {message.message_type === 'announcement' && (
-            <div className="flex items-center gap-2 mb-2 text-xs font-medium text-purple-700">
-              <span>📢</span>
-              <span>Host Announcement</span>
-            </div>
-          )}
-
           {/* Message content */}
           <div className="text-sm leading-relaxed whitespace-pre-wrap">
             {message.content}
