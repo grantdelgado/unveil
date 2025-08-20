@@ -1,7 +1,8 @@
 export { GuestMessaging } from './GuestMessaging';
-export { GuestMessageInput } from './GuestMessageInput';
+// GuestMessageInput removed - MVP is read-only announcements only
+// export { GuestMessageInput } from './GuestMessageInput';
 export { ResponseIndicator } from './ResponseIndicator';
 export { SMSNotificationToggle } from './SMSNotificationToggle';
 
-// Future phases
-// export { ResponseIndicator } from './ResponseIndicator'; 
+// Compile-time constant to prevent accidental re-enablement
+const GUEST_REPLIES_ENABLED = false; 

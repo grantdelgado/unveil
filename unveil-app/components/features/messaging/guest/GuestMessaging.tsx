@@ -4,11 +4,10 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { EmptyState, LoadingSpinner } from '@/components/ui';
 import { MessageBubble } from '@/components/features/messaging/common';
 // Note: Guest messaging functionality simplified - using useMessages hook instead
-import { GuestMessageInput } from './GuestMessageInput';
-import { ResponseIndicator } from './ResponseIndicator';
+// MVP: Guest message input and response indicator removed - read-only announcements
 import { SMSNotificationToggle } from './SMSNotificationToggle';
-import { MessageCircle, Send, ChevronDown } from 'lucide-react';
-import { logger } from '@/lib/logger';
+import { MessageCircle, ChevronDown } from 'lucide-react';
+// MVP: Logger removed - no error handling needed for read-only component
 import { useGuestMessagesRPC } from '@/hooks/messaging/useGuestMessagesRPC';
 import { useGuestSMSStatus } from '@/hooks/messaging/useGuestSMSStatus';
 import { MessageDebugOverlay } from '@/components/dev/MessageDebugOverlay';
@@ -29,7 +28,6 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
     error,
     hasMore,
     isFetchingOlder,
-    sendMessage,
     fetchOlderMessages,
     refetch,
   } = useGuestMessagesRPC({
@@ -43,22 +41,16 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
     userId: currentUserId,
   });
 
-  // Simple stub implementations for removed functionality
-  const respondToMessage = useCallback(async (messageId: string, content: string) => {
-    await sendMessage(content);
-  }, [sendMessage]);
+  // MVP: Response functionality removed - guests can only view announcements
   
   const isConnected = !loading;
 
-  // Response UI state
-  const [showResponseInput, setShowResponseInput] = useState(false);
-  const [responseError, setResponseError] = useState<string | null>(null);
-  const [canRespond] = useState(true); // For now, assume guests can respond
+  // MVP: Guest replies disabled - no response state needed
   
   // Scroll management state
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [showJumpToLatest, setShowJumpToLatest] = useState(false);
-  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  const [shouldAutoScroll] = useState(true);
   const [newMessagesCount, setNewMessagesCount] = useState(0);
   const [hasNewMessages, setHasNewMessages] = useState(false);
   
@@ -184,61 +176,7 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
     await fetchOlderMessages();
   }, [fetchOlderMessages]);
 
-  /**
-   * Simple response validation
-   */
-  const validateResponse = useCallback((content: string) => {
-    if (!content.trim()) {
-      return { isValid: false, error: 'Response cannot be empty' };
-    }
-    if (content.length > 500) {
-      return { isValid: false, error: 'Response must be 500 characters or less' };
-    }
-    return { isValid: true };
-  }, []);
-
-  /**
-   * Response handlers using the hook
-   */
-  const handleResponseSubmit = useCallback(async (content: string) => {
-    try {
-      setResponseError(null);
-      
-      // Validate content first
-      const validation = validateResponse(content);
-      if (!validation.isValid) {
-        setResponseError(validation.error || 'Invalid response');
-        return;
-      }
-      
-      // For functional responses, we need a message to reply to
-      // Using the most recent message as the target
-      const latestMessage = messages[messages.length - 1];
-      if (!latestMessage) {
-        throw new Error('No message to reply to');
-      }
-      
-      // Enable auto-scroll for user's own message
-      setShouldAutoScroll(true);
-      
-      await respondToMessage(latestMessage.message_id, content);
-      setShowResponseInput(false);
-      
-      // Ensure we scroll to the user's new message
-      setTimeout(() => scrollToBottom(true), 200);
-    } catch (err) {
-      const error = err instanceof Error ? err.message : 'Failed to send response';
-      setResponseError(error);
-      logger.smsError('Response send failed', err);
-    } finally {
-      setShouldAutoScroll(false);
-    }
-  }, [respondToMessage, messages, validateResponse, scrollToBottom]);
-
-  const handleResponseCancel = useCallback(() => {
-    setShowResponseInput(false);
-    setResponseError(null);
-  }, []);
+  // MVP: Response handling removed - guests can only view announcements
 
   // Loading state
   if (loading) {
@@ -342,9 +280,12 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
              />
            </div>
          </div>
-         <div className="flex-shrink-0 bg-white border-t border-stone-200 p-5">
-           <ResponseIndicator canRespond={canRespond} />
-         </div>
+        <div className="flex-shrink-0 bg-white border-t border-stone-200 py-6 px-5">
+          <div className="flex items-center justify-center gap-2 text-xs text-stone-500">
+            <MessageCircle className="h-3.5 w-3.5" />
+            <span>Announcements from your hosts</span>
+          </div>
+        </div>
        </div>
      );
    }
@@ -500,32 +441,14 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
         )}
       </div>
 
-      {/* Response UI - Pinned to Bottom */}
-      <div className="flex-shrink-0 bg-white border-t border-stone-200 p-5 space-y-3">
-        {/* Response status indicator */}
-        <ResponseIndicator canRespond={canRespond} variant="compact" />
-        
-        {!showResponseInput ? (
-          // Response toggle button
-          <button
-            onClick={() => setShowResponseInput(true)}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={!canRespond}
-          >
-            <Send className="h-4 w-4" />
-            <span>{canRespond ? 'Send a response' : 'Responses disabled'}</span>
-          </button>
-        ) : (
-          // Functional response input
-          <GuestMessageInput
-            onSend={handleResponseSubmit}
-            onCancel={handleResponseCancel}
-            validateContent={validateResponse}
-            error={responseError}
-            disabled={!canRespond}
-            previewMode={!canRespond}
-          />
-        )}
+      {/* MVP: Read-only announcements footer - no guest replies */}
+      <div className="flex-shrink-0 bg-white/95 backdrop-blur-sm border-t border-stone-200 sticky bottom-0 safe-bottom">
+        <div className="flex items-center justify-center gap-2 text-xs text-stone-500 py-5 px-5 min-h-[3rem]">
+          <MessageCircle className="h-3.5 w-3.5" />
+          <span>Announcements from your hosts</span>
+          {/* Build: {process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || 'dev'} */}
+          {/* Defensive: Composer intentionally removed for MVP read-only experience */}
+        </div>
       </div>
 
       {/* Debug overlay for development */}
