@@ -113,6 +113,50 @@ export type Database = {
           },
         ]
       }
+      event_schedule_items: {
+        Row: {
+          attire: string | null
+          created_at: string | null
+          end_at: string | null
+          event_id: string
+          id: string
+          location: string | null
+          start_at: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          attire?: string | null
+          created_at?: string | null
+          end_at?: string | null
+          event_id: string
+          id?: string
+          location?: string | null
+          start_at: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          attire?: string | null
+          created_at?: string | null
+          end_at?: string | null
+          event_id?: string
+          id?: string
+          location?: string | null
+          start_at?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_schedule_items_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           allow_open_signup: boolean

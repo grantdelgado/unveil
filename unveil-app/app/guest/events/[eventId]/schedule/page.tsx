@@ -77,8 +77,8 @@ export default function GuestEventSchedulePage() {
   }
 
   return (
-    <PageWrapper>
-      <div className="max-w-4xl mx-auto space-y-6">
+    <PageWrapper centered={false}>
+      <div className="max-w-4xl mx-auto pt-4 pb-6">
         {/* Header */}
         <div className="mb-6">
           <BackButton 
@@ -96,6 +96,7 @@ export default function GuestEventSchedulePage() {
 
         {/* Event Schedule */}
         <EventSchedule 
+          eventId={eventId}
           eventDate={event.event_date}
           location={event.location}
           timeZone={event.time_zone}

@@ -7,6 +7,7 @@ import {
   MessageCircle, 
   Edit, 
   Eye,
+  Calendar,
   ChevronRight 
 } from 'lucide-react';
 import { CardContainer } from '@/components/ui';
@@ -54,6 +55,13 @@ export function ModernActionList({
         : 'Send announcements and updates',
       icon: MessageCircle,
       href: `/host/events/${eventId}/messages`,
+    },
+    {
+      id: 'manage-schedule',
+      title: 'Manage Schedule',
+      subtitle: 'Add and organize event timeline items',
+      icon: Calendar,
+      href: `/host/events/${eventId}/schedule`,
     },
     {
       id: 'edit-details',
