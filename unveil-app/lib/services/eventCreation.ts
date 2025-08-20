@@ -888,7 +888,16 @@ export class EventCreationService {
           continue;
         }
 
-        const resultData = result as { success: boolean; guest_id: string; operation: string };
+        const resultData = result as { 
+          success: boolean; 
+          guest_id: string; 
+          operation: 'restored' | 'updated' | 'inserted';
+          event_id: string;
+          phone: string;
+          name: string;
+          email: string;
+          role: string;
+        };
         
         if (!result || !resultData.guest_id) {
           failed_count++;

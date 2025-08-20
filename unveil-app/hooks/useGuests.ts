@@ -133,7 +133,16 @@ export function useGuests(eventId?: string): UseGuestsReturn {
           throw new Error(`Failed to add guest ${guest.guest_name || guest.phone}: ${error.message}`);
         }
 
-        const resultData = result as { success: boolean; guest_id: string; operation: string };
+        const resultData = result as { 
+          success: boolean; 
+          guest_id: string; 
+          operation: 'restored' | 'updated' | 'inserted';
+          event_id: string;
+          phone: string;
+          name: string;
+          email: string;
+          role: string;
+        };
         
         if (!result || !resultData.guest_id) {
           throw new Error(`Invalid result from add_or_restore_guest: ${JSON.stringify(result)}`);
