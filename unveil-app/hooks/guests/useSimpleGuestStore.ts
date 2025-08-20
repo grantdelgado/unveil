@@ -11,32 +11,46 @@ import { logger } from '@/lib/logger';
 import { createEventRequestManager } from '@/lib/utils/requestThrottling';
 import { calculateAttendanceCounts } from '@/lib/guests/attendance';
 
-// Simplified guest type
+// Simplified guest type that matches the get_event_guests_with_display_names RPC function
 interface SimpleGuest {
   id: string;
   event_id: string;
   user_id: string | null;
   guest_name: string | null;
   guest_email: string | null;
-  phone: string;
-
+  phone: string | null;
+  rsvp_status: string | null;
   notes: string | null;
   guest_tags: string[] | null;
   role: string;
-  created_at: string | null;
-  updated_at: string | null;
-  // RSVP-Lite fields
-  declined_at: string | null;
-  decline_reason: string | null;
   // Invitation tracking fields
   invited_at: string | null;
   last_invited_at: string | null;
+  first_invited_at: string | null;
+  last_messaged_at: string | null;
   invite_attempts: number | null;
   joined_at: string | null;
+  // RSVP-Lite fields
+  declined_at: string | null;
+  decline_reason: string | null;
   removed_at: string | null;
+  phone_number_verified: boolean | null;
   sms_opt_out: boolean | null;
+  preferred_communication: string | null;
+  created_at: string | null;
+  updated_at: string | null;
   /** Computed display name from COALESCE(users.full_name, event_guests.guest_name) */
   guest_display_name: string;
+  // User fields from the join
+  user_full_name: string | null;
+  user_email: string | null;
+  user_phone: string | null;
+  user_avatar_url: string | null;
+  user_created_at: string | null;
+  user_updated_at: string | null;
+  user_intended_redirect: string | null;
+  user_onboarding_completed: boolean | null;
+  // Legacy users object for backward compatibility
   users?: {
     id: string;
     full_name: string | null;
@@ -116,31 +130,47 @@ export function useSimpleGuestStore(eventId: string): SimpleGuestStoreReturn {
         throw new Error(`Failed to fetch guests: ${guestError.message}`);
       }
 
-      // Process and normalize the data with computed display name
+      // Process and normalize the data - now matches the RPC function exactly
       const processedGuests = (guestData || []).map(guest => ({
+        // Map all fields from the RPC function
         id: guest.id,
         event_id: guest.event_id,
         user_id: guest.user_id,
         guest_name: guest.guest_name,
         guest_email: guest.guest_email,
-        phone: guest.phone || '',
-
+        phone: guest.phone,
+        rsvp_status: guest.rsvp_status,
         notes: guest.notes,
         guest_tags: guest.guest_tags,
         role: guest.role,
-        created_at: guest.created_at,
-        updated_at: guest.updated_at,
+        // Invitation tracking fields
+        invited_at: guest.invited_at,
+        last_invited_at: guest.last_invited_at,
+        first_invited_at: guest.first_invited_at,
+        last_messaged_at: guest.last_messaged_at,
+        invite_attempts: guest.invite_attempts,
+        joined_at: guest.joined_at,
         // RSVP-Lite fields
         declined_at: guest.declined_at,
         decline_reason: guest.decline_reason,
-        // Invitation tracking fields (using correct RPC field names)
-        invited_at: guest.invited_at,
-        last_invited_at: guest.last_invited_at,
-        invite_attempts: guest.invite_attempts,
-        joined_at: guest.joined_at,
         removed_at: guest.removed_at,
+        phone_number_verified: guest.phone_number_verified,
         sms_opt_out: guest.sms_opt_out,
+        preferred_communication: guest.preferred_communication,
+        created_at: guest.created_at,
+        updated_at: guest.updated_at,
+        // Computed display name
         guest_display_name: guest.guest_display_name,
+        // User fields from the join
+        user_full_name: guest.user_full_name,
+        user_email: guest.user_email,
+        user_phone: guest.user_phone,
+        user_avatar_url: guest.user_avatar_url,
+        user_created_at: guest.user_created_at,
+        user_updated_at: guest.user_updated_at,
+        user_intended_redirect: guest.user_intended_redirect,
+        user_onboarding_completed: guest.user_onboarding_completed,
+        // Legacy users object for backward compatibility
         users: guest.user_id ? {
           id: guest.user_id,
           full_name: guest.user_full_name,

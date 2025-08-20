@@ -16,6 +16,8 @@ export interface SingleInviteResult {
     messageId?: string;
     isFirstInvite: boolean;
     invitedAt: string;
+    configMode?: string;
+    simulationMode?: boolean;
   };
   error?: string;
 }
@@ -55,7 +57,9 @@ export async function sendSingleGuestInvite(request: SingleInviteRequest): Promi
       guestId: result.data.guestId,
       guestName: result.data.guestName,
       isFirstInvite: result.data.isFirstInvite,
-      smsStatus: result.data.smsStatus
+      smsStatus: result.data.smsStatus,
+      configMode: result.data.configMode,
+      simulationMode: result.data.simulationMode
     });
 
     return result;

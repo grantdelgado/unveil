@@ -6,6 +6,7 @@ import { FieldLabel } from '@/components/ui/Typography';
 import { cn } from '@/lib/utils';
 import { GuestSelectionList } from './GuestSelectionList';
 import { SendFlowModal } from './SendFlowModal';
+// HostInclusionToggle removed - hosts are always included now
 import { useGuestSelection } from '@/hooks/messaging/useGuestSelection';
 import { sendMessageToEvent } from '@/lib/services/messaging';
 import { supabase } from '@/lib/supabase/client';
@@ -42,6 +43,7 @@ export function MessageComposer({
   const [eventDetails, setEventDetails] = useState<{title: string, event_date: string, hostName: string} | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showSendFlowModal, setShowSendFlowModal] = useState(false);
+  // includeHosts state removed - hosts are always included now
 
   // Use new guest selection hook instead of RSVP filters
   const {
@@ -54,11 +56,13 @@ export function MessageComposer({
     clearAllSelection,
     setSearchQuery,
     loading: guestsLoading,
-    error: guestsError
+    error: guestsError,
+    refresh: refreshGuests
   } = useGuestSelection({ 
     eventId,
     preselectionPreset,
     preselectedGuestIds
+    // includeHosts removed - hosts are always included now
   });
 
   const characterCount = message.length;
@@ -230,8 +234,18 @@ export function MessageComposer({
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           {guestsError ? (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <div className="text-sm text-red-800">
-                ❌ {guestsError}
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="text-sm text-red-800 mb-2">
+                    ❌ {guestsError}
+                  </div>
+                </div>
+                <button
+                  onClick={refreshGuests}
+                  className="ml-3 text-xs bg-red-100 hover:bg-red-200 text-red-700 px-2 py-1 rounded transition-colors"
+                >
+                  Retry
+                </button>
               </div>
             </div>
           ) : (
@@ -248,6 +262,8 @@ export function MessageComposer({
             />
           )}
         </div>
+
+        {/* Advanced Options removed - hosts are always included now */}
 
         {/* Guest Tags - Coming Soon */}
         <div className="bg-white rounded-lg border border-gray-200 p-4">

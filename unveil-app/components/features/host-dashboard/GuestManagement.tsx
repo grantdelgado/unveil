@@ -88,14 +88,35 @@ function GuestManagementContent({
         throw new Error(result.error || 'Failed to send invitation');
       }
 
-      showSuccess(`Invitation sent to ${guestName}!`);
+      // Show different success messages based on mode
+      if (result.data?.simulationMode) {
+        showSuccess(`🔧 DEV: Invitation simulated for ${guestName}! (No SMS sent)`);
+      } else if (result.data?.configMode === 'development-tunnel') {
+        showSuccess(`📱 Invitation sent to ${guestName} via tunnel!`);
+      } else {
+        showSuccess(`📱 Invitation sent to ${guestName}!`);
+      }
+      
       refreshGuests(); // Refresh to get updated invitation status
       refreshCounts(); // Refresh unified counts
       onGuestUpdated?.();
       
     } catch (err) {
       console.error('Failed to send invitation:', err);
-      showError('Invitation Failed', err instanceof Error ? err.message : 'Failed to send invitation. Please try again.');
+      
+      // Show more helpful error messages based on error content
+      let errorTitle = 'Invitation Failed';
+      let errorMessage = err instanceof Error ? err.message : 'Failed to send invitation. Please try again.';
+      
+      if (errorMessage.includes('Public base URL not configured')) {
+        errorTitle = 'Configuration Required';
+        errorMessage = 'SMS invitations require configuration. Check the console or documentation for setup instructions.';
+      } else if (errorMessage.includes('DEV_TUNNEL_URL') || errorMessage.includes('DEV_SIMULATE_INVITES')) {
+        errorTitle = 'Development Setup Required';
+        errorMessage = 'For local development, either set up a tunnel or enable simulation mode. Check the documentation for details.';
+      }
+      
+      showError(errorTitle, errorMessage);
     } finally {
       setInvitingGuestId(null);
     }
@@ -158,7 +179,7 @@ function GuestManagementContent({
       filtered = filtered.filter(guest => {
         // Determine guest status based on timestamps
         const hasDeclined = !!guest.declined_at;
-        const hasBeenInvited = !!guest.invited_at;
+        const hasBeenInvited = !!guest.last_invited_at;
         
         switch (filterByRSVP) {
           case 'declined':

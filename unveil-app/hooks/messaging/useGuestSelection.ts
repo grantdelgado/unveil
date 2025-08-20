@@ -9,6 +9,7 @@ export interface UseGuestSelectionOptions {
   searchQuery?: string;
   preselectionPreset?: string | null;
   preselectedGuestIds?: string[];
+  // includeHosts removed - hosts are always included now
 }
 
 export interface UseGuestSelectionReturn {
@@ -53,6 +54,7 @@ export function useGuestSelection({
   const [hasUserInteracted, setHasUserInteracted] = useState(false);
 
   // Use unified messaging recipients hook for canonical scope consistency
+  // Hosts are always included now
   const { recipients, loading, error, refresh } = useMessagingRecipients(eventId);
 
   // Transform recipients to GuestWithDisplayName format for compatibility
@@ -60,7 +62,7 @@ export function useGuestSelection({
     return recipients.map(recipient => ({
       // Base Guest fields
       id: recipient.event_guest_id,
-      event_id: eventId, // Add missing field
+      event_id: eventId,
       user_id: null, // Not needed for messaging
       guest_name: recipient.guest_name,
       guest_email: recipient.guest_email,
@@ -72,7 +74,9 @@ export function useGuestSelection({
       updated_at: null, // Not needed for messaging
       role: recipient.role,
       invited_at: recipient.invited_at,
-      last_invited_at: null, // Not needed for messaging
+      first_invited_at: recipient.invited_at, // Use invited_at as fallback
+      last_invited_at: recipient.invited_at, // Use invited_at as fallback
+      last_messaged_at: null, // Not included in RPC
       invite_attempts: null, // Not needed for messaging
       joined_at: null, // Not needed for messaging
       declined_at: recipient.declined_at,

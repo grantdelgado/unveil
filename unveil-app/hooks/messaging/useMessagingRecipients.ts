@@ -26,6 +26,12 @@ export interface MessagingRecipient {
   has_valid_phone: boolean;
 }
 
+interface UseMessagingRecipientsOptions {
+  // includeHosts is now always true by default in the RPC
+  // Keeping interface for backward compatibility but option is ignored
+  includeHosts?: boolean;
+}
+
 interface UseMessagingRecipientsReturn {
   recipients: MessagingRecipient[];
   loading: boolean;
@@ -37,7 +43,10 @@ interface UseMessagingRecipientsReturn {
  * Hook that provides messaging recipients using the same canonical scope as Guest Management
  * Uses the get_messaging_recipients RPC to ensure consistency
  */
-export function useMessagingRecipients(eventId: string): UseMessagingRecipientsReturn {
+export function useMessagingRecipients(
+  eventId: string, 
+  options: UseMessagingRecipientsOptions = {}
+): UseMessagingRecipientsReturn {
   const [recipients, setRecipients] = useState<MessagingRecipient[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -52,8 +61,12 @@ export function useMessagingRecipients(eventId: string): UseMessagingRecipientsR
       setLoading(true);
       setError(null);
 
+      // Always include hosts now (RPC defaults to true)
       const { data, error: rpcError } = await supabase
-        .rpc('get_messaging_recipients', { p_event_id: eventId });
+        .rpc('get_messaging_recipients', { 
+          p_event_id: eventId,
+          p_include_hosts: true  // Always true - hosts included by default
+        });
 
       if (rpcError) {
         throw new Error(`Failed to fetch messaging recipients: ${rpcError.message}`);
@@ -78,21 +91,32 @@ export function useMessagingRecipients(eventId: string): UseMessagingRecipientsR
 
       setRecipients(processedRecipients);
 
-      logger.info('Successfully fetched messaging recipients', { 
+            logger.info('Successfully fetched messaging recipients', {
         eventId, 
-        count: processedRecipients.length 
+        count: processedRecipients.length,
+        includeHosts: true  // Always true now
       });
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
       logger.error('Error fetching messaging recipients', { eventId, error: errorMessage });
       
-      setError(errorMessage);
+      // Provide user-friendly error message
+      let userFriendlyError = 'Unable to load recipients. Please try again.';
+      if (errorMessage.includes('Could not find the function')) {
+        userFriendlyError = 'Messaging service is temporarily unavailable. Please refresh the page.';
+      } else if (errorMessage.includes('Access denied')) {
+        userFriendlyError = 'You don&apos;t have permission to view recipients for this event.';
+      } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+        userFriendlyError = 'Network error. Please check your connection and try again.';
+      }
+      
+      setError(userFriendlyError);
       setRecipients([]); // Set to empty array on error
     } finally {
       setLoading(false);
     }
-  }, [eventId]);
+  }, [eventId]); // options.includeHosts removed since it's always true now
 
   // Initial fetch on mount and when eventId changes
   useEffect(() => {

@@ -3,6 +3,19 @@
  */
 
 /**
+ * Normalize a URL by adding protocol and removing trailing slash
+ * @param url The URL to normalize
+ * @returns Normalized URL
+ */
+function normalizeUrl(url: string): string {
+  let normalized = url.trim();
+  if (!normalized.startsWith('http://') && !normalized.startsWith('https://')) {
+    normalized = `https://${normalized}`;
+  }
+  return normalized.replace(/\/$/, '');
+}
+
+/**
  * Get the base URL for the application based on environment
  * @returns The base URL without trailing slash
  */
@@ -23,40 +36,79 @@ export function getAppBaseUrl(): string {
 
 /**
  * Get the public base URL for outbound communications (SMS, emails, etc.)
- * Never falls back to localhost - throws error if not properly configured
+ * Supports development modes with tunnels and simulation
  * @returns The public base URL without trailing slash (always https://)
- * @throws Error if no public URL is configured or if localhost is detected
+ * @throws Error if no public URL is configured and not in development simulation mode
  */
 export function getPublicBaseUrl(): string {
-  // First try NEXT_PUBLIC_APP_URL
-  let baseUrl = process.env.NEXT_PUBLIC_APP_URL;
+  // Priority order: INVITES_PUBLIC_URL → NEXT_PUBLIC_APP_URL → APP_URL → DEV_TUNNEL_URL
+  let baseUrl = process.env.INVITES_PUBLIC_URL || 
+                process.env.NEXT_PUBLIC_APP_URL || 
+                process.env.APP_URL;
   
-  // Fallback to APP_URL if NEXT_PUBLIC_APP_URL is not set
-  if (!baseUrl) {
-    baseUrl = process.env.APP_URL;
+  // Development tunnel support - only use if no production URLs are set
+  if (!baseUrl && process.env.NODE_ENV === 'development' && process.env.DEV_TUNNEL_URL) {
+    baseUrl = process.env.DEV_TUNNEL_URL;
   }
   
-  // If still no URL configured, throw error
+  // If still no URL configured, check development simulation mode
   if (!baseUrl) {
+    if (process.env.NODE_ENV === 'development' && process.env.DEV_SIMULATE_INVITES === 'true') {
+      // Return a placeholder URL for development simulation
+      return 'https://dev-simulation.localhost';
+    }
+    
     throw new Error(
-      'Public base URL not configured. Set NEXT_PUBLIC_APP_URL or APP_URL environment variable.'
+      'Public base URL not configured. Set one of:\n' +
+      '- INVITES_PUBLIC_URL (highest priority)\n' +
+      '- NEXT_PUBLIC_APP_URL\n' +
+      '- APP_URL\n' +
+      '- DEV_TUNNEL_URL (for development with real SMS)\n' +
+      '- DEV_SIMULATE_INVITES=true (for development simulation)'
+    );
+  }
+  
+  // Check for empty/whitespace-only URLs
+  if (!baseUrl.trim()) {
+    if (process.env.NODE_ENV === 'development' && process.env.DEV_SIMULATE_INVITES === 'true') {
+      return 'https://dev-simulation.localhost';
+    }
+    
+    throw new Error(
+      'Public base URL not configured. Set one of:\n' +
+      '- INVITES_PUBLIC_URL (highest priority)\n' +
+      '- NEXT_PUBLIC_APP_URL\n' +
+      '- APP_URL\n' +
+      '- DEV_TUNNEL_URL (for development with real SMS)\n' +
+      '- DEV_SIMULATE_INVITES=true (for development simulation)'
     );
   }
   
   // Normalize the URL - ensure it has protocol and remove trailing slash
-  let normalizedUrl = baseUrl.trim();
-  if (!normalizedUrl.startsWith('http://') && !normalizedUrl.startsWith('https://')) {
-    normalizedUrl = `https://${normalizedUrl}`;
-  }
-  normalizedUrl = normalizedUrl.replace(/\/$/, '');
+  const normalizedUrl = normalizeUrl(baseUrl);
   
-  // Security check: never allow localhost for outbound communications
-  if (normalizedUrl.includes('localhost') || normalizedUrl.includes('127.0.0.1')) {
-    throw new Error(
-      `Invalid public base URL detected: ${normalizedUrl}. ` +
-      'Localhost URLs cannot be used for outbound SMS/email communications. ' +
-      'Configure NEXT_PUBLIC_APP_URL with your public domain.'
-    );
+  // Production security check: never allow localhost for outbound communications
+  if (process.env.NODE_ENV === 'production') {
+    if (normalizedUrl.includes('localhost') || normalizedUrl.includes('127.0.0.1')) {
+      throw new Error(
+        `Invalid public base URL detected in production: ${normalizedUrl}. ` +
+        'Localhost URLs cannot be used for outbound SMS/email communications. ' +
+        'Configure INVITES_PUBLIC_URL or NEXT_PUBLIC_APP_URL with your public domain.'
+      );
+    }
+  } else {
+    // Development mode: warn about localhost but allow it if tunnel or simulation
+    if ((normalizedUrl.includes('localhost') || normalizedUrl.includes('127.0.0.1')) && 
+        !process.env.DEV_TUNNEL_URL && 
+        process.env.DEV_SIMULATE_INVITES !== 'true') {
+      throw new Error(
+        `Invalid public base URL detected: ${normalizedUrl}. ` +
+        'Localhost URLs cannot be used for outbound SMS/email communications. ' +
+        'For development, either:\n' +
+        '- Set DEV_TUNNEL_URL=https://your-tunnel-domain.com (for real SMS)\n' +
+        '- Set DEV_SIMULATE_INVITES=true (to simulate SMS without sending)'
+      );
+    }
   }
   
   return normalizedUrl;

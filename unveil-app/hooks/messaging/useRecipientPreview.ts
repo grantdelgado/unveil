@@ -35,6 +35,7 @@ export function useRecipientPreview({
   const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(null);
 
   // Use unified messaging recipients hook for canonical scope consistency
+  // Hosts are always included now
   const { recipients, loading, error, refresh } = useMessagingRecipients(eventId);
 
   // Transform recipients to GuestWithDisplayName format for compatibility
@@ -54,7 +55,9 @@ export function useRecipientPreview({
       updated_at: null,
       role: recipient.role,
       invited_at: recipient.invited_at,
-      last_invited_at: null,
+      first_invited_at: recipient.invited_at, // Use invited_at as fallback
+      last_invited_at: recipient.invited_at, // Use invited_at as fallback
+      last_messaged_at: null, // Not included in RPC
       invite_attempts: null,
       joined_at: null,
       declined_at: recipient.declined_at,

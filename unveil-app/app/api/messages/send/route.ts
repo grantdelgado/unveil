@@ -21,10 +21,9 @@ export async function POST(request: NextRequest) {
     const body: SendMessageRequest = await request.json();
     const { eventId, content, messageType, recipientFilter, recipientEventGuestIds, sendVia } = body;
     
-    // Check if this is an invitation send (based on preset or message content)
-    const isInvitationSend = body.messageType === 'announcement' || 
-                           (recipientEventGuestIds && recipientEventGuestIds.length > 0 && 
-                            content.toLowerCase().includes('invited'));
+    // Check if this is an invitation send - ONLY for actual invitations, not regular messages
+    // This should ONLY be true for the message composer with 'not_invited' preset or explicit invitation messageType
+    const isInvitationSend = messageType === 'invitation';
 
     // Validation
     if (!content?.trim()) {
@@ -294,11 +293,11 @@ export async function POST(request: NextRequest) {
       eventId: eventId
     });
 
-    // Update invitation tracking if this is an invitation send
+    // Update invitation tracking ONLY if this is an actual invitation send
     if (isInvitationSend && guestIds.length > 0) {
       try {
         const { data: trackingResult, error: trackingError } = await supabase
-          .rpc('update_guest_invitation_tracking', {
+          .rpc('update_guest_invitation_tracking_strict', {
             p_event_id: eventId,
             p_guest_ids: guestIds
           });
@@ -318,6 +317,34 @@ export async function POST(request: NextRequest) {
       } catch (trackingErr) {
         logger.apiError('Error updating invitation tracking', {
           error: trackingErr instanceof Error ? trackingErr.message : 'Unknown error',
+          eventId,
+          guestIds
+        });
+      }
+    } else if (!isInvitationSend && guestIds.length > 0) {
+      // Update general messaging activity for regular messages (not invitations)
+      try {
+        const { data: messagingResult, error: messagingError } = await supabase
+          .rpc('update_guest_messaging_activity', {
+            p_event_id: eventId,
+            p_guest_ids: guestIds
+          });
+
+        if (messagingError) {
+          logger.apiError('Failed to update messaging activity', {
+            error: messagingError.message,
+            eventId,
+            guestIds
+          });
+        } else {
+          logger.api('Messaging activity updated', {
+            eventId,
+            updatedCount: Array.isArray(messagingResult) ? messagingResult.length : 0
+          });
+        }
+      } catch (messagingErr) {
+        logger.apiError('Error updating messaging activity', {
+          error: messagingErr instanceof Error ? messagingErr.message : 'Unknown error',
           eventId,
           guestIds
         });

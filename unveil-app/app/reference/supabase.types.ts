@@ -21,6 +21,7 @@ export type Database = {
           declined_at: string | null
           display_name: string | null
           event_id: string
+          first_invited_at: string | null
           guest_email: string | null
           guest_name: string | null
           guest_tags: string[] | null
@@ -29,6 +30,7 @@ export type Database = {
           invited_at: string | null
           joined_at: string | null
           last_invited_at: string | null
+          last_messaged_at: string | null
           notes: string | null
           phone: string | null
           phone_number_verified: boolean | null
@@ -46,6 +48,7 @@ export type Database = {
           declined_at?: string | null
           display_name?: string | null
           event_id: string
+          first_invited_at?: string | null
           guest_email?: string | null
           guest_name?: string | null
           guest_tags?: string[] | null
@@ -54,6 +57,7 @@ export type Database = {
           invited_at?: string | null
           joined_at?: string | null
           last_invited_at?: string | null
+          last_messaged_at?: string | null
           notes?: string | null
           phone?: string | null
           phone_number_verified?: boolean | null
@@ -71,6 +75,7 @@ export type Database = {
           declined_at?: string | null
           display_name?: string | null
           event_id?: string
+          first_invited_at?: string | null
           guest_email?: string | null
           guest_name?: string | null
           guest_tags?: string[] | null
@@ -79,6 +84,7 @@ export type Database = {
           invited_at?: string | null
           joined_at?: string | null
           last_invited_at?: string | null
+          last_messaged_at?: string | null
           notes?: string | null
           phone?: string | null
           phone_number_verified?: boolean | null
@@ -620,6 +626,7 @@ export type Database = {
           decline_reason: string
           declined_at: string
           event_id: string
+          first_invited_at: string
           guest_display_name: string
           guest_email: string
           guest_name: string
@@ -629,6 +636,7 @@ export type Database = {
           invited_at: string
           joined_at: string
           last_invited_at: string
+          last_messaged_at: string
           notes: string
           phone: string
           phone_number_verified: boolean
@@ -683,7 +691,7 @@ export type Database = {
         Returns: string
       }
       get_messaging_recipients: {
-        Args: { p_event_id: string }
+        Args: { p_event_id: string; p_include_hosts?: boolean }
         Returns: {
           declined_at: string
           event_guest_id: string
@@ -842,6 +850,18 @@ export type Database = {
       update_guest_invitation_tracking: {
         Args: { p_event_id: string; p_guest_ids: string[] }
         Returns: Json
+      }
+      update_guest_invitation_tracking_strict: {
+        Args: { p_event_id: string; p_guest_ids: string[] }
+        Returns: Json
+      }
+      update_guest_messaging_activity: {
+        Args: { p_event_id: string; p_guest_ids: string[] }
+        Returns: Json
+      }
+      validate_guest_phone_not_host: {
+        Args: { p_event_id: string; p_phone: string }
+        Returns: boolean
       }
     }
     Enums: {

@@ -568,6 +568,19 @@ export class EventCreationService {
         };
       }
 
+      // Step 2.5: Validate no guest phone conflicts with host
+      const hostPhoneValidation = await this.validateGuestPhonesNotHost(eventId, validationResult.validGuests!);
+      if (!hostPhoneValidation.success) {
+        return {
+          success: false,
+          error: {
+            code: 'HOST_PHONE_CONFLICT',
+            message: hostPhoneValidation.message || 'One or more guest phone numbers belong to the event host.',
+            details: hostPhoneValidation.conflictingPhones
+          }
+        };
+      }
+
       // Step 3: Perform batch import with error tracking
       const importResult = await this.performBatchGuestImport(
         eventId,
@@ -757,6 +770,55 @@ export class EventCreationService {
       return { valid: true };
     } catch (error) {
       return { valid: false, error };
+    }
+  }
+
+  /**
+   * Validate that guest phone numbers don't conflict with the host
+   */
+  private static async validateGuestPhonesNotHost(
+    eventId: string, 
+    guests: GuestImportInput[]
+  ): Promise<{
+    success: boolean;
+    message?: string;
+    conflictingPhones?: string[];
+  }> {
+    try {
+      const conflictingPhones: string[] = [];
+      
+      for (const guest of guests) {
+        if (guest.phone) {
+          const { data: isValid, error } = await supabase
+            .rpc('validate_guest_phone_not_host', {
+              p_event_id: eventId,
+              p_phone: guest.phone
+            });
+
+          if (error) {
+            logger.error('Error validating guest phone against host', { eventId, phone: guest.phone, error });
+            continue; // Skip validation on error, let it through
+          }
+
+          if (!isValid) {
+            conflictingPhones.push(guest.phone);
+          }
+        }
+      }
+
+      if (conflictingPhones.length > 0) {
+        return {
+          success: false,
+          message: `Cannot add guest(s) with phone number(s) that belong to the event host: ${conflictingPhones.join(', ')}`,
+          conflictingPhones
+        };
+      }
+
+      return { success: true };
+    } catch (error) {
+      logger.error('Error in host phone validation', { eventId, error });
+      // On validation error, allow through (fail open)
+      return { success: true };
     }
   }
 

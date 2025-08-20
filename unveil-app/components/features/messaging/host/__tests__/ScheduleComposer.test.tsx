@@ -20,21 +20,21 @@ vi.mock('@/hooks/messaging/useRecipientPreview', () => ({
   })
 }));
 
-jest.mock('@/hooks/messaging/useScheduledMessages', () => ({
+vi.mock('@/hooks/messaging/useScheduledMessages', () => ({
   useScheduledMessages: () => ({
-    createScheduledMessage: jest.fn().mockResolvedValue({ success: true })
+    createScheduledMessage: vi.fn().mockResolvedValue({ success: true })
   })
 }));
 
 describe('ScheduleComposer', () => {
   const defaultProps = {
     eventId: 'test-event-id',
-    onMessageScheduled: jest.fn(),
-    onCancel: jest.fn()
+    onMessageScheduled: vi.fn(),
+    onCancel: vi.fn()
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('renders schedule composer interface', () => {

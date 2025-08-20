@@ -4,6 +4,7 @@ import { createInvitationMessage } from '@/lib/sms-invitations';
 import { sendSMS } from '@/lib/sms';
 import { formatEventDate } from '@/lib/utils/date';
 import { logger } from '@/lib/logger';
+import { getPublicBaseUrl } from '@/lib/utils/url';
 
 interface InviteSingleGuestRequest {
   eventId: string;
@@ -16,6 +17,40 @@ interface InviteSingleGuestRequest {
  */
 export async function POST(request: NextRequest) {
   try {
+    // Pre-flight check: validate base URL configuration
+    let baseUrlStatus = 'unknown';
+    let configMode = 'production';
+    
+    try {
+      const resolvedBaseUrl = getPublicBaseUrl();
+      if (resolvedBaseUrl === 'https://dev-simulation.localhost') {
+        baseUrlStatus = 'simulation';
+        configMode = 'development-simulation';
+      } else if (process.env.DEV_TUNNEL_URL) {
+        baseUrlStatus = 'tunnel';
+        configMode = 'development-tunnel';
+      } else {
+        baseUrlStatus = 'configured';
+        configMode = process.env.NODE_ENV === 'production' ? 'production' : 'development';
+      }
+      
+      logger.info('Invite route base URL status', {
+        baseUrlStatus,
+        configMode,
+        resolvedUrl: resolvedBaseUrl.substring(0, 30) + '...',
+        simulationMode: process.env.DEV_SIMULATE_INVITES === 'true'
+      });
+    } catch (urlError) {
+      logger.apiError('Base URL configuration error', {
+        error: urlError instanceof Error ? urlError.message : 'Unknown URL error'
+      });
+      
+      return NextResponse.json({
+        success: false,
+        error: urlError instanceof Error ? urlError.message : 'Invalid base URL configuration'
+      }, { status: 500 });
+    }
+
     const supabase = await createServerSupabaseClient();
     
     // Get authenticated user
@@ -146,9 +181,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update invitation tracking
+    // Update invitation tracking using strict function (only for actual invitations)
     const { error: trackingError } = await supabase
-      .rpc('update_guest_invitation_tracking', {
+      .rpc('update_guest_invitation_tracking_strict', {
         p_event_id: eventId,
         p_guest_ids: [guestId]
       });
@@ -168,7 +203,9 @@ export async function POST(request: NextRequest) {
       guestName: guestName || 'Unnamed Guest',
       isFirstInvite,
       smsStatus: smsResult.status,
-      trackingUpdated: !trackingError
+      trackingUpdated: !trackingError,
+      configMode,
+      baseUrlStatus
     });
 
     return NextResponse.json({
@@ -179,7 +216,9 @@ export async function POST(request: NextRequest) {
         smsStatus: smsResult.status,
         messageId: smsResult.messageId,
         isFirstInvite,
-        invitedAt: new Date().toISOString()
+        invitedAt: new Date().toISOString(),
+        configMode,
+        simulationMode: process.env.DEV_SIMULATE_INVITES === 'true'
       }
     });
 

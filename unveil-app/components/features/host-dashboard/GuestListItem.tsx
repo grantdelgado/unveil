@@ -67,7 +67,9 @@ export const GuestListItem = memo<GuestListItemProps>(({
   
   // State analysis
   const hasDeclined = isDeclined(guest);
-  const hasBeenInvited = !!guest.invited_at;
+  // Use last_invited_at as the primary indicator of invitation status
+  // This ensures we only show "Invited" for actual invitations, not regular messages
+  const hasBeenInvited = !!guest.last_invited_at;
   const isHost = guest.role === 'host';
   const isOptedOut = !!guest.sms_opt_out;
   
@@ -191,9 +193,11 @@ export const GuestListItem = memo<GuestListItemProps>(({
 
       {/* Body: Contact Information */}
       <div className="space-y-1 mt-3">
-        <p className="text-sm text-gray-600 leading-tight">
-          📱 {guest.phone}
-        </p>
+        {guest.phone && (
+          <p className="text-sm text-gray-600 leading-tight">
+            📱 {guest.phone}
+          </p>
+        )}
         {displayEmail && (
           <p className="text-sm text-gray-500 leading-tight truncate">
             ✉️ {displayEmail}

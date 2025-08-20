@@ -162,8 +162,38 @@ export async function sendSMS({
       phone: to.slice(0, 6) + '...',
       eventId,
       messageType,
-      hasGuestId: !!guestId
+      hasGuestId: !!guestId,
+      simulationMode: process.env.DEV_SIMULATE_INVITES === 'true'
     });
+
+    // Development simulation mode
+    if (process.env.NODE_ENV === 'development' && process.env.DEV_SIMULATE_INVITES === 'true') {
+      logger.info('🔧 SMS SIMULATION MODE - No actual SMS sent', {
+        phone: to.slice(0, 6) + '...',
+        messagePreview: message.substring(0, 100) + '...',
+        messageLength: message.length,
+        eventId,
+        guestId,
+        messageType
+      });
+
+      // Log to database for tracking (same as real SMS)
+      await logSMSToDatabase({
+        eventId,
+        guestId,
+        phoneNumber: to,
+        content: message,
+        messageType,
+        twilioSid: `sim_${Date.now()}`,
+        status: 'sent',
+      });
+
+      return {
+        success: true,
+        messageId: `sim_${Date.now()}`,
+        status: 'sent',
+      };
+    }
 
     // Get Twilio client
     const client = await getTwilioClient();
