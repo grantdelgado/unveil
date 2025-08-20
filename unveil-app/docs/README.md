@@ -12,6 +12,11 @@ docs/
 ├── project/                     # 📋 Project-level documentation
 ├── architecture/                # 🏗️ System architecture and design
 ├── development/                 # 👨‍💻 Developer guides and procedures
+├── audits/                      # 🔍 System audits and analysis reports
+├── implementations/             # ⚙️ Feature implementation documentation
+├── guest-management/            # 👥 Guest management system documentation
+├── phases/                      # 📈 Development phase summaries
+├── performance/                 # ⚡ Performance optimization documentation
 └── archive/                     # 📚 Historical documentation
 ```
 
@@ -66,6 +71,49 @@ docs/
 | [`AUTH_FLOW_REPORT.md`](./development/AUTH_FLOW_REPORT.md) | Authentication system implementation | Current |
 
 **👨‍💻 [View Development Documentation Index](./development/index.md)**
+
+## 🔍 Audits & Analysis Documentation
+**System audits, security reviews, and analysis reports**
+
+| Document | Purpose | Last Updated |
+|----------|---------|--------------|
+| [`MAINTAINABILITY_AUDIT_REPORT.md`](./audits/MAINTAINABILITY_AUDIT_REPORT.md) | Comprehensive maintainability analysis and cleanup recommendations | Current |
+| [`event-access-visibility.md`](./audits/event-access-visibility.md) | Event access patterns and security vulnerability analysis | Current |
+| [`GUEST_MESSAGES_ACCESS_CONTROL_FIX.md`](./audits/GUEST_MESSAGES_ACCESS_CONTROL_FIX.md) | Guest message access security fixes | Current |
+
+**🔍 [View Audits Documentation Index](./audits/index.md)**
+
+## ⚙️ Implementation Documentation
+**Feature implementations, completion reports, and technical details**
+
+| Document | Purpose | Last Updated |
+|----------|---------|--------------|
+| [`PHASE_1_HARDENING_IMPLEMENTATION.md`](./implementations/PHASE_1_HARDENING_IMPLEMENTATION.md) | Critical security fixes and access control improvements | Current |
+| [`RSVP_LITE_IMPLEMENTATION_COMPLETE.md`](./implementations/RSVP_LITE_IMPLEMENTATION_COMPLETE.md) | Simplified RSVP system implementation | Current |
+| [`ONE_TAP_INVITE_IMPLEMENTATION.md`](./implementations/ONE_TAP_INVITE_IMPLEMENTATION.md) | Streamlined invitation process implementation | Current |
+
+**⚙️ [View Implementations Documentation Index](./implementations/index.md)**
+
+## 👥 Guest Management Documentation
+**Comprehensive guest management system documentation**
+
+| Document | Purpose | Last Updated |
+|----------|---------|--------------|
+| [`guest-management-audit.md`](./guest-management/guest-management-audit.md) | Comprehensive module audit with architecture analysis | Current |
+| [`guest-management-ux-audit.md`](./guest-management/guest-management-ux-audit.md) | User experience focused audit and improvements | Current |
+| [`guest-management-phase3-completion.md`](./guest-management/guest-management-phase3-completion.md) | Latest phase completion report | Current |
+
+**👥 [View Guest Management Documentation Index](./guest-management/index.md)**
+
+## 📈 Development Phases Documentation
+**High-level development phase summaries and reports**
+
+| Document | Purpose | Last Updated |
+|----------|---------|--------------|
+| [`PHASE_1_SUMMARY.md`](./phases/PHASE_1_SUMMARY.md) | First major development phase completion summary | Current |
+| [`PHASE_2_SUMMARY.md`](./phases/PHASE_2_SUMMARY.md) | Second major development phase completion summary | Current |
+
+**📈 [View Phases Documentation Index](./phases/index.md)**
 
 ## ⚡ Performance Documentation
 **Performance optimization, monitoring, and advanced frameworks**

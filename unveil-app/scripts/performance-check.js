@@ -281,7 +281,13 @@ class PerformanceChecker {
    * Generate performance report
    */
   async generateReport() {
-    const reportPath = path.join(process.cwd(), 'performance', 'reports', 'performance-report.json');
+    const reportDir = path.join(process.cwd(), 'lib', 'performance', 'reports');
+    const reportPath = path.join(reportDir, 'performance-report.json');
+    
+    // Ensure reports directory exists
+    if (!fs.existsSync(reportDir)) {
+      fs.mkdirSync(reportDir, { recursive: true });
+    }
     
     const report = {
       timestamp: new Date().toISOString(),

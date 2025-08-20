@@ -97,21 +97,25 @@ export function useEventWithGuest(
     fetchEventData();
   }, [fetchEventData]);
 
-  // Realtime: keep guestInfo in sync for this event (and user)
+  // Realtime: keep guestInfo in sync for this specific user's guest record
+  // Only subscribe if we have both eventId and userId to minimize unnecessary subscriptions
   useEventSubscription({
     eventId: eventId,
     table: 'event_guests',
     event: '*',
-    // Scope realtime at the channel level for efficiency
-    // Note: We still guard in the handler as a safety net
-     
-    filter: eventId ? `event_id=eq.${eventId}` : undefined,
+    // Filter to only this user's guest record to reduce noise
+    filter: eventId && userId ? `event_id=eq.${eventId}.and.user_id=eq.${userId}` : undefined,
     onDataChange: useCallback((payload) => {
       try {
-        // Narrow to the current user's row
+        // This subscription is already filtered to the current user's row
         const updated = payload.new as unknown as { id?: string; event_id?: string; user_id?: string; declined_at?: string; decline_reason?: string };
-        if (!updated || updated.event_id !== eventId) return;
-        if (userId && updated.user_id !== userId) return;
+        if (!updated || updated.event_id !== eventId || updated.user_id !== userId) return;
+
+        logger.realtime('Guest info updated via realtime', { 
+          eventId, 
+          userId, 
+          declined: !!updated.declined_at 
+        });
 
         // Merge minimal fields into guestInfo; realtime payload has flat record
         setGuestInfo((prev) => ({
@@ -125,7 +129,7 @@ export function useEventWithGuest(
     onError: useCallback((err: Error) => {
       logger.realtimeError('Guest realtime subscription error', err);
     }, []),
-    enabled: Boolean(eventId),
+    enabled: Boolean(eventId && userId),
     performanceOptions: { enablePooling: true, eventId: eventId || undefined },
   });
 

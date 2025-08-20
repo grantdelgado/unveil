@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import {
   PageWrapper,
@@ -268,159 +269,172 @@ export default function ProfilePage() {
   }
 
   return (
-    <PageWrapper centered={false}>
-      <div className="max-w-2xl mx-auto space-y-8">
-        {/* Header */}
-        <div className="mb-6">
-          <BackButton 
-            href="/select-event"
-            variant="subtle"
-            className="text-gray-900 hover:text-gray-700"
-          >
-            Back to Events
-          </BackButton>
-        </div>
+    <div className="min-h-mobile bg-[#FAFAFA] flex flex-col safe-x">
+      {/* Header with safe area */}
+      <header className="safe-top flex-shrink-0 px-6 py-4 bg-[#FAFAFA]/95 backdrop-blur-sm border-b border-gray-200/50">
+        <BackButton 
+          href="/select-event"
+          variant="subtle"
+          className="text-gray-900 hover:text-gray-700"
+        >
+          Back to Events
+        </BackButton>
+      </header>
 
-        {/* Profile Section */}
-        <CardContainer maxWidth="xl">
-          <div className="space-y-8">
-            <div className="text-center space-y-4">
-              <div className="w-20 h-20 bg-gradient-to-r from-rose-400 to-purple-500 rounded-full flex items-center justify-center mx-auto">
-                {userProfile.avatar_url ? (
-                  <Image 
-                    src={userProfile.avatar_url} 
-                    alt="Profile" 
-                    width={80}
-                    height={80}
-                    className="w-full h-full rounded-full object-cover"
+      {/* Scrollable content */}
+      <main className="flex-1 min-h-0 overflow-auto scroll-container">
+        <div className="max-w-2xl mx-auto px-6 py-8 space-y-8">
+
+          {/* Profile Section */}
+          <CardContainer maxWidth="xl">
+            <div className="space-y-8">
+              <div className="text-center space-y-4">
+                <div className="w-20 h-20 bg-gradient-to-r from-rose-400 to-purple-500 rounded-full flex items-center justify-center mx-auto">
+                  {userProfile.avatar_url ? (
+                    <Image 
+                      src={userProfile.avatar_url} 
+                      alt="Profile" 
+                      width={80}
+                      height={80}
+                      className="w-full h-full rounded-full object-cover"
+                    />
+                  ) : (
+                    <svg width="32" height="32" fill="white" viewBox="0 0 24 24">
+                      <circle cx="12" cy="8" r="4" />
+                      <ellipse cx="12" cy="17" rx="7" ry="4" />
+                    </svg>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <PageTitle>Your Profile</PageTitle>
+                  <SubTitle>Manage your account settings and preferences</SubTitle>
+                </div>
+              </div>
+
+              <form onSubmit={handleUpdate} className="space-y-5">
+                <div className="space-y-2">
+                  <FieldLabel htmlFor="displayName">Full Name</FieldLabel>
+                  <TextInput
+                    id="displayName"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    placeholder="Enter your full name"
+                    disabled={isSaving}
                   />
-                ) : (
-                  <svg width="32" height="32" fill="white" viewBox="0 0 24 24">
-                    <circle cx="12" cy="8" r="4" />
-                    <ellipse cx="12" cy="17" rx="7" ry="4" />
-                  </svg>
+                </div>
+
+                <div className="space-y-2">
+                  <FieldLabel htmlFor="phone">Phone Number</FieldLabel>
+                  <TextInput
+                    type="tel"
+                    id="phone"
+                    value={userProfile.phone}
+                    disabled
+                    className="bg-gray-50 text-gray-500"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <FieldLabel htmlFor="email">Email Address (Optional)</FieldLabel>
+                  <TextInput
+                    type="email"
+                    id="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter your email address (optional)"
+                    disabled={isSaving}
+                    className={email && !isValidEmail(email) ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''}
+                  />
+                  {email && !isValidEmail(email) && (
+                    <p className="text-sm text-red-600">Please enter a valid email address</p>
+                  )}
+                </div>
+
+                {message && (
+                  <div
+                    className={`p-4 rounded-lg text-center text-sm ${
+                      message.includes('wrong') || message.includes('Unable') || message.includes('already taken')
+                        ? 'bg-red-100 text-red-800 border border-red-200 shadow-sm'
+                        : 'bg-green-50 text-green-700 border border-green-100'
+                    }`}
+                  >
+                    {message}
+                  </div>
                 )}
-              </div>
-              <div className="space-y-2">
-                <PageTitle>Your Profile</PageTitle>
-                <SubTitle>Manage your account settings and preferences</SubTitle>
-              </div>
+              </form>
             </div>
+          </CardContainer>
 
-            <form onSubmit={handleUpdate} className="space-y-5">
-              <div className="space-y-2">
-                <FieldLabel htmlFor="displayName">Full Name</FieldLabel>
-                <TextInput
-                  id="displayName"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  placeholder="Enter your full name"
-                  disabled={isSaving}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <FieldLabel htmlFor="phone">Phone Number</FieldLabel>
-                <TextInput
-                  type="tel"
-                  id="phone"
-                  value={userProfile.phone}
-                  disabled
-                  className="bg-gray-50 text-gray-500"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <FieldLabel htmlFor="email">Email Address (Optional)</FieldLabel>
-                <TextInput
-                  type="email"
-                  id="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email address (optional)"
-                  disabled={isSaving}
-                  className={email && !isValidEmail(email) ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''}
-                />
-                {email && !isValidEmail(email) && (
-                  <p className="text-sm text-red-600">Please enter a valid email address</p>
-                )}
-              </div>
-
-              <PrimaryButton
-                type="submit"
-                disabled={isSaving || !isFormValid || !hasChanges}
-                loading={isSaving}
-                className={!hasChanges ? 'bg-gray-300 text-gray-500 cursor-not-allowed hover:bg-gray-300' : ''}
-              >
-                {isSaving ? 'Saving...' : 'Save Changes'}
-              </PrimaryButton>
-
-              {message && (
-                <div
-                  className={`p-4 rounded-lg text-center text-sm ${
-                    message.includes('wrong') || message.includes('Unable') || message.includes('already taken')
-                      ? 'bg-red-100 text-red-800 border border-red-200 shadow-sm'
-                      : 'bg-green-50 text-green-700 border border-green-100'
-                  }`}
-                >
-                  {message}
+          {/* Event Management Section */}
+          <CardContainer maxWidth="xl">
+            <div className="space-y-6">
+              {userEvents.length > 0 ? (
+                // User has existing events - show manage option
+                <div className="text-center space-y-2">
+                  <SectionTitle>Your Wedding</SectionTitle>
+                  <SubTitle>Manage your wedding event and guests.</SubTitle>
+                </div>
+              ) : (
+                // User has no events - show create option
+                <div className="text-center space-y-2">
+                  <SectionTitle>Planning Your Wedding?</SectionTitle>
+                  <SubTitle>Create your wedding event here.</SubTitle>
                 </div>
               )}
-            </form>
-          </div>
-        </CardContainer>
 
-        {/* Event Management Section */}
-        <CardContainer maxWidth="xl">
-          <div className="space-y-6">
-            {userEvents.length > 0 ? (
-              // User has existing events - show manage option
-              <div className="text-center space-y-2">
-                <SectionTitle>Your Wedding</SectionTitle>
-                <SubTitle>Manage your wedding event and guests.</SubTitle>
+              <div className="space-y-4">
+                {userEvents.length > 0 ? (
+                  // Show manage button for existing events
+                  <Link href={`/host/events/${userEvents[0].id}/dashboard`}>
+                    <PrimaryButton className="w-full flex items-center justify-center gap-2">
+                      <span>📋</span>
+                      Manage Your Wedding Page
+                    </PrimaryButton>
+                  </Link>
+                ) : (
+                  // Show create button for new users
+                  <Link href="/host/events/create">
+                    <PrimaryButton className="w-full flex items-center justify-center gap-2">
+                      <span>+</span>
+                      Create Your Wedding
+                    </PrimaryButton>
+                  </Link>
+                )}
               </div>
-            ) : (
-              // User has no events - show create option
-              <div className="text-center space-y-2">
-                <SectionTitle>Planning Your Wedding?</SectionTitle>
-                <SubTitle>Create your wedding event here.</SubTitle>
+            </div>
+          </CardContainer>
+
+          {/* Account Actions */}
+          <CardContainer maxWidth="xl">
+            <div className="space-y-6">
+              <SectionTitle>Account Actions</SectionTitle>
+
+              <div className="space-y-3">
+                <LogoutButtonStyled router={router} />
               </div>
+            </div>
+          </CardContainer>
+        </div>
+      </main>
+
+      {/* Sticky form actions - keyboard-safe */}
+      <footer className="safe-bottom sticky bottom-0 flex-shrink-0 bg-[#FAFAFA]/95 backdrop-blur-sm border-t border-gray-200/50">
+        <div className="max-w-2xl mx-auto px-6 py-4">
+          <PrimaryButton
+            type="submit"
+            onClick={handleUpdate}
+            disabled={isSaving || !isFormValid || !hasChanges}
+            loading={isSaving}
+            className={cn(
+              "w-full",
+              !hasChanges ? 'bg-gray-300 text-gray-500 cursor-not-allowed hover:bg-gray-300' : ''
             )}
-
-            <div className="space-y-4">
-              {userEvents.length > 0 ? (
-                // Show manage button for existing events
-                <Link href={`/host/events/${userEvents[0].id}/dashboard`}>
-                  <PrimaryButton className="w-full flex items-center justify-center gap-2">
-                    <span>📋</span>
-                    Manage Your Wedding Page
-                  </PrimaryButton>
-                </Link>
-              ) : (
-                // Show create button for new users
-                <Link href="/host/events/create">
-                  <PrimaryButton className="w-full flex items-center justify-center gap-2">
-                    <span>+</span>
-                    Create Your Wedding
-                  </PrimaryButton>
-                </Link>
-              )}
-            </div>
-          </div>
-        </CardContainer>
-
-        {/* Account Actions */}
-        <CardContainer maxWidth="xl">
-          <div className="space-y-6">
-            <SectionTitle>Account Actions</SectionTitle>
-
-            <div className="space-y-3">
-              <LogoutButtonStyled router={router} />
-            </div>
-          </div>
-        </CardContainer>
-      </div>
-    </PageWrapper>
+          >
+            {isSaving ? 'Saving...' : 'Save Changes'}
+          </PrimaryButton>
+        </div>
+      </footer>
+    </div>
   );
 }
 

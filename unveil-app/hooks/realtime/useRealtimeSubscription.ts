@@ -24,9 +24,24 @@ class SubscriptionPool {
   }
 
   private getPoolKey(table: string, eventId?: string, filter?: string): string {
-    // Create a unique key for pooling subscriptions with same table+event combination
-    const eventPart = eventId ? `event:${eventId}` : 'global';
-    const filterPart = filter ? `filter:${filter}` : 'all';
+    // Create a stable, deterministic key for pooling subscriptions
+    // Use a hash-like approach to avoid overly long channel names
+    const eventPart = eventId ? `event-${eventId}` : 'global';
+    
+    // Simplify filter to avoid complex channel names that might cause issues
+    let filterPart = 'all';
+    if (filter) {
+      // Extract the core filter pattern to create stable keys
+      if (filter.includes('event_id=eq.')) {
+        filterPart = 'by-event';
+      } else if (filter.includes('user_id=eq.')) {
+        filterPart = 'by-user';
+      } else {
+        // For other filters, create a simple hash
+        filterPart = `filter-${filter.replace(/[^a-zA-Z0-9]/g, '').substring(0, 8)}`;
+      }
+    }
+    
     return `${table}-${eventPart}-${filterPart}`;
   }
 

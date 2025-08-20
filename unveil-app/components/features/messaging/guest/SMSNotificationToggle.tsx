@@ -35,8 +35,8 @@ function ConfirmationModal({ isOpen, currentState, onConfirm, onCancel, isLoadin
         
         <p className="text-sm text-stone-600 mb-6">
           {willOptOut 
-            ? "Turn off text message updates for this event? You'll still see messages in the app."
-            : "Turn on text message updates for this event? You'll receive SMS notifications when the host sends messages."
+            ? "Turn off SMS updates from your hosts?"
+            : "Turn on SMS updates from your hosts?"
           }
         </p>
 
@@ -74,6 +74,7 @@ export function SMSNotificationToggle({ eventId, guestId, initialOptOut = false,
   const [isLoading, setIsLoading] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Update state when initialOptOut changes
   useEffect(() => {
@@ -113,8 +114,9 @@ export function SMSNotificationToggle({ eventId, guestId, initialOptOut = false,
         throw updateError;
       }
 
-      // Success - close modal
+      // Success - close modal and show success toast
       setShowConfirmation(false);
+      setSuccessMessage(newOptOutValue ? 'SMS updates turned off.' : 'SMS updates turned on.');
       
       logger.info('SMS notification preference updated', {
         eventId,
@@ -127,7 +129,7 @@ export function SMSNotificationToggle({ eventId, guestId, initialOptOut = false,
       setSmsOptOut(!smsOptOut);
       onToggle?.(!smsOptOut);
       
-      const errorMessage = err instanceof Error ? err.message : 'Failed to update notification settings';
+      const errorMessage = err instanceof Error ? err.message : 'Couldn\'t update SMS settings. Please try again.';
       setError(errorMessage);
       
       logger.error('Failed to update SMS notification preference', {
@@ -152,6 +154,14 @@ export function SMSNotificationToggle({ eventId, guestId, initialOptOut = false,
       return () => clearTimeout(timer);
     }
   }, [error]);
+
+  // Show success toast briefly
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => setSuccessMessage(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
 
   const isOptedIn = !smsOptOut;
   const IconComponent = isOptedIn ? Bell : BellOff;
@@ -183,11 +193,17 @@ export function SMSNotificationToggle({ eventId, guestId, initialOptOut = false,
         )}
       </button>
 
+      {/* Success toast */}
+      {successMessage && (
+        <div className="fixed top-4 right-4 z-50 bg-green-100 border border-green-200 text-green-700 px-4 py-3 rounded-lg shadow-lg max-w-sm">
+          <p className="text-sm font-medium">{successMessage}</p>
+        </div>
+      )}
+
       {/* Error toast */}
       {error && (
         <div className="fixed top-4 right-4 z-50 bg-red-100 border border-red-200 text-red-700 px-4 py-3 rounded-lg shadow-lg max-w-sm">
-          <p className="text-sm font-medium">Failed to update notification settings</p>
-          <p className="text-xs mt-1">{error}</p>
+          <p className="text-sm font-medium">{error}</p>
         </div>
       )}
 

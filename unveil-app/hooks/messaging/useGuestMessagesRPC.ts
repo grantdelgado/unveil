@@ -222,14 +222,15 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
     fetchInitialMessages();
   }, [fetchInitialMessages]);
 
-  // Set up realtime subscription for new messages
+  // Set up managed realtime subscription for new messages
   useEffect(() => {
     if (!eventId) return;
 
-    let subscription: any = null;
+    let deliveryUnsubscribe: (() => void) | null = null;
+    let messagesUnsubscribe: (() => void) | null = null;
     let isCleanedUp = false;
 
-    const setupRealtimeSubscription = async () => {
+    const setupManagedRealtimeSubscription = async () => {
       try {
         // Get current user for filtering
         const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -237,65 +238,93 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
           return;
         }
 
-        const channelKey = `guest_messages_rpc:${user.id}:${eventId}`;
-        
-        subscription = supabase
-          .channel(channelKey, {
-            config: {
-              broadcast: { self: false, ack: false },
-              presence: { key: channelKey }
-            }
-          })
-          // Listen for new delivery records for this user
-          .on(
-            'postgres_changes',
-            {
-              event: 'INSERT',
-              schema: 'public',
-              table: 'message_deliveries',
-              filter: `user_id=eq.${user.id}`,
+        // Import the subscription manager
+        const { getSubscriptionManager } = await import('@/lib/realtime/SubscriptionManager');
+        const subscriptionManager = getSubscriptionManager();
+
+        // Subscribe to message deliveries for this user
+        deliveryUnsubscribe = subscriptionManager.subscribe(
+          `guest-message-deliveries-${user.id}-${eventId}`,
+          {
+            table: 'message_deliveries',
+            event: 'INSERT',
+            schema: 'public',
+            filter: `user_id=eq.${user.id}`,
+            callback: handleRealtimeUpdate,
+            onError: (error) => {
+              if (!isCleanedUp) {
+                logger.error('Guest message deliveries subscription error', { error, eventId });
+              }
             },
-            handleRealtimeUpdate
-          )
-          // Listen for new messages from this user
-          .on(
-            'postgres_changes',
-            {
-              event: 'INSERT',
-              schema: 'public',
-              table: 'messages',
-              filter: `sender_user_id=eq.${user.id}`,
-            },
-            (payload) => {
+            enableBackoff: true,
+            maxBackoffDelay: 30000,
+            connectionTimeout: 15000,
+            maxRetries: 3,
+            timeoutMs: 30000,
+            retryOnTimeout: true,
+          }
+        );
+
+        // Subscribe to messages from this user (for sent message feedback)
+        messagesUnsubscribe = subscriptionManager.subscribe(
+          `guest-messages-sent-${user.id}-${eventId}`,
+          {
+            table: 'messages',
+            event: 'INSERT',
+            schema: 'public',
+            filter: `sender_user_id=eq.${user.id}`,
+            callback: (payload) => {
               // Only trigger update if the message is for this event
-              if (payload.new && payload.new.event_id === eventId && !isCleanedUp) {
+              if (payload.new && (payload.new as any).event_id === eventId && !isCleanedUp) {
                 handleRealtimeUpdate(payload);
               }
-            }
-          )
-          .subscribe();
+            },
+            onError: (error) => {
+              if (!isCleanedUp) {
+                logger.error('Guest sent messages subscription error', { error, eventId });
+              }
+            },
+            enableBackoff: true,
+            maxBackoffDelay: 30000,
+            connectionTimeout: 15000,
+            maxRetries: 3,
+            timeoutMs: 30000,
+            retryOnTimeout: true,
+          }
+        );
 
-        logger.info('Guest messages RPC realtime subscription established', { eventId, userId: user.id });
+        logger.info('Guest messages managed realtime subscriptions established', { eventId, userId: user.id });
 
       } catch (error) {
         if (!isCleanedUp) {
-          logger.error('Guest messages RPC subscription error', { error, eventId });
+          logger.error('Guest messages subscription setup error', { error, eventId });
         }
       }
     };
 
-    setupRealtimeSubscription();
+    setupManagedRealtimeSubscription();
 
     return () => {
       isCleanedUp = true;
-      if (subscription) {
+      
+      if (deliveryUnsubscribe) {
         try {
-          subscription.unsubscribe();
-          logger.info('Guest messages RPC subscription cleaned up', { eventId });
+          deliveryUnsubscribe();
+          logger.info('Guest message deliveries subscription cleaned up', { eventId });
         } catch (error) {
           // Ignore cleanup errors
         }
-        subscription = null;
+        deliveryUnsubscribe = null;
+      }
+      
+      if (messagesUnsubscribe) {
+        try {
+          messagesUnsubscribe();
+          logger.info('Guest sent messages subscription cleaned up', { eventId });
+        } catch (error) {
+          // Ignore cleanup errors
+        }
+        messagesUnsubscribe = null;
       }
     };
   }, [eventId, handleRealtimeUpdate]);

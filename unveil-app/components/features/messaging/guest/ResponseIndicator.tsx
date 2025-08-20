@@ -22,7 +22,7 @@ export function ResponseIndicator({
         {canRespond ? (
           <>
             <MessageCircle className="h-3 w-3 text-green-600" />
-            <span className="text-green-700">Replies enabled</span>
+            <span className="text-green-700">Announcements from your hosts</span>
           </>
         ) : (
           <>
@@ -54,13 +54,13 @@ export function ResponseIndicator({
       
       <div className="flex-1">
         <div className="font-medium">
-          {canRespond ? 'Responses Enabled' : 'Responses Disabled'}
+          {canRespond ? 'Announcements from your hosts' : 'Announcements Only'}
         </div>
         
         <div className="text-xs mt-1 opacity-75">
           {canRespond
-            ? 'You can reply to messages from the host.'
-            : reason || 'The host has disabled guest responses for this event.'
+            ? 'Stay updated with messages from your event hosts.'
+            : reason || 'This event shows announcements from your hosts only.'
           }
         </div>
       </div>

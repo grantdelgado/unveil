@@ -13,6 +13,7 @@ export default async function GuestEventLayout({
   children,
   params 
 }: GuestEventLayoutProps) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { eventId } = await params;
   
   return (

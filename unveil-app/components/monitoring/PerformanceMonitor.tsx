@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { initializePerformanceMonitoring } from '@/lib/performance-monitoring';
-import { initializeDevelopmentAlerts, PerformanceAlertOverlay } from '@/performance/monitoring/developmentAlerts';
+import { initializeDevelopmentAlerts, PerformanceAlertOverlay } from '@/lib/performance/monitoring/developmentAlerts';
 
 interface PerformanceMonitorProps {
   children: React.ReactNode;

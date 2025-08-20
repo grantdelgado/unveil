@@ -298,7 +298,16 @@ export class SubscriptionManager {
       );
     }
 
-    logger.warn(`⏰ Subscription timeout: ${subscriptionId} (attempt ${subscription.consecutiveErrors})`);
+    // Only log timeout warnings for the first few attempts to reduce noise
+    if (subscription.consecutiveErrors <= 2) {
+      logger.warn(`⏰ Subscription timeout: ${subscriptionId} (attempt ${subscription.consecutiveErrors})`);
+    }
+    
+    // Don't attempt reconnection if we have too many consecutive errors
+    if (subscription.consecutiveErrors > 5) {
+      logger.error(`❌ Too many timeouts for ${subscriptionId}, pausing reconnection attempts`);
+      return;
+    }
     
     // Schedule reconnection with backoff
     setTimeout(() => {
@@ -517,6 +526,15 @@ export class SubscriptionManager {
       this.healthCheckInterval = null;
     }
 
+    // Remove event listeners
+    if (typeof document !== 'undefined') {
+      document.removeEventListener('visibilitychange', this.handleVisibilityChange.bind(this));
+    }
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('online', this.handleOnlineStateChange.bind(this));
+      window.removeEventListener('offline', this.handleOnlineStateChange.bind(this));
+    }
+
     // Unsubscribe from all channels
     const subscriptionIds = Array.from(this.subscriptions.keys());
     subscriptionIds.forEach((id) => this.unsubscribe(id));
@@ -621,7 +639,7 @@ export class SubscriptionManager {
   }
 
   /**
-   * Enhanced connection monitoring with reduced logging noise
+   * Enhanced connection monitoring with token refresh integration
    */
   private setupConnectionMonitoring(): void {
     // Monitor connection state changes with minimal logging
@@ -640,9 +658,83 @@ export class SubscriptionManager {
         // Reset error counts on new auth
         this.errorCount = 0;
         this.globalConsecutiveErrors = 0;
+        
+        // Update realtime auth token
+        this.updateRealtimeAuth(session.access_token);
+      } else if (event === 'TOKEN_REFRESHED' && session) {
+        // Critical: Update realtime connection with new token
+        logger.realtime('🔄 Token refreshed, updating realtime auth');
+        this.updateRealtimeAuth(session.access_token);
       }
-      // Remove TOKEN_REFRESHED logging to reduce noise
     });
+
+    // Monitor visibility changes for mobile Safari backgrounding
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', this.handleVisibilityChange.bind(this));
+    }
+
+    // Monitor online/offline events
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', this.handleOnlineStateChange.bind(this));
+      window.addEventListener('offline', this.handleOnlineStateChange.bind(this));
+    }
+  }
+
+  /**
+   * Update realtime connection with new auth token
+   */
+  private updateRealtimeAuth(accessToken: string): void {
+    try {
+      // Update the realtime connection with the new token
+      supabase.realtime.setAuth(accessToken);
+      logger.realtime('✅ Realtime auth token updated');
+    } catch (error) {
+      logger.error('❌ Failed to update realtime auth token', error);
+    }
+  }
+
+  /**
+   * Handle visibility changes (mobile Safari backgrounding)
+   */
+  private handleVisibilityChange(): void {
+    if (typeof document === 'undefined') return;
+
+    if (document.hidden) {
+      logger.realtime('📱 Tab backgrounded, maintaining minimal subscriptions');
+      // Don't destroy subscriptions, just log the state change
+      // Modern browsers handle WebSocket suspension automatically
+    } else {
+      logger.realtime('📱 Tab foregrounded, checking connection health');
+      // Check if we need to reconnect after backgrounding
+      setTimeout(() => {
+        const stats = this.getStats();
+        if (stats.healthScore < 50 && stats.activeSubscriptions > 0) {
+          logger.realtime('🔄 Poor health after backgrounding, triggering reconnect');
+          this.reconnectAll();
+        }
+      }, 2000); // Give connections time to stabilize
+    }
+  }
+
+  /**
+   * Handle online/offline state changes
+   */
+  private handleOnlineStateChange(): void {
+    if (typeof navigator === 'undefined') return;
+
+    if (navigator.onLine) {
+      logger.realtime('🌐 Back online, checking connection health');
+      // Trigger reconnection after coming back online
+      setTimeout(() => {
+        const stats = this.getStats();
+        if (stats.activeSubscriptions > 0 && stats.connectionState !== 'connected') {
+          logger.realtime('🔄 Reconnecting after coming back online');
+          this.reconnectAll();
+        }
+      }, 1000);
+    } else {
+      logger.realtime('🌐 Gone offline, subscriptions may be affected');
+    }
   }
 
   /**

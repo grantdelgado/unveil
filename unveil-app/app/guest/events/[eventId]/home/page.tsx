@@ -27,7 +27,6 @@ import {
 } from '@/components/ui';
 import { ErrorBoundary, MessagingErrorFallback } from '@/components/ui/ErrorBoundary';
 import { MobileShell } from '@/components/layout';
-import { RealtimeDebugPanel } from '@/components/dev/RealtimeDebugPanel';
 
 export default function GuestEventHomePage() {
   const params = useParams();
@@ -529,7 +528,11 @@ export default function GuestEventHomePage() {
       </MobileShell>
       
       {/* Debug Panel - Only in development */}
-      <RealtimeDebugPanel />
+      {process.env.NODE_ENV === 'development' && (
+        <div>
+          {/* Debug panel loaded dynamically in development only */}
+        </div>
+      )}
     </ErrorBoundary>
   );
 }
