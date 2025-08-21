@@ -367,6 +367,7 @@ export type Database = {
           failed_count: number | null
           id: string
           message_type: Database["public"]["Enums"]["message_type_enum"] | null
+          scheduled_message_id: string | null
           sender_user_id: string | null
         }
         Insert: {
@@ -378,6 +379,7 @@ export type Database = {
           failed_count?: number | null
           id?: string
           message_type?: Database["public"]["Enums"]["message_type_enum"] | null
+          scheduled_message_id?: string | null
           sender_user_id?: string | null
         }
         Update: {
@@ -389,6 +391,7 @@ export type Database = {
           failed_count?: number | null
           id?: string
           message_type?: Database["public"]["Enums"]["message_type_enum"] | null
+          scheduled_message_id?: string | null
           sender_user_id?: string | null
         }
         Relationships: [
@@ -397,6 +400,13 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_scheduled_message_id_fkey"
+            columns: ["scheduled_message_id"]
+            isOneToOne: false
+            referencedRelation: "scheduled_messages"
             referencedColumns: ["id"]
           },
           {
@@ -418,6 +428,7 @@ export type Database = {
           idempotency_key: string | null
           message_type: Database["public"]["Enums"]["message_type_enum"] | null
           recipient_count: number | null
+          recipient_snapshot: Json | null
           scheduled_local: string | null
           scheduled_tz: string | null
           send_at: string
@@ -444,6 +455,7 @@ export type Database = {
           idempotency_key?: string | null
           message_type?: Database["public"]["Enums"]["message_type_enum"] | null
           recipient_count?: number | null
+          recipient_snapshot?: Json | null
           scheduled_local?: string | null
           scheduled_tz?: string | null
           send_at: string
@@ -470,6 +482,7 @@ export type Database = {
           idempotency_key?: string | null
           message_type?: Database["public"]["Enums"]["message_type_enum"] | null
           recipient_count?: number | null
+          recipient_snapshot?: Json | null
           scheduled_local?: string | null
           scheduled_tz?: string | null
           send_at?: string
@@ -766,7 +779,9 @@ export type Database = {
         }[]
       }
       get_scheduled_messages_for_processing: {
-        Args: { p_current_time?: string; p_limit?: number }
+        Args:
+          | { p_current_time?: string; p_limit?: number }
+          | { p_current_time?: string; p_limit?: number }
         Returns: {
           content: string
           created_at: string | null
@@ -776,6 +791,7 @@ export type Database = {
           idempotency_key: string | null
           message_type: Database["public"]["Enums"]["message_type_enum"] | null
           recipient_count: number | null
+          recipient_snapshot: Json | null
           scheduled_local: string | null
           scheduled_tz: string | null
           send_at: string

@@ -3,7 +3,7 @@
  * Supports real-time updates and comprehensive error handling
  */
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, startTransition } from 'react';
 import { supabase } from '@/lib/supabase';
 import { getSubscriptionManager } from '@/lib/realtime/SubscriptionManager';
 import { 
@@ -58,7 +58,7 @@ export function useScheduledMessages({
   const fetchInFlightRef = useRef(false);
   const subscriptionIdRef = useRef<string | null>(null);
 
-  // Memoize the complete filters object
+  // Memoize the complete filters object with stable serialization
   const completeFilters = useMemo(() => ({
     eventId,
     ...filters
@@ -250,25 +250,36 @@ export function useScheduledMessages({
         
         console.log('Scheduled message real-time update:', payload);
 
-        switch (payload.eventType) {
-          case 'INSERT':
-            setScheduledMessages(prev => [...prev, payload.new as ScheduledMessage]);
-            break;
-          
-          case 'UPDATE':
-            setScheduledMessages(prev =>
-              prev.map(msg =>
-                msg.id === payload.new.id ? payload.new as ScheduledMessage : msg
-              )
-            );
-            break;
-          
-          case 'DELETE':
-            setScheduledMessages(prev =>
-              prev.filter(msg => msg.id !== payload.old.id)
-            );
-            break;
-        }
+        // Batch updates with startTransition to prevent flicker
+        startTransition(() => {
+          switch (payload.eventType) {
+            case 'INSERT':
+              // Add deduplication to prevent duplicate messages
+              setScheduledMessages(prev => {
+                const existingIds = new Set(prev.map(msg => msg.id));
+                const newMessage = payload.new as ScheduledMessage;
+                if (existingIds.has(newMessage.id)) {
+                  return prev; // Skip if already exists
+                }
+                return [...prev, newMessage];
+              });
+              break;
+            
+            case 'UPDATE':
+              setScheduledMessages(prev =>
+                prev.map(msg =>
+                  msg.id === payload.new.id ? payload.new as ScheduledMessage : msg
+                )
+              );
+              break;
+            
+            case 'DELETE':
+              setScheduledMessages(prev =>
+                prev.filter(msg => msg.id !== payload.old.id)
+              );
+              break;
+          }
+        });
       },
       onError: (error) => {
         if (isMountedRef.current) {
@@ -285,23 +296,17 @@ export function useScheduledMessages({
     };
   }, [eventId, realTimeUpdates]);
 
-  // Auto-refresh interval (every 30 seconds for upcoming messages)
+  // Auto-refresh interval (every 30 seconds for upcoming messages) - stabilized dependencies  
   useEffect(() => {
     if (!autoRefresh) return;
 
     const interval = setInterval(() => {
-      // Only refresh if we have upcoming messages that might need status updates
-      const hasUpcoming = scheduledMessages.some(msg => 
-        msg.status === 'scheduled' && new Date(msg.send_at) > new Date()
-      );
-      
-      if (hasUpcoming) {
-        fetchMessages();
-      }
+      // Check current state inside interval to avoid dependency issues
+      fetchMessages();
     }, 30000); // 30 seconds
 
     return () => clearInterval(interval);
-  }, [autoRefresh, scheduledMessages, fetchMessages]);
+  }, [autoRefresh, fetchMessages]); // Simplified: always refresh on interval
 
   // TODO(grant): Cleanup effect to mark component as unmounted for StrictMode safety
   useEffect(() => {

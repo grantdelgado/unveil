@@ -631,7 +631,7 @@ export function MessageComposer({
                   <span>{sendMode === 'now' ? 'Send Now' : 'Schedule Message'}</span>
                   {willReceiveMessage > 0 && (
                     <span className="bg-white/20 px-2 py-1 rounded text-sm">
-                      {willReceiveMessage}
+                      {willReceiveMessage} {willReceiveMessage === 1 ? 'person' : 'people'}
                     </span>
                   )}
                 </>

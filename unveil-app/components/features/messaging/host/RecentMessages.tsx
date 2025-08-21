@@ -43,6 +43,9 @@ export function RecentMessages({
   const [showMyTime, setShowMyTime] = React.useState(false);
   const [eventTimezone, setEventTimezone] = React.useState<string | null>(null);
   
+  // Two-phase loading: track initial boot vs live updates
+  const [hasInitiallyLoaded, setHasInitiallyLoaded] = React.useState(false);
+  
   // Fetch scheduled messages
   const { 
     scheduledMessages, 
@@ -50,7 +53,16 @@ export function RecentMessages({
     cancelScheduledMessage 
   } = useScheduledMessages({ eventId });
 
-  const combinedLoading = isLoading || scheduledLoading;
+  // Only show skeleton on initial load, not subsequent updates
+  const isBootLoading = (isLoading || scheduledLoading) && !hasInitiallyLoaded;
+  const isLiveUpdating = (isLoading || scheduledLoading) && hasInitiallyLoaded;
+
+  // Track when we've completed initial load
+  React.useEffect(() => {
+    if (!isLoading && !scheduledLoading && !hasInitiallyLoaded) {
+      setHasInitiallyLoaded(true);
+    }
+  }, [isLoading, scheduledLoading, hasInitiallyLoaded]);
 
   // Fetch event timezone
   React.useEffect(() => {
@@ -71,7 +83,7 @@ export function RecentMessages({
     fetchEventTimezone();
   }, [eventId]);
 
-  // Combine and transform messages
+  // Combine and transform messages with stable dependencies
   const unifiedMessages: UnifiedMessage[] = React.useMemo(() => {
     const sentMessages: UnifiedMessage[] = messages.map(msg => ({
       id: msg.id,
@@ -129,7 +141,7 @@ export function RecentMessages({
       const bTime = new Date(b.sent_at || b.created_at).getTime();
       return bTime - aTime;
     });
-  }, [messages, scheduledMessages]);
+  }, [messages, scheduledMessages]); // Dependencies are stable arrays from hooks
 
   // Helper function to get status badge
   const getStatusBadge = (message: UnifiedMessage) => {
@@ -228,7 +240,7 @@ export function RecentMessages({
     }
   };
 
-  if (combinedLoading) {
+  if (isBootLoading) {
     return (
       <div className={cn('space-y-4', className)}>
         {Array.from({ length: 3 }, (_, i) => (
@@ -271,6 +283,9 @@ export function RecentMessages({
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-gray-900">
           Message History ({unifiedMessages.length})
+          {isLiveUpdating && (
+            <span className="ml-2 text-xs text-blue-600 animate-pulse">Updating...</span>
+          )}
         </h3>
         
         {/* Timezone Toggle for Scheduled Messages */}
@@ -310,7 +325,7 @@ export function RecentMessages({
                       </span>
                       {message.recipient_count && message.recipient_count > 0 && (
                         <span className="text-gray-500">
-                          {message.recipient_count} recipients
+                          {message.recipient_count} {message.recipient_count === 1 ? 'person' : 'people'}
                         </span>
                       )}
                     </div>
@@ -369,7 +384,7 @@ export function RecentMessages({
                         </span>
                       ) : message.recipient_count && message.recipient_count > 0 && (
                         <span className="text-gray-500">
-                          {message.recipient_count} recipients
+                          {message.recipient_count} {message.recipient_count === 1 ? 'person' : 'people'}
                         </span>
                       )}
                     </div>

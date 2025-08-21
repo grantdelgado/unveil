@@ -46,6 +46,19 @@ export async function resolveMessageRecipients(
       };
     }
 
+    // Handle explicit guest selection (NEW - CRITICAL FIX)
+    if (filter.type === 'explicit_selection' && filter.selectedGuestIds) {
+      // Validate that we have at least one recipient
+      if (filter.selectedGuestIds.length === 0) {
+        throw new Error('No recipients selected. Please select at least one guest to send the message to.');
+      }
+      
+      return { 
+        guestIds: filter.selectedGuestIds, 
+        recipientCount: filter.selectedGuestIds.length 
+      };
+    }
+
     // Use Supabase function for complex filtering
     const { data: recipients, error } = await supabase.rpc('resolve_message_recipients', {
       msg_event_id: eventId,
@@ -280,13 +293,78 @@ export async function createScheduledMessage(messageData: CreateScheduledMessage
     }
 
     // Pre-calculate recipient count for scheduling
-    const { recipientCount } = await resolveMessageRecipients(
+    const { recipientCount, guestIds } = await resolveMessageRecipients(
       messageData.eventId,
       recipientFilter
     );
 
+    // Optional: Create recipient snapshot for audit purposes (behind feature flag)
+    let recipientSnapshot: Array<{
+      guest_id: string;
+      user_id?: string;
+      phone: string;
+      name: string;
+      channel: string;
+    }> | null = null;
+    const enableRecipientSnapshot = process.env.NEXT_PUBLIC_ENABLE_RECIPIENT_SNAPSHOT === 'true';
+    
+    if (enableRecipientSnapshot && guestIds.length > 0) {
+      try {
+        // Fetch guest details for snapshot
+        const { data: guestDetails, error: guestError } = await supabase
+          .from('event_guests')
+          .select('id, guest_name, phone, user_id')
+          .eq('event_id', messageData.eventId)
+          .in('id', guestIds);
+
+        if (!guestError && guestDetails) {
+          recipientSnapshot = guestDetails.map(guest => ({
+            guest_id: guest.id,
+            user_id: guest.user_id || undefined,
+            phone: guest.phone || '',
+            name: guest.guest_name || 'Guest',
+            channel: 'sms' // Default channel for now
+          }));
+        }
+      } catch (snapshotError) {
+        console.warn('Failed to create recipient snapshot:', snapshotError);
+        // Don't fail the entire operation if snapshot creation fails
+      }
+    }
+
     if (recipientCount === 0) {
       throw new Error('No valid recipients found for the specified filter criteria');
+    }
+
+    // Server-side validation: Verify UTC conversion is correct
+    if (messageData.scheduledLocal && messageData.scheduledTz) {
+      try {
+        // Re-compute UTC time from local time and timezone
+        const localDateTime = new Date(`${messageData.scheduledLocal}:00`);
+        const expectedUTC = localDateTime.toLocaleString('sv-SE', { 
+          timeZone: messageData.scheduledTz 
+        }).replace(' ', 'T') + 'Z';
+        
+        const storedUTC = new Date(messageData.sendAt).toISOString();
+        const expectedUTCTime = new Date(expectedUTC).getTime();
+        const storedUTCTime = new Date(storedUTC).getTime();
+        
+        // Allow up to 1 minute difference to account for DST transitions
+        const timeDifference = Math.abs(expectedUTCTime - storedUTCTime);
+        if (timeDifference > 60000) { // 60 seconds
+          console.warn('UTC conversion mismatch detected:', {
+            scheduledLocal: messageData.scheduledLocal,
+            scheduledTz: messageData.scheduledTz,
+            expectedUTC,
+            storedUTC,
+            differenceMs: timeDifference
+          });
+          throw new Error('Invalid scheduled time. Please check the date and time, especially during daylight saving transitions.');
+        }
+      } catch (conversionError) {
+        console.error('UTC validation error:', conversionError);
+        throw new Error('Invalid scheduled time or timezone. Please check your inputs.');
+      }
     }
 
     const { data, error } = await supabase
@@ -309,6 +387,7 @@ export async function createScheduledMessage(messageData: CreateScheduledMessage
         target_guest_tags: targetGuestTags,
         target_guest_ids: targetGuestIds,
         recipient_count: recipientCount,
+        recipient_snapshot: recipientSnapshot,
       })
       .select()
       .single();

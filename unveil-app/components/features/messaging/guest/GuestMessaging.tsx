@@ -346,6 +346,7 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
               delivered_at: null,
               delivered_count: null,
               failed_count: null,
+              scheduled_message_id: null, // Guest messages are not scheduled messages
               sender: message.sender_name ? {
                 id: 'unknown', // We don't have the actual user ID from RPC
                 full_name: message.sender_name,

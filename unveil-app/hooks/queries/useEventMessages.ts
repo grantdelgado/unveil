@@ -99,6 +99,7 @@ export function useSendMessage({ onSuccess, onError }: UseSendMessageOptions = {
         delivered_at: null,
         delivered_count: 0,
         failed_count: 0,
+        scheduled_message_id: null, // Regular messages are not scheduled
         sender: null // Will be populated on success
       }
 

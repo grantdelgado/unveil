@@ -5,53 +5,57 @@ import { sendBulkSMS } from '@/lib/sms';
 import type { RecipientFilter } from '@/lib/types/messaging';
 import type { Database } from '@/app/reference/supabase.types';
 
-export async function POST(request: NextRequest) {
+// Types for processing results
+interface ProcessingResult {
+  success: boolean;
+  timestamp: string;
+  totalProcessed: number;
+  successful: number;
+  failed: number;
+  details: Array<{
+    messageId: string;
+    status: string;
+    recipientCount: number;
+    error?: string;
+  }>;
+  processingTimeMs?: number;
+  isDryRun: boolean;
+  message: string;
+  jobId?: string;
+}
+
+interface ProcessingOptions {
+  dryRun?: boolean;
+  maxMessages?: number;
+  jobId?: string;
+}
+
+/**
+ * Core processing logic for scheduled messages
+ * Used by both GET (cron) and POST (manual) handlers
+ */
+async function processDueScheduledMessages(options: ProcessingOptions = {}): Promise<ProcessingResult> {
+  const { dryRun = false, maxMessages = 100, jobId } = options;
+  const processingStartTime = new Date();
+  const timestamp = processingStartTime.toISOString();
+  
+  logger.api(`Processing scheduled messages${dryRun ? ' (DRY RUN)' : ''}`, { jobId, maxMessages });
+
+  let processedCount = 0;
+  let successfulCount = 0;
+  let failedCount = 0;
+  const processingDetails: Array<{
+    messageId: string;
+    status: string;
+    recipientCount: number;
+    error?: string;
+  }> = [];
+
   try {
-    // Check for dry-run mode
-    const url = new URL(request.url);
-    const isDryRun = url.searchParams.get('dryRun') === '1' || url.searchParams.get('dryRun') === 'true';
-    
-    logger.api(`Processing scheduled messages API called${isDryRun ? ' (DRY RUN)' : ''}`);
-
-    // Verify the request is authorized (internal calls only)
-    const authHeader = request.headers.get('authorization');
-    const cronHeader = request.headers.get('x-cron-key');
-    const vercelCronHeader = request.headers.get('x-vercel-cron-signature');
-    const cronSecret = process.env.CRON_SECRET;
-
-    // Accept Bearer token, X-CRON-KEY header, or Vercel cron signature
-    const isAuthorized = (
-      (cronSecret && authHeader === `Bearer ${cronSecret}`) ||
-      (cronSecret && cronHeader === cronSecret) ||
-      (vercelCronHeader) // Vercel automatically adds this header for cron requests
-    );
-
-    if (!isAuthorized) {
-      logger.api('Unauthorized request to scheduled messages processor', {
-        hasAuthHeader: !!authHeader,
-        hasCronHeader: !!cronHeader,
-        hasVercelCronHeader: !!vercelCronHeader,
-        hasCronSecret: !!cronSecret,
-        isDryRun
-      });
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const processingStartTime = new Date();
-    let processedCount = 0;
-    let successfulCount = 0;
-    let failedCount = 0;
-    const processingDetails: Array<{
-      messageId: string;
-      status: string;
-      recipientCount: number;
-      error?: string;
-    }> = [];
-
     // Fetch messages ready to send with FOR UPDATE SKIP LOCKED for concurrency safety
     const { data: readyMessages, error: fetchError } = await supabase
       .rpc('get_scheduled_messages_for_processing', {
-        p_limit: 100,
+        p_limit: maxMessages,
         p_current_time: new Date().toISOString()
       });
 
@@ -60,43 +64,48 @@ export async function POST(request: NextRequest) {
     }
 
     if (!readyMessages || readyMessages.length === 0) {
-      logger.api('No scheduled messages ready for processing');
-      return NextResponse.json({
+      logger.api('No scheduled messages ready for processing', { jobId });
+      return {
         success: true,
-        timestamp: new Date().toISOString(),
+        timestamp,
         totalProcessed: 0,
         successful: 0,
         failed: 0,
         details: [],
-        isDryRun,
-        message: 'No messages ready for processing'
-      });
+        isDryRun: dryRun,
+        message: 'No messages ready for processing',
+        jobId,
+        processingTimeMs: Date.now() - processingStartTime.getTime()
+      };
     }
 
-    logger.api(`Found ${readyMessages.length} scheduled messages ready for processing${isDryRun ? ' (DRY RUN)' : ''}`);
+    logger.api(`Found ${readyMessages.length} scheduled messages ready for processing${dryRun ? ' (DRY RUN)' : ''}`, { jobId });
 
     // If dry run, just return what would be processed
-    if (isDryRun) {
+    if (dryRun) {
       const dryRunDetails = readyMessages.map(message => ({
         messageId: message.id,
+        status: 'would_process',
+        recipientCount: message.recipient_count || 0,
         eventId: message.event_id,
         sendAt: message.send_at,
         content: message.content.substring(0, 50) + (message.content.length > 50 ? '...' : ''),
-        recipientCount: message.recipient_count,
         scheduledTz: message.scheduled_tz,
         scheduledLocal: message.scheduled_local
       }));
 
-      return NextResponse.json({
+      return {
         success: true,
-        timestamp: new Date().toISOString(),
+        timestamp,
         totalProcessed: 0,
         successful: 0,
         failed: 0,
         details: dryRunDetails,
         isDryRun: true,
-        message: `Would process ${readyMessages.length} scheduled messages`
-      });
+        message: `Would process ${readyMessages.length} scheduled messages`,
+        jobId,
+        processingTimeMs: Date.now() - processingStartTime.getTime()
+      };
     }
 
     // Process each message
@@ -161,6 +170,7 @@ export async function POST(request: NextRequest) {
             content: message.content,
             message_type: message.message_type as Database['public']['Enums']['message_type_enum'],
             sender_user_id: message.sender_user_id,
+            scheduled_message_id: message.id, // Link to the scheduled message
             created_at: new Date().toISOString()
           })
           .select('id')
@@ -172,7 +182,7 @@ export async function POST(request: NextRequest) {
         }
 
         messageRecord = createdMessage;
-        logger.api(`Created message record ${messageRecord.id} for scheduled message ${message.id}`);
+        logger.api(`Created message record ${messageRecord.id} for scheduled message ${message.id}`, { jobId });
 
         // Send SMS if enabled
         if (message.send_via_sms && resolvedRecipients.length > 0) {
@@ -205,22 +215,17 @@ export async function POST(request: NextRequest) {
               });
 
               if (error) {
-                logger.apiError('Error upserting delivery record for scheduled message', {
-                  error,
-                  messageId: messageRecord.id,
-                  guestId: guest.id,
-                  scheduledMessageId: message.id
-                });
+                logger.apiError('Error upserting delivery record for scheduled message', error, `jobId:${jobId} messageId:${messageRecord.id} guestId:${guest.id} scheduledMessageId:${message.id}`);
                 return null;
               } else {
-                logger.api(`Scheduled delivery upserted: ${deliveryId}`);
+                logger.api(`Scheduled delivery upserted: ${deliveryId}`, { jobId });
                 return deliveryId;
               }
             });
 
             const upsertResults = await Promise.all(upsertPromises);
             const successCount = upsertResults.filter(id => id !== null).length;
-            logger.api(`Upserted ${successCount}/${resolvedRecipients.length} delivery records for scheduled message ${messageRecord.id}`);
+            logger.api(`Upserted ${successCount}/${resolvedRecipients.length} delivery records for scheduled message ${messageRecord.id}`, { jobId });
           }
         }
 
@@ -229,7 +234,7 @@ export async function POST(request: NextRequest) {
         if (message.send_via_push && resolvedRecipients.length > 0) {
           // TODO: Implement push notification delivery
           pushDelivered = resolvedRecipients.length;
-          logger.api(`Push notifications would be sent to ${resolvedRecipients.length} guests`);
+          logger.api(`Push notifications would be sent to ${resolvedRecipients.length} guests`, { jobId });
         }
 
         const totalDelivered = smsDelivered + pushDelivered;
@@ -263,7 +268,7 @@ export async function POST(request: NextRequest) {
           failedCount++;
         }
 
-        logger.api(`Processed scheduled message ${message.id}: ${finalStatus}, delivered: ${totalDelivered}, failed: ${totalFailed}`);
+        logger.api(`Processed scheduled message ${message.id}: ${finalStatus}, delivered: ${totalDelivered}, failed: ${totalFailed}`, { jobId });
 
       } catch (messageError) {
         // Mark message as failed
@@ -287,29 +292,136 @@ export async function POST(request: NextRequest) {
         });
 
         failedCount++;
-        logger.apiError(`Failed to process scheduled message ${message.id}`, messageError);
+        logger.apiError(`Failed to process scheduled message ${message.id}`, messageError, jobId);
       }
     }
 
     const processingEndTime = new Date();
     const processingDuration = processingEndTime.getTime() - processingStartTime.getTime();
 
-    logger.api(`Scheduled message processing completed: ${processedCount} processed, ${successfulCount} successful, ${failedCount} failed`);
+    logger.api(`Scheduled message processing completed: ${processedCount} processed, ${successfulCount} successful, ${failedCount} failed`, { 
+      jobId, 
+      processingTimeMs: processingDuration 
+    });
 
-    return NextResponse.json({
+    return {
       success: true,
-      timestamp: new Date().toISOString(),
+      timestamp,
       totalProcessed: processedCount,
       successful: successfulCount,
       failed: failedCount,
       details: processingDetails,
       processingTimeMs: processingDuration,
       isDryRun: false,
-      message: `Processed ${processedCount} scheduled messages: ${successfulCount} successful, ${failedCount} failed`
+      message: `Processed ${processedCount} scheduled messages: ${successfulCount} successful, ${failedCount} failed`,
+      jobId
+    };
+
+  } catch (error) {
+    logger.apiError('Error processing scheduled messages', error, jobId);
+    
+    return {
+      success: false,
+      timestamp,
+      totalProcessed: processedCount,
+      successful: successfulCount,
+      failed: failedCount,
+      details: processingDetails,
+      isDryRun: dryRun,
+      message: error instanceof Error ? error.message : 'Unknown error',
+      jobId,
+      processingTimeMs: Date.now() - processingStartTime.getTime()
+    };
+  }
+}
+
+/**
+ * Helper function to generate job ID for tracking
+ */
+function generateJobId(): string {
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).substring(2, 8);
+  return `job_${timestamp}_${random}`;
+}
+
+/**
+ * Helper function to check if request is authorized
+ */
+function isRequestAuthorized(request: NextRequest): boolean {
+  const authHeader = request.headers.get('authorization');
+  const cronHeader = request.headers.get('x-cron-key');
+  const vercelCronHeader = request.headers.get('x-vercel-cron-signature');
+  const cronSecret = process.env.CRON_SECRET;
+
+  // Accept Bearer token, X-CRON-KEY header, or Vercel cron signature
+  return Boolean(
+    (cronSecret && authHeader === `Bearer ${cronSecret}`) ||
+    (cronSecret && cronHeader === cronSecret) ||
+    vercelCronHeader // Vercel automatically adds this header for cron requests
+  );
+}
+
+/**
+ * Helper function to detect if request is from Vercel cron
+ */
+function isCronRequest(request: NextRequest): boolean {
+  const vercelCronHeader = request.headers.get('x-vercel-cron-signature');
+  const vercelCronHeader2 = request.headers.get('x-vercel-cron'); // Alternative header name
+  const userAgent = request.headers.get('user-agent');
+  const cronHeader = request.headers.get('x-cron-key');
+  
+  // Check multiple possible cron indicators
+  const hasVercelCronHeader = !!(vercelCronHeader || vercelCronHeader2);
+  const hasVercelUserAgent = userAgent?.includes('vercel') || userAgent?.includes('cron');
+  const hasCronKey = !!cronHeader;
+  
+  // More permissive detection - if any cron indicator is present
+  return hasVercelCronHeader || hasVercelUserAgent || hasCronKey;
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    // Check for dry-run mode
+    const url = new URL(request.url);
+    const isDryRun = url.searchParams.get('dryRun') === '1' || url.searchParams.get('dryRun') === 'true';
+    const jobId = generateJobId();
+    
+    logger.api(`Processing scheduled messages API called${isDryRun ? ' (DRY RUN)' : ''}`, { jobId });
+
+    // Verify the request is authorized (internal calls only)
+    if (!isRequestAuthorized(request)) {
+      const authHeader = request.headers.get('authorization');
+      const cronHeader = request.headers.get('x-cron-key');
+      const vercelCronHeader = request.headers.get('x-vercel-cron-signature');
+      const cronSecret = process.env.CRON_SECRET;
+
+      logger.api('Unauthorized request to scheduled messages processor', {
+        hasAuthHeader: !!authHeader,
+        hasCronHeader: !!cronHeader,
+        hasVercelCronHeader: !!vercelCronHeader,
+        hasCronSecret: !!cronSecret,
+        isDryRun,
+        jobId
+      });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Get rate limit from environment
+    const maxMessages = parseInt(process.env.SCHEDULED_MAX_PER_TICK || '100', 10);
+
+    // Process messages using shared logic
+    const result = await processDueScheduledMessages({
+      dryRun: isDryRun,
+      maxMessages,
+      jobId
+    });
+
+    return NextResponse.json(result, { 
+      status: result.success ? 200 : 500 
     });
 
   } catch (error) {
-    logger.apiError('Error processing scheduled messages', error);
+    logger.apiError('Error in POST handler for scheduled messages', error);
     
     return NextResponse.json(
       {
@@ -486,11 +598,129 @@ async function resolveScheduledMessageRecipients(
   }
 }
 
-// Also support GET for status checks
-export async function GET() {
+// Support GET for both status checks and cron processing
+export async function GET(request: NextRequest) {
   try {
-    logger.api('Scheduled messages status check');
+    const url = new URL(request.url);
+    const isHealthCheck = url.searchParams.get('health') === '1';
+    const isStatusOnly = url.searchParams.get('status') === '1';
+    const isCron = isCronRequest(request);
+    const cronMode = url.searchParams.get('mode') === 'cron';
+    
+    // SIMPLIFIED LOGIC: Process by default unless explicitly requesting status only
+    // This ensures Vercel cron always triggers processing regardless of headers
+    const shouldProcess = !isHealthCheck && !isStatusOnly;
 
+    // Health check endpoint (lightweight, no DB writes)
+    if (isHealthCheck) {
+      // TODO: Store last run info in cache/memory for health checks
+      return NextResponse.json({
+        ok: true,
+        timestamp: new Date().toISOString(),
+        lastRunAt: null, // TODO: Implement last run tracking
+        lastResult: null // TODO: Implement last result caching
+      });
+    }
+
+    // If processing is requested, perform it
+    if (shouldProcess) {
+      // Require authentication for processing
+      if (!isRequestAuthorized(request)) {
+        logger.api('Unauthorized processing request to scheduled messages', {
+          isCron,
+          cronMode,
+          isStatusOnly,
+          hasVercelSignature: !!request.headers.get('x-vercel-cron-signature'),
+          hasCronKey: !!request.headers.get('x-cron-key'),
+          userAgent: request.headers.get('user-agent')
+        });
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+
+      const jobId = generateJobId();
+      logger.api('GET-triggered scheduled message processing', { jobId, isCron, cronMode, isStatusOnly });
+
+      // Get rate limit from environment
+      const maxMessages = parseInt(process.env.SCHEDULED_MAX_PER_TICK || '100', 10);
+
+      // Add small jitter to reduce overlapping cron invocations (±10s)
+      const jitter = Math.floor(Math.random() * 20000) - 10000; // -10s to +10s in ms
+      if (jitter > 0) {
+        logger.api(`Adding ${jitter}ms jitter to reduce overlap`, { jobId });
+        await new Promise(resolve => setTimeout(resolve, jitter));
+      }
+
+      // Process messages using shared logic (never dry run for cron)
+      const result = await processDueScheduledMessages({
+        dryRun: false,
+        maxMessages,
+        jobId
+      });
+
+      logger.api('Cron processing completed', { 
+        jobId, 
+        totalProcessed: result.totalProcessed,
+        successful: result.successful,
+        failed: result.failed,
+        processingTimeMs: result.processingTimeMs
+      });
+
+      return NextResponse.json(result, { 
+        status: result.success ? 200 : 500 
+      });
+    }
+
+    // Status check behavior (explicit status requests only)
+    logger.api('Scheduled messages status check', { isStatusOnly, isCron, cronMode });
+
+    // Note: With new logic, GET requests without ?status=1 will attempt processing
+    // This ensures Vercel cron always triggers processing regardless of headers
+
+    // In development, provide diagnostic information for status checks
+    if (process.env.NODE_ENV !== 'production') {
+      const cronSecret = process.env.CRON_SECRET;
+      
+      // Check for pending scheduled messages (no processing)
+      const { data: pendingMessages } = await supabase
+        .rpc('get_scheduled_messages_for_processing', {
+          p_limit: 10,
+          p_current_time: new Date().toISOString()
+        });
+
+      return NextResponse.json({
+        success: true,
+        timestamp: new Date().toISOString(),
+        environment: 'development',
+        diagnostics: {
+          utcNow: new Date().toISOString(),
+          hasCronSecret: !!cronSecret,
+          cronSecretLength: cronSecret?.length || 0,
+          pendingMessagesCount: pendingMessages?.length || 0,
+          pendingMessages: pendingMessages?.map(msg => ({
+            id: msg.id,
+            sendAt: msg.send_at,
+            status: msg.status,
+            recipientCount: msg.recipient_count
+          })) || [],
+          requestInfo: {
+            isCron,
+            cronMode,
+            isHealthCheck,
+            shouldProcess,
+            userAgent: request.headers.get('user-agent'),
+            hasVercelSignature: !!request.headers.get('x-vercel-cron-signature')
+          }
+        },
+        stats: {
+          pending: pendingMessages?.length || 0,
+          processed: 0,
+          failed: 0,
+          message: 'Development diagnostic endpoint'
+        },
+      });
+    }
+
+    // Production status response (minimal)
     return NextResponse.json({
       success: true,
       timestamp: new Date().toISOString(),
@@ -502,7 +732,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    logger.apiError('Error getting processing stats', error);
+    logger.apiError('Error in GET handler for scheduled messages', error);
     
     return NextResponse.json(
       {

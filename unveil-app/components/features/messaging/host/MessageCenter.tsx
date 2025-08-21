@@ -86,8 +86,8 @@ export function MessageCenter({ eventId, className, preselectionPreset, preselec
         </button>
       </div>
 
-      {/* Content */}
-      {activeView === 'compose' ? (
+      {/* Content - Keep both mounted to prevent state loss */}
+      <div style={{ display: activeView === 'compose' ? 'block' : 'none' }}>
         <MessageComposer
           eventId={eventId}
           onMessageSent={handleMessageSent}
@@ -96,12 +96,13 @@ export function MessageCenter({ eventId, className, preselectionPreset, preselec
           preselectionPreset={preselectionPreset}
           preselectedGuestIds={preselectedGuestIds}
         />
-      ) : (
+      </div>
+      <div style={{ display: activeView === 'history' ? 'block' : 'none' }}>
         <RecentMessages
           messages={messages || []}
           eventId={eventId}
         />
-      )}
+      </div>
     </div>
   );
 } 
