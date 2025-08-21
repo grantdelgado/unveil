@@ -118,6 +118,10 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="Unveil" />
+        
+        {/* Explicit Apple touch icons for better iOS compatibility */}
+        <link rel="apple-touch-icon" href="/apple-icon.png?v=1755746392" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-icon.png?v=1755746392" />
         <meta name="msapplication-TileColor" content="#E15B50" />
         <meta name="msapplication-config" content="/icons/browserconfig.xml" />
         <meta name="theme-color" content="#E15B50" />
