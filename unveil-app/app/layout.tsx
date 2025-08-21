@@ -48,7 +48,7 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  manifest: '/manifest.json',
+  manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -85,16 +85,10 @@ export const metadata: Metadata = {
     images: ['/icons/twitter-image.png'],
   },
   icons: {
-    icon: [
-      { url: '/icons/icon-32x32.png', sizes: '32x32', type: 'image/png' },
-      { url: '/icons/icon-96x96.png', sizes: '96x96', type: 'image/png' },
-      { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
-    ],
-    apple: [
-      { url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
-    ],
+    icon: '/icon.png',        // served from app/icon.png
+    apple: '/apple-icon.png', // served from app/apple-icon.png
     other: [
-      { rel: 'mask-icon', url: '/icons/safari-pinned-tab.svg', color: '#ff89a6' },
+      { rel: 'mask-icon', url: '/icons/safari-pinned-tab.svg', color: '#E15B50' },
     ],
   },
 };
@@ -104,7 +98,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: '#ff89a6',
+  themeColor: '#E15B50',
   colorScheme: 'light',
   viewportFit: 'cover',
 };
@@ -118,15 +112,15 @@ export default function RootLayout({
     <html lang="en">
       <head>
         {/* PWA and mobile optimizations */}
-        <link rel="manifest" href="/manifest.json" />
+        <link rel="manifest" href="/manifest.webmanifest" />
         <meta name="application-name" content="Unveil" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="Unveil" />
-        <meta name="msapplication-TileColor" content="#ff89a6" />
+        <meta name="msapplication-TileColor" content="#E15B50" />
         <meta name="msapplication-config" content="/icons/browserconfig.xml" />
-        <meta name="theme-color" content="#ff89a6" />
+        <meta name="theme-color" content="#E15B50" />
         
         {/* Preload critical resources */}
         <link rel="dns-prefetch" href="//wvhtbqvnamerdkkjknuv.supabase.co" />

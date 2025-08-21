@@ -1,0 +1,97 @@
+{
+  "name": "Unveil Wedding App",
+  "short_name": "Unveil",
+  "description": "Your wedding memories, beautifully preserved and shared",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fdfffc",
+  "theme_color": "#ff89a6",
+  "orientation": "portrait-primary",
+  "categories": ["lifestyle", "social", "photography"],
+  "lang": "en-US",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Upload Photos",
+      "short_name": "Upload",
+      "description": "Share your wedding photos",
+      "url": "/upload",
+      "icons": [{ "src": "/icons/upload-96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "View Gallery",
+      "short_name": "Gallery",
+      "description": "Browse wedding memories",
+      "url": "/gallery",
+      "icons": [{ "src": "/icons/gallery-96x96.png", "sizes": "96x96" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/desktop-home.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "platform": "wide",
+      "label": "Unveil wedding app home screen"
+    },
+    {
+      "src": "/screenshots/mobile-gallery.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "platform": "narrow",
+      "label": "Wedding photo gallery on mobile"
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+} 
