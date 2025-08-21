@@ -10,7 +10,7 @@ import { MessageCircle, ChevronDown } from 'lucide-react';
 // MVP: Logger removed - no error handling needed for read-only component
 import { useGuestMessagesRPC } from '@/hooks/messaging/useGuestMessagesRPC';
 import { useGuestSMSStatus } from '@/hooks/messaging/useGuestSMSStatus';
-import { MessageDebugOverlay } from '@/components/dev/MessageDebugOverlay';
+
 
 // Types - using hook's MessageWithDelivery type directly
 
@@ -417,12 +417,7 @@ export function GuestMessaging({ eventId, currentUserId, guestId }: GuestMessagi
         </div>
       </div>
 
-      {/* Debug overlay for development */}
-      <MessageDebugOverlay 
-        eventId={eventId}
-        userId={currentUserId}
-        guestId={guestId}
-      />
+
       
       {/* Accessibility: Screen reader announcements for new messages */}
       <div 

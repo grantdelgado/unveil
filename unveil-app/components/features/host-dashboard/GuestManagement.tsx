@@ -130,8 +130,9 @@ function GuestManagementContent({
   useEffect(() => {
     const handleGuestDataRefresh = (event: CustomEvent) => {
       if (event.detail?.eventId === eventId) {
-        // Trigger refresh of guest data
+        // Trigger refresh of both guest data and counts
         refreshGuests();
+        refreshCounts(); // CRITICAL: Also refresh unified counts for Send Invitations button
       }
     };
 
@@ -140,7 +141,7 @@ function GuestManagementContent({
     return () => {
       window.removeEventListener('guestDataRefresh', handleGuestDataRefresh as EventListener);
     };
-  }, [eventId, refreshGuests]);
+  }, [eventId, refreshGuests, refreshCounts]);
 
   // Helper function to extract first name from display name
   const getFirstName = useCallback((guest: typeof guests[0]) => {

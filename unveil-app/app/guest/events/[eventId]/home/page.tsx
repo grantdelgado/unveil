@@ -527,12 +527,7 @@ export default function GuestEventHomePage() {
 
       </MobileShell>
       
-      {/* Debug Panel - Only in development */}
-      {process.env.NODE_ENV === 'development' && (
-        <div>
-          {/* Debug panel loaded dynamically in development only */}
-        </div>
-      )}
+
     </ErrorBoundary>
   );
 }

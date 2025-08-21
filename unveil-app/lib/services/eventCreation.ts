@@ -11,6 +11,7 @@ export interface EventCreationInput {
   location?: string;
   is_public: boolean;
   header_image?: File;
+  creation_key?: string; // Idempotency key to prevent duplicate events
 }
 
 export interface EventCreationResult {
@@ -21,6 +22,7 @@ export interface EventCreationResult {
     host_user_id: string;
     created_at: string;
     header_image_url?: string;
+    operation?: 'created' | 'returned_existing'; // Indicates if event was created or returned due to idempotency
   };
   error?: {
     code: string;
@@ -92,12 +94,16 @@ export class EventCreationService {
     userId: string
   ): Promise<EventCreationResult> {
     const operationId = `event-creation-${Date.now()}`;
+    // Generate idempotency key if not provided
+    const creationKey = input.creation_key || crypto.randomUUID();
     
     try {
       logger.info('Starting event creation', { 
         operationId, 
         userId, 
-        title: input.title 
+        title: input.title,
+        creationKey,
+        isRetry: !!input.creation_key // Log if this is a retry with existing key
       });
 
       // Step 1: Validate user session
@@ -130,8 +136,8 @@ export class EventCreationService {
         headerImageUrl = imageResult.url || null;
       }
 
-      // Step 3: Attempt atomic event creation with host guest
-      const creationResult = await this.createEventAtomic(input, userId, headerImageUrl);
+      // Step 3: Attempt atomic event creation with host guest using idempotency key
+      const creationResult = await this.createEventAtomic(input, userId, headerImageUrl, creationKey);
       
       if (!creationResult.success) {
         // Cleanup uploaded image if event creation failed
@@ -143,7 +149,9 @@ export class EventCreationService {
 
       logger.info('Event creation completed successfully', {
         operationId,
-        eventId: creationResult.data?.event_id
+        eventId: creationResult.data?.event_id,
+        operation: creationResult.data?.operation,
+        creationKey
       });
 
       return creationResult;
@@ -246,12 +254,13 @@ export class EventCreationService {
   private static async createEventAtomic(
     input: EventCreationInput,
     userId: string,
-    headerImageUrl: string | null
+    headerImageUrl: string | null,
+    creationKey: string
   ): Promise<EventCreationResult> {
     
     // Try using database function for true atomicity first
     try {
-      const atomicResult = await this.createEventWithRPC(input, userId, headerImageUrl);
+      const atomicResult = await this.createEventWithRPC(input, userId, headerImageUrl, creationKey);
       if (atomicResult.success) {
         return atomicResult;
       }
@@ -262,7 +271,7 @@ export class EventCreationService {
     }
 
     // Client-side transaction simulation with rollback
-    return await this.createEventClientSide(input, userId, headerImageUrl);
+    return await this.createEventClientSide(input, userId, headerImageUrl, creationKey);
   }
 
   /**
@@ -271,7 +280,8 @@ export class EventCreationService {
   private static async createEventWithRPC(
     input: EventCreationInput,
     userId: string,
-    headerImageUrl: string | null
+    headerImageUrl: string | null,
+    creationKey: string
   ): Promise<EventCreationResult> {
     
     // Prepare event data
@@ -279,10 +289,10 @@ export class EventCreationService {
       title: input.title.trim(),
       event_date: input.event_date,
       location: input.location?.trim() || null,
-
       header_image_url: headerImageUrl,
       host_user_id: userId,
       is_public: input.is_public,
+      creation_key: creationKey,
     };
 
     // Try to call database function (if it exists)
@@ -296,7 +306,13 @@ export class EventCreationService {
     }
 
     // Type the response from our custom function
-    const atomicResult = data as { success: boolean; event_id?: string; created_at?: string; error_message?: string };
+    const atomicResult = data as { 
+      success: boolean; 
+      event_id?: string; 
+      created_at?: string; 
+      error_message?: string;
+      operation?: 'created' | 'returned_existing';
+    };
 
     if (atomicResult && atomicResult.success) {
       return {
@@ -306,7 +322,8 @@ export class EventCreationService {
           title: eventData.title,
           host_user_id: userId,
           created_at: atomicResult.created_at!,
-          header_image_url: headerImageUrl || undefined
+          header_image_url: headerImageUrl || undefined,
+          operation: atomicResult.operation || 'created'
         }
       };
     }
@@ -320,18 +337,41 @@ export class EventCreationService {
   private static async createEventClientSide(
     input: EventCreationInput,
     userId: string,
-    headerImageUrl: string | null
+    headerImageUrl: string | null,
+    creationKey: string
   ): Promise<EventCreationResult> {
     
     let createdEventId: string | null = null;
 
     try {
-      // Step 1: Create event record
+      // Step 1: Check for existing event with same creation_key (idempotency)
+      const { data: existingEvent } = await supabase
+        .from('events')
+        .select('id, title, host_user_id, created_at')
+        .eq('creation_key', creationKey)
+        .eq('host_user_id', userId)
+        .single();
+
+      if (existingEvent) {
+        // Return existing event (idempotency)
+        return {
+          success: true,
+          data: {
+            event_id: existingEvent.id,
+            title: existingEvent.title,
+            host_user_id: existingEvent.host_user_id,
+            created_at: existingEvent.created_at || new Date().toISOString(),
+            header_image_url: headerImageUrl || undefined,
+            operation: 'returned_existing'
+          }
+        };
+      }
+
+      // Step 2: Create event record
       const eventData: EventInsert = {
         title: input.title.trim(),
         event_date: input.event_date,
         location: input.location?.trim() || null,
-  
         header_image_url: headerImageUrl,
         host_user_id: userId,
         is_public: input.is_public,
@@ -366,7 +406,7 @@ export class EventCreationService {
 
       createdEventId = newEvent.id;
 
-      // Step 2: Create host guest entry
+      // Step 3: Create host guest entry
       const hostProfile = await this.getHostProfile(userId);
       const hostGuestResult = await this.createHostGuestEntry(newEvent.id, userId, hostProfile);
 
@@ -397,7 +437,8 @@ export class EventCreationService {
           title: newEvent.title,
           host_user_id: newEvent.host_user_id,
           created_at: newEvent.created_at || new Date().toISOString(),
-          header_image_url: headerImageUrl || undefined
+          header_image_url: headerImageUrl || undefined,
+          operation: 'created'
         }
       };
 

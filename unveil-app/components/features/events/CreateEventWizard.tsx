@@ -58,6 +58,8 @@ export default function CreateEventWizard() {
   
   // Double-submission protection
   const submissionInProgressRef = useRef(false);
+  // Idempotency key for server-side duplicate prevention
+  const creationKeyRef = useRef<string | null>(null);
 
   // Update form data
   const updateFormData = useCallback((field: keyof EventFormData, value: string | boolean) => {
@@ -152,6 +154,11 @@ export default function CreateEventWizard() {
     setIsLoading(true);
     setFormMessage('');
     
+    // Generate idempotency key if not already set (for retries)
+    if (!creationKeyRef.current) {
+      creationKeyRef.current = crypto.randomUUID();
+    }
+    
     try {
       // Get current user session
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -169,6 +176,7 @@ export default function CreateEventWizard() {
         location: formData.location || undefined,
         is_public: formData.is_public,
         header_image: headerImage || undefined,
+        creation_key: creationKeyRef.current, // Include idempotency key
       };
       
       // Call centralized service
@@ -190,7 +198,12 @@ export default function CreateEventWizard() {
       }
       
       // Success!
-      setFormMessage('Wedding hub created successfully!');
+      const isExistingEvent = result.data?.operation === 'returned_existing';
+      setFormMessage(
+        isExistingEvent 
+          ? 'Wedding hub found (already created)!' 
+          : 'Wedding hub created successfully!'
+      );
       
       // Navigate to event dashboard
       setTimeout(() => {

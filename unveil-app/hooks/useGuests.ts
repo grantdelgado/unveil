@@ -64,7 +64,10 @@ export function useGuests(eventId?: string): UseGuestsReturn {
       return data;
     },
     onSuccess: (_, variables) => {
+      // Invalidate guest queries to refresh guest lists and counts
       queryClient.invalidateQueries({ queryKey: ['guests', variables.event_id] });
+      queryClient.invalidateQueries({ queryKey: ['guest-counts', variables.event_id] });
+      queryClient.invalidateQueries({ queryKey: ['unified-guest-counts', variables.event_id] });
     },
   });
 
@@ -165,7 +168,11 @@ export function useGuests(eventId?: string): UseGuestsReturn {
       return results;
     },
     onSuccess: (_, variables) => {
+      // Invalidate guest queries to refresh guest lists
       queryClient.invalidateQueries({ queryKey: ['guests', variables.eventId] });
+      // Also invalidate any guest counts queries that might exist
+      queryClient.invalidateQueries({ queryKey: ['guest-counts', variables.eventId] });
+      queryClient.invalidateQueries({ queryKey: ['unified-guest-counts', variables.eventId] });
     },
   });
 

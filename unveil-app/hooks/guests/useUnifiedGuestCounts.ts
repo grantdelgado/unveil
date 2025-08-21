@@ -5,7 +5,7 @@
  * and Guest Management to ensure consistency.
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase/client';
 import { logger } from '@/lib/logger';
 
@@ -26,47 +26,27 @@ interface UseUnifiedGuestCountsReturn {
 
 /**
  * Hook that provides unified guest counts for an event
- * Uses the get_event_guest_counts RPC to ensure consistency
+ * Uses React Query with the get_event_guest_counts RPC to ensure consistency
+ * and automatic invalidation when guests are added/removed
  */
 export function useUnifiedGuestCounts(eventId: string): UseUnifiedGuestCountsReturn {
-  const [counts, setCounts] = useState<UnifiedGuestCounts>({
-    total_guests: 0,
-    total_invited: 0,
-    attending: 0,
-    declined: 0,
-    not_invited: 0,
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  
-  // TODO(grant): Add memoization to prevent recursive guest count fetches
-  const fetchInFlightRef = useRef(false);
-  const lastFetchTimeRef = useRef(0);
-  const STALE_TIME = 30000; // 30 seconds stale time
+  const queryClient = useQueryClient();
 
-  const fetchCounts = useCallback(async () => {
-    if (!eventId) {
-      logger.warn('useUnifiedGuestCounts: No eventId provided');
-      return;
-    }
+  const { data: counts, isLoading: loading, error, refetch } = useQuery({
+    queryKey: ['unified-guest-counts', eventId],
+    queryFn: async (): Promise<UnifiedGuestCounts> => {
+      if (!eventId) {
+        logger.warn('useUnifiedGuestCounts: No eventId provided');
+        return {
+          total_guests: 0,
+          total_invited: 0,
+          attending: 0,
+          declined: 0,
+          not_invited: 0,
+        };
+      }
 
-    // TODO(grant): Prevent duplicate fetches and implement stale-while-revalidate pattern
-    const now = Date.now();
-    const timeSinceLastFetch = now - lastFetchTimeRef.current;
-    
-    if (fetchInFlightRef.current) {
-      return; // Fetch already in progress
-    }
-    
-    if (timeSinceLastFetch < STALE_TIME && counts.total_guests > 0) {
-      return; // Data is still fresh
-    }
-
-    try {
-      fetchInFlightRef.current = true;
-      setLoading(true);
-      setError(null);
-      lastFetchTimeRef.current = now;
+      logger.info('Fetching unified guest counts', { eventId });
 
       const { data, error: rpcError } = await supabase
         .rpc('get_event_guest_counts', { p_event_id: eventId });
@@ -77,50 +57,51 @@ export function useUnifiedGuestCounts(eventId: string): UseUnifiedGuestCountsRet
 
       if (data && Array.isArray(data) && data.length > 0) {
         const result = data[0];
-        setCounts({
+        const counts = {
           total_guests: result.total_guests || 0,
           total_invited: result.total_invited || 0,
           attending: result.attending || 0,
           declined: result.declined || 0,
           not_invited: result.not_invited || 0,
+        };
+
+        logger.info('Successfully fetched unified guest counts', { 
+          eventId, 
+          counts
         });
+
+        return counts;
       } else {
         // No data returned, set all to 0
-        setCounts({
+        logger.info('No guest count data returned, defaulting to zeros', { eventId });
+        return {
           total_guests: 0,
           total_invited: 0,
           attending: 0,
           declined: 0,
           not_invited: 0,
-        });
+        };
       }
+    },
+    enabled: !!eventId,
+    staleTime: 30000, // 30 seconds stale time
+    gcTime: 5 * 60 * 1000, // 5 minutes garbage collection time
+  });
 
-      logger.info('Successfully fetched unified guest counts', { 
-        eventId, 
-        counts: Array.isArray(data) ? data[0] : null
-      });
-
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-      logger.error('Error fetching unified guest counts', { eventId, error: errorMessage });
-      
-      setError(errorMessage);
-      // Keep previous counts on error rather than resetting to 0
-    } finally {
-      fetchInFlightRef.current = false;
-      setLoading(false);
-    }
-  }, [eventId, counts.total_guests]); // TODO(grant): Added counts.total_guests to dependency for stale-time check
-
-  // Initial fetch on mount and when eventId changes
-  useEffect(() => {
-    fetchCounts();
-  }, [fetchCounts]);
+  const refresh = async () => {
+    await refetch();
+  };
 
   return {
-    counts,
+    counts: counts || {
+      total_guests: 0,
+      total_invited: 0,
+      attending: 0,
+      declined: 0,
+      not_invited: 0,
+    },
     loading,
-    error,
-    refresh: fetchCounts,
+    error: error ? (error as Error).message : null,
+    refresh,
   };
 }

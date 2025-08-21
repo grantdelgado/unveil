@@ -213,6 +213,8 @@ export function GuestImportWizard({
         const qc = queryClient as { invalidateQueries: (options: { queryKey: string[] }) => void };
         qc.invalidateQueries({ queryKey: ['events'] });
         qc.invalidateQueries({ queryKey: ['user-events'] });
+        // CRITICAL: Also invalidate unified guest counts for immediate "Send Invitations" button refresh
+        qc.invalidateQueries({ queryKey: ['unified-guest-counts', eventId] });
       }
 
       // Complete the import first, then send SMS invitations asynchronously
