@@ -8,6 +8,7 @@ import { APP_CONFIG } from '@/lib/constants';
 import { Suspense } from 'react';
 import { PerformanceMonitor } from '@/components/monitoring/PerformanceMonitor';
 import { AuthProvider } from '@/lib/auth/AuthProvider';
+import { DevToolsGate } from '@/lib/dev/DevToolsGate';
 
 // Load auth debug utilities in development
 if (process.env.NODE_ENV === 'development') {
@@ -134,8 +135,10 @@ export default function RootLayout({
           <AuthProvider>
             <ErrorBoundary>
               <PerformanceMonitor>
-                <Suspense>
-                  {children}
+                <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+                  <DevToolsGate>
+                    {children}
+                  </DevToolsGate>
                 </Suspense>
               </PerformanceMonitor>
             </ErrorBoundary>
