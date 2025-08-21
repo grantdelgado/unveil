@@ -2,10 +2,7 @@
   "crons": [
     {
       "path": "/api/messages/process-scheduled",
-      "schedule": "*/1 * * * *",
-      "headers": {
-        "x-cron-key": "${CRON_SECRET}"
-      }
+      "schedule": "*/1 * * * *"
     }
   ]
 }

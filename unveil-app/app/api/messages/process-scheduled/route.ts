@@ -16,18 +16,21 @@ export async function POST(request: NextRequest) {
     // Verify the request is authorized (internal calls only)
     const authHeader = request.headers.get('authorization');
     const cronHeader = request.headers.get('x-cron-key');
+    const vercelCronHeader = request.headers.get('x-vercel-cron-signature');
     const cronSecret = process.env.CRON_SECRET;
 
-    // Accept either Bearer token or X-CRON-KEY header
-    const isAuthorized = cronSecret && (
-      authHeader === `Bearer ${cronSecret}` || 
-      cronHeader === cronSecret
+    // Accept Bearer token, X-CRON-KEY header, or Vercel cron signature
+    const isAuthorized = (
+      (cronSecret && authHeader === `Bearer ${cronSecret}`) ||
+      (cronSecret && cronHeader === cronSecret) ||
+      (vercelCronHeader) // Vercel automatically adds this header for cron requests
     );
 
     if (!isAuthorized) {
       logger.api('Unauthorized request to scheduled messages processor', {
         hasAuthHeader: !!authHeader,
         hasCronHeader: !!cronHeader,
+        hasVercelCronHeader: !!vercelCronHeader,
         hasCronSecret: !!cronSecret,
         isDryRun
       });
