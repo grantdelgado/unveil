@@ -71,7 +71,7 @@ export const OTPStep: React.FC<OTPStepProps> = ({
 
       <div className="mt-6">
         <MicroCopy>
-          Code will verify automatically when entered. Didn&apos;t receive it? Wait 60 seconds and try again.
+          Code will verify automatically when entered. Didn&apos;t receive it? Wait 30 seconds and try again.
         </MicroCopy>
       </div>
     </>

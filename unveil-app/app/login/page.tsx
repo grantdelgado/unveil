@@ -20,6 +20,7 @@ import {
 } from '@/components/ui';
 import { UnveilHeader, AuthCard } from '@/components/shared';
 import { ModernOTPInput } from '@/components/features/auth/ModernOTPInput';
+import { ResendOTPButton } from '@/components/features/auth/ResendOTPButton';
 import { MobileShell } from '@/components/layout';
 
 // Login flow steps
@@ -32,6 +33,7 @@ export default function LoginPage() {
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [resendMessage, setResendMessage] = useState('');
   const { handlePostAuthRedirect } = usePostAuthRedirect();
   
   // Extract phone from return URL if available (for pre-filling)
@@ -148,6 +150,19 @@ export default function LoginPage() {
     setStep('phone');
     setOtp('');
     setError('');
+    setResendMessage('');
+  };
+
+  const handleResendSuccess = () => {
+    setError(''); // Clear any existing errors
+    setResendMessage('Code resent. Check your messages.');
+    // Clear the success message after 5 seconds
+    setTimeout(() => setResendMessage(''), 5000);
+  };
+
+  const handleResendError = (errorMessage: string) => {
+    setResendMessage('');
+    setError(errorMessage);
   };
 
   const handlePhoneChange = (value: string) => {
@@ -158,8 +173,9 @@ export default function LoginPage() {
 
   const handleOtpChange = (value: string) => {
     setOtp(value);
-    // Clear error when user starts typing
+    // Clear error and resend message when user starts typing
     if (error) setError('');
+    if (resendMessage) setResendMessage('');
   };
 
   // Handle OTP completion (auto-submit when 6 digits entered)
@@ -303,8 +319,16 @@ export default function LoginPage() {
                   loading={loading}
                   className="w-full sm:w-full"
                 >
-                  Verify Code
+                  {loading ? 'Verifying...' : 'Verify Code'}
                 </PrimaryButton>
+
+                <ResendOTPButton
+                  phone={phone}
+                  disabled={loading}
+                  onResendSuccess={handleResendSuccess}
+                  onResendError={handleResendError}
+                  className="w-full sm:w-full"
+                />
 
                 <SecondaryButton
                   type="button"
@@ -318,12 +342,22 @@ export default function LoginPage() {
             </form>
           )}
 
-          {/* Enhanced Microcopy */}
-          <div className="mt-6 sm:mt-8">
+          {/* Success/Info Messages */}
+          <div className="mt-6 sm:mt-8 space-y-3">
+            {/* Resend success message */}
+            {resendMessage && (
+              <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-sm text-green-800 text-center break-words">
+                  {resendMessage}
+                </p>
+              </div>
+            )}
+
+            {/* Enhanced Microcopy */}
             <MicroCopy className="break-words">
               {step === 'phone' 
                 ? "First time here? Just enter your phone — we'll set everything up for you automatically."
-                : "Code will verify automatically when entered. Didn't receive it? Wait 60 seconds and try again."
+                : "Code will verify automatically when entered. Use the resend button if you need a new code."
               }
             </MicroCopy>
           </div>
