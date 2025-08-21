@@ -58,7 +58,17 @@ export async function resolveMessageRecipients(
 
     if (error) throw error;
 
+    // Map the enhanced RPC response to guest IDs
     const guestIds = recipients?.map((r: Record<string, unknown>) => r.guest_id as string) || [];
+    
+    // Log recipient details for debugging (but don't expose sensitive data)
+    console.log('Resolved recipients:', {
+      eventId,
+      totalRecipients: recipients?.length || 0,
+      smsEligible: recipients?.filter((r: Record<string, unknown>) => r.can_receive_sms).length || 0,
+      optedOut: recipients?.filter((r: Record<string, unknown>) => r.sms_opt_out).length || 0
+    });
+    
     return { guestIds, recipientCount: guestIds.length };
   } catch (error) {
     console.error('Error resolving message recipients:', error);
@@ -196,6 +206,10 @@ export async function getScheduledMessages(filters: ScheduledMessageFilters) {
 
     return { success: true, data: data || [] };
   } catch (error) {
+    // TODO(grant): Silent handling of AbortErrors to reduce console noise during component unmounts/HMR
+    if (error instanceof Error && error.name === 'AbortError') {
+      return { success: false, error: 'Request cancelled', data: [] };
+    }
     console.error('Error fetching scheduled messages:', error);
     return { success: false, error, data: [] };
   }
@@ -281,6 +295,9 @@ export async function createScheduledMessage(messageData: CreateScheduledMessage
         event_id: messageData.eventId,
         content: messageData.content.trim(),
         send_at: messageData.sendAt,
+        scheduled_tz: messageData.scheduledTz || null,
+        scheduled_local: messageData.scheduledLocal || null,
+        idempotency_key: messageData.idempotencyKey || null,
         message_type: messageData.messageType,
         send_via_sms: messageData.sendViaSms,
         send_via_email: messageData.sendViaEmail,

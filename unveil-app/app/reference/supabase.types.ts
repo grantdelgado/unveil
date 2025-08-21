@@ -415,8 +415,11 @@ export type Database = {
           event_id: string
           failure_count: number | null
           id: string
+          idempotency_key: string | null
           message_type: Database["public"]["Enums"]["message_type_enum"] | null
           recipient_count: number | null
+          scheduled_local: string | null
+          scheduled_tz: string | null
           send_at: string
           send_via_email: boolean | null
           send_via_push: boolean | null
@@ -438,8 +441,11 @@ export type Database = {
           event_id: string
           failure_count?: number | null
           id?: string
+          idempotency_key?: string | null
           message_type?: Database["public"]["Enums"]["message_type_enum"] | null
           recipient_count?: number | null
+          scheduled_local?: string | null
+          scheduled_tz?: string | null
           send_at: string
           send_via_email?: boolean | null
           send_via_push?: boolean | null
@@ -461,8 +467,11 @@ export type Database = {
           event_id?: string
           failure_count?: number | null
           id?: string
+          idempotency_key?: string | null
           message_type?: Database["public"]["Enums"]["message_type_enum"] | null
           recipient_count?: number | null
+          scheduled_local?: string | null
+          scheduled_tz?: string | null
           send_at?: string
           send_via_email?: boolean | null
           send_via_push?: boolean | null
@@ -756,6 +765,35 @@ export type Database = {
           user_phone: string
         }[]
       }
+      get_scheduled_messages_for_processing: {
+        Args: { p_current_time?: string; p_limit?: number }
+        Returns: {
+          content: string
+          created_at: string | null
+          event_id: string
+          failure_count: number | null
+          id: string
+          idempotency_key: string | null
+          message_type: Database["public"]["Enums"]["message_type_enum"] | null
+          recipient_count: number | null
+          scheduled_local: string | null
+          scheduled_tz: string | null
+          send_at: string
+          send_via_email: boolean | null
+          send_via_push: boolean | null
+          send_via_sms: boolean | null
+          sender_user_id: string
+          sent_at: string | null
+          status: string | null
+          subject: string | null
+          success_count: number | null
+          target_all_guests: boolean | null
+          target_guest_ids: string[] | null
+          target_guest_tags: string[] | null
+          target_sub_event_ids: string[] | null
+          updated_at: string | null
+        }[]
+      }
       get_user_events: {
         Args: { user_id_param?: string }
         Returns: {
@@ -853,26 +891,22 @@ export type Database = {
         Returns: string
       }
       resolve_message_recipients: {
-        Args:
-          | {
-              include_declined?: boolean
-              msg_event_id: string
-              require_all_tags?: boolean
-              target_guest_ids?: string[]
-              target_rsvp_statuses?: string[]
-              target_tags?: string[]
-            }
-          | {
-              msg_event_id: string
-              require_all_tags?: boolean
-              target_guest_ids?: string[]
-              target_rsvp_statuses?: string[]
-              target_tags?: string[]
-            }
+        Args: {
+          include_declined?: boolean
+          msg_event_id: string
+          require_all_tags?: boolean
+          target_guest_ids?: string[]
+          target_rsvp_statuses?: string[]
+          target_tags?: string[]
+        }
         Returns: {
+          can_receive_sms: boolean
+          display_name: string
           guest_id: string
           guest_name: string
-          guest_phone: string
+          phone: string
+          recipient_type: string
+          sms_opt_out: boolean
         }[]
       }
       restore_guest: {

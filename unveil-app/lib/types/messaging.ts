@@ -76,7 +76,10 @@ export type SendMessageRequest = {
 export type CreateScheduledMessageData = {
   eventId: string;
   content: string;
-  sendAt: string;
+  sendAt: string; // UTC timestamp for execution
+  scheduledTz?: string; // IANA timezone identifier 
+  scheduledLocal?: string; // Original local date/time string for display
+  idempotencyKey?: string; // SHA256 hash to prevent duplicates
   recipientFilter: RecipientFilter;
   messageType: 'direct' | 'announcement' | 'channel';
   sendViaSms: boolean;

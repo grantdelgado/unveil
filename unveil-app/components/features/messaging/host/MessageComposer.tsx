@@ -8,9 +8,11 @@ import { GuestSelectionList } from './GuestSelectionList';
 import { SendFlowModal } from './SendFlowModal';
 // HostInclusionToggle removed - hosts are always included now
 import { useGuestSelection } from '@/hooks/messaging/useGuestSelection';
-import { sendMessageToEvent } from '@/lib/services/messaging';
+import { sendMessageToEvent, createScheduledMessage } from '@/lib/services/messaging';
 import { supabase } from '@/lib/supabase/client';
 import { formatEventDate } from '@/lib/utils/date';
+import { toUTCFromEventZone, getTimezoneInfo, isValidTimezone } from '@/lib/utils/timezone';
+import type { CreateScheduledMessageData } from '@/lib/types/messaging';
 
 // Type for the enhanced API response that includes SMS delivery counts
 interface SendMessageResult {
@@ -25,6 +27,7 @@ interface SendMessageResult {
 interface MessageComposerProps {
   eventId: string;
   onMessageSent?: () => void;
+  onMessageScheduled?: () => void;
   onClear?: () => void;
   className?: string;
   preselectionPreset?: string | null;
@@ -34,15 +37,23 @@ interface MessageComposerProps {
 export function MessageComposer({
   eventId,
   onMessageSent,
+  onMessageScheduled,
   onClear,
   className,
   preselectionPreset,
   preselectedGuestIds
 }: MessageComposerProps) {
   const [message, setMessage] = useState('');
-  const [eventDetails, setEventDetails] = useState<{title: string, event_date: string, hostName: string} | null>(null);
+  const [eventDetails, setEventDetails] = useState<{title: string, event_date: string, hostName: string, time_zone?: string} | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showSendFlowModal, setShowSendFlowModal] = useState(false);
+  
+  // Delivery mode state
+  const [sendMode, setSendMode] = useState<'now' | 'schedule'>('now');
+  const [scheduledDate, setScheduledDate] = useState('');
+  const [scheduledTime, setScheduledTime] = useState('');
+  const [isScheduling, setIsScheduling] = useState(false);
+  
   // includeHosts state removed - hosts are always included now
 
   // Use new guest selection hook instead of RSVP filters
@@ -65,10 +76,53 @@ export function MessageComposer({
     // includeHosts removed - hosts are always included now
   });
 
+  // TODO(grant): Removed useScheduledMessages hook from composer to eliminate unnecessary scheduled message fetches and realtime subscriptions.
+  // Only History tab should load scheduled messages. Composer uses direct createScheduledMessage service call.
+
   const characterCount = message.length;
   const maxCharacters = 1000;
   const isValid = message.trim().length > 0 && characterCount <= maxCharacters;
-  const canSend = isValid && selectedGuestIds.length > 0;
+  
+  // Calculate minimum date/time (now + 5 minutes)
+  const minDateTime = React.useMemo(() => {
+    const now = new Date();
+    const minTime = new Date(now.getTime() + 5 * 60000); // 5 minutes from now
+    return {
+      date: minTime.toISOString().split('T')[0],
+      time: minTime.toTimeString().slice(0, 5),
+      datetime: minTime.toISOString()
+    };
+  }, []);
+  
+  // Get event timezone info for display and validation
+  const eventTimezoneInfo = React.useMemo(() => {
+    if (!eventDetails?.time_zone || !isValidTimezone(eventDetails.time_zone)) {
+      return null;
+    }
+    return getTimezoneInfo(eventDetails.time_zone);
+  }, [eventDetails?.time_zone]);
+
+  // Validation for scheduling
+  const canSchedule = React.useMemo(() => {
+    if (!isValid || selectedGuestIds.length === 0) return false;
+    if (sendMode === 'now') return true;
+    
+    if (!scheduledDate || !scheduledTime) return false;
+    
+    // Check if scheduled time is in the future using event timezone
+    if (eventDetails?.time_zone) {
+      const utcTime = toUTCFromEventZone(scheduledDate, scheduledTime, eventDetails.time_zone);
+      if (!utcTime) return false;
+      return new Date(utcTime) > new Date();
+    } else {
+      // Fallback to local time validation if no event timezone
+      const scheduledDateTime = new Date(`${scheduledDate}T${scheduledTime}`);
+      const now = new Date();
+      return scheduledDateTime > now;
+    }
+  }, [isValid, selectedGuestIds.length, sendMode, scheduledDate, scheduledTime, eventDetails?.time_zone]);
+  
+  const canSend = canSchedule;
 
   // Create preview data for confirmation modal
   const previewData = {
@@ -95,14 +149,15 @@ export function MessageComposer({
       try {
         const { data, error } = await supabase
           .from('events')
-          .select('title, event_date, host:users!events_host_user_id_fkey(full_name)')
+          .select('title, event_date, time_zone, host:users!events_host_user_id_fkey(full_name)')
           .eq('id', eventId)
           .single();
         
         if (error) throw error;
         setEventDetails({
           ...data,
-          hostName: (data.host as { full_name?: string } | null)?.full_name || 'Your host'
+          hostName: (data.host as { full_name?: string } | null)?.full_name || 'Your host',
+          time_zone: data.time_zone || undefined
         });
       } catch (err) {
         console.error('Failed to fetch event details:', err);
@@ -139,6 +194,13 @@ export function MessageComposer({
   };
 
   const handleSendFlowSend = async (options: { sendViaPush: boolean; sendViaSms: boolean }) => {
+    if (sendMode === 'schedule') {
+      return handleScheduleMessage(options);
+    }
+    return handleImmediateSend(options);
+  };
+
+  const handleImmediateSend = async (options: { sendViaPush: boolean; sendViaSms: boolean }) => {
     try {
       // Check authentication first
       const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -210,12 +272,109 @@ export function MessageComposer({
     }
   };
 
+  const handleScheduleMessage = async (options: { sendViaPush: boolean; sendViaSms: boolean }) => {
+    try {
+      setIsScheduling(true);
+      setError(null);
+
+      const eventTimeZone = eventDetails?.time_zone;
+      let scheduledAtUTC: string;
+      const scheduledLocal = `${scheduledDate}T${scheduledTime}:00`;
+
+      // Convert to UTC using event timezone if available
+      if (eventTimeZone && isValidTimezone(eventTimeZone)) {
+        const utcTime = toUTCFromEventZone(scheduledDate, scheduledTime, eventTimeZone);
+        if (!utcTime) {
+          throw new Error('Invalid scheduled time. Please check the date and time.');
+        }
+        scheduledAtUTC = utcTime;
+      } else {
+        // Fallback to treating input as local time (not ideal but safe)
+        scheduledAtUTC = new Date(scheduledLocal).toISOString();
+      }
+
+      // Generate idempotency key to prevent duplicate schedules
+      const contentHash = await crypto.subtle.digest(
+        'SHA-256', 
+        new TextEncoder().encode(
+          `${eventId}_${selectedGuestIds.sort().join(',')}_${message.trim()}_${scheduledLocal}_${eventTimeZone || 'local'}`
+        )
+      );
+      const idempotencyKey = Array.from(new Uint8Array(contentHash))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+      
+      const scheduleData: CreateScheduledMessageData = {
+        eventId,
+        content: message.trim(),
+        sendAt: scheduledAtUTC,
+        scheduledTz: eventTimeZone || undefined,
+        scheduledLocal,
+        idempotencyKey,
+        recipientFilter: {
+          type: 'explicit_selection',
+          selectedGuestIds: selectedGuestIds
+        },
+        messageType: preselectionPreset === 'not_invited' ? 'announcement' : 'announcement',
+        sendViaSms: options.sendViaSms,
+        sendViaEmail: false,
+        sendViaPush: options.sendViaPush
+      };
+
+      const result = await createScheduledMessage(scheduleData);
+
+      if (!result.success) {
+        const errorMessage = typeof result.error === 'string' ? result.error : 'Failed to schedule message';
+        throw new Error(errorMessage);
+      }
+
+      // Success - clear form and notify parent
+      setMessage('');
+      setSendMode('now');
+      setScheduledDate('');
+      setScheduledTime('');
+      clearAllSelection();
+      setError(null);
+      onMessageScheduled?.();
+
+      return {
+        success: true,
+        sentCount: willReceiveMessage,
+        failedCount: 0,
+        messageId: undefined,
+        // Include scheduled message data for success UI
+        scheduledData: {
+          id: result.data?.id,
+          send_at: result.data?.send_at,
+          scheduled_tz: result.data?.scheduled_tz,
+          scheduled_local: result.data?.scheduled_local,
+          recipient_count: result.data?.recipient_count
+        }
+      };
+
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to schedule message';
+      setError(errorMessage);
+      return {
+        success: false,
+        sentCount: 0,
+        failedCount: willReceiveMessage,
+        error: errorMessage
+      };
+    } finally {
+      setIsScheduling(false);
+    }
+  };
+
   const handleCloseSendFlowModal = () => {
     setShowSendFlowModal(false);
   };
 
   const handleClear = () => {
     setMessage('');
+    setSendMode('now');
+    setScheduledDate('');
+    setScheduledTime('');
     clearAllSelection(); // Clear guest selection
     setError(null);
     onClear?.();
@@ -264,6 +423,127 @@ export function MessageComposer({
         </div>
 
         {/* Advanced Options removed - hosts are always included now */}
+
+        {/* Delivery Options */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <FieldLabel className="text-gray-700 font-medium mb-3">
+            Delivery Options
+          </FieldLabel>
+          
+          {/* Send Mode Toggle */}
+          <div className="flex bg-gray-100 rounded-lg p-1 mb-4">
+            <button
+              type="button"
+              onClick={() => setSendMode('now')}
+              className={cn(
+                'flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors',
+                sendMode === 'now'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              )}
+            >
+              Send Now
+            </button>
+            <button
+              type="button"
+              onClick={() => setSendMode('schedule')}
+              className={cn(
+                'flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors',
+                sendMode === 'schedule'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              )}
+            >
+              Schedule for Later
+            </button>
+          </div>
+
+          {/* Schedule Date/Time Picker */}
+          {sendMode === 'schedule' && (
+            <div className="space-y-4">
+              {eventTimezoneInfo && (
+                <div className="text-sm text-gray-600 bg-gray-50 rounded-lg p-3">
+                  <span className="font-medium">🌍 Event timezone:</span> {eventTimezoneInfo.displayName} ({eventTimezoneInfo.abbreviation})
+                </div>
+              )}
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Date
+                  </label>
+                  <input
+                    type="date"
+                    value={scheduledDate}
+                    onChange={(e) => setScheduledDate(e.target.value)}
+                    min={minDateTime.date}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-base"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Time
+                  </label>
+                  <input
+                    type="time"
+                    value={scheduledTime}
+                    onChange={(e) => setScheduledTime(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-base"
+                  />
+                </div>
+              </div>
+
+              {scheduledDate && scheduledTime && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <div className="text-sm text-blue-800">
+                    <div className="font-medium mb-1">📅 Scheduled for:</div>
+                    {eventTimezoneInfo ? (
+                      <div className="space-y-1">
+                        <div>
+                          <span className="font-medium">Event time:</span> {new Date(`${scheduledDate}T${scheduledTime}`).toLocaleString([], {
+                            year: 'numeric',
+                            month: 'short', 
+                            day: 'numeric',
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            hour12: true
+                          })} {eventTimezoneInfo.abbreviation}
+                        </div>
+                        <div className="text-blue-600">
+                          <span className="font-medium">Your time:</span> {(() => {
+                            const eventTimeZone = eventDetails?.time_zone;
+                            if (eventTimeZone) {
+                              const utcTime = toUTCFromEventZone(scheduledDate, scheduledTime, eventTimeZone);
+                              if (utcTime) {
+                                return new Date(utcTime).toLocaleString([], {
+                                  year: 'numeric',
+                                  month: 'short',
+                                  day: 'numeric', 
+                                  hour: 'numeric',
+                                  minute: '2-digit',
+                                  hour12: true
+                                });
+                              }
+                            }
+                            return new Date(`${scheduledDate}T${scheduledTime}`).toLocaleString();
+                          })()}
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        {new Date(`${scheduledDate}T${scheduledTime}`).toLocaleString()} 
+                        {!eventDetails?.time_zone && (
+                          <span className="text-orange-600 ml-2">(Event timezone not set)</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Guest Tags - Coming Soon */}
         <div className="bg-white rounded-lg border border-gray-200 p-4">
@@ -337,15 +617,24 @@ export function MessageComposer({
           <div className="flex items-center gap-3">
             <Button
               onClick={handleSend}
-              disabled={!canSend}
+              disabled={!canSend || isScheduling}
               className="flex-1 flex items-center justify-center gap-2 py-3 text-base"
               size="lg"
             >
-              <span>Send Now</span>
-              {willReceiveMessage > 0 && (
-                <span className="bg-white/20 px-2 py-1 rounded text-sm">
-                  {willReceiveMessage}
-                </span>
+              {isScheduling ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Scheduling...</span>
+                </>
+              ) : (
+                <>
+                  <span>{sendMode === 'now' ? 'Send Now' : 'Schedule Message'}</span>
+                  {willReceiveMessage > 0 && (
+                    <span className="bg-white/20 px-2 py-1 rounded text-sm">
+                      {willReceiveMessage}
+                    </span>
+                  )}
+                </>
               )}
             </Button>
             
@@ -367,6 +656,10 @@ export function MessageComposer({
           previewData={previewData}
           messageContent={message}
           messageType={preselectionPreset === 'not_invited' ? 'invitation' : 'announcement'}
+          sendMode={sendMode}
+          scheduledDate={scheduledDate}
+          scheduledTime={scheduledTime}
+          eventTimezone={eventDetails?.time_zone}
         />
       </div>
     </div>

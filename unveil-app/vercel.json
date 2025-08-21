@@ -1,8 +1,11 @@
 {
   "crons": [
     {
-      "path": "/api/cron/process-messages",
-      "schedule": "0 9 * * *"
+      "path": "/api/messages/process-scheduled",
+      "schedule": "*/1 * * * *",
+      "headers": {
+        "x-cron-key": "${CRON_SECRET}"
+      }
     }
   ]
 }

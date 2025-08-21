@@ -3,8 +3,9 @@
  * Supports real-time updates and comprehensive error handling
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
+import { getSubscriptionManager } from '@/lib/realtime/SubscriptionManager';
 import { 
   getScheduledMessages, 
   createScheduledMessage, 
@@ -51,6 +52,11 @@ export function useScheduledMessages({
   const [scheduledMessages, setScheduledMessages] = useState<ScheduledMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // TODO(grant): StrictMode-safe refs to prevent duplicate subscriptions and fetches
+  const isMountedRef = useRef(true);
+  const fetchInFlightRef = useRef(false);
+  const subscriptionIdRef = useRef<string | null>(null);
 
   // Memoize the complete filters object
   const completeFilters = useMemo(() => ({
@@ -59,16 +65,28 @@ export function useScheduledMessages({
   }), [eventId, filters]);
 
   /**
-   * Fetch scheduled messages from the server
+   * Fetch scheduled messages from the server (StrictMode-safe)
    */
   const fetchMessages = useCallback(async () => {
+    // TODO(grant): Prevent duplicate fetches during StrictMode double-invoke or rapid re-renders
+    if (fetchInFlightRef.current || !isMountedRef.current) {
+      return;
+    }
+
     try {
+      fetchInFlightRef.current = true;
       setLoading(true);
       setError(null);
 
       const result = await getScheduledMessages(completeFilters);
       
+      if (!isMountedRef.current) return; // Component unmounted during fetch
+      
       if (!result.success) {
+        // TODO(grant): Silent handling of AbortErrors from cancelled requests
+        if (typeof result.error === 'string' && result.error.includes('Request cancelled')) {
+          return; // Silent return for cancelled requests
+        }
         throw new Error(
           (result.error && typeof result.error === 'object' && 'message' in result.error) 
             ? String(result.error.message)
@@ -78,11 +96,21 @@ export function useScheduledMessages({
 
       setScheduledMessages(result.data || []);
     } catch (err) {
+      if (!isMountedRef.current) return; // Component unmounted during error handling
+      
+      // TODO(grant): Reduce error noise for AbortErrors and cancelled requests
+      if (err instanceof Error && (err.name === 'AbortError' || err.message.includes('Request cancelled'))) {
+        return; // Silent return for aborted requests
+      }
+      
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch scheduled messages';
       setError(errorMessage);
       console.error('Error fetching scheduled messages:', err);
     } finally {
-      setLoading(false);
+      fetchInFlightRef.current = false;
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
   }, [completeFilters]);
 
@@ -204,48 +232,56 @@ export function useScheduledMessages({
     fetchMessages();
   }, [fetchMessages]);
 
-  // Set up real-time subscription for scheduled messages
+  // TODO(grant): Set up real-time subscription using SubscriptionManager for better stability and StrictMode safety
   useEffect(() => {
-    if (!realTimeUpdates) return;
+    if (!realTimeUpdates || !isMountedRef.current) return;
 
-    const channel = supabase
-      .channel(`scheduled_messages:${eventId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'scheduled_messages',
-          filter: `event_id=eq.${eventId}`
-        },
-        (payload) => {
-          console.log('Scheduled message real-time update:', payload);
+    const subscriptionId = `scheduled_messages:${eventId}`;
+    subscriptionIdRef.current = subscriptionId;
+    
+    const subscriptionManager = getSubscriptionManager();
+    
+    const unsubscribe = subscriptionManager.subscribe(subscriptionId, {
+      table: 'scheduled_messages',
+      event: '*',
+      filter: `event_id=eq.${eventId}`,
+      callback: (payload) => {
+        if (!isMountedRef.current) return;
+        
+        console.log('Scheduled message real-time update:', payload);
 
-          switch (payload.eventType) {
-            case 'INSERT':
-              setScheduledMessages(prev => [...prev, payload.new as ScheduledMessage]);
-              break;
-            
-            case 'UPDATE':
-              setScheduledMessages(prev =>
-                prev.map(msg =>
-                  msg.id === payload.new.id ? payload.new as ScheduledMessage : msg
-                )
-              );
-              break;
-            
-            case 'DELETE':
-              setScheduledMessages(prev =>
-                prev.filter(msg => msg.id !== payload.old.id)
-              );
-              break;
-          }
+        switch (payload.eventType) {
+          case 'INSERT':
+            setScheduledMessages(prev => [...prev, payload.new as ScheduledMessage]);
+            break;
+          
+          case 'UPDATE':
+            setScheduledMessages(prev =>
+              prev.map(msg =>
+                msg.id === payload.new.id ? payload.new as ScheduledMessage : msg
+              )
+            );
+            break;
+          
+          case 'DELETE':
+            setScheduledMessages(prev =>
+              prev.filter(msg => msg.id !== payload.old.id)
+            );
+            break;
         }
-      )
-      .subscribe();
+      },
+      onError: (error) => {
+        if (isMountedRef.current) {
+          console.warn('Scheduled messages realtime error:', error);
+        }
+      },
+      enableBackoff: true,
+      maxRetries: 3
+    });
 
     return () => {
-      supabase.removeChannel(channel);
+      subscriptionIdRef.current = null;
+      unsubscribe();
     };
   }, [eventId, realTimeUpdates]);
 
@@ -266,6 +302,13 @@ export function useScheduledMessages({
 
     return () => clearInterval(interval);
   }, [autoRefresh, scheduledMessages, fetchMessages]);
+
+  // TODO(grant): Cleanup effect to mark component as unmounted for StrictMode safety
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   return {
     scheduledMessages,

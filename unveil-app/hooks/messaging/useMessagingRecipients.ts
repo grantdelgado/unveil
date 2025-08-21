@@ -5,7 +5,7 @@
  * Replaces direct event_guests queries in messaging components.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { logger } from '@/lib/logger';
 
@@ -50,6 +50,11 @@ export function useMessagingRecipients(
   const [recipients, setRecipients] = useState<MessagingRecipient[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // TODO(grant): Add memoization to prevent recursive fetches during re-renders
+  const fetchInFlightRef = useRef(false);
+  const lastFetchTimeRef = useRef(0);
+  const STALE_TIME = 30000; // 30 seconds stale time like React Query
 
   const fetchRecipients = useCallback(async () => {
     if (!eventId) {
@@ -57,9 +62,23 @@ export function useMessagingRecipients(
       return;
     }
 
+    // TODO(grant): Prevent duplicate fetches and implement stale-while-revalidate pattern
+    const now = Date.now();
+    const timeSinceLastFetch = now - lastFetchTimeRef.current;
+    
+    if (fetchInFlightRef.current) {
+      return; // Fetch already in progress
+    }
+    
+    if (timeSinceLastFetch < STALE_TIME && recipients.length > 0) {
+      return; // Data is still fresh
+    }
+
     try {
+      fetchInFlightRef.current = true;
       setLoading(true);
       setError(null);
+      lastFetchTimeRef.current = now;
 
       // Always include hosts now (RPC defaults to true)
       const { data, error: rpcError } = await supabase
@@ -114,9 +133,10 @@ export function useMessagingRecipients(
       setError(userFriendlyError);
       setRecipients([]); // Set to empty array on error
     } finally {
+      fetchInFlightRef.current = false;
       setLoading(false);
     }
-  }, [eventId]); // options.includeHosts removed since it's always true now
+  }, [eventId, recipients.length]); // TODO(grant): Added recipients.length to dependency for stale-time check
 
   // Initial fetch on mount and when eventId changes
   useEffect(() => {

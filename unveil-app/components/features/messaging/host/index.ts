@@ -6,8 +6,7 @@ export { RecentMessages } from './RecentMessages';
 // MVP messaging component - simplified for production launch
 export { MessageCenterMVP } from './MessageCenterMVP';
 
-// Scheduling components (preserved for testing)
-export { ScheduleComposer } from './ScheduleComposer';
+// Scheduling components
 export { ScheduledMessagesList } from './ScheduledMessagesList';
 
 // Core components used by MVP

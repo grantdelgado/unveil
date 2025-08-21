@@ -7,14 +7,30 @@ import type { Database } from '@/app/reference/supabase.types';
 
 export async function POST(request: NextRequest) {
   try {
-    logger.api('Processing scheduled messages API called');
+    // Check for dry-run mode
+    const url = new URL(request.url);
+    const isDryRun = url.searchParams.get('dryRun') === '1' || url.searchParams.get('dryRun') === 'true';
+    
+    logger.api(`Processing scheduled messages API called${isDryRun ? ' (DRY RUN)' : ''}`);
 
     // Verify the request is authorized (internal calls only)
     const authHeader = request.headers.get('authorization');
+    const cronHeader = request.headers.get('x-cron-key');
     const cronSecret = process.env.CRON_SECRET;
 
-    // Require valid cron secret for all environments
-    if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+    // Accept either Bearer token or X-CRON-KEY header
+    const isAuthorized = cronSecret && (
+      authHeader === `Bearer ${cronSecret}` || 
+      cronHeader === cronSecret
+    );
+
+    if (!isAuthorized) {
+      logger.api('Unauthorized request to scheduled messages processor', {
+        hasAuthHeader: !!authHeader,
+        hasCronHeader: !!cronHeader,
+        hasCronSecret: !!cronSecret,
+        isDryRun
+      });
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -29,14 +45,12 @@ export async function POST(request: NextRequest) {
       error?: string;
     }> = [];
 
-    // Fetch messages ready to send (with idempotency protection)
+    // Fetch messages ready to send with FOR UPDATE SKIP LOCKED for concurrency safety
     const { data: readyMessages, error: fetchError } = await supabase
-      .from('scheduled_messages')
-      .select('*')
-      .eq('status', 'scheduled')
-      .lte('send_at', new Date().toISOString())
-      .order('send_at', { ascending: true })
-      .limit(100); // Process max 100 messages per run to avoid timeouts
+      .rpc('get_scheduled_messages_for_processing', {
+        p_limit: 100,
+        p_current_time: new Date().toISOString()
+      });
 
     if (fetchError) {
       throw new Error(`Failed to fetch scheduled messages: ${fetchError.message}`);
@@ -51,11 +65,36 @@ export async function POST(request: NextRequest) {
         successful: 0,
         failed: 0,
         details: [],
+        isDryRun,
         message: 'No messages ready for processing'
       });
     }
 
-    logger.api(`Found ${readyMessages.length} scheduled messages ready for processing`);
+    logger.api(`Found ${readyMessages.length} scheduled messages ready for processing${isDryRun ? ' (DRY RUN)' : ''}`);
+
+    // If dry run, just return what would be processed
+    if (isDryRun) {
+      const dryRunDetails = readyMessages.map(message => ({
+        messageId: message.id,
+        eventId: message.event_id,
+        sendAt: message.send_at,
+        content: message.content.substring(0, 50) + (message.content.length > 50 ? '...' : ''),
+        recipientCount: message.recipient_count,
+        scheduledTz: message.scheduled_tz,
+        scheduledLocal: message.scheduled_local
+      }));
+
+      return NextResponse.json({
+        success: true,
+        timestamp: new Date().toISOString(),
+        totalProcessed: 0,
+        successful: 0,
+        failed: 0,
+        details: dryRunDetails,
+        isDryRun: true,
+        message: `Would process ${readyMessages.length} scheduled messages`
+      });
+    }
 
     // Process each message
     for (const message of readyMessages) {
@@ -65,7 +104,10 @@ export async function POST(request: NextRequest) {
         // Mark message as processing to prevent double-processing
         const { error: lockError } = await supabase
           .from('scheduled_messages')
-          .update({ status: 'sending' })
+          .update({ 
+            status: 'sending',
+            updated_at: new Date().toISOString()
+          })
           .eq('id', message.id)
           .eq('status', 'scheduled'); // Only update if still scheduled
 
@@ -200,7 +242,8 @@ export async function POST(request: NextRequest) {
             status: finalStatus,
             sent_at: new Date().toISOString(),
             success_count: totalDelivered,
-            failure_count: totalFailed
+            failure_count: totalFailed,
+            updated_at: new Date().toISOString()
           })
           .eq('id', message.id);
 
@@ -227,7 +270,8 @@ export async function POST(request: NextRequest) {
             status: 'failed',
             sent_at: new Date().toISOString(),
             failure_count: 1,
-            success_count: 0
+            success_count: 0,
+            updated_at: new Date().toISOString()
           })
           .eq('id', message.id);
 
@@ -257,7 +301,8 @@ export async function POST(request: NextRequest) {
       failed: failedCount,
       details: processingDetails,
       processingTimeMs: processingDuration,
-      message: `Processed ${processedCount} scheduled messages`
+      isDryRun: false,
+      message: `Processed ${processedCount} scheduled messages: ${successfulCount} successful, ${failedCount} failed`
     });
 
   } catch (error) {

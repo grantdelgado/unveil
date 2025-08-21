@@ -204,6 +204,50 @@ export function formatTimeWithTimezone(
 }
 
 /**
+ * Formats a scheduled time for display with timezone abbreviation
+ * Example: "Thu, Aug 21 at 9:27 AM MDT"
+ */
+export function formatScheduledDateTime(
+  utcDateTime: string,
+  eventTimeZone: string
+): string | null {
+  if (!utcDateTime || !isValidTimezone(eventTimeZone)) {
+    return null;
+  }
+
+  try {
+    const utcDate = new Date(utcDateTime);
+    
+    // Format the date and time in the event timezone
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: eventTimeZone,
+      weekday: 'short',
+      month: 'short', 
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+      timeZoneName: 'short'
+    });
+    
+    // Format and parse parts
+    const parts = formatter.formatToParts(utcDate);
+    const weekday = parts.find(p => p.type === 'weekday')?.value || '';
+    const month = parts.find(p => p.type === 'month')?.value || '';
+    const day = parts.find(p => p.type === 'day')?.value || '';
+    const hour = parts.find(p => p.type === 'hour')?.value || '';
+    const minute = parts.find(p => p.type === 'minute')?.value || '';
+    const dayPeriod = parts.find(p => p.type === 'dayPeriod')?.value || '';
+    const timeZoneName = parts.find(p => p.type === 'timeZoneName')?.value || '';
+    
+    return `${weekday}, ${month} ${day} at ${hour}:${minute} ${dayPeriod} ${timeZoneName}`;
+  } catch (error) {
+    console.warn('Failed to format scheduled date time:', { utcDateTime, eventTimeZone, error });
+    return null;
+  }
+}
+
+/**
  * Gets timezone label for schedule display
  */
 export function getTimezoneLabel(timeZone: string | null): string {

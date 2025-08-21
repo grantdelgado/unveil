@@ -3,6 +3,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
+
+import { fromUTCToEventZone, getTimezoneInfo, isValidTimezone, toUTCFromEventZone, formatScheduledDateTime } from '@/lib/utils/timezone';
 import type { RecipientPreviewData } from '@/lib/types/messaging';
 
 // Modal state machine
@@ -20,6 +22,13 @@ interface SendResult {
   failedCount: number;
   messageId?: string;
   error?: string;
+  scheduledData?: {
+    id?: string;
+    send_at?: string;
+    scheduled_tz?: string;
+    scheduled_local?: string;
+    recipient_count?: number;
+  };
 }
 
 interface SendFlowModalProps {
@@ -29,6 +38,11 @@ interface SendFlowModalProps {
   previewData: RecipientPreviewData | null;
   messageContent: string;
   messageType?: 'announcement' | 'reminder' | 'thank_you' | 'invitation';
+  // Schedule-aware props
+  sendMode?: 'now' | 'schedule';
+  scheduledDate?: string;
+  scheduledTime?: string;
+  eventTimezone?: string;
   className?: string;
 }
 
@@ -43,6 +57,10 @@ export function SendFlowModal({
   previewData,
   messageContent,
   messageType = 'announcement',
+  sendMode = 'now',
+  scheduledDate,
+  scheduledTime,
+  eventTimezone,
   className
 }: SendFlowModalProps) {
   const [currentState, setCurrentState] = useState<ModalState>('review');
@@ -59,13 +77,64 @@ export function SendFlowModal({
   const skippedCount = totalCount - validRecipientCount;
   const isLargeGroup = validRecipientCount > 50;
   
-  // Calculate estimated delivery time
-  const estimatedDeliveryMinutes = useMemo(() => {
-    if (validRecipientCount <= 10) return '< 1';
-    if (validRecipientCount <= 50) return '1-2';
-    if (validRecipientCount <= 200) return '2-5';
-    return '5-10';
-  }, [validRecipientCount]);
+  // Calculate delivery time display (immediate vs scheduled)
+  const deliveryTimeDisplay = useMemo(() => {
+    if (sendMode === 'schedule' && scheduledDate && scheduledTime) {
+      // Show scheduled delivery time with timezone awareness
+      const eventTimezoneInfo = eventTimezone && isValidTimezone(eventTimezone) 
+        ? getTimezoneInfo(eventTimezone) 
+        : null;
+
+      if (eventTimezoneInfo) {
+        // Convert to UTC for accurate user time calculation
+        const utcTime = toUTCFromEventZone(scheduledDate, scheduledTime, eventTimezone!);
+        if (utcTime) {
+          const eventTime = fromUTCToEventZone(utcTime, eventTimezone!);
+          const userTime = new Date(utcTime).toLocaleString([], {
+            weekday: 'short',
+            month: 'short', 
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+          });
+
+          return {
+            primary: `${eventTime?.formatted} ${eventTimezoneInfo.abbreviation}`,
+            secondary: `= ${userTime} your time`,
+            type: 'scheduled' as const
+          };
+        }
+      }
+      
+      // Fallback if timezone conversion fails
+      const localTime = new Date(`${scheduledDate}T${scheduledTime}`).toLocaleString([], {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric', 
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+      
+      return {
+        primary: localTime,
+        secondary: eventTimezone ? `(${eventTimezone})` : '(Event timezone not set)',
+        type: 'scheduled' as const
+      };
+    }
+
+    // Immediate delivery estimation
+    const minutes = validRecipientCount <= 10 ? '< 1' :
+                   validRecipientCount <= 50 ? '1-2' :
+                   validRecipientCount <= 200 ? '2-5' : '5-10';
+    
+    return {
+      primary: `${minutes} minute${minutes === '< 1' ? '' : 's'}`,
+      secondary: 'Messages sent immediately',
+      type: 'immediate' as const
+    };
+  }, [sendMode, scheduledDate, scheduledTime, eventTimezone, validRecipientCount]);
 
   // Validation for review state
   const canSend = useMemo(() => {
@@ -179,9 +248,38 @@ export function SendFlowModal({
                 </div>
               )}
 
-              <div className="bg-blue-100 border border-blue-200 rounded-lg p-3">
-                <div className="text-xs text-blue-800">
-                  <span className="font-medium">⏱️ Estimated delivery:</span> {estimatedDeliveryMinutes} minute{estimatedDeliveryMinutes !== '< 1' ? 's' : ''}
+              <div className={cn(
+                "border rounded-lg p-3",
+                deliveryTimeDisplay.type === 'scheduled' 
+                  ? "bg-purple-100 border-purple-200" 
+                  : "bg-blue-100 border-blue-200"
+              )}>
+                <div className={cn(
+                  "text-xs",
+                  deliveryTimeDisplay.type === 'scheduled' ? "text-purple-800" : "text-blue-800"
+                )}>
+                  {deliveryTimeDisplay.type === 'scheduled' ? (
+                    <div className="space-y-1">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">📅 Scheduled delivery:</span>
+                        <span className="font-semibold">{deliveryTimeDisplay.primary}</span>
+                      </div>
+                      <div className="text-right text-purple-600" aria-live="polite">
+                        {deliveryTimeDisplay.secondary}
+                      </div>
+                      {eventTimezone && (
+                        <div className="flex items-center justify-end gap-1 text-purple-500 mt-1">
+                          <span>ℹ️</span>
+                          <span>Times are anchored to the event timezone</span>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">⏱️ Estimated delivery:</span>
+                      <span className="font-semibold">{deliveryTimeDisplay.primary}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -311,7 +409,7 @@ export function SendFlowModal({
                 disabled={!canSend}
                 className="flex-1"
               >
-                <span>Send Now</span>
+                <span>{sendMode === 'schedule' ? 'Schedule Message' : 'Send Now'}</span>
                 <span className="bg-white/20 px-1.5 py-0.5 rounded text-xs ml-2">
                   {validRecipientCount}
                 </span>
@@ -363,7 +461,7 @@ export function SendFlowModal({
                 {/* Success */}
                 <div className="text-5xl mb-4">✅</div>
                 <h2 className="text-xl font-semibold text-gray-900">
-                  Message Sent Successfully
+                  {sendResult.scheduledData ? 'Message Scheduled' : 'Message Sent Successfully'}
                 </h2>
                 
                 {sendResult.failedCount > 0 ? (
@@ -384,39 +482,111 @@ export function SendFlowModal({
                     </div>
                   </div>
                 ) : (
-                  // Full success
+                  // Full success - branch between sent and scheduled
                   <div 
-                    className="bg-green-50 border border-green-200 rounded-lg p-4"
+                    className={cn(
+                      "border rounded-lg p-4",
+                      sendResult.scheduledData 
+                        ? "bg-purple-50 border-purple-200" 
+                        : "bg-green-50 border-green-200"
+                    )}
                     role="alert"
                   >
-                    <div className="text-sm text-green-800">
-                      <div className="font-medium">Complete Success</div>
-                      <div className="mt-1">
-                        Message sent to <span className="font-bold">{sendResult.sentCount}</span> guest{sendResult.sentCount === 1 ? '' : 's'}
-                      </div>
+                    <div className={cn(
+                      "text-sm",
+                      sendResult.scheduledData ? "text-purple-800" : "text-green-800"
+                    )}>
+                      {sendResult.scheduledData ? (
+                        // Scheduled success
+                        <>
+                          <div className="font-medium">Message Scheduled</div>
+                          <div className="mt-2 space-y-1">
+                            {/* Scheduled time display */}
+                            {(() => {
+                              const { scheduledData } = sendResult;
+                              const formattedTime = scheduledData.send_at && scheduledData.scheduled_tz 
+                                ? formatScheduledDateTime(scheduledData.send_at, scheduledData.scheduled_tz)
+                                : null;
+                              
+                              return (
+                                <div>
+                                  <div 
+                                    className="font-medium"
+                                    aria-live="polite"
+                                  >
+                                    Scheduled for: {formattedTime || 'Time not available'}
+                                  </div>
+                                  <div className="text-xs text-purple-600 mt-1">
+                                    Times are anchored to the event timezone
+                                  </div>
+                                  <div className="mt-1">
+                                    Will send to <span className="font-bold">{sendResult.sentCount}</span> guest{sendResult.sentCount === 1 ? '' : 's'}
+                                  </div>
+                                </div>
+                              );
+                            })()}
+                          </div>
+                        </>
+                      ) : (
+                        // Immediate send success
+                        <>
+                          <div className="font-medium">Complete Success</div>
+                          <div className="mt-1">
+                            Message sent to <span className="font-bold">{sendResult.sentCount}</span> guest{sendResult.sentCount === 1 ? '' : 's'}
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 )}
 
                 <div className="flex gap-3">
-                  {sendResult.messageId && (
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        // TODO: Navigate to message deliveries if available
-                        console.log('View deliveries:', sendResult.messageId);
-                      }}
-                      className="flex-1"
-                    >
-                      View Deliveries
-                    </Button>
+                  {sendResult.scheduledData ? (
+                    // Scheduled message buttons
+                    <>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          // Navigate to Message History
+                          onClose();
+                          // TODO: Navigate to Message History with scheduled filter
+                          console.log('Navigate to Message History');
+                        }}
+                        className="flex-1"
+                      >
+                        View in History
+                      </Button>
+                      
+                      <Button
+                        onClick={onClose}
+                        className="flex-1"
+                      >
+                        Done
+                      </Button>
+                    </>
+                  ) : (
+                    // Immediate send buttons
+                    <>
+                      {sendResult.messageId && (
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            // TODO: Navigate to message deliveries if available
+                            console.log('View deliveries:', sendResult.messageId);
+                          }}
+                          className="flex-1"
+                        >
+                          View Deliveries
+                        </Button>
+                      )}
+                      <Button
+                        onClick={onClose}
+                        className="flex-1"
+                      >
+                        Done
+                      </Button>
+                    </>
                   )}
-                  <Button
-                    onClick={onClose}
-                    className="flex-1"
-                  >
-                    Done
-                  </Button>
                 </div>
               </>
             ) : (

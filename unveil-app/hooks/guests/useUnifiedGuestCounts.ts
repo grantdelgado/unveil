@@ -5,7 +5,7 @@
  * and Guest Management to ensure consistency.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { logger } from '@/lib/logger';
 
@@ -38,6 +38,11 @@ export function useUnifiedGuestCounts(eventId: string): UseUnifiedGuestCountsRet
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // TODO(grant): Add memoization to prevent recursive guest count fetches
+  const fetchInFlightRef = useRef(false);
+  const lastFetchTimeRef = useRef(0);
+  const STALE_TIME = 30000; // 30 seconds stale time
 
   const fetchCounts = useCallback(async () => {
     if (!eventId) {
@@ -45,9 +50,23 @@ export function useUnifiedGuestCounts(eventId: string): UseUnifiedGuestCountsRet
       return;
     }
 
+    // TODO(grant): Prevent duplicate fetches and implement stale-while-revalidate pattern
+    const now = Date.now();
+    const timeSinceLastFetch = now - lastFetchTimeRef.current;
+    
+    if (fetchInFlightRef.current) {
+      return; // Fetch already in progress
+    }
+    
+    if (timeSinceLastFetch < STALE_TIME && counts.total_guests > 0) {
+      return; // Data is still fresh
+    }
+
     try {
+      fetchInFlightRef.current = true;
       setLoading(true);
       setError(null);
+      lastFetchTimeRef.current = now;
 
       const { data, error: rpcError } = await supabase
         .rpc('get_event_guest_counts', { p_event_id: eventId });
@@ -88,9 +107,10 @@ export function useUnifiedGuestCounts(eventId: string): UseUnifiedGuestCountsRet
       setError(errorMessage);
       // Keep previous counts on error rather than resetting to 0
     } finally {
+      fetchInFlightRef.current = false;
       setLoading(false);
     }
-  }, [eventId]);
+  }, [eventId, counts.total_guests]); // TODO(grant): Added counts.total_guests to dependency for stale-time check
 
   // Initial fetch on mount and when eventId changes
   useEffect(() => {
