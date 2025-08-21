@@ -56,6 +56,8 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
       }
 
       // Get messages delivered to this user
+      // Note: Removed .eq('user_id', user.id) filter to let RLS handle access control
+      // RLS policy uses can_access_event() which handles both user_id and phone-based access
       const { data: deliveries, error: deliveryError } = await supabase
         .from('message_deliveries')
         .select(`
@@ -70,7 +72,6 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
             sender:users!messages_sender_user_id_fkey(full_name, avatar_url)
           )
         `)
-        .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(INITIAL_WINDOW_SIZE + 1);
 
@@ -217,6 +218,7 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
         if (userError || !user) return;
 
         // Fetch recent deliveries to get the new message in proper format
+        // Note: Removed .eq('user_id', user.id) filter to let RLS handle access control
         const { data: deliveries, error: deliveryError } = await supabase
           .from('message_deliveries')
           .select(`
@@ -231,7 +233,6 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
               sender:users!messages_sender_user_id_fkey(full_name, avatar_url)
             )
           `)
-          .eq('user_id', user.id)
           .eq('id', (payload.new as any)?.id) // Only fetch this specific delivery
           .single();
 
