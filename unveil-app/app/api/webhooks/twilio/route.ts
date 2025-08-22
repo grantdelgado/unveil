@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
         const { error: syncError } = await supabase.rpc('handle_sms_delivery_error', {
           p_phone: toNumber,
           p_error_code: errorCode,
-          p_error_message: errorMessage || null,
+          p_error_message: errorMessage || undefined,
         });
 
         if (syncError) {

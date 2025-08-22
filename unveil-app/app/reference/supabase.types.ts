@@ -17,6 +17,7 @@ export type Database = {
       event_guests: {
         Row: {
           a2p_notice_sent_at: string | null
+          carrier_opted_out_at: string | null
           created_at: string | null
           decline_reason: string | null
           declined_at: string | null
@@ -45,6 +46,7 @@ export type Database = {
         }
         Insert: {
           a2p_notice_sent_at?: string | null
+          carrier_opted_out_at?: string | null
           created_at?: string | null
           decline_reason?: string | null
           declined_at?: string | null
@@ -73,6 +75,7 @@ export type Database = {
         }
         Update: {
           a2p_notice_sent_at?: string | null
+          carrier_opted_out_at?: string | null
           created_at?: string | null
           decline_reason?: string | null
           declined_at?: string | null
@@ -884,6 +887,18 @@ export type Database = {
       }
       guest_rejoin_event: {
         Args: { p_event_id: string }
+        Returns: Json
+      }
+      handle_sms_delivery_error: {
+        Args: {
+          p_error_code: string
+          p_error_message?: string
+          p_phone: string
+        }
+        Returns: Json
+      }
+      handle_sms_delivery_success: {
+        Args: { p_phone: string }
         Returns: Json
       }
       host_clear_guest_decline: {

@@ -85,6 +85,7 @@ export function useGuestSelection({
       removed_at: null, // Not included since we filter these out
       phone_number_verified: null, // Not needed for messaging
       sms_opt_out: recipient.sms_opt_out,
+      carrier_opted_out_at: null, // Not included in messaging RPC
       preferred_communication: null, // Not needed for messaging
       display_name: recipient.guest_display_name,
       users: recipient.user_full_name
