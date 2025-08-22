@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase/admin';
 import { sendBulkSMS } from '@/lib/sms';
 import type { RecipientFilter } from '@/lib/types/messaging';
 import type { Database } from '@/app/reference/supabase.types';
+import { incrementSkippedRemovedGuests, incrementIncludedRecipients } from '@/lib/metrics/messaging';
 
 // Types for processing results
 interface ProcessingResult {
@@ -575,6 +576,14 @@ async function resolveScheduledMessageRecipients(
   try {
     // Handle simple 'all' filter
     if (filter.type === 'all') {
+      // First get total count to calculate skipped removed guests
+      const { count: totalGuests } = await supabase
+        .from('event_guests')
+        .select('*', { count: 'exact', head: true })
+        .eq('event_id', eventId)
+        .not('phone', 'is', null)
+        .neq('phone', '');
+
       const { data: guests, error } = await supabase
         .from('event_guests')
         .select('id, phone, guest_name')
@@ -585,13 +594,23 @@ async function resolveScheduledMessageRecipients(
         .neq('phone', '');
 
       if (error) throw error;
-      return (guests || [])
+      
+      const validGuests = (guests || [])
         .filter((guest) => guest.phone) // Filter out guests without phone numbers
         .map((guest) => ({
           ...guest,
           phone: guest.phone as string, // Type assertion since we filtered out nulls
           guest_name: guest.guest_name || 'Guest',
         }));
+
+      // Track metrics (PII-safe counts only)
+      const skippedRemoved = (totalGuests || 0) - validGuests.length;
+      if (skippedRemoved > 0) {
+        incrementSkippedRemovedGuests(skippedRemoved);
+      }
+      incrementIncludedRecipients(validGuests.length);
+
+      return validGuests;
     }
 
     // Handle explicit guest selection (NEW)
@@ -607,13 +626,23 @@ async function resolveScheduledMessageRecipients(
         .neq('phone', '');
 
       if (error) throw error;
-      return (guests || [])
+      
+      const validGuests = (guests || [])
         .filter((guest) => guest.phone) // Filter out guests without phone numbers
         .map((guest) => ({
           ...guest,
           phone: guest.phone as string, // Type assertion since we filtered out nulls
           guest_name: guest.guest_name || 'Guest',
         }));
+
+      // Track metrics - calculate skipped based on selected vs valid
+      const skippedRemoved = filter.selectedGuestIds.length - validGuests.length;
+      if (skippedRemoved > 0) {
+        incrementSkippedRemovedGuests(skippedRemoved);
+      }
+      incrementIncludedRecipients(validGuests.length);
+
+      return validGuests;
     }
 
     // Handle individual guest selection (legacy)

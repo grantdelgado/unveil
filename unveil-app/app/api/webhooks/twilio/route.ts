@@ -119,14 +119,50 @@ export async function POST(request: NextRequest) {
       await updateMessageAggregateStats(messageSid);
     }
 
-    // Log error details if delivery failed
-    if (errorCode && errorMessage) {
+    // Handle SMS delivery errors and auto-sync opt-out status
+    if (errorCode && toNumber) {
+      // Log error details (PII-safe)
       logger.smsError('SMS delivery failed', {
         messageSid: messageSid.slice(0, 10) + '...',
         errorCode,
         errorMessage,
-        phone: toNumber ? toNumber.slice(0, 6) + '...' : 'unknown',
+        phone: toNumber.slice(0, 6) + '...',
       });
+
+      // Auto-sync opt-out status for carrier-level blocks
+      try {
+        const { error: syncError } = await supabase.rpc('handle_sms_delivery_error', {
+          p_phone: toNumber,
+          p_error_code: errorCode,
+          p_error_message: errorMessage || null,
+        });
+
+        if (syncError) {
+          logger.apiError('Failed to sync SMS opt-out status', syncError);
+        } else {
+          logger.api('SMS error auto-sync completed', {
+            errorCode,
+            phone: toNumber.slice(0, 6) + '...',
+          });
+        }
+      } catch (syncError) {
+        logger.apiError('Exception during SMS error auto-sync', syncError);
+      }
+    }
+
+    // Handle successful delivery - clear carrier opt-out markers
+    if (messageStatus === 'delivered' && toNumber) {
+      try {
+        const { error: successError } = await supabase.rpc('handle_sms_delivery_success', {
+          p_phone: toNumber,
+        });
+
+        if (successError) {
+          logger.apiError('Failed to handle SMS delivery success', successError);
+        }
+      } catch (successError) {
+        logger.apiError('Exception during SMS success handling', successError);
+      }
     }
 
     // Acknowledge webhook receipt

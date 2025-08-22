@@ -266,14 +266,14 @@ export function useGuestData({
   const handleRemoveGuest = useCallback(
     async (guestId: string) => {
       try {
-        const { error } = await supabase
-          .from('event_guests')
-          .delete()
-          .eq('id', guestId);
+        // Use soft delete RPC instead of hard delete
+        const { error } = await supabase.rpc('soft_delete_guest', {
+          p_guest_id: guestId,
+        });
 
         if (error) throw error;
 
-        // Remove from local state
+        // Remove from local state (soft deleted guests are filtered out)
         setGuests((prev) => prev.filter((guest) => guest.id !== guestId));
         setTotalCount((prev) => prev - 1);
 

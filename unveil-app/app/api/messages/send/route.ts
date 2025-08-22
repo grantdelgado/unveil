@@ -4,6 +4,7 @@ import { sendBulkSMS } from '@/lib/sms';
 import { logger } from '@/lib/logger';
 import type { SendMessageRequest } from '@/lib/types/messaging';
 import type { Database } from '@/app/reference/supabase.types';
+import { incrementSkippedRemovedGuests, incrementIncludedRecipients } from '@/lib/metrics/messaging';
 
 export async function POST(request: NextRequest) {
   try {
@@ -126,12 +127,20 @@ export async function POST(request: NextRequest) {
 
       guestIds = eligibleGuests.map((guest) => guest.id);
 
-      // Log if any opted-out guests were filtered out
-      const filteredCount =
-        recipientEventGuestIds.length - eligibleGuests.length;
+      // Track metrics - calculate skipped removed guests
+      const skippedRemoved = recipientEventGuestIds.length - (validGuests?.length || 0);
+      const skippedOptedOut = (validGuests?.length || 0) - eligibleGuests.length;
+      
+      if (skippedRemoved > 0) {
+        incrementSkippedRemovedGuests(skippedRemoved);
+      }
+      incrementIncludedRecipients(eligibleGuests.length);
+
+      // Log if any guests were filtered out
+      const filteredCount = recipientEventGuestIds.length - eligibleGuests.length;
       if (filteredCount > 0) {
         logger.api(
-          `Filtered out ${filteredCount} opted-out guests from message delivery`,
+          `Filtered out ${filteredCount} guests from message delivery (${skippedRemoved} removed, ${skippedOptedOut} opted-out)`,
         );
       }
     } else if (recipientFilter.type === 'all') {

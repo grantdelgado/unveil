@@ -249,6 +249,23 @@ export const GuestListItem = memo<GuestListItemProps>(
             </div>
           </div>
         )}
+
+        {/* SMS Opt-Out Warning (for opted-out guests with phone numbers) */}
+        {isOptedOut && guest.phone && (
+          <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-start gap-2">
+              <span className="text-red-500 text-sm">📵</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-red-700 font-medium">
+                  SMS disabled
+                </p>
+                <p className="text-xs text-red-600 mt-1">
+                  Guest has opted out of text messages. They can text UNSTOP to re-enable.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   },

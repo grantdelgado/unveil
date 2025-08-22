@@ -118,7 +118,7 @@ export function useGuests(eventId?: string): UseGuestsReturn {
     },
   });
 
-  // Remove guest mutation
+  // Remove guest mutation - use soft delete RPC
   const removeGuestMutation = useMutation({
     mutationFn: async (id: string): Promise<void> => {
       // Ensure user is authenticated
@@ -127,10 +127,10 @@ export function useGuests(eventId?: string): UseGuestsReturn {
       } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      const { error } = await supabase
-        .from('event_guests')
-        .delete()
-        .eq('id', id);
+      // Use soft delete RPC instead of hard delete
+      const { error } = await supabase.rpc('soft_delete_guest', {
+        p_guest_id: id,
+      });
 
       if (error) throw new Error(error.message);
     },
