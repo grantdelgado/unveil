@@ -4,13 +4,13 @@ export function useToast() {
   const [toasts, setToasts] = useState<string[]>([]);
 
   const toast = (message: string) => {
-    setToasts(prev => [...prev, message]);
+    setToasts((prev) => [...prev, message]);
     // Simple console log for now
     console.log('Toast:', message);
-    
+
     // Auto-remove after 3 seconds
     setTimeout(() => {
-      setToasts(prev => prev.filter(t => t !== message));
+      setToasts((prev) => prev.filter((t) => t !== message));
     }, 3000);
   };
 
@@ -28,4 +28,4 @@ export function useToast() {
   );
 
   return { toast, toasts, ToastContainer };
-} 
+}

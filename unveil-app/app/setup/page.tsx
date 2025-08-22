@@ -15,7 +15,7 @@ import {
   TextInput,
   PrimaryButton,
   MicroCopy,
-  LoadingSpinner
+  LoadingSpinner,
 } from '@/components/ui';
 import { ArrowLeft } from 'lucide-react';
 
@@ -78,7 +78,7 @@ export default function AccountSetupPage() {
           setUserProfile(newProfile);
         } else {
           setUserProfile(profile);
-          
+
           // Pre-fill form if user already has some data
           if (
             profile.full_name &&
@@ -119,7 +119,7 @@ export default function AccountSetupPage() {
       // Update user profile and mark onboarding as completed
       // Only mark as complete if full_name is provided and not empty
       const trimmedFullName = fullName.trim();
-      
+
       if (!trimmedFullName) {
         setError('Full name is required to complete setup.');
         return;
@@ -182,7 +182,10 @@ export default function AccountSetupPage() {
               disabled={loading}
             >
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-              <span>← Cancel and Start Over (you&apos;ll need to re-enter your phone number)</span>
+              <span>
+                ← Cancel and Start Over (you&apos;ll need to re-enter your phone
+                number)
+              </span>
             </button>
           </div>
 
@@ -212,9 +215,7 @@ export default function AccountSetupPage() {
             </div>
 
             <div className="space-y-2">
-              <FieldLabel htmlFor="email">
-                Email Address (Optional)
-              </FieldLabel>
+              <FieldLabel htmlFor="email">Email Address (Optional)</FieldLabel>
               <TextInput
                 type="email"
                 id="email"
@@ -249,7 +250,8 @@ export default function AccountSetupPage() {
           <div className="text-center space-y-1">
             <MicroCopy>Phone: {userProfile.phone}</MicroCopy>
             <MicroCopy>
-              This is your verified phone number. You can update your name or email anytime in your profile.
+              This is your verified phone number. You can update your name or
+              email anytime in your profile.
             </MicroCopy>
           </div>
         </div>

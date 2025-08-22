@@ -9,7 +9,7 @@ To provide a cleaner development experience, we've optimized console output to r
 In development mode, the following console output is now minimized:
 
 - ✅ **Font preloading warnings**: Optimized font loading strategy
-- ✅ **Performance monitoring**: Reduced to warnings/errors only  
+- ✅ **Performance monitoring**: Reduced to warnings/errors only
 - ✅ **Auth state logging**: Only critical auth events shown
 - ✅ **Bundle analysis**: Silent unless errors occur
 
@@ -18,11 +18,13 @@ In development mode, the following console output is now minimized:
 If you need detailed logging for debugging, set the `UNVEIL_DEBUG` environment variable:
 
 ### In `.env.local`:
+
 ```env
 UNVEIL_DEBUG=true
 ```
 
 ### Or temporarily in terminal:
+
 ```bash
 UNVEIL_DEBUG=true npm run dev
 ```
@@ -30,7 +32,7 @@ UNVEIL_DEBUG=true npm run dev
 ## What Debug Mode Enables
 
 - 🔍 Performance monitoring initialization logs
-- 🔍 Detailed auth state changes  
+- 🔍 Detailed auth state changes
 - 🔍 Bundle size monitoring details
 - 🔍 Component render performance tracking
 - 🔍 Memory usage trend analysis
@@ -47,7 +49,7 @@ These remain visible for important development feedback:
 ## Font Optimization Changes
 
 - Changed font preloading from `preload: true` to `preload: false`
-- Added fallback fonts for better loading experience  
+- Added fallback fonts for better loading experience
 - Next.js now handles font loading more intelligently
 
 ## Performance Impact

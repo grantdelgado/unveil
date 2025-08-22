@@ -1,6 +1,6 @@
 /**
  * Scheduled Messages Hooks Exports
- * 
+ *
  * Clean export interface for the refactored scheduled messages hooks.
  * Provides both individual hooks and types for flexibility.
  */
@@ -13,15 +13,15 @@ export { useScheduledMessagesRealtime } from './useScheduledMessagesRealtime';
 // Types for TypeScript support
 export type {
   UseScheduledMessagesQueryOptions,
-  UseScheduledMessagesQueryReturn
+  UseScheduledMessagesQueryReturn,
 } from './useScheduledMessagesQuery';
 
 export type {
   UseScheduledMessagesCacheOptions,
-  UseScheduledMessagesCacheReturn
+  UseScheduledMessagesCacheReturn,
 } from './useScheduledMessagesCache';
 
 export type {
   UseScheduledMessagesRealtimeOptions,
-  UseScheduledMessagesRealtimeReturn
-} from './useScheduledMessagesRealtime'; 
+  UseScheduledMessagesRealtimeReturn,
+} from './useScheduledMessagesRealtime';

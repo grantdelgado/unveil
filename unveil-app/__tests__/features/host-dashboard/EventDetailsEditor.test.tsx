@@ -36,7 +36,11 @@ vi.mock('next/navigation', () => ({
 // Mock react-hook-form
 vi.mock('react-hook-form', () => ({
   useForm: () => ({
-    register: vi.fn(() => ({ name: 'test', onChange: vi.fn(), onBlur: vi.fn() })),
+    register: vi.fn(() => ({
+      name: 'test',
+      onChange: vi.fn(),
+      onBlur: vi.fn(),
+    })),
     handleSubmit: (fn: (data: unknown) => void) => (e: Event) => {
       e.preventDefault();
       fn(mockEvent);
@@ -60,7 +64,7 @@ describe('EventDetailsEditor', () => {
         onSave={mockOnSave}
         onCancel={mockOnCancel}
         onPreviewGuestView={mockOnPreviewGuestView}
-      />
+      />,
     );
 
     // Check for section titles
@@ -81,14 +85,16 @@ describe('EventDetailsEditor', () => {
         onSave={mockOnSave}
         onCancel={mockOnCancel}
         onPreviewGuestView={mockOnPreviewGuestView}
-      />
+      />,
     );
 
     // Check for form fields
     expect(screen.getByLabelText(/Event Title/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Event Date/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Time Zone/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Where is your event taking place/i)).toBeInTheDocument();
+    expect(
+      screen.getByLabelText(/Where is your event taking place/i),
+    ).toBeInTheDocument();
     expect(screen.getByLabelText(/Wedding Website/i)).toBeInTheDocument();
   });
 
@@ -99,12 +105,16 @@ describe('EventDetailsEditor', () => {
         onSave={mockOnSave}
         onCancel={mockOnCancel}
         onPreviewGuestView={mockOnPreviewGuestView}
-      />
+      />,
     );
 
-    expect(screen.getByRole('button', { name: /Save Changes/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Save Changes/i }),
+    ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Cancel/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Preview Guest View/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Preview Guest View/i }),
+    ).toBeInTheDocument();
   });
 
   it('calls onCancel when cancel button is clicked', () => {
@@ -114,7 +124,7 @@ describe('EventDetailsEditor', () => {
         onSave={mockOnSave}
         onCancel={mockOnCancel}
         onPreviewGuestView={mockOnPreviewGuestView}
-      />
+      />,
     );
 
     const cancelButton = screen.getByRole('button', { name: /Cancel/i });
@@ -130,10 +140,12 @@ describe('EventDetailsEditor', () => {
         onSave={mockOnSave}
         onCancel={mockOnCancel}
         onPreviewGuestView={mockOnPreviewGuestView}
-      />
+      />,
     );
 
-    const previewButton = screen.getByRole('button', { name: /Preview Guest View/i });
+    const previewButton = screen.getByRole('button', {
+      name: /Preview Guest View/i,
+    });
     fireEvent.click(previewButton);
 
     expect(mockOnPreviewGuestView).toHaveBeenCalledTimes(1);
@@ -148,7 +160,7 @@ describe('EventDetailsEditor', () => {
         onSave={mockOnSave}
         onCancel={mockOnCancel}
         onPreviewGuestView={mockOnPreviewGuestView}
-      />
+      />,
     );
 
     const saveButton = screen.getByRole('button', { name: /Save Changes/i });
@@ -160,7 +172,10 @@ describe('EventDetailsEditor', () => {
   });
 
   it('shows error message after failed save', async () => {
-    mockOnSave.mockResolvedValue({ success: false, error: 'Test error message' });
+    mockOnSave.mockResolvedValue({
+      success: false,
+      error: 'Test error message',
+    });
 
     render(
       <EventDetailsEditor
@@ -168,7 +183,7 @@ describe('EventDetailsEditor', () => {
         onSave={mockOnSave}
         onCancel={mockOnCancel}
         onPreviewGuestView={mockOnPreviewGuestView}
-      />
+      />,
     );
 
     const saveButton = screen.getByRole('button', { name: /Save Changes/i });

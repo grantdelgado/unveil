@@ -74,21 +74,25 @@ unveil-app/
 ### Key Directories
 
 #### `/app` - Next.js App Router
+
 - **Route Groups**: `(auth)` for authentication-only routes
 - **Dynamic Routes**: `[eventId]` for event-specific pages
 - **Role-based Routing**: Separate `/host` and `/guest` directories
 
 #### `/components` - React Components
+
 - **Feature-First**: Organized by domain (auth, events, messaging)
 - **Reusable UI**: Generic components in `/ui`
 - **Index Exports**: Each feature exports through `index.ts`
 
 #### `/services` - Data Layer
+
 - **Database Operations**: Supabase queries with error handling
 - **Type Safety**: Uses generated Supabase types
 - **Validation**: Input validation before database operations
 
 #### `/hooks` - Custom Hooks
+
 - **Domain-Specific**: Organized by feature area
 - **Caching**: React Query integration for data caching
 - **Real-time**: Supabase subscription management
@@ -126,6 +130,7 @@ pnpm format           # Format code with Prettier
 ### Development Server
 
 The development server runs on `http://localhost:3000` with:
+
 - **Hot Reload**: Automatic page refresh on changes
 - **Type Checking**: Real-time TypeScript validation
 - **Fast Refresh**: Preserves component state during edits
@@ -174,6 +179,7 @@ supabase db push
 ### ESLint Rules
 
 Key rules enforced:
+
 - **No `any` types**: Use proper TypeScript types
 - **Import organization**: Specific imports over barrel exports
 - **React hooks**: Proper dependency arrays
@@ -194,6 +200,7 @@ Key rules enforced:
 ### Code Organization Patterns
 
 #### 1. Feature-First Structure
+
 ```typescript
 // components/features/messaging/
 ├── GuestMessaging.tsx
@@ -207,6 +214,7 @@ export { MessageComposer } from './MessageComposer'
 ```
 
 #### 2. Custom Hooks Pattern
+
 ```typescript
 // hooks/messaging/useMessages.ts
 export const useMessages = (eventId: string) => {
@@ -214,29 +222,30 @@ export const useMessages = (eventId: string) => {
     queryKey: ['messages', eventId],
     queryFn: () => getEventMessages(eventId),
     enabled: !!eventId,
-  })
-}
+  });
+};
 ```
 
 #### 3. Service Layer Pattern
+
 ```typescript
 // services/messaging.ts
 export const sendMessage = async (data: MessageInsert) => {
   try {
-    const validation = validateMessage(data.content)
+    const validation = validateMessage(data.content);
     if (!validation.isValid) {
-      throw new Error(validation.error)
+      throw new Error(validation.error);
     }
-    
+
     return await supabase
       .from('messages')
       .insert(data)
       .select('*, sender:public_user_profiles(*)')
-      .single()
+      .single();
   } catch (error) {
-    handleDatabaseError(error, 'sendMessage')
+    handleDatabaseError(error, 'sendMessage');
   }
-}
+};
 ```
 
 ---
@@ -247,51 +256,51 @@ export const sendMessage = async (data: MessageInsert) => {
 
 ```typescript
 // lib/validations.test.ts
-import { describe, it, expect } from 'vitest'
-import { validatePhoneNumber } from './validations'
+import { describe, it, expect } from 'vitest';
+import { validatePhoneNumber } from './validations';
 
 describe('validatePhoneNumber', () => {
   it('should validate US phone numbers', () => {
-    expect(validatePhoneNumber('(555) 123-4567')).toBe(true)
-    expect(validatePhoneNumber('555-123-4567')).toBe(true)
-    expect(validatePhoneNumber('+15551234567')).toBe(true)
-  })
+    expect(validatePhoneNumber('(555) 123-4567')).toBe(true);
+    expect(validatePhoneNumber('555-123-4567')).toBe(true);
+    expect(validatePhoneNumber('+15551234567')).toBe(true);
+  });
 
   it('should reject invalid phone numbers', () => {
-    expect(validatePhoneNumber('123')).toBe(false)
-    expect(validatePhoneNumber('invalid')).toBe(false)
-  })
-})
+    expect(validatePhoneNumber('123')).toBe(false);
+    expect(validatePhoneNumber('invalid')).toBe(false);
+  });
+});
 ```
 
 ### Integration Tests (MSW)
 
 ```typescript
 // src/test/setup.ts
-import { setupServer } from 'msw/node'
-import { rest } from 'msw'
+import { setupServer } from 'msw/node';
+import { rest } from 'msw';
 
 export const server = setupServer(
   rest.get('/api/events', (req, res, ctx) => {
-    return res(ctx.json([{ id: '1', title: 'Test Event' }]))
-  })
-)
+    return res(ctx.json([{ id: '1', title: 'Test Event' }]));
+  }),
+);
 ```
 
 ### E2E Tests (Playwright)
 
 ```typescript
 // playwright-tests/auth.spec.ts
-import { test, expect } from '@playwright/test'
+import { test, expect } from '@playwright/test';
 
 test('user can authenticate with phone', async ({ page }) => {
-  await page.goto('/login')
-  
-  await page.fill('[data-testid=phone-input]', '(555) 123-4567')
-  await page.click('[data-testid=send-otp-button]')
-  
-  await expect(page.locator('[data-testid=otp-input]')).toBeVisible()
-})
+  await page.goto('/login');
+
+  await page.fill('[data-testid=phone-input]', '(555) 123-4567');
+  await page.click('[data-testid=send-otp-button]');
+
+  await expect(page.locator('[data-testid=otp-input]')).toBeVisible();
+});
 ```
 
 ### Running Tests
@@ -318,6 +327,7 @@ pnpm test:e2e auth.spec.ts
 ### 1. Creating New Features
 
 #### Step 1: Create Service Functions
+
 ```typescript
 // services/new-feature.ts
 export const getFeatureData = async (id: string) => {
@@ -326,14 +336,15 @@ export const getFeatureData = async (id: string) => {
       .from('feature_table')
       .select('*')
       .eq('id', id)
-      .single()
+      .single();
   } catch (error) {
-    handleDatabaseError(error, 'getFeatureData')
+    handleDatabaseError(error, 'getFeatureData');
   }
-}
+};
 ```
 
 #### Step 2: Create Custom Hook
+
 ```typescript
 // hooks/new-feature/useFeature.ts
 export const useFeature = (id: string) => {
@@ -341,18 +352,19 @@ export const useFeature = (id: string) => {
     queryKey: ['feature', id],
     queryFn: () => getFeatureData(id),
     enabled: !!id,
-  })
-}
+  });
+};
 ```
 
 #### Step 3: Create Components
+
 ```typescript
 // components/features/new-feature/FeatureComponent.tsx
 export const FeatureComponent = ({ id }: { id: string }) => {
   const { data: feature, isLoading } = useFeature(id)
-  
+
   if (isLoading) return <LoadingSpinner />
-  
+
   return (
     <div>
       <h2>{feature?.title}</h2>
@@ -365,6 +377,7 @@ export const FeatureComponent = ({ id }: { id: string }) => {
 ### 2. Adding Database Tables
 
 #### Step 1: Create Migration
+
 ```sql
 -- supabase/migrations/[timestamp]_add_feature_table.sql
 CREATE TABLE feature_table (
@@ -378,17 +391,19 @@ CREATE TABLE feature_table (
 ALTER TABLE feature_table ENABLE ROW LEVEL SECURITY;
 
 -- Create policies
-CREATE POLICY "feature_user_access" ON feature_table 
-  FOR ALL TO authenticated 
+CREATE POLICY "feature_user_access" ON feature_table
+  FOR ALL TO authenticated
   USING (user_id = auth.uid());
 ```
 
 #### Step 2: Update Types
+
 ```bash
 pnpm supabase:types
 ```
 
 #### Step 3: Add Service Functions
+
 Use the generated types in your service functions.
 
 ### 3. Real-time Subscriptions
@@ -399,19 +414,23 @@ export const useRealtimeFeature = (id: string, callback: Function) => {
   useEffect(() => {
     const subscription = supabase
       .channel(`feature:${id}`)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'feature_table',
-        filter: `id=eq.${id}`
-      }, callback)
-      .subscribe()
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'feature_table',
+          filter: `id=eq.${id}`,
+        },
+        callback,
+      )
+      .subscribe();
 
     return () => {
-      supabase.removeChannel(subscription)
-    }
-  }, [id, callback])
-}
+      supabase.removeChannel(subscription);
+    };
+  }, [id, callback]);
+};
 ```
 
 ---
@@ -423,6 +442,7 @@ export const useRealtimeFeature = (id: string, callback: Function) => {
 #### 1. Authentication Problems
 
 **Issue**: "Session not found" errors
+
 ```bash
 # Solution: Reset auth session
 localStorage.removeItem('supabase.auth.token')
@@ -430,16 +450,18 @@ localStorage.removeItem('supabase.auth.token')
 ```
 
 **Issue**: RLS policy blocking queries
+
 ```sql
 -- Check policies in Supabase dashboard
-SELECT schemaname, tablename, policyname 
-FROM pg_policies 
+SELECT schemaname, tablename, policyname
+FROM pg_policies
 WHERE tablename = 'your_table';
 ```
 
 #### 2. Database Connection Issues
 
 **Issue**: "Connection to database failed"
+
 ```bash
 # Check Supabase status
 supabase status
@@ -450,6 +472,7 @@ supabase start
 ```
 
 **Issue**: Type generation fails
+
 ```bash
 # Check database connection
 supabase db ping
@@ -462,6 +485,7 @@ pnpm supabase:types
 #### 3. Build Issues
 
 **Issue**: TypeScript compilation errors
+
 ```bash
 # Check types
 pnpm type-check
@@ -472,6 +496,7 @@ pnpm build
 ```
 
 **Issue**: ESLint errors blocking build
+
 ```bash
 # Fix auto-fixable issues
 pnpm lint:fix
@@ -483,42 +508,46 @@ pnpm lint
 #### 4. Real-time Subscription Issues
 
 **Issue**: Subscriptions not receiving updates
+
 ```typescript
 // Check subscription status
-const subscription = supabase.channel('test')
+const subscription = supabase.channel('test');
 subscription.subscribe((status) => {
-  console.log('Subscription status:', status)
-})
+  console.log('Subscription status:', status);
+});
 ```
 
 **Issue**: Memory leaks from subscriptions
+
 ```typescript
 // Always cleanup subscriptions
 useEffect(() => {
-  const subscription = supabase.channel('test')
-  
+  const subscription = supabase.channel('test');
+
   return () => {
-    supabase.removeChannel(subscription)
-  }
-}, [])
+    supabase.removeChannel(subscription);
+  };
+}, []);
 ```
 
 ### Debug Tools
 
 #### 1. Supabase Auth Debugging
+
 ```typescript
 // Check current session
 supabase.auth.getSession().then(({ data: { session } }) => {
-  console.log('Current session:', session)
-})
+  console.log('Current session:', session);
+});
 
 // Listen for auth events
 supabase.auth.onAuthStateChange((event, session) => {
-  console.log('Auth event:', event, session)
-})
+  console.log('Auth event:', event, session);
+});
 ```
 
 #### 2. React Query DevTools
+
 ```typescript
 // Add to development builds
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
@@ -534,14 +563,16 @@ export default function App() {
 ```
 
 #### 3. Database Query Debugging
+
 ```typescript
 // Enable query logging in development
 if (process.env.NODE_ENV === 'development') {
-  supabase.from('table')
+  supabase
+    .from('table')
     .select('*')
-    .then(result => {
-      console.log('Query result:', result)
-    })
+    .then((result) => {
+      console.log('Query result:', result);
+    });
 }
 ```
 
@@ -558,16 +589,19 @@ if (process.env.NODE_ENV === 'development') {
 ### Pull Request Process
 
 #### 1. Create Feature Branch
+
 ```bash
 git checkout -b feature/your-feature-name
 ```
 
 #### 2. Make Changes
+
 - Follow existing code style
 - Add tests for new functionality
 - Update documentation if needed
 
 #### 3. Test Changes
+
 ```bash
 pnpm lint
 pnpm type-check
@@ -576,6 +610,7 @@ pnpm build
 ```
 
 #### 4. Submit Pull Request
+
 - Clear description of changes
 - Reference related issues
 - Include screenshots for UI changes
@@ -637,21 +672,24 @@ refactor: improve component structure
 ## 📚 Additional Resources
 
 ### Documentation
+
 - [Next.js Documentation](https://nextjs.org/docs)
 - [Supabase Documentation](https://supabase.com/docs)
 - [React Query Documentation](https://tanstack.com/query/latest)
 - [Tailwind CSS Documentation](https://tailwindcss.com/docs)
 
 ### Internal Documentation
+
 - [`docs/architecture-guide.md`](./docs-architecture-guide.md) - System architecture
 - [`docs/rules.md`](./docs-rules.md) - Development rules and guidelines
 - [`docs/testing-infrastructure.md`](./docs-testing-infrastructure.md) - Testing setup
 
 ### Tools
+
 - [Supabase Dashboard](https://app.supabase.com) - Database management
 - [Vercel Dashboard](https://vercel.com) - Deployment management
 - [React DevTools](https://react.dev/learn/react-developer-tools) - React debugging
 
 ---
 
-*This developer guide is maintained alongside the codebase. Please update it when making significant changes to the development workflow or project structure.* 
+_This developer guide is maintained alongside the codebase. Please update it when making significant changes to the development workflow or project structure._

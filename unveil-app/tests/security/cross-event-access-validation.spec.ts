@@ -17,7 +17,7 @@ const TEST_USERS = {
   host2: { email: 'host2-test@example.com', phone: '+15551001002' },
   guest1: { email: 'guest1-test@example.com', phone: '+15551001003' },
   guest2: { email: 'guest2-test@example.com', phone: '+15551001004' },
-  phoneOnly: { phone: '+15551001005' } // Phone-only guest for isolation testing
+  phoneOnly: { phone: '+15551001005' }, // Phone-only guest for isolation testing
 };
 
 describe('🛡️ Cross-Event Access Validation', () => {
@@ -27,10 +27,12 @@ describe('🛡️ Cross-Event Access Validation', () => {
 
   beforeAll(async () => {
     supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
-    
+
     // Create test events and users for isolation testing
     // This would typically be done in a test setup script
-    console.log('⚠️ Note: This test requires test data setup in development environment');
+    console.log(
+      '⚠️ Note: This test requires test data setup in development environment',
+    );
   });
 
   afterAll(async () => {
@@ -66,7 +68,7 @@ describe('🛡️ Cross-Event Access Validation', () => {
       expect(data).toBeNull();
     });
 
-    test('Guest cannot access other guests\' messages', async () => {
+    test("Guest cannot access other guests' messages", async () => {
       // Test: Guest1 tries to access Guest2's message deliveries
       const { data, error } = await supabase
         .from('message_deliveries')
@@ -92,14 +94,18 @@ describe('🛡️ Cross-Event Access Validation', () => {
   describe('✅ Phone-Only Guest Strict Isolation', () => {
     test('Phone-only guest can only access their specific event', async () => {
       // Test phone-based authentication isolation
-      const { data: phoneGuestAccess, error } = await supabase
-        .rpc('can_access_event', { p_event_id: testEventIds.phoneGuestEvent });
+      const { data: phoneGuestAccess, error } = await supabase.rpc(
+        'can_access_event',
+        { p_event_id: testEventIds.phoneGuestEvent },
+      );
 
       expect(phoneGuestAccess).toBe(true);
 
       // Should NOT have access to other events
-      const { data: otherEventAccess } = await supabase
-        .rpc('can_access_event', { p_event_id: testEventIds.otherEvent });
+      const { data: otherEventAccess } = await supabase.rpc(
+        'can_access_event',
+        { p_event_id: testEventIds.otherEvent },
+      );
 
       expect(otherEventAccess).toBe(false);
     });
@@ -131,14 +137,12 @@ describe('🛡️ Cross-Event Access Validation', () => {
 
     test('Guest cannot create unauthorized events', async () => {
       // Test: Guest tries to create event they shouldn't be able to
-      const { data, error } = await supabase
-        .from('events')
-        .insert({
-          title: 'Unauthorized Event',
-          event_date: '2024-12-31',
-          location: 'Unauthorized Location',
-          host_user_id: testUserIds.host1 // Trying to impersonate host1
-        });
+      const { data, error } = await supabase.from('events').insert({
+        title: 'Unauthorized Event',
+        event_date: '2024-12-31',
+        location: 'Unauthorized Location',
+        host_user_id: testUserIds.host1, // Trying to impersonate host1
+      });
 
       // Should fail due to RLS
       expect(error).toBeTruthy();
@@ -146,14 +150,13 @@ describe('🛡️ Cross-Event Access Validation', () => {
 
     test('Cannot access unauthorized messaging functions', async () => {
       // Test: User tries to send messages to events they don't have access to
-      const { data, error } = await supabase
-        .rpc('resolve_message_recipients', {
-          msg_event_id: testEventIds.unauthorizedEvent,
-          target_guest_ids: null,
-          target_tags: ['test'],
-          require_all_tags: false,
-          target_rsvp_statuses: null
-        });
+      const { data, error } = await supabase.rpc('resolve_message_recipients', {
+        msg_event_id: testEventIds.unauthorizedEvent,
+        target_guest_ids: null,
+        target_tags: ['test'],
+        require_all_tags: false,
+        target_rsvp_statuses: null,
+      });
 
       // Should return empty or error due to access control
       expect(data).toEqual([]);
@@ -162,16 +165,18 @@ describe('🛡️ Cross-Event Access Validation', () => {
 
   describe('✅ Proper Access Control Validation', () => {
     test('Host can access their own events', async () => {
-      const { data, error } = await supabase
-        .rpc('is_event_host', { p_event_id: testEventIds.ownEvent });
+      const { data, error } = await supabase.rpc('is_event_host', {
+        p_event_id: testEventIds.ownEvent,
+      });
 
       expect(error).toBeNull();
       expect(data).toBe(true);
     });
 
     test('Guest can access their invited events', async () => {
-      const { data, error } = await supabase
-        .rpc('is_event_guest', { p_event_id: testEventIds.invitedEvent });
+      const { data, error } = await supabase.rpc('is_event_guest', {
+        p_event_id: testEventIds.invitedEvent,
+      });
 
       expect(error).toBeNull();
       expect(data).toBe(true);
@@ -179,8 +184,9 @@ describe('🛡️ Cross-Event Access Validation', () => {
 
     test('Helper functions return sanitized errors', async () => {
       // Test that error messages don't leak sensitive information
-      const { data, error } = await supabase
-        .rpc('can_access_event', { p_event_id: 'invalid-uuid' });
+      const { data, error } = await supabase.rpc('can_access_event', {
+        p_event_id: 'invalid-uuid',
+      });
 
       if (error) {
         // Error message should not reveal internal details
@@ -194,8 +200,16 @@ describe('🛡️ Cross-Event Access Validation', () => {
   describe('🔐 RLS Policy Verification', () => {
     test('All tables have RLS enabled', async () => {
       // This test verifies RLS is active on all tables
-      const tables = ['events', 'event_guests', 'messages', 'message_deliveries', 'scheduled_messages', 'media', 'users'];
-      
+      const tables = [
+        'events',
+        'event_guests',
+        'messages',
+        'message_deliveries',
+        'scheduled_messages',
+        'media',
+        'users',
+      ];
+
       for (const table of tables) {
         const { data, error } = await supabase
           .from(table as any)
@@ -211,8 +225,9 @@ describe('🛡️ Cross-Event Access Validation', () => {
 
     test('Search path vulnerabilities eliminated', async () => {
       // Test that helper functions use secure search_path
-      const { data, error } = await supabase
-        .rpc('can_access_event', { p_event_id: testEventIds.testEvent });
+      const { data, error } = await supabase.rpc('can_access_event', {
+        p_event_id: testEventIds.testEvent,
+      });
 
       // Function should execute without search_path injection vulnerabilities
       expect(error).toBeNull();
@@ -222,7 +237,7 @@ describe('🛡️ Cross-Event Access Validation', () => {
 
 /**
  * 📋 SECURITY TEST CHECKLIST:
- * 
+ *
  * ✅ Cross-event access isolation
  * ✅ Phone-only guest isolation
  * ✅ Privilege escalation prevention
@@ -230,7 +245,7 @@ describe('🛡️ Cross-Event Access Validation', () => {
  * ✅ Error message sanitization
  * ✅ RLS policy verification
  * ✅ Helper function security
- * 
+ *
  * 🚨 CRITICAL: These tests require test data setup in development environment
  * Run with: npm run test:security
- */ 
+ */

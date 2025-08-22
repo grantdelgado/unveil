@@ -1,18 +1,23 @@
 # Event Membership Consistency Implementation
 
 ## Summary
+
 Fixed the "Choose an event" list to hide events from removed guests and implemented canonical membership model with single rows per (event_id, phone).
 
 ## Implementation Details
 
 ### 1. Fixed Event List RPC ✅
+
 **File**: `supabase/migrations/20250120000002_fix_get_user_events_removed_at.sql`
+
 - Updated `get_user_events()` RPC to filter `removed_at IS NULL` in JOIN condition
 - Now removed guests won't see events in "Choose an event" list
 - Added proper WHERE clause filtering for guest membership
 
 ### 2. Canonical Membership Constraints ✅
+
 **File**: `supabase/migrations/20250120000003_canonical_membership_constraints.sql`
+
 - Ensured unique constraint: `uq_event_guests_event_phone_active` (already existed)
 - Added performance indexes:
   - `idx_event_guests_user_active` - User/event lookups for active guests
@@ -20,7 +25,9 @@ Fixed the "Choose an event" list to hide events from removed guests and implemen
   - `idx_event_guests_removed_at` - Removed status filtering
 
 ### 3. Single Entry Point RPC ✅
+
 **File**: `supabase/migrations/20250120000004_add_or_restore_guest_rpc.sql`
+
 - Created `add_or_restore_guest(p_event_id, p_phone, p_name, p_email, p_role)` RPC
 - **Logic**:
   - Find existing record by (event_id, phone) - most recent first
@@ -30,7 +37,9 @@ Fixed the "Choose an event" list to hide events from removed guests and implemen
 - **Returns**: `{success, guest_id, operation, phone, name, email, role}`
 
 ### 4. Backfill/Dedupe Migration ✅
+
 **File**: `supabase/migrations/20250120000005_backfill_canonical_membership.sql`
+
 - Safe migration to handle existing duplicate rows
 - **Process**:
   - Identify groups with multiple rows for same (event_id, phone)
@@ -40,18 +49,23 @@ Fixed the "Choose an event" list to hide events from removed guests and implemen
 - **Validation**: Ensures no active duplicates remain
 
 ### 5. Updated Add Flows ✅
+
 **Frontend Changes**:
+
 - **CSV Import**: `lib/services/eventCreation.ts` → Uses `add_or_restore_guest` RPC
 - **Manual Add**: `hooks/useGuests.ts` → Uses `add_or_restore_guest` RPC
 - **Benefits**: No more duplicate rows, automatic restore of removed guests
 
 ### 6. Remove Flow (Already Working) ✅
+
 - Uses existing `soft_delete_guest(p_guest_id)` RPC
 - Sets `removed_at = NOW()` (soft delete)
 - Preserves history and foreign key relationships
 
 ### 7. Cache Invalidation ✅
+
 **Added to**:
+
 - `GuestManagement.tsx` → Invalidates user events after guest removal
 - `GuestImportWizard.tsx` → Invalidates user events after guest import
 - **Result**: "Choose an event" list updates immediately
@@ -68,6 +82,7 @@ Fixed the "Choose an event" list to hide events from removed guests and implemen
 ## Database Schema Changes
 
 ### New RPC Functions
+
 ```sql
 -- Single entry point for guest management
 add_or_restore_guest(p_event_id uuid, p_phone text, p_name text, p_email text, p_role text)
@@ -77,6 +92,7 @@ get_user_events(user_id_param uuid) -- Now filters removed_at IS NULL
 ```
 
 ### New Indexes
+
 ```sql
 -- Performance optimization for canonical membership
 idx_event_guests_user_active ON event_guests(user_id, event_id) WHERE removed_at IS NULL
@@ -86,11 +102,13 @@ idx_event_guests_event_phone_all ON event_guests(event_id, phone)
 ## Testing Recommendations
 
 1. **Remove/Re-add Flow**:
+
    - Remove a guest → Verify they can't see event in "Choose an event"
    - Re-add same guest → Verify same guest_id is restored
    - Check message_deliveries still point to correct guest_id
 
 2. **CSV Import Duplicates**:
+
    - Import CSV with phone numbers that exist (some removed, some active)
    - Verify removed guests are restored, active guests are updated
    - No duplicate rows created
@@ -100,12 +118,15 @@ idx_event_guests_event_phone_all ON event_guests(event_id, phone)
    - Add guest → Verify they see event immediately
 
 ## Performance Impact
+
 - **Positive**: Better indexes for membership queries
 - **Neutral**: Individual RPC calls vs batch inserts (trade-off for correctness)
 - **Monitoring**: Watch for slow guest import on large CSV files
 
 ## Rollback Plan
+
 If issues arise:
+
 1. Revert to previous `get_user_events` function
 2. Temporarily disable new `add_or_restore_guest` RPC
 3. Fall back to direct INSERT for guest creation

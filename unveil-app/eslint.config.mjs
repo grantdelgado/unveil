@@ -21,26 +21,24 @@ const eslintConfig = [
       '**/lib/services/guestAutoJoin.ts',
       '**/app/api/**/*.ts',
       '**/lib/auth/**/*.ts',
-      '**/lib/auth/**/*.tsx'
+      '**/lib/auth/**/*.tsx',
     ],
     rules: {
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-unused-vars': 'warn',
       'react-hooks/exhaustive-deps': 'warn',
       'react/no-unescaped-entities': 'warn',
-      '@typescript-eslint/ban-ts-comment': 'warn'
-    }
+      '@typescript-eslint/ban-ts-comment': 'warn',
+    },
   },
   {
-    files: [
-      '**/components/features/messaging/host/MessageAnalyticsCard.tsx'
-    ],
+    files: ['**/components/features/messaging/host/MessageAnalyticsCard.tsx'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unused-vars': 'off',
-      '@typescript-eslint/ban-ts-comment': 'off'
-    }
-  }
+      '@typescript-eslint/ban-ts-comment': 'off',
+    },
+  },
 ];
 
 export default eslintConfig;

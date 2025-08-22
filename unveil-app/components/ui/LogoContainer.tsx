@@ -20,14 +20,13 @@ export const LogoContainer: React.FC<LogoContainerProps> = ({
 
   return (
     <div className={cn('flex justify-center mb-4', className)}>
-      <div className={cn(
-        'flex items-center justify-center',
-        sizeClasses[size]
-      )}>
+      <div
+        className={cn('flex items-center justify-center', sizeClasses[size])}
+      >
         <span>{children}</span>
       </div>
     </div>
   );
 };
 
-LogoContainer.displayName = 'LogoContainer'; 
+LogoContainer.displayName = 'LogoContainer';

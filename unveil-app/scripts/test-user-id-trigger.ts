@@ -2,7 +2,7 @@
 
 /**
  * Test script to verify the user_id auto-population trigger
- * 
+ *
  * This script will:
  * 1. Find an existing user with a phone number
  * 2. Create a test event
@@ -36,12 +36,12 @@ const testData: TestData = {};
 
 async function cleanup() {
   console.log('🧹 Cleaning up test data...');
-  
+
   if (testData.testGuestId) {
     await supabase.from('event_guests').delete().eq('id', testData.testGuestId);
     console.log('   ✅ Removed test guest');
   }
-  
+
   if (testData.testEventId) {
     await supabase.from('events').delete().eq('id', testData.testEventId);
     console.log('   ✅ Removed test event');
@@ -67,11 +67,11 @@ async function runTriggerTest(): Promise<void> {
     const testUser = users[0];
     testData.userId = testUser.id;
     testData.userPhone = testUser.phone;
-    
+
     console.log('📱 Using test user:', {
       id: testUser.id,
       phone: testUser.phone,
-      name: testUser.full_name
+      name: testUser.full_name,
     });
 
     // 2. Create a test event
@@ -81,7 +81,7 @@ async function runTriggerTest(): Promise<void> {
         title: 'Test Event for Trigger',
         event_date: new Date().toISOString().split('T')[0],
         host_user_id: testUser.id,
-        description: 'Temporary test event - will be deleted'
+        description: 'Temporary test event - will be deleted',
       })
       .select()
       .single();
@@ -95,8 +95,10 @@ async function runTriggerTest(): Promise<void> {
     console.log('🎉 Created test event:', event.id);
 
     // 3. Insert guest with same phone but no user_id (should trigger auto-population)
-    console.log('\n🔄 Inserting guest with matching phone (user_id should auto-populate)...');
-    
+    console.log(
+      '\n🔄 Inserting guest with matching phone (user_id should auto-populate)...',
+    );
+
     const { data: guest, error: guestError } = await supabase
       .from('event_guests')
       .insert({
@@ -104,7 +106,7 @@ async function runTriggerTest(): Promise<void> {
         phone: testUser.phone,
         guest_name: 'Test Guest for Trigger',
         user_id: null, // Explicitly null to test trigger
-        role: 'guest'
+        role: 'guest',
       })
       .select()
       .single();
@@ -119,7 +121,7 @@ async function runTriggerTest(): Promise<void> {
 
     // 4. Verify the trigger worked
     console.log('🔍 Checking if trigger populated user_id...');
-    
+
     const { data: updatedGuest, error: checkError } = await supabase
       .from('event_guests')
       .select('id, user_id, phone, guest_name')
@@ -148,7 +150,7 @@ async function runTriggerTest(): Promise<void> {
 
     // 5. Test that existing user_id values are not overwritten
     console.log('\n🔄 Testing trigger does not overwrite existing user_id...');
-    
+
     // Create another user for testing
     const { data: anotherUser, error: userError2 } = await supabase
       .from('users')
@@ -165,7 +167,7 @@ async function runTriggerTest(): Promise<void> {
           phone: testUser.phone, // Same phone
           guest_name: 'Test Guest 2',
           user_id: anotherUser.id, // Different user_id
-          role: 'guest'
+          role: 'guest',
         })
         .select()
         .single();
@@ -188,7 +190,6 @@ async function runTriggerTest(): Promise<void> {
         await supabase.from('event_guests').delete().eq('id', guest2.id);
       }
     }
-
   } catch (err) {
     console.error('❌ Unexpected error:', err);
   } finally {

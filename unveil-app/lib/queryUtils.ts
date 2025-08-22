@@ -17,49 +17,49 @@ export interface InvalidationOptions {
  * Invalidate event-related queries after mutations
  * Use this when event data changes (RSVP, guest updates, etc.)
  */
-export async function invalidateEventQueries({ 
-  queryClient, 
-  eventId, 
-  userId 
+export async function invalidateEventQueries({
+  queryClient,
+  eventId,
+  userId,
 }: InvalidationOptions) {
   const invalidations: Promise<void>[] = [];
 
   if (eventId) {
     // Invalidate event analytics - critical for dashboard accuracy
     invalidations.push(
-      queryClient.invalidateQueries({ 
-        queryKey: ['analytics', eventId] 
-      })
+      queryClient.invalidateQueries({
+        queryKey: ['analytics', eventId],
+      }),
     );
-    
+
     // Invalidate event guests data
     invalidations.push(
-      queryClient.invalidateQueries({ 
-        queryKey: queryKeys.eventGuests(eventId) 
-      })
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.eventGuests(eventId),
+      }),
     );
-    
+
     // Invalidate event messages
     invalidations.push(
-      queryClient.invalidateQueries({ 
-        queryKey: queryKeys.eventMessages(eventId) 
-      })
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.eventMessages(eventId),
+      }),
     );
-    
+
     // Invalidate event media
     invalidations.push(
-      queryClient.invalidateQueries({ 
-        queryKey: queryKeys.eventMedia(eventId) 
-      })
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.eventMedia(eventId),
+      }),
     );
   }
 
   if (userId) {
     // Invalidate user events list
     invalidations.push(
-      queryClient.invalidateQueries({ 
-        queryKey: queryKeys.userEvents(userId) 
-      })
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.userEvents(userId),
+      }),
     );
   }
 
@@ -69,9 +69,9 @@ export async function invalidateEventQueries({
 /**
  * Invalidate guest-specific queries after RSVP or profile changes
  */
-export async function invalidateGuestQueries({ 
-  queryClient, 
-  eventId, 
+export async function invalidateGuestQueries({
+  queryClient,
+  eventId,
   // guestId: Future enhancement for guest-specific invalidation
 }: InvalidationOptions) {
   const invalidations: Promise<void>[] = [];
@@ -79,16 +79,16 @@ export async function invalidateGuestQueries({
   if (eventId) {
     // Invalidate event guests
     invalidations.push(
-      queryClient.invalidateQueries({ 
-        queryKey: queryKeys.eventGuests(eventId) 
-      })
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.eventGuests(eventId),
+      }),
     );
-    
+
     // Invalidate analytics due to RSVP changes
     invalidations.push(
-      queryClient.invalidateQueries({ 
-        queryKey: ['analytics', eventId] 
-      })
+      queryClient.invalidateQueries({
+        queryKey: ['analytics', eventId],
+      }),
     );
   }
 
@@ -98,25 +98,25 @@ export async function invalidateGuestQueries({
 /**
  * Invalidate messaging-related queries after message operations
  */
-export async function invalidateMessagingQueries({ 
-  queryClient, 
-  eventId 
+export async function invalidateMessagingQueries({
+  queryClient,
+  eventId,
 }: InvalidationOptions) {
   const invalidations: Promise<void>[] = [];
 
   if (eventId) {
     // Invalidate event messages
     invalidations.push(
-      queryClient.invalidateQueries({ 
-        queryKey: queryKeys.eventMessages(eventId) 
-      })
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.eventMessages(eventId),
+      }),
     );
-    
+
     // Invalidate scheduled messages
     invalidations.push(
-      queryClient.invalidateQueries({ 
-        queryKey: ['scheduledMessages', eventId] 
-      })
+      queryClient.invalidateQueries({
+        queryKey: ['scheduledMessages', eventId],
+      }),
     );
   }
 
@@ -132,7 +132,7 @@ export async function smartInvalidation({
   mutationType,
   eventId,
   userId,
-  guestId
+  guestId,
 }: InvalidationOptions & {
   mutationType: 'rsvp' | 'guest' | 'message' | 'event' | 'media';
 }) {
@@ -140,27 +140,27 @@ export async function smartInvalidation({
     case 'rsvp':
       await invalidateGuestQueries({ queryClient, eventId, guestId });
       break;
-      
+
     case 'guest':
       await invalidateGuestQueries({ queryClient, eventId, guestId });
       break;
-      
+
     case 'message':
       await invalidateMessagingQueries({ queryClient, eventId });
       break;
-      
+
     case 'event':
       await invalidateEventQueries({ queryClient, eventId, userId });
       break;
-      
+
     case 'media':
       if (eventId) {
-        await queryClient.invalidateQueries({ 
-          queryKey: queryKeys.eventMedia(eventId) 
+        await queryClient.invalidateQueries({
+          queryKey: queryKeys.eventMedia(eventId),
         });
       }
       break;
-      
+
     default:
       // Fallback to full event invalidation
       await invalidateEventQueries({ queryClient, eventId, userId });
@@ -171,9 +171,9 @@ export async function smartInvalidation({
  * Bulk invalidation for major operations (use sparingly)
  * Only use when multiple systems are affected
  */
-export async function bulkInvalidation({ 
-  queryClient, 
-  eventId, 
+export async function bulkInvalidation({
+  queryClient,
+  eventId,
   // userId: Future enhancement for user-specific bulk invalidation
 }: InvalidationOptions) {
   const invalidations: Promise<void>[] = [
@@ -185,7 +185,7 @@ export async function bulkInvalidation({
 
   if (eventId) {
     invalidations.push(
-      queryClient.invalidateQueries({ queryKey: ['media', 'event', eventId] })
+      queryClient.invalidateQueries({ queryKey: ['media', 'event', eventId] }),
     );
   }
 

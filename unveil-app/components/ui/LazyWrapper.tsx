@@ -1,14 +1,14 @@
-'use client'
+'use client';
 
-import { Suspense, type ComponentType, type ReactNode } from 'react'
-import { LoadingSpinner } from './LoadingSpinner'
-import { ErrorBoundary } from './ErrorBoundary'
+import { Suspense, type ComponentType, type ReactNode } from 'react';
+import { LoadingSpinner } from './LoadingSpinner';
+import { ErrorBoundary } from './ErrorBoundary';
 
 interface LazyWrapperProps {
-  children: ReactNode
-  fallback?: ReactNode
-  errorFallback?: ComponentType<{ error: Error; resetError: () => void }>
-  className?: string
+  children: ReactNode;
+  fallback?: ReactNode;
+  errorFallback?: ComponentType<{ error: Error; resetError: () => void }>;
+  className?: string;
 }
 
 // Default loading fallback
@@ -16,22 +16,28 @@ const DefaultLoadingFallback = () => (
   <div className="flex items-center justify-center min-h-[200px] w-full">
     <LoadingSpinner size="lg" />
   </div>
-)
+);
 
 // Default error fallback
-const DefaultLazyErrorFallback = ({ error, resetError }: { error: Error; resetError: () => void }) => (
+const DefaultLazyErrorFallback = ({
+  error,
+  resetError,
+}: {
+  error: Error;
+  resetError: () => void;
+}) => (
   <div className="flex items-center justify-center min-h-[200px] w-full">
     <div className="text-center space-y-2">
       <p className="text-stone-600">Failed to load component</p>
       <div className="space-x-2">
-        <button 
+        <button
           onClick={resetError}
           className="text-sm text-rose-600 hover:text-rose-700 underline"
         >
           Try again
         </button>
-        <button 
-          onClick={() => window.location.reload()} 
+        <button
+          onClick={() => window.location.reload()}
           className="text-sm text-stone-500 hover:text-stone-600 underline"
         >
           Reload page
@@ -39,32 +45,34 @@ const DefaultLazyErrorFallback = ({ error, resetError }: { error: Error; resetEr
       </div>
       {process.env.NODE_ENV === 'development' && (
         <details className="mt-2 text-left">
-          <summary className="text-xs text-stone-500 cursor-pointer">Error details</summary>
-          <pre className="text-xs text-red-600 mt-1 whitespace-pre-wrap">{error.message}</pre>
+          <summary className="text-xs text-stone-500 cursor-pointer">
+            Error details
+          </summary>
+          <pre className="text-xs text-red-600 mt-1 whitespace-pre-wrap">
+            {error.message}
+          </pre>
         </details>
       )}
     </div>
   </div>
-)
+);
 
 /**
  * Wrapper component for lazy-loaded components with loading and error states
  */
-export function LazyWrapper({ 
-  children, 
-  fallback = <DefaultLoadingFallback />, 
+export function LazyWrapper({
+  children,
+  fallback = <DefaultLoadingFallback />,
   errorFallback = DefaultLazyErrorFallback,
-  className 
+  className,
 }: LazyWrapperProps) {
   return (
     <div className={className}>
       <ErrorBoundary fallback={errorFallback}>
-        <Suspense fallback={fallback}>
-          {children}
-        </Suspense>
+        <Suspense fallback={fallback}>{children}</Suspense>
       </ErrorBoundary>
     </div>
-  )
+  );
 }
 
 /**
@@ -73,18 +81,18 @@ export function LazyWrapper({
 export function withLazyWrapper<P extends object>(
   Component: ComponentType<P>,
   options?: {
-    fallback?: ReactNode
-    errorFallback?: ComponentType<{ error: Error; resetError: () => void }>
-    className?: string
-  }
+    fallback?: ReactNode;
+    errorFallback?: ComponentType<{ error: Error; resetError: () => void }>;
+    className?: string;
+  },
 ) {
   return function LazyWrappedComponent(props: P) {
     return (
       <LazyWrapper {...options}>
         <Component {...props} />
       </LazyWrapper>
-    )
-  }
+    );
+  };
 }
 
 // Specialized loading components for different contexts
@@ -100,15 +108,18 @@ export const DashboardLoading = () => (
       <div className="h-64 bg-stone-200 rounded"></div>
     </div>
   </div>
-)
+);
 
 export const GalleryLoading = () => (
   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
     {Array.from({ length: 8 }).map((_, i) => (
-      <div key={i} className="aspect-square bg-stone-200 rounded-lg animate-pulse"></div>
+      <div
+        key={i}
+        className="aspect-square bg-stone-200 rounded-lg animate-pulse"
+      ></div>
     ))}
   </div>
-)
+);
 
 export const FormLoading = () => (
   <div className="space-y-4 p-6">
@@ -120,7 +131,7 @@ export const FormLoading = () => (
       <div className="h-10 bg-stone-200 rounded w-1/3"></div>
     </div>
   </div>
-)
+);
 
 export const MessagingLoading = () => (
   <div className="space-y-4 p-4">
@@ -136,4 +147,4 @@ export const MessagingLoading = () => (
       ))}
     </div>
   </div>
-) 
+);

@@ -1,12 +1,12 @@
 /**
  * Hooks Barrel - OPTIMIZED FOR TREE-SHAKING
- * 
+ *
  * WARNING: Wildcard exports can significantly bloat your bundle.
  * RECOMMENDED: Import hooks directly:
  * - import { useAuth } from '@/hooks/useAuth'
  * - import { useUserEvents } from '@/hooks/events'
  * - import { useGuests } from '@/hooks/guests'
- * 
+ *
  * Use this barrel only when importing multiple hooks from the same domain.
  */
 

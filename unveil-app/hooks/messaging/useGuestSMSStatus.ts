@@ -17,7 +17,10 @@ interface UseGuestSMSStatusReturn {
 /**
  * Hook to fetch and track the current guest's SMS opt-out status
  */
-export function useGuestSMSStatus({ eventId, userId }: UseGuestSMSStatusProps): UseGuestSMSStatusReturn {
+export function useGuestSMSStatus({
+  eventId,
+  userId,
+}: UseGuestSMSStatusProps): UseGuestSMSStatusReturn {
   const [smsOptOut, setSmsOptOut] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -53,17 +56,19 @@ export function useGuestSMSStatus({ eventId, userId }: UseGuestSMSStatusProps): 
       logger.info('Fetched guest SMS status', {
         eventId,
         userId,
-        smsOptOut: guest?.sms_opt_out
+        smsOptOut: guest?.sms_opt_out,
       });
-
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch SMS notification status';
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : 'Failed to fetch SMS notification status';
       setError(errorMessage);
-      
+
       logger.error('Failed to fetch guest SMS status', {
         error: err,
         eventId,
-        userId
+        userId,
       });
     } finally {
       setLoading(false);
@@ -79,6 +84,6 @@ export function useGuestSMSStatus({ eventId, userId }: UseGuestSMSStatusProps): 
     smsOptOut,
     loading,
     error,
-    refreshStatus: fetchSMSStatus
+    refreshStatus: fetchSMSStatus,
   };
 }

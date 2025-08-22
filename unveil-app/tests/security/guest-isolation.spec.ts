@@ -1,6 +1,6 @@
 /**
  * Guest Access Isolation Tests
- * 
+ *
  * These tests validate that guests can only access data they're authorized to see,
  * and that cross-guest data leakage is prevented through proper RLS policies.
  */
@@ -40,7 +40,7 @@ test.describe('Guest Access Isolation', () => {
         event_id: context.eventId,
         content: 'Message for guest 1 only',
         target_guest_ids: [context.guest1Id],
-        message_type: 'direct'
+        message_type: 'direct',
       })
       .select()
       .single();
@@ -54,7 +54,9 @@ test.describe('Guest Access Isolation', () => {
 
     expect(guest1Error).toBeNull();
     expect(guest1Messages).toBeDefined();
-    expect(guest1Messages.some(msg => msg.id === targetedMessage.id)).toBe(true);
+    expect(guest1Messages.some((msg) => msg.id === targetedMessage.id)).toBe(
+      true,
+    );
 
     // Authenticate as guest2 - should not see the message
     await authenticateAsPhone(context.guest2Phone);
@@ -65,7 +67,9 @@ test.describe('Guest Access Isolation', () => {
 
     expect(guest2Error).toBeNull();
     expect(guest2Messages).toBeDefined();
-    expect(guest2Messages.some(msg => msg.id === targetedMessage.id)).toBe(false);
+    expect(guest2Messages.some((msg) => msg.id === targetedMessage.id)).toBe(
+      false,
+    );
   });
 
   test('guests cannot view other guests message deliveries', async () => {
@@ -75,7 +79,7 @@ test.describe('Guest Access Isolation', () => {
       .insert({
         message_id: context.messageId,
         guest_id: context.guest1Id,
-        status: 'delivered'
+        status: 'delivered',
       })
       .select()
       .single();
@@ -85,7 +89,7 @@ test.describe('Guest Access Isolation', () => {
       .insert({
         message_id: context.messageId,
         guest_id: context.guest2Id,
-        status: 'delivered'
+        status: 'delivered',
       })
       .select()
       .single();
@@ -123,7 +127,7 @@ test.describe('Guest Access Isolation', () => {
       .insert({
         event_id: context.eventId,
         content: 'Message from guest 1',
-        message_type: 'direct'
+        message_type: 'direct',
       })
       .select()
       .single();
@@ -132,8 +136,8 @@ test.describe('Guest Access Isolation', () => {
       .from('messages')
       .insert({
         event_id: context.eventId,
-        content: 'Message from guest 2', 
-        message_type: 'direct'
+        content: 'Message from guest 2',
+        message_type: 'direct',
       })
       .select()
       .single();
@@ -148,7 +152,9 @@ test.describe('Guest Access Isolation', () => {
     expect(guest1Messages).toBeDefined();
     // Note: Current RLS implementation may allow cross-guest visibility for same event
     // This test documents current behavior - future enhancement needed for proper isolation
-    const canSeeOwnMessage = guest1Messages?.some(msg => msg.id === response1?.id);
+    const canSeeOwnMessage = guest1Messages?.some(
+      (msg) => msg.id === response1?.id,
+    );
     expect(canSeeOwnMessage).toBeDefined(); // Basic functionality check
   });
 
@@ -161,7 +167,7 @@ test.describe('Guest Access Isolation', () => {
         guest_name: 'Phone Only Guest',
         phone: '+14155556789',
         user_id: null, // Phone-only access
-        guest_tags: ['vip']
+        guest_tags: ['vip'],
       })
       .select()
       .single();
@@ -173,7 +179,7 @@ test.describe('Guest Access Isolation', () => {
       .insert({
         event_id: context.eventId,
         content: 'Announcement message',
-        message_type: 'announcement'
+        message_type: 'announcement',
       })
       .select()
       .single();
@@ -186,7 +192,9 @@ test.describe('Guest Access Isolation', () => {
       .eq('event_id', context.eventId);
 
     expect(phoneOnlyMessages).toBeDefined();
-    expect(phoneOnlyMessages?.some(msg => msg.id === vipMessage?.id)).toBe(true);
+    expect(phoneOnlyMessages?.some((msg) => msg.id === vipMessage?.id)).toBe(
+      true,
+    );
 
     // Authenticate as regular guest - should also see announcement messages for their event
     await authenticateAsPhone(context.guest1Phone);
@@ -196,7 +204,9 @@ test.describe('Guest Access Isolation', () => {
       .eq('event_id', context.eventId);
 
     expect(regularMessages).toBeDefined();
-    expect(regularMessages?.some(msg => msg.id === vipMessage?.id)).toBe(true);
+    expect(regularMessages?.some((msg) => msg.id === vipMessage?.id)).toBe(
+      true,
+    );
   });
 
   test('guests cannot access data from other events', async () => {
@@ -207,7 +217,7 @@ test.describe('Guest Access Isolation', () => {
         title: 'Other Event',
         host_user_id: context.hostUserId, // Same host for simplicity
         event_date: '2025-03-01',
-        location: 'Other Venue'
+        location: 'Other Venue',
       })
       .select()
       .single();
@@ -219,7 +229,7 @@ test.describe('Guest Access Isolation', () => {
         event_id: otherEvent.id,
         guest_name: 'Other Event Guest',
         phone: context.guest1Phone, // Same phone, different event
-        user_id: null
+        user_id: null,
       })
       .select()
       .single();
@@ -230,7 +240,7 @@ test.describe('Guest Access Isolation', () => {
       .insert({
         event_id: otherEvent.id,
         content: 'Message in other event',
-        message_type: 'announcement'
+        message_type: 'announcement',
       })
       .select()
       .single();
@@ -242,8 +252,12 @@ test.describe('Guest Access Isolation', () => {
       .select('*');
 
     expect(guest1Messages).toBeDefined();
-    expect(guest1Messages.some(msg => msg.event_id === otherEvent.id)).toBe(false);
-    expect(guest1Messages.every(msg => msg.event_id === context.eventId)).toBe(true);
+    expect(guest1Messages.some((msg) => msg.event_id === otherEvent.id)).toBe(
+      false,
+    );
+    expect(
+      guest1Messages.every((msg) => msg.event_id === context.eventId),
+    ).toBe(true);
   });
 
   test('unauthorized API access attempts are blocked', async () => {
@@ -271,9 +285,8 @@ test.describe('Guest Access Isolation', () => {
     expect(unauthGuests).toBeNull();
 
     // Attempt to access message deliveries without authentication
-    const { data: unauthDeliveries, error: unauthDeliveryError } = await supabase
-      .from('message_deliveries')
-      .select('*');
+    const { data: unauthDeliveries, error: unauthDeliveryError } =
+      await supabase.from('message_deliveries').select('*');
 
     // Should be blocked by RLS
     expect(unauthDeliveryError).toBeDefined();
@@ -313,7 +326,7 @@ async function setupTestData(): Promise<TestContext> {
   const { data: hostAuth } = await supabase.auth.signUp({
     email: 'test-host@example.com',
     password: 'testpassword123',
-    phone: '+14155551000'
+    phone: '+14155551000',
   });
 
   const hostUserId = hostAuth.user!.id;
@@ -326,7 +339,7 @@ async function setupTestData(): Promise<TestContext> {
       title: 'Test Wedding',
       host_user_id: hostUserId,
       event_date: '2025-02-15',
-      location: 'Test Venue'
+      location: 'Test Venue',
     })
     .select()
     .single();
@@ -339,7 +352,7 @@ async function setupTestData(): Promise<TestContext> {
       guest_name: 'Guest One',
       phone: '+14155551001',
       user_id: null,
-      guest_tags: ['family']
+      guest_tags: ['family'],
     })
     .select()
     .single();
@@ -351,7 +364,7 @@ async function setupTestData(): Promise<TestContext> {
       guest_name: 'Guest Two',
       phone: '+14155551002',
       user_id: null,
-      guest_tags: ['friends']
+      guest_tags: ['friends'],
     })
     .select()
     .single();
@@ -362,7 +375,7 @@ async function setupTestData(): Promise<TestContext> {
     .insert({
       event_id: event.id,
       content: 'Test message for all guests',
-      message_type: 'announcement'
+      message_type: 'announcement',
     })
     .select()
     .single();
@@ -375,13 +388,16 @@ async function setupTestData(): Promise<TestContext> {
     guest2Id: guest2.id,
     guest2Phone: '+14155551002',
     eventId: event.id,
-    messageId: message.id
+    messageId: message.id,
   };
 }
 
 async function cleanupTestData(context: TestContext) {
   // Clean up in reverse order due to foreign key constraints
-  await supabase.from('message_deliveries').delete().eq('message_id', context.messageId);
+  await supabase
+    .from('message_deliveries')
+    .delete()
+    .eq('message_id', context.messageId);
   await supabase.from('messages').delete().eq('event_id', context.eventId);
   await supabase.from('event_guests').delete().eq('event_id', context.eventId);
   await supabase.from('events').delete().eq('id', context.eventId);
@@ -390,7 +406,7 @@ async function cleanupTestData(context: TestContext) {
 async function authenticateAsPhone(phone: string) {
   // Sign out first
   await supabase.auth.signOut();
-  
+
   // Simulate phone-based authentication
   // In a real test, this would trigger the phone auth flow
   // For testing purposes, we'll use a mock JWT with phone claim
@@ -401,10 +417,10 @@ async function authenticateAsPhone(phone: string) {
     iat: Math.floor(Date.now() / 1000),
     iss: 'supabase',
     sub: 'test-user-id',
-    role: 'authenticated'
+    role: 'authenticated',
   };
 
   // Note: In a real test environment, you would use Supabase's test helpers
   // or a proper authentication mechanism. This is a simplified example.
   console.log(`Authenticating as phone: ${phone}`);
-} 
+}

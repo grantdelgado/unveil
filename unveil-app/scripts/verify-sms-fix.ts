@@ -2,9 +2,9 @@
 
 /**
  * SMS Fix Verification Script
- * 
+ *
  * Verifies that our comprehensive SMS fixes are working correctly
- * 
+ *
  * Usage: npx tsx scripts/verify-sms-fix.ts
  */
 
@@ -23,28 +23,28 @@ interface TestResult {
 async function testAdminClientConnection(): Promise<TestResult> {
   try {
     console.log('🧪 Testing admin client connection...');
-    
+
     const { testAdminConnection } = await import('../lib/supabase/admin');
     const isConnected = await testAdminConnection();
-    
+
     if (isConnected) {
       return {
         test: 'Admin Client Connection',
         success: true,
-        details: 'Successfully connected to Supabase with admin privileges'
+        details: 'Successfully connected to Supabase with admin privileges',
       };
     } else {
       return {
         test: 'Admin Client Connection',
         success: false,
-        error: 'Failed to connect with admin client'
+        error: 'Failed to connect with admin client',
       };
     }
   } catch (error) {
     return {
       test: 'Admin Client Connection',
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     };
   }
 }
@@ -52,25 +52,25 @@ async function testAdminClientConnection(): Promise<TestResult> {
 async function testEventLookup(): Promise<TestResult> {
   try {
     console.log('🧪 Testing event lookup with admin client...');
-    
+
     const { supabaseAdmin } = await import('../lib/supabase/admin');
     const testEventId = '24caa3a8-020e-4a80-9899-35ff2797dcc0';
-    
+
     const { data: event, error } = await supabaseAdmin
       .from('events')
       .select('id, title, host_user_id')
       .eq('id', testEventId)
       .single();
-    
+
     if (error) {
       return {
         test: 'Event Lookup (Admin)',
         success: false,
         error: `Database error: ${error.message}`,
-        details: { errorCode: error.code, hint: error.hint }
+        details: { errorCode: error.code, hint: error.hint },
       };
     }
-    
+
     if (event) {
       return {
         test: 'Event Lookup (Admin)',
@@ -78,106 +78,108 @@ async function testEventLookup(): Promise<TestResult> {
         details: {
           eventId: event.id,
           title: event.title,
-          hasHost: !!event.host_user_id
-        }
+          hasHost: !!event.host_user_id,
+        },
       };
     }
-    
+
     return {
       test: 'Event Lookup (Admin)',
       success: false,
-      error: 'Event not found in database'
+      error: 'Event not found in database',
     };
-    
   } catch (error) {
     return {
       test: 'Event Lookup (Admin)',
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     };
   }
 }
 
 async function testEnvironmentVariables(): Promise<TestResult> {
   console.log('🧪 Testing environment variables...');
-  
+
   const required = [
     'NEXT_PUBLIC_SUPABASE_URL',
     'NEXT_PUBLIC_SUPABASE_ANON_KEY',
-    'SUPABASE_SERVICE_ROLE_KEY'
+    'SUPABASE_SERVICE_ROLE_KEY',
   ];
-  
-  const missing = required.filter(varName => !process.env[varName]);
-  
+
+  const missing = required.filter((varName) => !process.env[varName]);
+
   if (missing.length > 0) {
     return {
       test: 'Environment Variables',
       success: false,
-      error: `Missing required variables: ${missing.join(', ')}`
+      error: `Missing required variables: ${missing.join(', ')}`,
     };
   }
-  
+
   // Check format
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  
+
   if (!url?.startsWith('https://')) {
     return {
       test: 'Environment Variables',
       success: false,
-      error: 'NEXT_PUBLIC_SUPABASE_URL should start with https://'
+      error: 'NEXT_PUBLIC_SUPABASE_URL should start with https://',
     };
   }
-  
+
   if (!anonKey?.startsWith('eyJ')) {
     return {
       test: 'Environment Variables',
       success: false,
-      error: 'NEXT_PUBLIC_SUPABASE_ANON_KEY should be a JWT token'
+      error: 'NEXT_PUBLIC_SUPABASE_ANON_KEY should be a JWT token',
     };
   }
-  
+
   if (!serviceKey?.startsWith('eyJ')) {
     return {
       test: 'Environment Variables',
       success: false,
-      error: 'SUPABASE_SERVICE_ROLE_KEY should be a JWT token'
+      error: 'SUPABASE_SERVICE_ROLE_KEY should be a JWT token',
     };
   }
-  
+
   return {
     test: 'Environment Variables',
     success: true,
     details: {
       url: url.substring(0, 30) + '...',
       anonKey: anonKey.substring(0, 20) + '...',
-      serviceKey: serviceKey.substring(0, 20) + '...'
-    }
+      serviceKey: serviceKey.substring(0, 20) + '...',
+    },
   };
 }
 
 async function testAPIEndpointStructure(): Promise<TestResult> {
   try {
     console.log('🧪 Testing SMS API endpoint structure...');
-    
-    const response = await fetch('http://localhost:3000/api/sms/send-invitations', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+
+    const response = await fetch(
+      'http://localhost:3000/api/sms/send-invitations',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          eventId: 'test-id',
+          guests: [{ phone: '+15551234567' }],
+        }),
       },
-      body: JSON.stringify({
-        eventId: 'test-id',
-        guests: [{ phone: '+15551234567' }]
-      }),
-    });
-    
+    );
+
     // Should return 401 (auth required) not 404 or 500
     if (response.status === 401) {
       return {
         test: 'SMS API Endpoint Structure',
         success: true,
-        details: 'API endpoint properly requires authentication'
+        details: 'API endpoint properly requires authentication',
       };
     } else {
       const data = await response.json().catch(() => ({}));
@@ -185,14 +187,14 @@ async function testAPIEndpointStructure(): Promise<TestResult> {
         test: 'SMS API Endpoint Structure',
         success: false,
         error: `Expected 401, got ${response.status}`,
-        details: data
+        details: data,
       };
     }
   } catch (error) {
     return {
       test: 'SMS API Endpoint Structure',
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     };
   }
 }
@@ -201,25 +203,25 @@ function generateReport(results: TestResult[]) {
   console.log('\n📊 SMS FIX VERIFICATION REPORT');
   console.log('==============================\n');
 
-  const passed = results.filter(r => r.success).length;
-  const failed = results.filter(r => !r.success).length;
+  const passed = results.filter((r) => r.success).length;
+  const failed = results.filter((r) => !r.success).length;
 
   console.log(`✅ Passed: ${passed}`);
   console.log(`❌ Failed: ${failed}`);
   console.log(`📊 Total: ${results.length}\n`);
 
-  results.forEach(result => {
+  results.forEach((result) => {
     const icon = result.success ? '✅' : '❌';
     console.log(`${icon} ${result.test}`);
-    
+
     if (result.error) {
       console.log(`   Error: ${result.error}`);
     }
-    
+
     if (result.details) {
       console.log(`   Details:`, result.details);
     }
-    
+
     console.log('');
   });
 
@@ -245,17 +247,20 @@ async function main() {
   console.log('=============================\n');
 
   const results: TestResult[] = [];
-  
+
   try {
     // Run all verification tests
     results.push(await testEnvironmentVariables());
     results.push(await testAdminClientConnection());
     results.push(await testEventLookup());
     results.push(await testAPIEndpointStructure());
-    
+
     generateReport(results);
   } catch (error) {
-    console.error('❌ Verification suite failed:', error instanceof Error ? error.message : 'Unknown error');
+    console.error(
+      '❌ Verification suite failed:',
+      error instanceof Error ? error.message : 'Unknown error',
+    );
   }
 }
 

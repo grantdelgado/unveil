@@ -13,12 +13,14 @@ interface CompactEventHeaderProps {
   className?: string;
 }
 
-export function CompactEventHeader({ event, className }: CompactEventHeaderProps) {
+export function CompactEventHeader({
+  event,
+  className,
+}: CompactEventHeaderProps) {
   return (
-    <div className={cn(
-      "bg-white border-b border-gray-200 shadow-sm",
-      className
-    )}>
+    <div
+      className={cn('bg-white border-b border-gray-200 shadow-sm', className)}
+    >
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between py-4">
           {/* Left side - Back button and title */}
@@ -30,14 +32,12 @@ export function CompactEventHeader({ event, className }: CompactEventHeaderProps
               <ChevronLeft className="h-4 w-4" />
               <span className="hidden sm:inline">Back to Events</span>
             </Link>
-            
+
             <div className="min-w-0 flex-1">
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
                 {event.title}
               </h1>
-              <p className="text-sm text-gray-500 mt-0.5">
-                Host Dashboard
-              </p>
+              <p className="text-sm text-gray-500 mt-0.5">Host Dashboard</p>
             </div>
           </div>
 
@@ -51,7 +51,7 @@ export function CompactEventHeader({ event, className }: CompactEventHeaderProps
               <Pencil className="h-4 w-4" />
               <span className="hidden md:inline">Edit details</span>
             </Link>
-            
+
             <Link
               href={`/guest/events/${event.id}/home`}
               target="_blank"

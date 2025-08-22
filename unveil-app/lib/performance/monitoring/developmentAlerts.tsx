@@ -1,13 +1,13 @@
 /**
  * 🚨 PERFORMANCE GUARDRAILS: Development Alert System
- * 
+ *
  * Provides real-time warnings during development for:
  * - Bundle sizes exceeding 350KB threshold
  * - Too many Supabase subscriptions per page (>2)
  * - Heavy component rendering times
  * - Excessive re-renders
  * - Memory usage warnings
- * 
+ *
  * Helps prevent performance regressions before they reach production.
  */
 
@@ -16,12 +16,12 @@ import React from 'react';
 // Performance thresholds for alerts
 export const PERFORMANCE_ALERTS = {
   BUNDLE_SIZE_WARNING: 350 * 1024, // 350KB in bytes
-  BUNDLE_SIZE_ERROR: 500 * 1024,   // 500KB in bytes
+  BUNDLE_SIZE_ERROR: 500 * 1024, // 500KB in bytes
   MAX_SUBSCRIPTIONS_PER_PAGE: 2,
-  MAX_COMPONENT_RENDER_TIME: 16,   // 16ms for 60fps
+  MAX_COMPONENT_RENDER_TIME: 16, // 16ms for 60fps
   MAX_RE_RENDERS_PER_MINUTE: 30,
   MEMORY_WARNING_MB: process.env.NODE_ENV === 'production' ? 75 : 250, // Increased dev threshold
-  MEMORY_ERROR_MB: process.env.NODE_ENV === 'production' ? 100 : 300,   // Increased dev threshold for severe leaks
+  MEMORY_ERROR_MB: process.env.NODE_ENV === 'production' ? 100 : 300, // Increased dev threshold for severe leaks
 } as const;
 
 interface PerformanceAlert {
@@ -86,7 +86,10 @@ class DevelopmentAlerts {
       info: 'blue',
     }[alert.type];
 
-    console.group(`%c${emoji} Performance Alert: ${alert.category}`, `color: ${color}; font-weight: bold;`);
+    console.group(
+      `%c${emoji} Performance Alert: ${alert.category}`,
+      `color: ${color}; font-weight: bold;`,
+    );
     console.log(`Message: ${alert.message}`);
     if (alert.details) {
       console.log('Details:', alert.details);
@@ -131,11 +134,13 @@ class DevelopmentAlerts {
    * Track Supabase subscription count per page
    */
   trackSupabaseSubscription(subscriptionId: string, action: 'add' | 'remove') {
-    const pageKey = typeof window !== 'undefined' ? window.location.pathname : 'unknown';
-    
+    const pageKey =
+      typeof window !== 'undefined' ? window.location.pathname : 'unknown';
+
     const currentCount = this.subscriptionCounts.get(pageKey) || 0;
-    const newCount = action === 'add' ? currentCount + 1 : Math.max(0, currentCount - 1);
-    
+    const newCount =
+      action === 'add' ? currentCount + 1 : Math.max(0, currentCount - 1);
+
     this.subscriptionCounts.set(pageKey, newCount);
 
     if (newCount > PERFORMANCE_ALERTS.MAX_SUBSCRIPTIONS_PER_PAGE) {
@@ -148,7 +153,8 @@ class DevelopmentAlerts {
           limit: PERFORMANCE_ALERTS.MAX_SUBSCRIPTIONS_PER_PAGE,
           page: pageKey,
           subscriptionId,
-          recommendation: 'Use centralized subscription management or combine subscriptions',
+          recommendation:
+            'Use centralized subscription management or combine subscriptions',
         },
       });
     }
@@ -174,7 +180,8 @@ class DevelopmentAlerts {
 
     // Track render frequency
     const now = Date.now();
-    if (now - this.lastRenderCountReset > 60000) { // Reset every minute
+    if (now - this.lastRenderCountReset > 60000) {
+      // Reset every minute
       this.renderCounts.clear();
       this.lastRenderCountReset = now;
     }
@@ -191,7 +198,8 @@ class DevelopmentAlerts {
           component: componentName,
           renders: renderCount,
           timeframe: '1 minute',
-          recommendation: 'Check dependencies in useEffect, useMemo, or useCallback',
+          recommendation:
+            'Check dependencies in useEffect, useMemo, or useCallback',
         },
       });
     }
@@ -210,17 +218,17 @@ class DevelopmentAlerts {
             totalJSHeapSize: number;
           };
         };
-        
+
         if (performance.memory) {
           const usedMB = performance.memory.usedJSHeapSize / (1024 * 1024);
           const now = Date.now();
-          
+
           // Track memory usage history for trend analysis
           this.memoryHistory.push({ timestamp: now, used: usedMB });
-          
+
           // Keep only last 10 minutes of history
           this.memoryHistory = this.memoryHistory.filter(
-            entry => now - entry.timestamp < 10 * 60 * 1000
+            (entry) => now - entry.timestamp < 10 * 60 * 1000,
           );
 
           // Only alert if memory exceeds threshold AND we haven't alerted recently
@@ -238,13 +246,17 @@ class DevelopmentAlerts {
                   used: `${usedMB.toFixed(1)}MB`,
                   limit: `${PERFORMANCE_ALERTS.MEMORY_ERROR_MB}MB`,
                   total: `${(performance.memory.totalJSHeapSize / (1024 * 1024)).toFixed(1)}MB`,
-                  recommendation: 'Memory leak likely - check component cleanup and subscriptions',
+                  recommendation:
+                    'Memory leak likely - check component cleanup and subscriptions',
                 },
               });
               this.lastMemoryAlert = now;
             }
             // Check for potential memory leaks (trending upward)
-            else if (this.isMemoryTrendingUp() && usedMB > PERFORMANCE_ALERTS.MEMORY_WARNING_MB) {
+            else if (
+              this.isMemoryTrendingUp() &&
+              usedMB > PERFORMANCE_ALERTS.MEMORY_WARNING_MB
+            ) {
               this.addAlert({
                 type: 'warning',
                 category: 'memory',
@@ -254,7 +266,8 @@ class DevelopmentAlerts {
                   limit: `${PERFORMANCE_ALERTS.MEMORY_WARNING_MB}MB`,
                   total: `${(performance.memory.totalJSHeapSize / (1024 * 1024)).toFixed(1)}MB`,
                   trend: 'increasing',
-                  recommendation: 'Monitor for potential memory leaks - check subscriptions and intervals',
+                  recommendation:
+                    'Monitor for potential memory leaks - check subscriptions and intervals',
                 },
               });
               this.lastMemoryAlert = now;
@@ -272,13 +285,13 @@ class DevelopmentAlerts {
    */
   private isMemoryTrendingUp(): boolean {
     if (this.memoryHistory.length < 3) return false;
-    
+
     const recent = this.memoryHistory.slice(-3);
     const isIncreasing = recent.every((entry, index) => {
       if (index === 0) return true;
       return entry.used > recent[index - 1].used;
     });
-    
+
     // Consider it trending up if memory increased by >20MB in recent samples
     const increase = recent[recent.length - 1].used - recent[0].used;
     return isIncreasing && increase > 20;
@@ -325,9 +338,12 @@ export function usePerformanceAlert(componentName: string) {
 
   // Check memory usage less frequently to reduce noise
   React.useEffect(() => {
-    const interval = setInterval(() => {
-      developmentAlerts.checkMemoryUsage();
-    }, 2 * 60 * 1000); // Every 2 minutes (reduced from 30s)
+    const interval = setInterval(
+      () => {
+        developmentAlerts.checkMemoryUsage();
+      },
+      2 * 60 * 1000,
+    ); // Every 2 minutes (reduced from 30s)
 
     return () => clearInterval(interval);
   }, []);
@@ -351,7 +367,8 @@ export function monitorBundleSize() {
       for (const entry of list.getEntries()) {
         if (entry.entryType === 'navigation') {
           // Get bundle size from navigation timing
-          const transferSize = (entry as PerformanceNavigationTiming).transferSize;
+          const transferSize = (entry as PerformanceNavigationTiming)
+            .transferSize;
           if (transferSize) {
             developmentAlerts.checkBundleSize({
               size: transferSize,
@@ -386,7 +403,9 @@ export function initializeDevelopmentAlerts() {
   // Only log if UNVEIL_DEBUG is enabled
   if (process.env.UNVEIL_DEBUG === 'true') {
     console.log('🚨 Performance Alert System initialized');
-    console.log('📊 Monitoring bundle sizes, subscriptions, and render performance...');
+    console.log(
+      '📊 Monitoring bundle sizes, subscriptions, and render performance...',
+    );
     console.table(PERFORMANCE_ALERTS);
   }
 
@@ -394,9 +413,12 @@ export function initializeDevelopmentAlerts() {
   monitorBundleSize();
 
   // Periodic memory check (less frequent to reduce noise)
-  setInterval(() => {
-    developmentAlerts.checkMemoryUsage();
-  }, 5 * 60 * 1000); // Every 5 minutes (reduced further)
+  setInterval(
+    () => {
+      developmentAlerts.checkMemoryUsage();
+    },
+    5 * 60 * 1000,
+  ); // Every 5 minutes (reduced further)
 }
 
 /**
@@ -411,7 +433,7 @@ export function PerformanceAlertOverlay() {
 
     const interval = setInterval(() => {
       const currentAlerts = developmentAlerts.getAlerts();
-      setAlerts(prev => {
+      setAlerts((prev) => {
         // Only update if alerts actually changed
         if (JSON.stringify(prev) !== JSON.stringify(currentAlerts)) {
           return currentAlerts;
@@ -434,7 +456,7 @@ export function PerformanceAlertOverlay() {
     <div className="fixed top-4 right-4 z-50 bg-yellow-100 border border-yellow-400 rounded p-4 max-w-sm shadow-lg">
       <div className="flex justify-between items-center mb-2">
         <h3 className="font-bold text-yellow-800">⚠️ Performance Alerts</h3>
-        <button 
+        <button
           onClick={() => setShowOverlay(false)}
           className="text-yellow-600 hover:text-yellow-800"
         >
@@ -446,12 +468,13 @@ export function PerformanceAlertOverlay() {
           <div key={index} className="border-l-2 border-yellow-400 pl-2">
             <div className="font-medium">{alert.message}</div>
             <div className="text-xs text-yellow-600">
-              {alert.category} • {new Date(alert.timestamp).toLocaleTimeString()}
+              {alert.category} •{' '}
+              {new Date(alert.timestamp).toLocaleTimeString()}
             </div>
           </div>
         ))}
       </div>
-      <button 
+      <button
         onClick={() => developmentAlerts.clearAlerts()}
         className="mt-2 text-xs text-yellow-600 hover:text-yellow-800"
       >

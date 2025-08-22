@@ -1,13 +1,21 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Calendar, Clock, MapPin, Shirt, Edit, Trash2 } from 'lucide-react';
+import {
+  Plus,
+  Calendar,
+  Clock,
+  MapPin,
+  Shirt,
+  Edit,
+  Trash2,
+} from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { 
-  CardContainer, 
-  PrimaryButton, 
+import {
+  CardContainer,
+  PrimaryButton,
   SecondaryButton,
-  LoadingSpinner 
+  LoadingSpinner,
 } from '@/components/ui';
 import { ScheduleItemModal } from './ScheduleItemModal';
 import { formatEventDate } from '@/lib/utils/date';
@@ -30,7 +38,10 @@ interface ScheduleManagementProps {
   event: Event;
 }
 
-export function ScheduleManagement({ eventId, event }: ScheduleManagementProps) {
+export function ScheduleManagement({
+  eventId,
+  event,
+}: ScheduleManagementProps) {
   const [scheduleItems, setScheduleItems] = useState<ScheduleItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -102,16 +113,22 @@ export function ScheduleManagement({ eventId, event }: ScheduleManagementProps) 
   };
 
   // Group items by date (in event timezone)
-  const groupedItems = scheduleItems.reduce((groups, item) => {
-    const eventTimeData = fromUTCToEventZone(item.start_at, event.time_zone || 'UTC');
-    const dateKey = eventTimeData?.date || item.start_at.split('T')[0];
-    
-    if (!groups[dateKey]) {
-      groups[dateKey] = [];
-    }
-    groups[dateKey].push(item);
-    return groups;
-  }, {} as Record<string, ScheduleItem[]>);
+  const groupedItems = scheduleItems.reduce(
+    (groups, item) => {
+      const eventTimeData = fromUTCToEventZone(
+        item.start_at,
+        event.time_zone || 'UTC',
+      );
+      const dateKey = eventTimeData?.date || item.start_at.split('T')[0];
+
+      if (!groups[dateKey]) {
+        groups[dateKey] = [];
+      }
+      groups[dateKey].push(item);
+      return groups;
+    },
+    {} as Record<string, ScheduleItem[]>,
+  );
 
   const sortedDates = Object.keys(groupedItems).sort();
 
@@ -131,7 +148,9 @@ export function ScheduleManagement({ eventId, event }: ScheduleManagementProps) 
       <CardContainer className="p-8">
         <div className="text-center">
           <div className="text-4xl mb-4">⚠️</div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Schedule</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            Error Loading Schedule
+          </h3>
           <p className="text-gray-600 mb-4">{error}</p>
           <SecondaryButton onClick={loadScheduleItems}>
             Try Again
@@ -148,12 +167,13 @@ export function ScheduleManagement({ eventId, event }: ScheduleManagementProps) 
         <CardContainer className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-1">Schedule Items</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-1">
+                Schedule Items
+              </h2>
               <p className="text-sm text-gray-600">
-                {scheduleItems.length === 0 
+                {scheduleItems.length === 0
                   ? 'No schedule items yet. Add your first item to get started.'
-                  : `${scheduleItems.length} item${scheduleItems.length === 1 ? '' : 's'} scheduled`
-                }
+                  : `${scheduleItems.length} item${scheduleItems.length === 1 ? '' : 's'} scheduled`}
               </p>
             </div>
             <PrimaryButton
@@ -171,7 +191,9 @@ export function ScheduleManagement({ eventId, event }: ScheduleManagementProps) 
           <div className="flex items-start space-x-4">
             <Calendar className="w-5 h-5 text-purple-600 mt-0.5" />
             <div>
-              <h3 className="font-semibold text-gray-900">{formatEventDate(event.event_date)}</h3>
+              <h3 className="font-semibold text-gray-900">
+                {formatEventDate(event.event_date)}
+              </h3>
               {event.location && (
                 <p className="text-sm text-gray-600 mt-1">{event.location}</p>
               )}
@@ -191,9 +213,12 @@ export function ScheduleManagement({ eventId, event }: ScheduleManagementProps) 
           <CardContainer className="p-12">
             <div className="text-center">
               <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Schedule Items</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                No Schedule Items
+              </h3>
               <p className="text-gray-600 mb-6">
-                Create your first schedule item to start building your event timeline.
+                Create your first schedule item to start building your event
+                timeline.
               </p>
               <PrimaryButton
                 onClick={() => setShowModal(true)}
@@ -213,9 +238,15 @@ export function ScheduleManagement({ eventId, event }: ScheduleManagementProps) 
                 </h3>
                 <div className="space-y-4">
                   {groupedItems[date].map((item) => {
-                    const startTime = fromUTCToEventZone(item.start_at, event.time_zone || 'UTC');
-                    const endTime = item.end_at 
-                      ? fromUTCToEventZone(item.end_at, event.time_zone || 'UTC')
+                    const startTime = fromUTCToEventZone(
+                      item.start_at,
+                      event.time_zone || 'UTC',
+                    );
+                    const endTime = item.end_at
+                      ? fromUTCToEventZone(
+                          item.end_at,
+                          event.time_zone || 'UTC',
+                        )
                       : null;
 
                     return (
@@ -224,14 +255,14 @@ export function ScheduleManagement({ eventId, event }: ScheduleManagementProps) 
                         className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg"
                       >
                         <Clock className="w-5 h-5 text-gray-500 mt-0.5 flex-shrink-0" />
-                        
+
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between">
                             <div className="min-w-0 flex-1">
                               <h4 className="font-medium text-gray-900 truncate">
                                 {item.title}
                               </h4>
-                              
+
                               <div className="flex items-center space-x-4 mt-1 text-sm text-gray-600">
                                 <span className="font-mono">
                                   {startTime?.formatted}
@@ -246,7 +277,7 @@ export function ScheduleManagement({ eventId, event }: ScheduleManagementProps) 
                                     <span>{item.location}</span>
                                   </div>
                                 )}
-                                
+
                                 {item.attire && (
                                   <div className="flex items-center space-x-1 text-sm text-gray-600">
                                     <Shirt className="w-3 h-3" />
@@ -267,7 +298,7 @@ export function ScheduleManagement({ eventId, event }: ScheduleManagementProps) 
                               >
                                 <Edit className="w-4 h-4" />
                               </button>
-                              
+
                               <button
                                 onClick={() => handleDeleteItem(item)}
                                 className="p-2 text-gray-400 hover:text-red-600 hover:bg-white rounded-lg transition-colors"

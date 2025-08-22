@@ -2,7 +2,10 @@
 
 import { useEffect } from 'react';
 import { initializePerformanceMonitoring } from '@/lib/performance-monitoring';
-import { initializeDevelopmentAlerts, PerformanceAlertOverlay } from '@/lib/performance/monitoring/developmentAlerts';
+import {
+  initializeDevelopmentAlerts,
+  PerformanceAlertOverlay,
+} from '@/lib/performance/monitoring/developmentAlerts';
 
 interface PerformanceMonitorProps {
   children: React.ReactNode;
@@ -14,7 +17,7 @@ export function PerformanceMonitor({ children }: PerformanceMonitorProps) {
     if (typeof window !== 'undefined') {
       // Initialize performance monitoring
       initializePerformanceMonitoring();
-      
+
       // Initialize development alerts system
       initializeDevelopmentAlerts();
     }
@@ -27,4 +30,4 @@ export function PerformanceMonitor({ children }: PerformanceMonitorProps) {
       {process.env.NODE_ENV === 'development' && <PerformanceAlertOverlay />}
     </>
   );
-} 
+}

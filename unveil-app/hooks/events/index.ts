@@ -13,5 +13,5 @@ export { useEventDetails } from './useEventDetails';
 
 // Legacy hooks removed:
 // - useEventDetails (replaced by useEventWithGuest)
-// - useEventInsights (replaced by useEventAnalytics)  
+// - useEventInsights (replaced by useEventAnalytics)
 // - useUserEventsSorted (replaced by useUserEvents)

@@ -1,6 +1,6 @@
 /**
  * useScheduledMessagesQuery Hook
- * 
+ *
  * Handles React Query logic for scheduled messages.
  * Extracted from the original useScheduledMessages hook for better separation of concerns.
  */
@@ -30,7 +30,7 @@ export interface UseScheduledMessagesQueryReturn {
 
 /**
  * Hook for React Query logic of scheduled messages
- * 
+ *
  * Responsibilities:
  * - Data fetching via React Query
  * - Cache management and invalidation
@@ -41,9 +41,8 @@ export function useScheduledMessagesQuery({
   eventId,
   filters,
   autoRefresh = true,
-  enabled = true
+  enabled = true,
 }: UseScheduledMessagesQueryOptions): UseScheduledMessagesQueryReturn {
-  
   // Enhanced query key including filters for better caching
   const queryKey = ['scheduled-messages', eventId, filters];
 
@@ -58,14 +57,18 @@ export function useScheduledMessagesQuery({
     queryFn: async () => {
       const messageFilters: ScheduledMessageFilters = {
         eventId,
-        ...filters
+        ...filters,
       };
-      
+
       const result = await getScheduledMessages(messageFilters);
       if (!result.success) {
-        throw new Error(result.error instanceof Error ? result.error.message : 'Failed to fetch scheduled messages');
+        throw new Error(
+          result.error instanceof Error
+            ? result.error.message
+            : 'Failed to fetch scheduled messages',
+        );
       }
-      
+
       return result.data || [];
     },
     enabled: !!eventId && enabled,
@@ -91,4 +94,4 @@ export function useScheduledMessagesQuery({
     queryKey,
     refetch,
   };
-} 
+}

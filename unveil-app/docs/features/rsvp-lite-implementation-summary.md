@@ -2,7 +2,7 @@
 
 **📅 Completed**: January 2025  
 **🎯 Goal**: Replace complex RSVP system with minimal "decline-only" flow  
-**📊 Status**: ✅ Complete - Ready for Production  
+**📊 Status**: ✅ Complete - Ready for Production
 
 ---
 
@@ -24,12 +24,14 @@ RSVP-Lite transforms Unveil's RSVP system from a complex 4-option flow (Attendin
 ### Database Changes (Additive & Non-Destructive)
 
 **New Fields in `event_guests`:**
+
 ```sql
 declined_at TIMESTAMPTZ NULL     -- When guest declined
 decline_reason TEXT NULL         -- Optional reason (max ~200 chars)
 ```
 
 **New RPCs:**
+
 - `guest_decline_event(event_id, reason?)` - Guest declines with optional reason
 - `host_clear_guest_decline(event_id, guest_user_id)` - Host clears decline
 - `is_guest_attending_rsvp_lite(event_id, user_id)` - Check if attending (not declined)
@@ -37,11 +39,13 @@ decline_reason TEXT NULL         -- Optional reason (max ~200 chars)
 ### UI Components
 
 **Guest Experience:**
+
 - `CantMakeItButton` - Subtle link to decline flow
 - `DeclineEventModal` - 2-step decline with optional reason
 - `DeclineBanner` - Post-decline status with contact host option
 
 **Host Experience:**
+
 - Decline indicators in guest list with reasons
 - "Clear decline" button for hosts
 - "Include declined guests" toggle in messaging
@@ -52,9 +56,9 @@ decline_reason TEXT NULL         -- Optional reason (max ~200 chars)
 ```typescript
 // lib/constants/features.ts
 FEATURE_FLAGS = {
-  RSVP_LITE: true,      // New decline-only system
-  LEGACY_RSVP: false,   // Old 4-option system
-}
+  RSVP_LITE: true, // New decline-only system
+  LEGACY_RSVP: false, // Old 4-option system
+};
 ```
 
 ---
@@ -89,13 +93,13 @@ FEATURE_FLAGS = {
 
 ```sql
 -- event_guests table additions
-ALTER TABLE event_guests 
+ALTER TABLE event_guests
 ADD COLUMN declined_at timestamptz NULL,
 ADD COLUMN decline_reason text NULL;
 
 -- Index for efficient queries
-CREATE INDEX idx_event_guests_declined_at 
-ON event_guests (event_id, declined_at) 
+CREATE INDEX idx_event_guests_declined_at
+ON event_guests (event_id, declined_at)
 WHERE declined_at IS NOT NULL;
 ```
 
@@ -113,7 +117,7 @@ type RecipientFilter = {
   type: 'all' | 'tags' | 'rsvp_status' | 'individual';
   includeDeclined?: boolean; // Default: false
   // ... other filters
-}
+};
 ```
 
 ---
@@ -206,6 +210,7 @@ type RecipientFilter = {
 ### Data Migration
 
 No migration required - system is purely additive:
+
 - New installs get RSVP-Lite by default
 - Existing events continue with current RSVP data
 - Hosts can use either system via feature flags
@@ -233,6 +238,7 @@ No migration required - system is purely additive:
 RSVP-Lite successfully transforms Unveil's RSVP system from a complex, friction-heavy process to a streamlined, mobile-first experience. The implementation preserves all existing functionality while providing a cleaner default experience for both guests and hosts.
 
 **Key Achievements:**
+
 - ✅ Zero-friction default experience (attending by default)
 - ✅ Simple decline flow with host communication channel
 - ✅ Improved messaging targeting with smart defaults

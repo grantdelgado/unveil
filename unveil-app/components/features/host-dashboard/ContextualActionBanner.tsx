@@ -44,18 +44,22 @@ export function ContextualActionBanner({
 
         if (error) throw error;
 
-        const stats = data?.reduce((acc, guest) => {
-          const status = guest.rsvp_status || 'pending';
-          acc[status as keyof Omit<GuestStats, 'total'>] = (acc[status as keyof Omit<GuestStats, 'total'>] || 0) + 1;
-          acc.total += 1;
-          return acc;
-        }, {
-          attending: 0,
-          declined: 0,
-          pending: 0,
-          maybe: 0,
-          total: 0,
-        }) || { attending: 0, declined: 0, pending: 0, maybe: 0, total: 0 };
+        const stats = data?.reduce(
+          (acc, guest) => {
+            const status = guest.rsvp_status || 'pending';
+            acc[status as keyof Omit<GuestStats, 'total'>] =
+              (acc[status as keyof Omit<GuestStats, 'total'>] || 0) + 1;
+            acc.total += 1;
+            return acc;
+          },
+          {
+            attending: 0,
+            declined: 0,
+            pending: 0,
+            maybe: 0,
+            total: 0,
+          },
+        ) || { attending: 0, declined: 0, pending: 0, maybe: 0, total: 0 };
 
         setGuestStats(stats);
       } catch (error) {
@@ -83,7 +87,8 @@ export function ContextualActionBanner({
       return {
         type: 'import-guests' as const,
         title: '🚀 Get Started',
-        message: 'Import your guest list to begin sending invitations and managing RSVPs',
+        message:
+          'Import your guest list to begin sending invitations and managing RSVPs',
         actionText: 'Import Guests',
         action: onImportGuests,
         variant: 'primary' as const,
@@ -137,9 +142,12 @@ export function ContextualActionBanner({
   }
 
   const variantStyles = {
-    primary: 'bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200 text-purple-900',
-    warning: 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200 text-amber-900',
-    success: 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 text-green-900',
+    primary:
+      'bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200 text-purple-900',
+    warning:
+      'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200 text-amber-900',
+    success:
+      'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 text-green-900',
     subtle: 'bg-gray-50 border-gray-200 text-gray-700',
   };
 
@@ -155,7 +163,7 @@ export function ContextualActionBanner({
       <div
         className={cn(
           'p-4 rounded-lg border-2 transition-all duration-200 hover:shadow-md',
-          variantStyles[contextualAction.variant]
+          variantStyles[contextualAction.variant],
         )}
       >
         <div className="flex items-center justify-between gap-4">
@@ -167,14 +175,14 @@ export function ContextualActionBanner({
               {contextualAction.message}
             </p>
           </div>
-          
+
           {contextualAction.action && (
             <div className="flex-shrink-0">
               <button
                 onClick={contextualAction.action}
                 className={cn(
                   'px-4 py-2 rounded-lg font-medium text-sm transition-colors duration-200 min-h-[44px]',
-                  buttonStyles[contextualAction.variant]
+                  buttonStyles[contextualAction.variant],
                 )}
               >
                 {contextualAction.actionText}

@@ -46,7 +46,7 @@
               "effort": "2 hours"
             },
             {
-              "id": "p1_rsvp_2", 
+              "id": "p1_rsvp_2",
               "title": "Update GuestListItem dropdown to use enum",
               "status": "pending",
               "effort": "4 hours"
@@ -54,7 +54,7 @@
             {
               "id": "p1_rsvp_3",
               "title": "Fix useGuestMutations status values",
-              "status": "pending", 
+              "status": "pending",
               "effort": "4 hours"
             },
             {

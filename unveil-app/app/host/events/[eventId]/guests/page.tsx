@@ -8,12 +8,20 @@ import {
   PageWrapper,
   CardContainer,
   BackButton,
-  LoadingSpinner
+  LoadingSpinner,
 } from '@/components/ui';
 
 // Lazy load heavy components
-const LazyGuestImportWizard = lazy(() => import('@/components/features/guests/GuestImportWizard').then(m => ({ default: m.GuestImportWizard })));
-const LazyGuestManagement = lazy(() => import('@/components/features/host-dashboard/GuestManagement').then(m => ({ default: m.GuestManagement })));
+const LazyGuestImportWizard = lazy(() =>
+  import('@/components/features/guests/GuestImportWizard').then((m) => ({
+    default: m.GuestImportWizard,
+  })),
+);
+const LazyGuestManagement = lazy(() =>
+  import('@/components/features/host-dashboard/GuestManagement').then((m) => ({
+    default: m.GuestManagement,
+  })),
+);
 
 type Event = Database['public']['Tables']['events']['Row'];
 
@@ -50,7 +58,7 @@ export default function EventGuestsPage() {
 
         const [
           { data: eventData, error: eventError },
-          { data: guestData, error: guestError }
+          { data: guestData, error: guestError },
         ] = await Promise.all([
           supabase
             .from('events')
@@ -58,10 +66,7 @@ export default function EventGuestsPage() {
             .eq('id', eventId)
             .eq('host_user_id', user.id)
             .single(),
-          supabase
-            .from('event_guests')
-            .select('id')
-            .eq('event_id', eventId)
+          supabase.from('event_guests').select('id').eq('event_id', eventId),
         ]);
 
         if (eventError) {
@@ -101,9 +106,11 @@ export default function EventGuestsPage() {
       .eq('event_id', eventId);
 
     setGuestCount(guestData?.length || 0);
-    
+
     // Trigger a custom event to notify the guest management component to refresh
-    window.dispatchEvent(new CustomEvent('guestDataRefresh', { detail: { eventId } }));
+    window.dispatchEvent(
+      new CustomEvent('guestDataRefresh', { detail: { eventId } }),
+    );
   };
 
   // Loading state
@@ -129,7 +136,7 @@ export default function EventGuestsPage() {
     return (
       <PageWrapper centered={false}>
         <div className="max-w-4xl mx-auto space-y-6">
-          <BackButton 
+          <BackButton
             href={`/host/events/${eventId}/dashboard`}
             fallback="/select-event"
           >
@@ -155,12 +162,14 @@ export default function EventGuestsPage() {
       {showGuestImport && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <Suspense 
+            <Suspense
               fallback={
                 <CardContainer>
                   <div className="flex items-center justify-center py-8">
                     <LoadingSpinner size="lg" />
-                    <span className="ml-3 text-gray-600">Loading guest import...</span>
+                    <span className="ml-3 text-gray-600">
+                      Loading guest import...
+                    </span>
                   </div>
                 </CardContainer>
               }
@@ -182,12 +191,14 @@ export default function EventGuestsPage() {
       {showAddIndividualGuest && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <Suspense 
+            <Suspense
               fallback={
                 <CardContainer>
                   <div className="flex items-center justify-center py-8">
                     <LoadingSpinner size="lg" />
-                    <span className="ml-3 text-gray-600">Loading guest form...</span>
+                    <span className="ml-3 text-gray-600">
+                      Loading guest form...
+                    </span>
                   </div>
                 </CardContainer>
               }
@@ -209,7 +220,7 @@ export default function EventGuestsPage() {
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Navigation */}
         <div className="mb-6">
-          <BackButton 
+          <BackButton
             href={`/host/events/${eventId}/dashboard`}
             fallback="/select-event"
           >
@@ -219,18 +230,23 @@ export default function EventGuestsPage() {
 
         {/* Page Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Guest Management</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Guest Management
+          </h1>
           <p className="text-gray-600">
-            Manage guest attendance, send invitations, and organize guests for <span className="font-medium text-gray-800">{event.title}</span>
+            Manage guest attendance, send invitations, and organize guests for{' '}
+            <span className="font-medium text-gray-800">{event.title}</span>
           </p>
         </div>
 
         {/* Guest Management Interface */}
-        <Suspense 
+        <Suspense
           fallback={
             <div className="flex items-center justify-center py-8">
               <LoadingSpinner size="lg" />
-              <span className="ml-3 text-gray-600">Loading guest management...</span>
+              <span className="ml-3 text-gray-600">
+                Loading guest management...
+              </span>
             </div>
           }
         >
@@ -241,7 +257,9 @@ export default function EventGuestsPage() {
             onAddIndividualGuest={() => setShowAddIndividualGuest(true)}
             onSendMessage={(messageType) => {
               // Navigate to messages page with pre-selected type
-              router.push(`/host/events/${eventId}/messages?type=${messageType}`);
+              router.push(
+                `/host/events/${eventId}/messages?type=${messageType}`,
+              );
             }}
           />
         </Suspense>

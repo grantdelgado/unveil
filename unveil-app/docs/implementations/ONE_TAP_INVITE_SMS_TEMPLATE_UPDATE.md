@@ -7,11 +7,13 @@ Updated the SMS invitation template with proper greeting and line breaks, and si
 ## 📋 Discovery Notes
 
 ### SMS Template Location
+
 - **Primary Template**: `createInvitationMessage()` in `lib/sms-invitations.ts` (lines 27-42)
-- **One-tap Usage**: Called in `/api/guests/invite-single/route.ts` (line 124)  
+- **One-tap Usage**: Called in `/api/guests/invite-single/route.ts` (line 124)
 - **Composer Default**: Set in `MessageComposer.tsx` (lines 112-116)
 
 ### Guest Row Component
+
 - **Main Component**: `GuestListItem.tsx` renders all row actions and status chips
 - **Actions Container**: Lines 125-194 contain the bottom actions row
 - **Previous Actions**: Invite button, Copy Link (removed), Remove button
@@ -21,6 +23,7 @@ Updated the SMS invitation template with proper greeting and line breaks, and si
 ### Before vs After
 
 **Before**:
+
 ```
 Garrett Delgado! You are invited to Providence & Grant on Sunday, August 31, 2025!
 View the wedding details here: app.sendunveil.com/select-event.
@@ -29,6 +32,7 @@ Reply STOP to opt out.
 ```
 
 **After**:
+
 ```
 Hi, Garrett! You are invited to Providence & Grant on Sunday, August 31, 2025!
 
@@ -40,6 +44,7 @@ Reply STOP to opt out.
 ```
 
 ### Key Improvements
+
 - ✅ **Proper Greeting**: "Hi, {FirstName}!" format (more human and readable)
 - ✅ **Line Breaks**: `\n\n` for blank lines between sections
 - ✅ **Name Handling**: Full name → First name → "there" fallback
@@ -47,18 +52,22 @@ Reply STOP to opt out.
 - ✅ **SMS Compliance**: Clear STOP instruction
 
 ### Name Handling Logic
+
 ```typescript
 // Guest name handling: full name → first name → "there"
 let guestGreeting = 'Hi there! ';
 if (invitation.guestName) {
   const firstName = invitation.guestName.split(' ')[0]?.trim();
-  guestGreeting = firstName ? `Hi, ${firstName}! ` : `Hi, ${invitation.guestName}! `;
+  guestGreeting = firstName
+    ? `Hi, ${firstName}! `
+    : `Hi, ${invitation.guestName}! `;
 }
 ```
 
 **Examples**:
+
 - "Garrett Michael Delgado" → "Hi, Garrett!"
-- "Garrett" → "Hi, Garrett!"  
+- "Garrett" → "Hi, Garrett!"
 - "" or undefined → "Hi there!"
 
 ## 🎨 Simplified Guest Row Layout
@@ -69,6 +78,7 @@ if (invitation.guestName) {
 **After**: Name/Role/Status + Contact + [Invite] ← → [Remove]
 
 ### New Card Anatomy
+
 ```
 ┌─────────────────────────────────────────────┐
 │ Guest Name (bold)          📝 Not Invited   │
@@ -82,6 +92,7 @@ if (invitation.guestName) {
 ```
 
 ### Key UX Improvements
+
 1. **Cleaner Layout**: Removed Copy Link reduces cognitive load
 2. **Better Spacing**: 44px+ touch targets with adequate spacing
 3. **Primary Action**: Invite button is prominent and primary-styled
@@ -89,6 +100,7 @@ if (invitation.guestName) {
 5. **Mobile Optimized**: No overflow or wrapping on common iOS/Android widths
 
 ### Button States
+
 - **Not Invited**: Primary pink "📨 Invite" button (44px height)
 - **Loading**: "⏳ Sending..." with disabled state
 - **Invited**: "📬 Invited" chip with attempt count tooltip
@@ -97,16 +109,20 @@ if (invitation.guestName) {
 ## 🔧 Technical Implementation
 
 ### Files Modified
+
 1. **`lib/sms-invitations.ts`**
+
    - Updated `createInvitationMessage()` with new format
    - Added proper greeting logic and line breaks
    - Environment-aware APP_URL
 
 2. **`components/features/messaging/host/MessageComposer.tsx`**
+
    - Updated default template to match SMS format
    - Added environment-aware URL handling
 
 3. **`components/features/host-dashboard/GuestListItem.tsx`**
+
    - Removed Copy Link action entirely
    - Improved layout with better spacing
    - Enhanced button styling for 44px+ touch targets
@@ -117,6 +133,7 @@ if (invitation.guestName) {
    - Simplified component props
 
 ### SMS Payload Verification
+
 ```json
 "Hi, Garrett! You are invited to Providence & Grant on Sunday, August 31, 2025!\n\nView the wedding details here: app.sendunveil.com/select-event.\n\nHosted by Grant Delgado via Unveil\n\nReply STOP to opt out."
 ```
@@ -135,18 +152,21 @@ if (invitation.guestName) {
 ## 🎨 UX Design Rationale
 
 ### Why Remove Copy Link?
+
 - **Cognitive Load**: Fewer actions = faster scanning
 - **Wrong Channel**: Avoids accidental "wrong channel" outreach
 - **Universal Link**: Using single universal link instead of per-guest links
 - **Focus**: Emphasizes primary action (Invite) and secondary action (Remove)
 
 ### Why New SMS Format?
+
 - **Human Touch**: "Hi, {FirstName}!" feels more personal than "{FullName}!"
 - **Readability**: Blank lines (`\n\n`) make SMS more scannable
 - **Compliance**: Explicit STOP instruction remains obvious
 - **Professional**: Maintains brand consistency with "via Unveil"
 
 ### Why Improved Layout?
+
 - **Scannable**: Consistent card anatomy (name/role → contact → actions)
 - **Mobile-First**: 44px+ touch targets, safe-area aware
 - **Visual Hierarchy**: Status chip in top-right for quick status checks
@@ -155,8 +175,9 @@ if (invitation.guestName) {
 ## 🚀 Ready for Production
 
 All changes have been implemented and tested:
+
 - ✅ SMS template verified with proper line breaks
-- ✅ Guest row layout improved and simplified  
+- ✅ Guest row layout improved and simplified
 - ✅ All linting errors resolved
 - ✅ Touch targets meet accessibility standards
 - ✅ Environment-aware URL handling

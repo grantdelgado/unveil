@@ -7,7 +7,10 @@ export { useSwipeGesture } from './useSwipeGesture';
 
 // Form and wizard utilities
 export { useWizardNavigation } from './useWizardNavigation';
-export type { WizardConfig, UseWizardNavigationReturn } from './useWizardNavigation';
+export type {
+  WizardConfig,
+  UseWizardNavigationReturn,
+} from './useWizardNavigation';
 
 // Types
 export type {
@@ -15,4 +18,4 @@ export type {
   PaginationControls,
   UsePaginationOptions,
   PaginatedQuery,
-} from './usePagination' 
+} from './usePagination';

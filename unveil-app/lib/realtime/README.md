@@ -47,7 +47,7 @@ const unsubscribe = subscriptionManager.subscribe('my-subscription', {
   enableBackoff: true,
   maxRetries: 3,
   timeoutMs: 30000,
-  retryOnTimeout: true
+  retryOnTimeout: true,
 });
 
 // Always clean up
@@ -71,8 +71,8 @@ function MyComponent({ eventId }: { eventId: string }) {
     enabled: Boolean(eventId),
     performanceOptions: {
       enablePooling: true, // Use shared connections
-      eventId
-    }
+      eventId,
+    },
   });
 }
 ```
@@ -116,7 +116,7 @@ const unsubscribe = subscriptionManager.subscribe(`my-new-table-${eventId}`, {
   // Use standard stability config
   enableBackoff: true,
   maxRetries: 3,
-  timeoutMs: 30000
+  timeoutMs: 30000,
 });
 ```
 
@@ -129,7 +129,7 @@ import { useEventSubscription } from '@/hooks/realtime';
 export function useMyNewTableSubscription({
   eventId,
   onDataChange,
-  enabled = true
+  enabled = true,
 }: {
   eventId: string;
   onDataChange: (payload: any) => void;
@@ -144,8 +144,8 @@ export function useMyNewTableSubscription({
     enabled,
     performanceOptions: {
       enablePooling: true,
-      eventId
-    }
+      eventId,
+    },
   });
 }
 ```
@@ -154,12 +154,12 @@ export function useMyNewTableSubscription({
 
 ```typescript
 // In guest component
-const { } = useMyNewTableSubscription({
+const {} = useMyNewTableSubscription({
   eventId,
   onDataChange: (payload) => {
     // Handle guest-specific updates
   },
-  enabled: Boolean(eventId && currentUserId)
+  enabled: Boolean(eventId && currentUserId),
 });
 ```
 
@@ -181,8 +181,9 @@ npx playwright test tests/realtime/subscription-stability.spec.ts -g "idle perio
 ```
 
 Test coverage includes:
+
 - ✅ 15+ minute idle behavior
-- ✅ Network offline/online recovery  
+- ✅ Network offline/online recovery
 - ✅ Page visibility changes
 - ✅ Duplicate subscription prevention
 - ✅ Token refresh handling
@@ -199,6 +200,7 @@ window.realtimeTests.testVisibilityHandling();
 ```
 
 Or use the debug panel:
+
 - Open guest dashboard in development
 - Look for debug panel in bottom-right corner
 - Click "Run Stability Tests" button
@@ -206,8 +208,9 @@ Or use the debug panel:
 ### Debug Panel
 
 The debug panel (development only) shows:
+
 - Active subscription count and health scores
-- Connection state and error counts  
+- Connection state and error counts
 - Individual subscription details
 - Manual reconnect and test buttons
 
@@ -226,6 +229,7 @@ The debug panel (development only) shows:
 Check these metrics in production:
 
 1. **Connection Stability**
+
    ```typescript
    const stats = subscriptionManager.getStats();
    console.log('Health Score:', stats.healthScore); // Should be >80
@@ -233,6 +237,7 @@ Check these metrics in production:
    ```
 
 2. **Memory Usage**
+
    - Monitor for memory leaks during long sessions
    - Check that subscriptions are properly cleaned up
 
@@ -246,7 +251,7 @@ Check these metrics in production:
 Expected performance characteristics:
 
 - **Connection Time**: <2 seconds for initial subscription
-- **Recovery Time**: 5-30 seconds after network restoration  
+- **Recovery Time**: 5-30 seconds after network restoration
 - **Memory Usage**: <5MB additional for realtime connections
 - **CPU Impact**: <1% during normal operation
 - **Idle Stability**: No errors after 15+ minutes idle
@@ -256,6 +261,7 @@ Expected performance characteristics:
 ### Common Issues
 
 **1. Subscriptions Not Connecting**
+
 ```bash
 # Check auth state
 supabase.auth.getSession()
@@ -265,6 +271,7 @@ supabase.auth.getSession()
 ```
 
 **2. Frequent Disconnections**
+
 ```typescript
 // Check health score
 const stats = subscriptionManager.getStats();
@@ -274,6 +281,7 @@ if (stats.healthScore < 50) {
 ```
 
 **3. Memory Leaks**
+
 ```typescript
 // Ensure cleanup in useEffect
 useEffect(() => {
@@ -283,6 +291,7 @@ useEffect(() => {
 ```
 
 **4. Duplicate Subscriptions**
+
 ```typescript
 // Use stable subscription IDs
 const subscriptionId = `messages-${eventId}-${userId}`; // ✅ Deterministic
@@ -312,7 +321,13 @@ If you have existing raw Supabase channels:
 // ❌ Old pattern - Raw channels
 const channel = supabase
   .channel('my-channel')
-  .on('postgres_changes', { /*...*/ }, callback)
+  .on(
+    'postgres_changes',
+    {
+      /*...*/
+    },
+    callback,
+  )
   .subscribe();
 
 // ✅ New pattern - Managed subscriptions
@@ -321,7 +336,7 @@ const unsubscribe = subscriptionManager.subscribe('my-channel', {
   event: 'INSERT',
   callback,
   enableBackoff: true,
-  maxRetries: 3
+  maxRetries: 3,
 });
 ```
 
@@ -350,8 +365,9 @@ import { useGuestMessagesRPC } from './useGuestMessagesRPC'; // Uses Subscriptio
 ### Why Exponential Backoff?
 
 Prevents overwhelming the server during outages while ensuring quick recovery:
+
 - Start: 2 seconds
-- Max: 30 seconds  
+- Max: 30 seconds
 - Global cooldown: 30 seconds between mass reconnects
 
 ### Why Separate Guest/Host Patterns?
@@ -365,7 +381,7 @@ Prevents overwhelming the server during outages while ensuring quick recovery:
 ### Adding New Features
 
 1. **Update SubscriptionManager** for core functionality
-2. **Create React hooks** for component integration  
+2. **Create React hooks** for component integration
 3. **Add tests** in `tests/realtime/`
 4. **Update documentation** in this README
 5. **Test in development** with debug panel
@@ -382,13 +398,13 @@ Prevents overwhelming the server during outages while ensuring quick recovery:
 
 ## Quick Reference
 
-| Task | Command/Code |
-|------|-------------|
-| Create subscription | `subscriptionManager.subscribe(id, config)` |
-| React hook | `useEventSubscription({ eventId, table, ... })` |
-| Run tests | `npx playwright test tests/realtime/` |
-| Debug in dev | Open debug panel or `window.realtimeTests` |
-| Check health | `subscriptionManager.getStats()` |
-| Force reconnect | `subscriptionManager.reconnectAll()` |
+| Task                | Command/Code                                    |
+| ------------------- | ----------------------------------------------- |
+| Create subscription | `subscriptionManager.subscribe(id, config)`     |
+| React hook          | `useEventSubscription({ eventId, table, ... })` |
+| Run tests           | `npx playwright test tests/realtime/`           |
+| Debug in dev        | Open debug panel or `window.realtimeTests`      |
+| Check health        | `subscriptionManager.getStats()`                |
+| Force reconnect     | `subscriptionManager.reconnectAll()`            |
 
 For questions or issues, refer to the comprehensive JSDoc in `SubscriptionManager.ts` or run the stability tests to validate your implementation.

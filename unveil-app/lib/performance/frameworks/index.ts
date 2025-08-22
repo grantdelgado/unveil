@@ -1,6 +1,6 @@
 /**
  * 🚀 PERFORMANCE OPTIMIZATION FRAMEWORKS
- * 
+ *
  * Advanced performance optimization components and utilities.
  * Ready-to-deploy frameworks for Week 4+ optimizations.
  */
@@ -8,7 +8,7 @@
 // Service Worker framework
 export * from './serviceWorker';
 
-// Virtualization framework  
+// Virtualization framework
 export * from './virtualization/VirtualizedList';
 
 // Framework configuration
@@ -35,7 +35,7 @@ export const DEPLOYMENT_STATUS = {
     features: ['Offline support', 'Aggressive caching', 'Background sync'],
   },
   virtualization: {
-    status: 'ready', 
+    status: 'ready',
     implementation: 'Complete - ready for large list integration',
     features: ['1000+ item support', 'Constant memory usage', 'Grid support'],
   },

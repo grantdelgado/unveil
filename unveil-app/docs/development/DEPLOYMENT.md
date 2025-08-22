@@ -3,6 +3,7 @@
 ## Required Environment Variables
 
 ### **Core Application (REQUIRED)**
+
 ```bash
 # Supabase Configuration
 NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
@@ -28,6 +29,7 @@ CRON_SECRET=your-secure-random-string
 ```
 
 ### **Optional Monitoring & Analytics**
+
 ```bash
 # Error Tracking
 NEXT_PUBLIC_SENTRY_DSN=https://xxx@xxx.ingest.sentry.io/xxx
@@ -41,6 +43,7 @@ NEW_RELIC_LICENSE_KEY=your-license-key
 ```
 
 ### **Feature Flags (Optional)**
+
 ```bash
 NEXT_PUBLIC_ENABLE_MESSAGING=true
 NEXT_PUBLIC_ENABLE_MEDIA_UPLOAD=true
@@ -50,6 +53,7 @@ NEXT_PUBLIC_ENABLE_SMS_INVITES=true
 ## Security Checklist
 
 ### **Before Production Deployment:**
+
 - [ ] All required environment variables are set
 - [ ] Supabase URL matches production project (`wvhtbqvnamerdkkjknuv.supabase.co`)
 - [ ] Storage bucket 'event-media' exists and configured
@@ -61,6 +65,7 @@ NEXT_PUBLIC_ENABLE_SMS_INVITES=true
 - [ ] All secrets secured in deployment platform (Vercel)
 
 ### **Environment-Specific Behaviors:**
+
 - **Development:** Debug panels, React Query devtools, detailed error messages
 - **Production:** Error tracking, performance monitoring, security headers
 - **SMS Testing:** Only enabled in development mode
@@ -70,6 +75,7 @@ NEXT_PUBLIC_ENABLE_SMS_INVITES=true
 For local development, SMS invites require special configuration since localhost URLs cannot be used in outbound SMS messages.
 
 ### **Option 1: Tunnel Mode (Real SMS)**
+
 Use a tunnel service to expose your local development server publicly:
 
 ```bash
@@ -84,6 +90,7 @@ DEV_TUNNEL_URL=https://your-tunnel-domain.ngrok.io
 ```
 
 ### **Option 2: Simulation Mode (No SMS Sent)**
+
 Enable simulation mode to test the invite flow without sending actual SMS:
 
 ```bash
@@ -92,6 +99,7 @@ DEV_SIMULATE_INVITES=true
 ```
 
 **Simulation Mode Features:**
+
 - ✅ Database updates (invited_at, invite_attempts, etc.)
 - ✅ UI feedback and state changes
 - ✅ Complete invite flow testing
@@ -99,7 +107,9 @@ DEV_SIMULATE_INVITES=true
 - 📝 SMS payload logged to console
 
 ### **Environment Variable Priority**
+
 The system checks for base URLs in this order:
+
 1. `INVITES_PUBLIC_URL` (highest priority)
 2. `NEXT_PUBLIC_APP_URL`
 3. `APP_URL`
@@ -107,6 +117,7 @@ The system checks for base URLs in this order:
 5. Simulation mode if `DEV_SIMULATE_INVITES=true`
 
 ### **Error Messages**
+
 - **"Public base URL not configured"**: Set one of the environment variables above
 - **"Invalid public base URL detected"**: Localhost detected - use tunnel or simulation mode
 - **"Development Setup Required"**: Check tunnel or simulation configuration
@@ -114,12 +125,14 @@ The system checks for base URLs in this order:
 ## Deployment Platform Setup
 
 ### **Vercel Environment Variables:**
+
 1. Go to Vercel Dashboard > Project Settings > Environment Variables
 2. Add all required variables above
 3. Set Environment: **Production**
 4. Ensure sensitive keys are marked as **Sensitive**
 
 ### **Validation Script:**
+
 ```bash
 # Run environment validation
 npx tsx scripts/validate-production-env.ts
@@ -128,13 +141,15 @@ npx tsx scripts/validate-production-env.ts
 ## Security Considerations
 
 ### **Secrets Management:**
+
 - Never commit `.env.production` to version control
 - Use Vercel's encrypted environment variables
 - Rotate secrets regularly (quarterly recommended)
 - Monitor for leaked credentials
 
 ### **API Security:**
+
 - Service role key only used in API routes
 - Cron endpoints protected with secret validation
 - Development panels disabled in production
-- RLS policies enforce data access control 
+- RLS policies enforce data access control

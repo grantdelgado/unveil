@@ -2,10 +2,10 @@
 
 /**
  * 🚨 PERFORMANCE GUARDRAILS: Build-time Bundle Size Checker
- * 
+ *
  * Automatically checks bundle sizes during build process and fails build
  * if sizes exceed critical thresholds.
- * 
+ *
  * Usage:
  * - pnpm build:check (runs build + performance check)
  * - node scripts/performance-check.js
@@ -17,17 +17,17 @@ const { execSync } = require('child_process');
 
 // Performance thresholds (in bytes)
 const THRESHOLDS = {
-  BUNDLE_SIZE_WARNING: 350 * 1024,   // 350KB
-  BUNDLE_SIZE_ERROR: 500 * 1024,     // 500KB - fail build
-  SHARED_BUNDLE_LIMIT: 250 * 1024,   // 250KB for shared chunks
+  BUNDLE_SIZE_WARNING: 350 * 1024, // 350KB
+  BUNDLE_SIZE_ERROR: 500 * 1024, // 500KB - fail build
+  SHARED_BUNDLE_LIMIT: 250 * 1024, // 250KB for shared chunks
   TOTAL_SIZE_LIMIT: 2 * 1024 * 1024, // 2MB total
 };
 
 // Target bundle sizes for specific pages
 const PAGE_TARGETS = {
-  '/host/events/[eventId]/dashboard': 300 * 1024,  // 300KB target
-  '/guest/events/[eventId]/home': 250 * 1024,      // 250KB target
-  '/select-event': 300 * 1024,                     // 300KB target
+  '/host/events/[eventId]/dashboard': 300 * 1024, // 300KB target
+  '/guest/events/[eventId]/home': 250 * 1024, // 250KB target
+  '/select-event': 300 * 1024, // 300KB target
 };
 
 class PerformanceChecker {
@@ -84,39 +84,46 @@ class PerformanceChecker {
 
     try {
       // Get build output
-      const buildOutput = execSync('pnpm build', { encoding: 'utf-8', cwd: process.cwd() });
-      
+      const buildOutput = execSync('pnpm build', {
+        encoding: 'utf-8',
+        cwd: process.cwd(),
+      });
+
       // Parse bundle sizes from build output
       const bundleInfo = this.parseBuildOutput(buildOutput);
-      
+
       for (const bundle of bundleInfo) {
         this.checkSingleBundle(bundle);
       }
 
       // Check total size - only for user-facing pages, not API routes
-      const pageOnlyBundles = bundleInfo.filter(bundle => bundle.type === 'page' && !bundle.route.startsWith('/api/'));
-      const totalSize = pageOnlyBundles.reduce((sum, bundle) => sum + bundle.size, 0);
-      
+      const pageOnlyBundles = bundleInfo.filter(
+        (bundle) => bundle.type === 'page' && !bundle.route.startsWith('/api/'),
+      );
+      const totalSize = pageOnlyBundles.reduce(
+        (sum, bundle) => sum + bundle.size,
+        0,
+      );
+
       // More realistic total size limit for client-side bundles
       const CLIENT_BUNDLE_LIMIT = 5 * 1024 * 1024; // 5MB for all client bundles combined
-      
+
       if (totalSize > CLIENT_BUNDLE_LIMIT) {
         this.errors.push({
           type: 'bundle',
           message: `Total client bundle size ${this.formatSize(totalSize)} exceeds limit`,
-          details: { 
-            size: this.formatSize(totalSize), 
+          details: {
+            size: this.formatSize(totalSize),
             limit: this.formatSize(CLIENT_BUNDLE_LIMIT),
-            pages: pageOnlyBundles.length
-          }
+            pages: pageOnlyBundles.length,
+          },
         });
       }
-
     } catch (error) {
       this.warnings.push({
         type: 'bundle',
         message: 'Could not analyze bundle sizes',
-        details: { error: error.message }
+        details: { error: error.message },
       });
     }
   }
@@ -127,22 +134,22 @@ class PerformanceChecker {
   parseBuildOutput(output) {
     const bundles = [];
     const lines = output.split('\n');
-    
+
     let inRouteSection = false;
-    
+
     for (const line of lines) {
       // Look for route section
       if (line.includes('Route (app)')) {
         inRouteSection = true;
         continue;
       }
-      
+
       // Skip shared chunks line
       if (line.includes('+ First Load JS shared by all')) {
         inRouteSection = false;
         continue;
       }
-      
+
       if (inRouteSection && line.includes('kB')) {
         const match = line.match(/([^│]+?)\s+([0-9.]+)\s*kB\s+([0-9.]+)\s*kB/);
         if (match) {
@@ -151,12 +158,12 @@ class PerformanceChecker {
             route: route.trim(),
             size: parseFloat(firstLoad) * 1024, // Convert kB to bytes
             rawSize: parseFloat(size) * 1024,
-            type: 'page'
+            type: 'page',
           });
         }
       }
     }
-    
+
     return bundles;
   }
 
@@ -165,7 +172,7 @@ class PerformanceChecker {
    */
   checkSingleBundle(bundle) {
     const { route, size, type } = bundle;
-    
+
     // Check against page-specific targets
     const target = PAGE_TARGETS[route];
     if (target && size > target) {
@@ -176,11 +183,11 @@ class PerformanceChecker {
           page: route,
           size: this.formatSize(size),
           target: this.formatSize(target),
-          excess: this.formatSize(size - target)
-        }
+          excess: this.formatSize(size - target),
+        },
       });
     }
-    
+
     // Check against general thresholds
     if (size > THRESHOLDS.BUNDLE_SIZE_ERROR) {
       this.errors.push({
@@ -190,8 +197,8 @@ class PerformanceChecker {
           page: route,
           size: this.formatSize(size),
           limit: this.formatSize(THRESHOLDS.BUNDLE_SIZE_ERROR),
-          type
-        }
+          type,
+        },
       });
     } else if (size > THRESHOLDS.BUNDLE_SIZE_WARNING) {
       this.warnings.push({
@@ -201,8 +208,8 @@ class PerformanceChecker {
           page: route,
           size: this.formatSize(size),
           limit: this.formatSize(THRESHOLDS.BUNDLE_SIZE_WARNING),
-          type
-        }
+          type,
+        },
       });
     }
   }
@@ -214,20 +221,23 @@ class PerformanceChecker {
     console.log('📋 Checking build manifest...');
 
     try {
-      const manifestPath = path.join(this.buildOutputPath, 'build-manifest.json');
+      const manifestPath = path.join(
+        this.buildOutputPath,
+        'build-manifest.json',
+      );
       if (fs.existsSync(manifestPath)) {
         const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
-        
+
         // Check for too many chunks
         const chunkCount = Object.keys(manifest.pages || {}).length;
         if (chunkCount > 50) {
           this.warnings.push({
             type: 'manifest',
             message: `High number of chunks detected: ${chunkCount}`,
-            details: { 
+            details: {
               chunks: chunkCount,
-              recommendation: 'Consider route-level code splitting'
-            }
+              recommendation: 'Consider route-level code splitting',
+            },
           });
         }
       }
@@ -235,7 +245,7 @@ class PerformanceChecker {
       this.warnings.push({
         type: 'manifest',
         message: 'Could not analyze build manifest',
-        details: { error: error.message }
+        details: { error: error.message },
       });
     }
   }
@@ -250,20 +260,21 @@ class PerformanceChecker {
       const staticPath = path.join(this.buildOutputPath, 'static');
       if (fs.existsSync(staticPath)) {
         const stats = this.getDirectorySize(staticPath);
-        
+
         // Check font sizes
         const fontsPath = path.join(process.cwd(), 'public', 'fonts');
         if (fs.existsSync(fontsPath)) {
           const fontStats = this.getDirectorySize(fontsPath);
-          if (fontStats.size > 200 * 1024) { // 200KB limit for fonts
+          if (fontStats.size > 200 * 1024) {
+            // 200KB limit for fonts
             this.warnings.push({
               type: 'assets',
               message: 'Font assets are large',
               details: {
                 size: this.formatSize(fontStats.size),
                 limit: '200KB',
-                recommendation: 'Consider font subsetting or compression'
-              }
+                recommendation: 'Consider font subsetting or compression',
+              },
             });
           }
         }
@@ -272,7 +283,7 @@ class PerformanceChecker {
       this.warnings.push({
         type: 'assets',
         message: 'Could not analyze static assets',
-        details: { error: error.message }
+        details: { error: error.message },
       });
     }
   }
@@ -283,12 +294,12 @@ class PerformanceChecker {
   async generateReport() {
     const reportDir = path.join(process.cwd(), 'lib', 'performance', 'reports');
     const reportPath = path.join(reportDir, 'performance-report.json');
-    
+
     // Ensure reports directory exists
     if (!fs.existsSync(reportDir)) {
       fs.mkdirSync(reportDir, { recursive: true });
     }
-    
+
     const report = {
       timestamp: new Date().toISOString(),
       thresholds: THRESHOLDS,
@@ -298,8 +309,8 @@ class PerformanceChecker {
       summary: {
         totalErrors: this.errors.length,
         totalWarnings: this.warnings.length,
-        passed: this.errors.length === 0
-      }
+        passed: this.errors.length === 0,
+      },
     };
 
     fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
@@ -329,7 +340,9 @@ class PerformanceChecker {
       this.warnings.forEach((warning, index) => {
         console.log(`${index + 1}. ${warning.message}`);
         if (warning.details) {
-          console.log(`   Details: ${JSON.stringify(warning.details, null, 2)}`);
+          console.log(
+            `   Details: ${JSON.stringify(warning.details, null, 2)}`,
+          );
         }
         console.log('');
       });
@@ -339,7 +352,9 @@ class PerformanceChecker {
     console.log('📈 SUMMARY:');
     console.log(`   Errors: ${this.errors.length}`);
     console.log(`   Warnings: ${this.warnings.length}`);
-    console.log(`   Status: ${this.errors.length === 0 ? '✅ PASSED' : '❌ FAILED'}`);
+    console.log(
+      `   Status: ${this.errors.length === 0 ? '✅ PASSED' : '❌ FAILED'}`,
+    );
   }
 
   /**
@@ -351,11 +366,11 @@ class PerformanceChecker {
 
     const traverse = (currentDir) => {
       const items = fs.readdirSync(currentDir);
-      
+
       for (const item of items) {
         const itemPath = path.join(currentDir, item);
         const stats = fs.statSync(itemPath);
-        
+
         if (stats.isFile()) {
           size += stats.size;
           files++;

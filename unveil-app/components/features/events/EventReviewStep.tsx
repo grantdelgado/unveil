@@ -14,10 +14,8 @@ interface EventReviewStepProps {
 export function EventReviewStep({
   formData,
   headerImage,
-  imagePreview
+  imagePreview,
 }: EventReviewStepProps) {
-
-
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -41,7 +39,7 @@ export function EventReviewStep({
             <div className="absolute inset-0 bg-black bg-opacity-20" />
           </div>
         )}
-        
+
         {/* Event Details */}
         <div className="p-6 space-y-4">
           <div className="text-center">
@@ -49,7 +47,9 @@ export function EventReviewStep({
               {formData.title}
             </h3>
             <p className="text-lg text-gray-700">
-              {formatEventDateTime(formData.event_date + 'T' + formData.event_time)}
+              {formatEventDateTime(
+                formData.event_date + 'T' + formData.event_time,
+              )}
             </p>
           </div>
 
@@ -61,15 +61,15 @@ export function EventReviewStep({
               </p>
             </div>
           )}
-
-
         </div>
       </div>
 
       {/* Configuration Summary */}
       <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-        <h4 className="text-sm font-medium text-gray-900 mb-3">Configuration</h4>
-        
+        <h4 className="text-sm font-medium text-gray-900 mb-3">
+          Configuration
+        </h4>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
           <div className="flex items-center justify-between">
             <span className="text-gray-600">Visibility:</span>
@@ -77,14 +77,14 @@ export function EventReviewStep({
               {formData.is_public ? 'Discoverable' : 'Private'}
             </span>
           </div>
-          
+
           <div className="flex items-center justify-between">
             <span className="text-gray-600">Header Image:</span>
             <span className="font-medium text-gray-900">
               {headerImage ? 'Added' : 'None'}
             </span>
           </div>
-          
+
           <div className="flex items-center justify-between">
             <span className="text-gray-600">Guest Management:</span>
             <span className="font-medium text-gray-900">
@@ -120,4 +120,4 @@ export function EventReviewStep({
       </div>
     </div>
   );
-} 
+}

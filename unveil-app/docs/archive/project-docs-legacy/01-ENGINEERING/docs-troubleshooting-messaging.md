@@ -5,16 +5,19 @@
 When encountering messaging issues, run through this checklist:
 
 1. **Environment Check**
+
    ```bash
    npx tsx scripts/validate-production-env.ts
    ```
 
 2. **Build Verification**
+
    ```bash
    pnpm build && pnpm lint
    ```
 
 3. **Database Connection Test**
+
    - Check Supabase dashboard is accessible
    - Verify RLS policies are active
    - Confirm migrations are applied
@@ -29,7 +32,9 @@ When encountering messaging issues, run through this checklist:
 ### 🚫 Messages Not Sending
 
 #### **Symptom**: Messages stuck in "scheduled" status
+
 **Diagnosis Steps:**
+
 1. Check CRON job execution in Vercel dashboard
 2. Verify `send_at` timestamp is in the past
 3. Examine function logs for errors
@@ -37,6 +42,7 @@ When encountering messaging issues, run through this checklist:
 **Common Causes & Solutions:**
 
 **CRON Job Not Running**
+
 ```bash
 # Check Vercel CRON configuration
 cat vercel.json
@@ -53,6 +59,7 @@ cat vercel.json
 **Solution**: Ensure CRON job is deployed and environment variables are set in Vercel.
 
 **Missing CRON_SECRET**
+
 ```bash
 # Check environment variable exists
 echo $CRON_SECRET  # Should output 32+ character string
@@ -61,18 +68,21 @@ echo $CRON_SECRET  # Should output 32+ character string
 **Solution**: Set `CRON_SECRET` in Vercel environment variables.
 
 **Timezone Issues**
+
 ```sql
 -- Check message scheduling in database
-SELECT id, content, send_at, status, created_at 
-FROM scheduled_messages 
-WHERE status = 'scheduled' 
+SELECT id, content, send_at, status, created_at
+FROM scheduled_messages
+WHERE status = 'scheduled'
 ORDER BY send_at ASC;
 ```
 
 **Solution**: Ensure `send_at` times are in UTC and properly formatted.
 
 #### **Symptom**: CRON job runs but no messages delivered
+
 **Diagnosis Steps:**
+
 1. Check message delivery records
 2. Verify guest data completeness
 3. Review delivery service configurations
@@ -87,6 +97,7 @@ ORDER BY sm.created_at DESC LIMIT 10;
 ```
 
 **Common Solutions:**
+
 - **Missing Guest Data**: Ensure guests have valid phone numbers and emails
 - **Twilio Issues**: Check account balance and phone number verification
 - **Service Limits**: Verify API rate limits haven't been exceeded
@@ -94,7 +105,9 @@ ORDER BY sm.created_at DESC LIMIT 10;
 ### 📱 SMS Delivery Problems
 
 #### **Symptom**: SMS status shows "failed"
+
 **Diagnosis Steps:**
+
 1. Check Twilio account status and balance
 2. Verify phone number format validation
 3. Review Twilio delivery logs
@@ -102,6 +115,7 @@ ORDER BY sm.created_at DESC LIMIT 10;
 **Common Causes & Solutions:**
 
 **Invalid Phone Numbers**
+
 ```typescript
 // Phone number validation check
 const isValidPhone = (phone: string) => {
@@ -113,6 +127,7 @@ const isValidPhone = (phone: string) => {
 **Solution**: Update guest phone numbers to E.164 format (+1234567890).
 
 **Twilio Account Issues**
+
 ```bash
 # Check Twilio environment variables
 echo $TWILIO_ACCOUNT_SID
@@ -123,17 +138,21 @@ echo $TWILIO_PHONE_NUMBER
 **Solution**: Verify credentials in Twilio console and update environment variables.
 
 **Message Content Violations**
+
 - Check for blocked keywords
 - Ensure message length is under carrier limits
 - Avoid suspicious content patterns
 
 #### **Symptom**: SMS sent but not received
+
 **Diagnosis Steps:**
+
 1. Check delivery status in Twilio console
 2. Verify recipient phone number is active
 3. Test with different carriers
 
 **Solutions:**
+
 - **Carrier Blocking**: Try alternative phone numbers for testing
 - **Message Filtering**: Avoid promotional language in content
 - **Delivery Reports**: Enable delivery receipts in Twilio settings
@@ -141,7 +160,9 @@ echo $TWILIO_PHONE_NUMBER
 ### 📊 Analytics Not Updating
 
 #### **Symptom**: Dashboard shows empty or outdated metrics
+
 **Diagnosis Steps:**
+
 1. Check if message deliveries are being created
 2. Verify read tracking is functioning
 3. Review analytics query performance
@@ -151,13 +172,14 @@ echo $TWILIO_PHONE_NUMBER
 SELECT COUNT(*) as total_deliveries,
        COUNT(CASE WHEN sms_status = 'delivered' THEN 1 END) as sms_delivered,
        COUNT(CASE WHEN has_responded = true THEN 1 END) as responses
-FROM message_deliveries 
+FROM message_deliveries
 WHERE created_at >= NOW() - INTERVAL '7 days';
 ```
 
 **Common Solutions:**
 
 **Missing Delivery Records**
+
 ```typescript
 // Ensure delivery records are created in message processor
 await createMessageDelivery({
@@ -169,6 +191,7 @@ await createMessageDelivery({
 ```
 
 **Read Tracking Not Working**
+
 ```typescript
 // Check read tracking implementation
 const handleMessageRead = async (deliveryId: string) => {
@@ -178,6 +201,7 @@ const handleMessageRead = async (deliveryId: string) => {
 ```
 
 **Query Performance Issues**
+
 - Check database indexes on `event_id`, `message_id`, `created_at`
 - Consider pagination for large datasets
 - Monitor query execution times
@@ -185,7 +209,9 @@ const handleMessageRead = async (deliveryId: string) => {
 ### 🔄 Real-time Updates Not Working
 
 #### **Symptom**: New messages don't appear instantly
+
 **Diagnosis Steps:**
+
 1. Check browser console for WebSocket errors
 2. Verify Supabase real-time is enabled
 3. Test subscription setup
@@ -194,15 +220,19 @@ const handleMessageRead = async (deliveryId: string) => {
 // Debug real-time subscription
 const subscription = supabase
   .channel(`event-${eventId}-messages`)
-  .on('postgres_changes', {
-    event: 'INSERT',
-    schema: 'public',
-    table: 'messages',
-    filter: `event_id=eq.${eventId}`
-  }, (payload) => {
-    console.log('Real-time message received:', payload);
-    // Handle new message
-  })
+  .on(
+    'postgres_changes',
+    {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'messages',
+      filter: `event_id=eq.${eventId}`,
+    },
+    (payload) => {
+      console.log('Real-time message received:', payload);
+      // Handle new message
+    },
+  )
   .subscribe((status) => {
     console.log('Subscription status:', status);
   });
@@ -211,21 +241,24 @@ const subscription = supabase
 **Common Solutions:**
 
 **WebSocket Connection Issues**
+
 - Check browser network tab for WebSocket connections
 - Verify Supabase URL is correct
 - Test with different browsers/networks
 
 **Subscription Filtering**
+
 - Ensure event_id filter matches current event
 - Check table and schema names are correct
 - Verify RLS policies allow real-time access
 
 **Component Lifecycle Issues**
+
 ```typescript
 // Proper cleanup on unmount
 useEffect(() => {
   const subscription = setupRealtimeSubscription();
-  
+
   return () => {
     subscription.unsubscribe();
   };
@@ -235,7 +268,9 @@ useEffect(() => {
 ### 🔐 Permission & Access Issues
 
 #### **Symptom**: "Unauthorized" or "Access Denied" errors
+
 **Diagnosis Steps:**
+
 1. Check user authentication status
 2. Verify host/guest role assignments
 3. Review RLS policy implementations
@@ -243,6 +278,7 @@ useEffect(() => {
 **Common Solutions:**
 
 **Host Permission Issues**
+
 ```sql
 -- Check host permission function
 SELECT is_event_host('event-id', 'user-id');
@@ -252,19 +288,21 @@ SELECT is_event_host('event-id', 'user-id');
 **Solution**: Verify user is properly assigned as event host in `events` table.
 
 **Guest Access Problems**
+
 ```sql
 -- Check guest assignment
-SELECT * FROM event_guests 
+SELECT * FROM event_guests
 WHERE user_id = 'user-id' AND event_id = 'event-id';
 ```
 
 **Solution**: Ensure guest record exists and is properly linked.
 
 **RLS Policy Conflicts**
+
 ```sql
 -- Review messaging RLS policies
-SELECT tablename, policyname, cmd, qual 
-FROM pg_policies 
+SELECT tablename, policyname, cmd, qual
+FROM pg_policies
 WHERE tablename IN ('scheduled_messages', 'message_deliveries', 'messages');
 ```
 
@@ -273,7 +311,9 @@ WHERE tablename IN ('scheduled_messages', 'message_deliveries', 'messages');
 ### 🚀 Performance Issues
 
 #### **Symptom**: Slow loading or timeouts
+
 **Diagnosis Steps:**
+
 1. Check database query performance
 2. Monitor API response times
 3. Review client-side caching
@@ -281,16 +321,18 @@ WHERE tablename IN ('scheduled_messages', 'message_deliveries', 'messages');
 **Optimization Strategies:**
 
 **Database Optimization**
+
 ```sql
 -- Add indexes for common queries
-CREATE INDEX IF NOT EXISTS idx_scheduled_messages_event_send_at 
+CREATE INDEX IF NOT EXISTS idx_scheduled_messages_event_send_at
 ON scheduled_messages(event_id, send_at);
 
-CREATE INDEX IF NOT EXISTS idx_message_deliveries_message_guest 
+CREATE INDEX IF NOT EXISTS idx_message_deliveries_message_guest
 ON message_deliveries(message_id, guest_id);
 ```
 
 **Client-side Caching**
+
 ```typescript
 // Use React Query for efficient caching
 const { data: messages, isLoading } = useQuery({
@@ -301,13 +343,14 @@ const { data: messages, isLoading } = useQuery({
 ```
 
 **Pagination Implementation**
+
 ```typescript
 // Implement pagination for large datasets
 const { data, fetchNextPage, hasNextPage } = useInfiniteQuery({
   queryKey: ['messages', eventId],
-  queryFn: ({ pageParam = 0 }) => 
+  queryFn: ({ pageParam = 0 }) =>
     fetchMessages(eventId, { offset: pageParam, limit: 20 }),
-  getNextPageParam: (lastPage, pages) => 
+  getNextPageParam: (lastPage, pages) =>
     lastPage.length === 20 ? pages.length * 20 : undefined,
 });
 ```
@@ -347,18 +390,18 @@ console.log('Current user:', await window.supabase?.auth.getUser());
 
 ```sql
 -- Check recent errors in logs (if enabled)
-SELECT * FROM pg_stat_activity 
-WHERE state = 'active' 
+SELECT * FROM pg_stat_activity
+WHERE state = 'active'
 AND query LIKE '%scheduled_messages%';
 
 -- Monitor table sizes
-SELECT 
+SELECT
   schemaname,
   tablename,
   attname,
   n_distinct,
   most_common_vals
-FROM pg_stats 
+FROM pg_stats
 WHERE tablename IN ('scheduled_messages', 'message_deliveries')
 ORDER BY schemaname, tablename;
 
@@ -367,7 +410,7 @@ SELECT conrelid::regclass AS table_name,
        conname AS constraint_name,
        pg_get_constraintdef(oid) AS constraint_definition
 FROM pg_constraint
-WHERE contype = 'c' 
+WHERE contype = 'c'
 AND conrelid::regclass::text LIKE '%message%';
 ```
 
@@ -376,11 +419,13 @@ AND conrelid::regclass::text LIKE '%message%';
 ### Key Metrics to Monitor
 
 1. **Message Processing Rate**
+
    - Messages processed per minute
    - Processing success rate
    - Queue depth and backlog
 
 2. **Delivery Success Rates**
+
    - SMS delivery rate (target: >95%)
    - Email delivery rate (target: >98%)
    - Push notification rate (target: >90%)
@@ -406,6 +451,7 @@ const ALERT_THRESHOLDS = {
 ### Log Analysis
 
 **Search for Common Error Patterns:**
+
 ```bash
 # CRON job failures
 grep -i "cron.*failed" /var/log/vercel/*.log
@@ -422,17 +468,19 @@ grep -i "supabase.*connection" /var/log/vercel/*.log
 ### Critical Message Stuck in Queue
 
 1. **Identify Issue**
+
    ```sql
-   SELECT * FROM scheduled_messages 
-   WHERE status = 'processing' 
+   SELECT * FROM scheduled_messages
+   WHERE status = 'processing'
    AND updated_at < NOW() - INTERVAL '1 hour';
    ```
 
 2. **Manual Intervention**
+
    ```sql
    -- Reset stuck messages to scheduled
-   UPDATE scheduled_messages 
-   SET status = 'scheduled' 
+   UPDATE scheduled_messages
+   SET status = 'scheduled'
    WHERE id = 'stuck-message-id';
    ```
 
@@ -446,15 +494,17 @@ grep -i "supabase.*connection" /var/log/vercel/*.log
 ### Mass Message Failure
 
 1. **Stop Further Processing**
+
    ```sql
    -- Temporarily disable auto-processing
-   UPDATE scheduled_messages 
-   SET status = 'draft' 
-   WHERE status = 'scheduled' 
+   UPDATE scheduled_messages
+   SET status = 'draft'
+   WHERE status = 'scheduled'
    AND send_at > NOW();
    ```
 
 2. **Investigate Root Cause**
+
    - Check service provider status
    - Review configuration changes
    - Analyze error patterns
@@ -462,9 +512,9 @@ grep -i "supabase.*connection" /var/log/vercel/*.log
 3. **Gradual Recovery**
    ```sql
    -- Re-enable messages in small batches
-   UPDATE scheduled_messages 
-   SET status = 'scheduled' 
-   WHERE status = 'draft' 
+   UPDATE scheduled_messages
+   SET status = 'scheduled'
+   WHERE status = 'draft'
    AND id IN (SELECT id FROM scheduled_messages LIMIT 10);
    ```
 
@@ -480,11 +530,13 @@ grep -i "supabase.*connection" /var/log/vercel/*.log
 ### Information to Gather
 
 1. **Error Details**
+
    - Exact error messages
    - Timestamps of incidents
    - Affected user/event IDs
 
 2. **System State**
+
    - Recent deployments or changes
    - Environment variable modifications
    - Database migration status
@@ -506,11 +558,13 @@ grep -i "supabase.*connection" /var/log/vercel/*.log
 ### Regular Maintenance
 
 1. **Weekly Checks**
+
    - Review CRON job execution logs
    - Monitor delivery success rates
    - Check database performance metrics
 
 2. **Monthly Tasks**
+
    - Update dependencies and security patches
    - Review and optimize database queries
    - Analyze usage patterns and capacity planning
@@ -532,4 +586,4 @@ grep -i "supabase.*connection" /var/log/vercel/*.log
 - **Staged Rollouts**: Deploy to staging first
 - **Feature Flags**: Use flags for new functionality
 - **Rollback Plans**: Maintain quick rollback capabilities
-- **Health Checks**: Implement comprehensive health monitoring 
+- **Health Checks**: Implement comprehensive health monitoring

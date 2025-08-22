@@ -12,20 +12,27 @@ interface StaticEventHeaderProps {
   className?: string;
 }
 
-export function StaticEventHeader({ event, className }: StaticEventHeaderProps) {
+export function StaticEventHeader({
+  event,
+  className,
+}: StaticEventHeaderProps) {
   const hasHeaderImage = event.header_image_url;
 
   if (!hasHeaderImage) {
     // Fallback gradient header when no image is available
     return (
-      <div className={cn(
-        "w-full h-48 md:h-64 bg-gradient-to-r from-purple-600 to-pink-600 relative overflow-hidden",
-        className
-      )}>
+      <div
+        className={cn(
+          'w-full h-48 md:h-64 bg-gradient-to-r from-purple-600 to-pink-600 relative overflow-hidden',
+          className,
+        )}
+      >
         <div className="absolute inset-0 bg-black/20"></div>
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center text-white">
-            <h1 className="text-2xl md:text-3xl font-bold mb-2">{event.title}</h1>
+            <h1 className="text-2xl md:text-3xl font-bold mb-2">
+              {event.title}
+            </h1>
             <p className="text-white/90 text-sm md:text-base">Host Dashboard</p>
           </div>
         </div>
@@ -34,10 +41,12 @@ export function StaticEventHeader({ event, className }: StaticEventHeaderProps) 
   }
 
   return (
-    <div className={cn(
-      "w-full h-48 md:h-64 relative overflow-hidden bg-gray-200",
-      className
-    )}>
+    <div
+      className={cn(
+        'w-full h-48 md:h-64 relative overflow-hidden bg-gray-200',
+        className,
+      )}
+    >
       {/* Cover Image */}
       <Image
         src={event.header_image_url!}
@@ -47,10 +56,10 @@ export function StaticEventHeader({ event, className }: StaticEventHeaderProps) 
         priority
         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 100vw"
       />
-      
+
       {/* Overlay for better text readability */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
-      
+
       {/* Optional overlay content */}
       <div className="absolute bottom-4 left-4 right-4 text-white">
         <div className="inline-flex items-center gap-2 text-sm font-medium bg-black/30 backdrop-blur-sm rounded-full px-3 py-1">

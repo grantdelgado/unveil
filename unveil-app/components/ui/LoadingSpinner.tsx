@@ -20,10 +20,12 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
 
   return (
     <div className={cn('text-center', className)}>
-      <div className={cn(
-        'border-2 border-pink-300 border-t-[#FF6B6B] rounded-full animate-spin mx-auto mb-4',
-        sizeClasses[size]
-      )}></div>
+      <div
+        className={cn(
+          'border-2 border-pink-300 border-t-[#FF6B6B] rounded-full animate-spin mx-auto mb-4',
+          sizeClasses[size],
+        )}
+      ></div>
       {text && <p className="text-gray-500 text-base">{text}</p>}
     </div>
   );

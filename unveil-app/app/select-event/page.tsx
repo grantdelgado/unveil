@@ -4,7 +4,6 @@
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
-
 // Internal utilities
 import { formatEventDate } from '@/lib/utils/date';
 import { cn } from '@/lib/utils';
@@ -16,8 +15,6 @@ import { useAuth } from '@/lib/auth/AuthProvider';
 // Internal components (specific imports)
 import { SkeletonLoader } from '@/components/ui';
 import { MobileShell } from '@/components/layout';
-
-
 
 export default function SelectEventPage() {
   const { events, loading, error, refetch } = useUserEvents();
@@ -79,7 +76,9 @@ export default function SelectEventPage() {
     const header = (
       <div className="max-w-md mx-auto px-4 pt-6 w-full">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Error Loading Events</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            Error Loading Events
+          </h1>
           <p className="text-lg text-gray-600">Something went wrong</p>
         </div>
       </div>
@@ -89,8 +88,8 @@ export default function SelectEventPage() {
       <div className="max-w-md mx-auto w-full">
         <div className="text-center text-sm text-gray-600 pb-6 px-4">
           Need help? Contact us at{' '}
-          <a 
-            href="mailto:grant@sendunveil.com" 
+          <a
+            href="mailto:grant@sendunveil.com"
             className="text-rose-500 hover:text-rose-600 transition-colors"
           >
             grant@sendunveil.com
@@ -107,7 +106,7 @@ export default function SelectEventPage() {
             <p className="text-gray-600 break-words">
               {error?.message || 'An unexpected error occurred'}
             </p>
-            <button 
+            <button
               onClick={refetch}
               className="px-6 py-3 bg-rose-500 text-white rounded-xl font-semibold hover:bg-rose-600 transition-colors min-h-[44px] min-w-[44px]"
             >
@@ -130,9 +129,10 @@ export default function SelectEventPage() {
     user_role: string;
     title: string;
   }) => {
-    const path = event.user_role === 'host' 
-      ? `/host/events/${event.event_id}/dashboard`
-      : `/guest/events/${event.event_id}/home`;
+    const path =
+      event.user_role === 'host'
+        ? `/host/events/${event.event_id}/dashboard`
+        : `/guest/events/${event.event_id}/home`;
     router.push(path);
   };
 
@@ -141,8 +141,10 @@ export default function SelectEventPage() {
   };
 
   // Group events by user role for better organization
-  const hostEvents = events?.filter(event => event.user_role === 'host') || [];
-  const guestEvents = events?.filter(event => event.user_role === 'guest') || [];
+  const hostEvents =
+    events?.filter((event) => event.user_role === 'host') || [];
+  const guestEvents =
+    events?.filter((event) => event.user_role === 'guest') || [];
 
   const header = (
     <div className="max-w-md mx-auto px-4 pt-6 w-full">
@@ -151,17 +153,19 @@ export default function SelectEventPage() {
           <h1 className="text-4xl font-bold text-rose-500 mb-2 break-words">
             Welcome!
           </h1>
-          <p className="text-lg text-gray-600">
-            Choose an event to continue.
-          </p>
+          <p className="text-lg text-gray-600">Choose an event to continue.</p>
         </div>
-        <button 
+        <button
           onClick={handleProfile}
           className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors flex-shrink-0"
           aria-label="Profile settings"
         >
-          <svg className="w-6 h-6 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+          <svg
+            className="w-6 h-6 text-gray-600"
+            fill="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
           </svg>
         </button>
       </div>
@@ -172,8 +176,8 @@ export default function SelectEventPage() {
     <div className="max-w-md mx-auto w-full">
       <div className="text-center text-sm text-gray-600 pb-6 px-4">
         Need help? Drop a line to{' '}
-        <a 
-          href="mailto:grant@sendunveil.com" 
+        <a
+          href="mailto:grant@sendunveil.com"
           className="text-rose-500 hover:text-rose-600 transition-colors"
         >
           grant@sendunveil.com
@@ -184,11 +188,7 @@ export default function SelectEventPage() {
 
   return (
     <div id="select-event">
-      <MobileShell
-        header={header}
-        footer={footer}
-        className="scroll-container"
-      >
+      <MobileShell header={header} footer={footer} className="scroll-container">
         <div className="max-w-md mx-auto px-4 py-8 w-full space-y-8">
           {/* Events List */}
           <div className="space-y-8">
@@ -197,13 +197,15 @@ export default function SelectEventPage() {
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <span className="text-2xl">💍</span>
-                  <h2 className="text-xl font-bold text-gray-800">Your Wedding</h2>
+                  <h2 className="text-xl font-bold text-gray-800">
+                    Your Wedding
+                  </h2>
                 </div>
-                
+
                 <div className="space-y-3">
                   {hostEvents.map((event) => {
                     const formattedDate = formatEventDate(event.event_date);
-                    
+
                     return (
                       <div key={event.event_id} className="relative">
                         <button
@@ -214,7 +216,7 @@ export default function SelectEventPage() {
                             'transition-all duration-200 hover:shadow-md hover:border-rose-300',
                             'focus:outline-none focus:ring-2 focus:ring-rose-300 focus:ring-offset-2',
                             'active:scale-[0.98]',
-                            'group'
+                            'group',
                           )}
                         >
                           <div className="flex items-center justify-between">
@@ -229,13 +231,25 @@ export default function SelectEventPage() {
                               )}
                               <div className="flex items-center gap-2 text-gray-600">
                                 <span>📅</span>
-                                <span className="font-medium break-words">{formattedDate}</span>
+                                <span className="font-medium break-words">
+                                  {formattedDate}
+                                </span>
                               </div>
                             </div>
-                            
+
                             <div className="text-gray-400 group-hover:text-rose-500 transition-colors ml-4">
-                              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                              <svg
+                                className="w-6 h-6"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M9 5l7 7-7 7"
+                                />
                               </svg>
                             </div>
                           </div>
@@ -252,13 +266,15 @@ export default function SelectEventPage() {
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <span className="text-2xl">🍾</span>
-                  <h2 className="text-xl font-bold text-gray-800">Weddings You&apos;re Invited To</h2>
+                  <h2 className="text-xl font-bold text-gray-800">
+                    Weddings You&apos;re Invited To
+                  </h2>
                 </div>
-                
+
                 <div className="space-y-3">
                   {guestEvents.map((event) => {
                     const formattedDate = formatEventDate(event.event_date);
-                    
+
                     return (
                       <button
                         key={event.event_id}
@@ -269,7 +285,7 @@ export default function SelectEventPage() {
                           'transition-all duration-200 hover:shadow-md hover:border-rose-300',
                           'focus:outline-none focus:ring-2 focus:ring-rose-300 focus:ring-offset-2',
                           'active:scale-[0.98]',
-                          'group'
+                          'group',
                         )}
                       >
                         <div className="flex items-center justify-between">
@@ -284,13 +300,25 @@ export default function SelectEventPage() {
                             )}
                             <div className="flex items-center gap-2 text-gray-600 mb-1">
                               <span>📅</span>
-                              <span className="font-medium break-words">{formattedDate}</span>
+                              <span className="font-medium break-words">
+                                {formattedDate}
+                              </span>
                             </div>
                           </div>
-                          
+
                           <div className="text-gray-400 group-hover:text-rose-500 transition-colors ml-4">
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            <svg
+                              className="w-6 h-6"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 5l7 7-7 7"
+                              />
                             </svg>
                           </div>
                         </div>

@@ -7,4 +7,4 @@ export function EventDashboard() {
       <p>Dashboard content will be implemented here.</p>
     </div>
   );
-} 
+}

@@ -1,6 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase/client';
-import type { Guest, TagWithUsage, GuestWithDisplayName } from '@/lib/types/messaging';
+import type {
+  Guest,
+  TagWithUsage,
+  GuestWithDisplayName,
+} from '@/lib/types/messaging';
 
 export function useGuestTags(eventId: string) {
   const [tags, setTags] = useState<string[]>([]);
@@ -18,10 +22,12 @@ export function useGuestTags(eventId: string) {
         // Fetch all guests with their tags
         const { data: guests, error: guestsError } = await supabase
           .from('event_guests')
-          .select(`
+          .select(
+            `
             *,
             users(*)
-          `)
+          `,
+          )
           .eq('event_id', eventId);
 
         if (guestsError) throw guestsError;
@@ -41,17 +47,21 @@ export function useGuestTags(eventId: string) {
           });
         });
 
-        const tagStatsData: TagWithUsage[] = Array.from(tagMap.entries()).map(([tag, guestList]) => ({
-          tag,
-          guestCount: guestList.length,
-          guests: guestList,
-        }));
+        const tagStatsData: TagWithUsage[] = Array.from(tagMap.entries()).map(
+          ([tag, guestList]) => ({
+            tag,
+            guestCount: guestList.length,
+            guests: guestList,
+          }),
+        );
 
         setTags(Array.from(allTags));
         setTagStats(tagStatsData);
       } catch (err) {
         console.error('Error fetching guest tags:', err);
-        setError(err instanceof Error ? err.message : 'Failed to fetch guest tags');
+        setError(
+          err instanceof Error ? err.message : 'Failed to fetch guest tags',
+        );
       } finally {
         setLoading(false);
       }
@@ -64,10 +74,11 @@ export function useGuestTags(eventId: string) {
     if (selectedTags.length === 0) return [];
 
     return tagStats
-      .filter(stat => selectedTags.includes(stat.tag))
-      .flatMap(stat => stat.guests)
-      .filter((guest, index, array) => 
-        array.findIndex(g => g.id === guest.id) === index
+      .filter((stat) => selectedTags.includes(stat.tag))
+      .flatMap((stat) => stat.guests)
+      .filter(
+        (guest, index, array) =>
+          array.findIndex((g) => g.id === guest.id) === index,
       );
   };
 
@@ -86,7 +97,7 @@ export function useGuestTags(eventId: string) {
             await supabase
               .from('event_guests')
               .update({
-                guest_tags: [...currentTags, tag]
+                guest_tags: [...currentTags, tag],
               })
               .eq('id', guestId);
           }
@@ -112,7 +123,7 @@ export function useGuestTags(eventId: string) {
           await supabase
             .from('event_guests')
             .update({
-              guest_tags: currentTags.filter(t => t !== tag)
+              guest_tags: currentTags.filter((t) => t !== tag),
             })
             .eq('id', guestId);
         }
@@ -150,7 +161,7 @@ export function useGuestTags(eventId: string) {
   };
 
   // Get all guests for components that need them
-  const guests = tagStats.flatMap(stat => stat.guests);
+  const guests = tagStats.flatMap((stat) => stat.guests);
 
   return {
     tags,
@@ -167,4 +178,4 @@ export function useGuestTags(eventId: string) {
     assignTagsToGuests,
     refresh,
   };
-} 
+}

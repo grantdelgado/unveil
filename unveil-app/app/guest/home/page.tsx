@@ -7,7 +7,7 @@ import {
   PageTitle,
   SectionTitle,
   PrimaryButton,
-  SecondaryButton
+  SecondaryButton,
 } from '@/components/ui';
 
 export default function GuestHome() {
@@ -23,9 +23,7 @@ export default function GuestHome() {
           {/* RSVP Section */}
           <div className="space-y-4">
             <SectionTitle>RSVP</SectionTitle>
-            <PrimaryButton fullWidth={false}>
-              RSVP Now
-            </PrimaryButton>
+            <PrimaryButton fullWidth={false}>RSVP Now</PrimaryButton>
           </div>
 
           {/* Upload Media Section */}
@@ -36,7 +34,6 @@ export default function GuestHome() {
             </SecondaryButton>
           </div>
         </div>
-
       </CardContainer>
     </PageWrapper>
   );

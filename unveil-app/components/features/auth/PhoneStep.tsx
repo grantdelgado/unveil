@@ -47,11 +47,12 @@ export const PhoneStep: React.FC<PhoneStepProps> = ({
 
       <div className="mt-6">
         <MicroCopy>
-          First time here? Just enter your phone &mdash; we&apos;ll set everything up for you automatically.
+          First time here? Just enter your phone &mdash; we&apos;ll set
+          everything up for you automatically.
         </MicroCopy>
       </div>
     </>
   );
 };
 
-PhoneStep.displayName = 'PhoneStep'; 
+PhoneStep.displayName = 'PhoneStep';

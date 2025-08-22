@@ -33,7 +33,9 @@ export const createInvitationMessage = (
   let guestGreeting = 'Hi there! ';
   if (invitation.guestName) {
     const firstName = invitation.guestName.split(' ')[0]?.trim();
-    guestGreeting = firstName ? `Hi, ${firstName}! ` : `Hi, ${invitation.guestName}! `;
+    guestGreeting = firstName
+      ? `Hi, ${firstName}! `
+      : `Hi, ${invitation.guestName}! `;
   }
 
   // Use standardized public URL helper - this will throw if localhost or unconfigured
@@ -242,18 +244,21 @@ export const sendGuestInvitationSMS = async (
   options: {
     guestName?: string;
     skipRateLimit?: boolean; // For development/testing
-  } = {}
+  } = {},
 ): Promise<{ success: boolean; error?: string; rateLimited?: boolean }> => {
   const redactedPhone = phone.slice(0, 6) + '...';
-  
+
   try {
     // Development-only debug logging
     if (process.env.NODE_ENV === 'development') {
-      console.log(`📱 SMS Debug: Starting invitation SMS for ${redactedPhone}`, {
-        eventId,
-        hasGuestName: !!options.guestName,
-        skipRateLimit: options.skipRateLimit
-      });
+      console.log(
+        `📱 SMS Debug: Starting invitation SMS for ${redactedPhone}`,
+        {
+          eventId,
+          hasGuestName: !!options.guestName,
+          skipRateLimit: options.skipRateLimit,
+        },
+      );
     }
 
     // Import Supabase admin client to bypass RLS for event lookup
@@ -262,27 +267,34 @@ export const sendGuestInvitationSMS = async (
     // TODO: Rate limiting will be implemented after migration is applied
     // Currently disabled to allow building without guest_sms_log table
     if (!options.skipRateLimit) {
-      logger.info('SMS Debug: Rate limiting temporarily disabled - will be enabled after migration');
+      logger.info(
+        'SMS Debug: Rate limiting temporarily disabled - will be enabled after migration',
+      );
     }
 
     // Fetch event details for the invitation using admin client
     const { data: event, error: eventError } = await supabaseAdmin
       .from('events')
-      .select(`
+      .select(
+        `
         title,
         event_date,
         location,
         host:users!events_host_user_id_fkey(full_name)
-      `)
+      `,
+      )
       .eq('id', eventId)
       .single();
 
     if (eventError || !event) {
-      logger.error(`SMS Debug: Event not found for SMS invitation - ${redactedPhone}`, {
-        eventId,
-        error: eventError?.message,
-        errorCode: eventError?.code
-      });
+      logger.error(
+        `SMS Debug: Event not found for SMS invitation - ${redactedPhone}`,
+        {
+          eventId,
+          error: eventError?.message,
+          errorCode: eventError?.code,
+        },
+      );
       return { success: false, error: 'Event not found' };
     }
 
@@ -291,7 +303,7 @@ export const sendGuestInvitationSMS = async (
         eventId,
         eventTitle: event.title,
         eventDate: event.event_date,
-        hasHost: !!(event.host as { full_name?: string } | null)?.full_name
+        hasHost: !!(event.host as { full_name?: string } | null)?.full_name,
       });
     }
 
@@ -302,34 +314,38 @@ export const sendGuestInvitationSMS = async (
       eventDate: formatEventDate(event.event_date), // Use timezone-safe date formatting
       guestPhone: phone,
       guestName: options.guestName,
-      hostName: (event.host as { full_name?: string } | null)?.full_name || 'Your host'
+      hostName:
+        (event.host as { full_name?: string } | null)?.full_name || 'Your host',
     };
 
     // Generate invitation message
     const message = createInvitationMessage(invitation);
 
     if (process.env.NODE_ENV === 'development') {
-      console.log(`📱 SMS Debug: Prepared invitation message for ${redactedPhone}:`, {
-        messageLength: message.length,
-        messagePreview: message.substring(0, 100) + '...',
-        guestName: options.guestName || 'No name provided',
-        hostName: invitation.hostName
-      });
+      console.log(
+        `📱 SMS Debug: Prepared invitation message for ${redactedPhone}:`,
+        {
+          messageLength: message.length,
+          messagePreview: message.substring(0, 100) + '...',
+          guestName: options.guestName || 'No name provided',
+          hostName: invitation.hostName,
+        },
+      );
     }
 
     // Send SMS using existing infrastructure
     const { sendSMS } = await import('./sms');
-    
+
     if (process.env.NODE_ENV === 'development') {
       console.log(`📱 SMS Debug: Calling sendSMS for ${redactedPhone}...`);
     }
-    
+
     const smsResult = await sendSMS({
       to: phone,
       message: message,
       eventId: eventId,
       guestId: undefined, // Guest invitations don't have a specific guest record ID yet
-      messageType: 'welcome'
+      messageType: 'welcome',
     });
 
     if (process.env.NODE_ENV === 'development') {
@@ -337,25 +353,28 @@ export const sendGuestInvitationSMS = async (
         success: smsResult.success,
         error: smsResult.error,
         messageId: smsResult.messageId,
-        status: smsResult.status
+        status: smsResult.status,
       });
     }
 
     return {
       success: smsResult.success,
       error: smsResult.error,
-      rateLimited: false
+      rateLimited: false,
     };
-
   } catch (error) {
     logger.error('Error sending guest invitation SMS', error);
-    
+
     // TODO: SMS error logging will be implemented after migration is applied
-    logger.error('SMS error for phone', { phone: phone.substring(0, 6) + '****', error });
-    
+    logger.error('SMS error for phone', {
+      phone: phone.substring(0, 6) + '****',
+      error,
+    });
+
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to send invitation'
+      error:
+        error instanceof Error ? error.message : 'Failed to send invitation',
     };
   }
 };
@@ -373,7 +392,7 @@ export const sendBatchGuestInvitations = async (
   options: {
     skipRateLimit?: boolean;
     maxConcurrency?: number;
-  } = {}
+  } = {},
 ): Promise<{
   sent: number;
   failed: number;
@@ -400,18 +419,18 @@ export const sendBatchGuestInvitations = async (
   // Process guests in batches to avoid overwhelming the SMS service
   for (let i = 0; i < guests.length; i += maxConcurrency) {
     const batch = guests.slice(i, i + maxConcurrency);
-    
+
     const batchPromises = batch.map(async (guest) => {
       const result = await sendGuestInvitationSMS(guest.phone, eventId, {
         guestName: guest.guestName,
-        skipRateLimit: options.skipRateLimit
+        skipRateLimit: options.skipRateLimit,
       });
 
       const guestResult = {
         phone: guest.phone,
         success: result.success,
         error: result.error,
-        rateLimited: result.rateLimited
+        rateLimited: result.rateLimited,
       };
 
       if (result.success) {
@@ -426,7 +445,7 @@ export const sendBatchGuestInvitations = async (
     });
 
     const batchResults = await Promise.allSettled(batchPromises);
-    
+
     batchResults.forEach((promiseResult) => {
       if (promiseResult.status === 'fulfilled') {
         results.push(promiseResult.value);
@@ -435,7 +454,7 @@ export const sendBatchGuestInvitations = async (
         results.push({
           phone: 'unknown',
           success: false,
-          error: 'Promise rejected'
+          error: 'Promise rejected',
         });
         failed++;
       }
@@ -443,7 +462,7 @@ export const sendBatchGuestInvitations = async (
 
     // Small delay between batches to be nice to the SMS service
     if (i + maxConcurrency < guests.length) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
   }
 

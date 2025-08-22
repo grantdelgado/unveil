@@ -1,4 +1,5 @@
 # Event Creation System Audit
+
 ## Unveil App - Complete Analysis
 
 **Generated:** January 29, 2025  
@@ -12,6 +13,7 @@
 The Unveil app implements a sophisticated multi-step event creation wizard that handles event data collection, image uploads, and database operations with comprehensive validation and security measures. The system is well-architected but has some architectural patterns that could benefit from modernization for long-term scalability.
 
 **Key Strengths:**
+
 - ✅ Comprehensive RLS security implementation
 - ✅ Multi-step wizard with excellent UX
 - ✅ Robust client-side validation with Zod
@@ -19,6 +21,7 @@ The Unveil app implements a sophisticated multi-step event creation wizard that 
 - ✅ TypeScript strict typing throughout
 
 **Areas for Improvement:**
+
 - ⚠️ Direct database calls in components (vs service layer)
 - ⚠️ Missing atomic transactions for multi-table operations
 - ⚠️ Limited scalability for bulk operations
@@ -28,11 +31,13 @@ The Unveil app implements a sophisticated multi-step event creation wizard that 
 ## 1. Flow Overview
 
 ### Entry Point
+
 ```
 /host/events/create → app/host/events/create/page.tsx → <CreateEventWizard />
 ```
 
 ### Component Architecture
+
 ```
 CreateEventWizard (Main Controller)
 ├── EventBasicsStep (Form data collection)
@@ -42,6 +47,7 @@ CreateEventWizard (Main Controller)
 ```
 
 ### Step Flow
+
 1. **Basics Step**: Event name, date, time, location, description, privacy
 2. **Image Step**: Optional header image upload (drag/drop, 10MB limit)
 3. **Guests Step**: Guest import method selection (currently "skip only")
@@ -53,27 +59,31 @@ CreateEventWizard (Main Controller)
 ## 2. Supabase Integration
 
 ### Current Implementation
+
 The system uses **direct Supabase client calls** from the component level, not the MCP (Model-Controller-Pattern) mentioned in the project conventions.
 
 #### Tables Written During Creation
 
 **Primary Event Record:**
+
 ```sql
 INSERT INTO events (
-  title, event_date, location, description, 
+  title, event_date, location, description,
   header_image_url, host_user_id, is_public
 ) VALUES (...)
 ```
 
 **Host Guest Entry:**
+
 ```sql
 INSERT INTO event_guests (
-  event_id, user_id, phone, guest_name, 
+  event_id, user_id, phone, guest_name,
   role, rsvp_status, preferred_communication, sms_opt_out
 ) VALUES (...)
 ```
 
 **Storage Operations:**
+
 ```sql
 -- If image provided
 supabase.storage.from('event-images').upload(fileName, headerImage)
@@ -81,6 +91,7 @@ supabase.storage.from('event-images').getPublicUrl(fileName)
 ```
 
 ### Database Client Configuration
+
 ```typescript
 // lib/supabase/client.ts
 const supabase = createClient<Database>(
@@ -88,8 +99,8 @@ const supabase = createClient<Database>(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
   {
     auth: { autoRefreshToken: true, persistSession: true },
-    realtime: { timeout: 30000, heartbeatIntervalMs: 30000 }
-  }
+    realtime: { timeout: 30000, heartbeatIntervalMs: 30000 },
+  },
 );
 ```
 
@@ -99,19 +110,20 @@ const supabase = createClient<Database>(
 
 ### Form Data → Database Schema
 
-| Form Field | Database Column | Type | Required | Validation |
-|------------|----------------|------|----------|------------|
-| `title` | `events.title` | TEXT | ✅ | 3-100 chars, trimmed |
-| `event_date` | `events.event_date` | DATE | ✅ | Future date only |
-| `event_time` | *(combined with date)* | - | ✅ | HH:MM format |
-| `location` | `events.location` | TEXT | ❌ | Max 200 chars, trimmed |
-| `description` | `events.description` | TEXT | ❌ | Max 500 chars, trimmed |
-| `is_public` | `events.is_public` | BOOLEAN | ❌ | Default: true |
-| `headerImage` | `events.header_image_url` | TEXT | ❌ | Supabase Storage URL |
-| *(auto)* | `events.host_user_id` | UUID | ✅ | auth.uid() |
-| *(auto)* | `events.id` | UUID | ✅ | gen_random_uuid() |
+| Form Field    | Database Column           | Type    | Required | Validation             |
+| ------------- | ------------------------- | ------- | -------- | ---------------------- |
+| `title`       | `events.title`            | TEXT    | ✅       | 3-100 chars, trimmed   |
+| `event_date`  | `events.event_date`       | DATE    | ✅       | Future date only       |
+| `event_time`  | _(combined with date)_    | -       | ✅       | HH:MM format           |
+| `location`    | `events.location`         | TEXT    | ❌       | Max 200 chars, trimmed |
+| `description` | `events.description`      | TEXT    | ❌       | Max 500 chars, trimmed |
+| `is_public`   | `events.is_public`        | BOOLEAN | ❌       | Default: true          |
+| `headerImage` | `events.header_image_url` | TEXT    | ❌       | Supabase Storage URL   |
+| _(auto)_      | `events.host_user_id`     | UUID    | ✅       | auth.uid()             |
+| _(auto)_      | `events.id`               | UUID    | ✅       | gen_random_uuid()      |
 
 ### Events Table Schema
+
 ```sql
 CREATE TABLE events (
     id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -128,6 +140,7 @@ CREATE TABLE events (
 ```
 
 ### Event Guests Table (Host Entry)
+
 ```sql
 CREATE TABLE event_guests (
     id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -150,24 +163,26 @@ CREATE TABLE event_guests (
 ### Row Level Security Policies
 
 **Events Table Policies:**
+
 ```sql
 -- INSERT: Allow users to create events for themselves
-CREATE POLICY "events_insert_own" ON events 
-  FOR INSERT TO authenticated 
+CREATE POLICY "events_insert_own" ON events
+  FOR INSERT TO authenticated
   WITH CHECK (host_user_id = auth.uid());
 
 -- SELECT: Allow access to public events or user's events
-CREATE POLICY "events_select_accessible" ON events 
-  FOR SELECT TO authenticated 
+CREATE POLICY "events_select_accessible" ON events
+  FOR SELECT TO authenticated
   USING (is_public = true OR can_access_event(id));
 
 -- UPDATE/DELETE: Only hosts can manage their events
-CREATE POLICY "events_update_delete_own" ON events 
-  FOR UPDATE TO authenticated 
+CREATE POLICY "events_update_delete_own" ON events
+  FOR UPDATE TO authenticated
   USING (is_event_host(id));
 ```
 
 **Security Helper Functions:**
+
 ```sql
 -- Optimized with auth caching
 CREATE OR REPLACE FUNCTION is_event_host(p_event_id uuid)
@@ -177,9 +192,9 @@ DECLARE
 BEGIN
     current_user_id := (SELECT auth.uid());
     IF current_user_id IS NULL THEN RETURN false; END IF;
-    
+
     RETURN EXISTS (
-        SELECT 1 FROM public.events 
+        SELECT 1 FROM public.events
         WHERE id = p_event_id AND host_user_id = current_user_id
     );
 END;
@@ -187,6 +202,7 @@ $$;
 ```
 
 ### Authentication Flow
+
 1. **Session Validation**: `supabase.auth.getSession()` before any operations
 2. **User ID Extraction**: `session.user.id` used as `host_user_id`
 3. **RLS Enforcement**: All database operations automatically filtered by policies
@@ -196,23 +212,41 @@ $$;
 ## 5. Error Handling
 
 ### Client-Side Validation (Zod Schemas)
+
 ```typescript
 export const eventCreateSchema = z.object({
-  title: z.string().min(1, 'Event title is required')
-    .max(200, 'Event title must be less than 200 characters').trim(),
-  event_date: z.string().min(1, 'Event date is required')
-    .refine((date) => new Date(date) >= new Date(), 'Event date must be in the future'),
-  location: z.string().max(500, 'Location must be less than 500 characters').optional(),
-  description: z.string().max(2000, 'Description must be less than 2000 characters').optional(),
+  title: z
+    .string()
+    .min(1, 'Event title is required')
+    .max(200, 'Event title must be less than 200 characters')
+    .trim(),
+  event_date: z
+    .string()
+    .min(1, 'Event date is required')
+    .refine(
+      (date) => new Date(date) >= new Date(),
+      'Event date must be in the future',
+    ),
+  location: z
+    .string()
+    .max(500, 'Location must be less than 500 characters')
+    .optional(),
+  description: z
+    .string()
+    .max(2000, 'Description must be less than 2000 characters')
+    .optional(),
   is_public: z.boolean().default(true),
 });
 ```
 
 ### Database Error Handling
+
 ```typescript
 // Specific PostgreSQL error code handling
 if (insertError.code === '23505') {
-  setFormMessage('An event with this name already exists. Please choose a different name.');
+  setFormMessage(
+    'An event with this name already exists. Please choose a different name.',
+  );
 } else if (insertError.code === '23503') {
   setFormMessage('User validation failed. Please log out and log back in.');
 } else {
@@ -221,8 +255,9 @@ if (insertError.code === '23505') {
 ```
 
 ### Error Categories Handled
+
 - **23505**: Unique constraint violations
-- **23503**: Foreign key violations  
+- **23503**: Foreign key violations
 - **Authentication errors**: Session timeouts, invalid users
 - **Storage errors**: Upload failures, file size limits
 - **Network errors**: Connection timeouts, API failures
@@ -234,11 +269,13 @@ if (insertError.code === '23505') {
 ### Current Architecture Limitations
 
 1. **Direct Database Calls in Components**
+
    - **Issue**: Business logic mixed with UI components
    - **Impact**: Difficult to test, maintain, and scale
    - **Solution**: Implement service layer pattern
 
 2. **Missing Atomic Transactions**
+
    - **Issue**: Event + host guest entry not in single transaction
    - **Impact**: Potential data inconsistency if host guest creation fails
    - **Solution**: Use Supabase database functions or service layer transactions
@@ -251,10 +288,14 @@ if (insertError.code === '23505') {
 ### Recommended Improvements
 
 #### 1. Service Layer Implementation
+
 ```typescript
 // lib/services/event-creation.ts
 export class EventCreationService {
-  async createEvent(data: EventCreateInput, userId: string): Promise<EventCreationResult> {
+  async createEvent(
+    data: EventCreateInput,
+    userId: string,
+  ): Promise<EventCreationResult> {
     // Single transaction for event + host guest
     // Centralized error handling
     // Standardized response format
@@ -263,6 +304,7 @@ export class EventCreationService {
 ```
 
 #### 2. Atomic Transaction Support
+
 ```sql
 -- Database function for atomic event creation
 CREATE OR REPLACE FUNCTION create_event_with_host(
@@ -276,6 +318,7 @@ $$;
 ```
 
 #### 3. Enhanced Error Recovery
+
 ```typescript
 // Implement rollback for failed operations
 if (eventCreated && !hostGuestCreated) {
@@ -284,6 +327,7 @@ if (eventCreated && !hostGuestCreated) {
 ```
 
 #### 4. Performance Optimizations
+
 - **Lazy loading**: Image upload only when necessary
 - **Caching**: User profile data for repeat operations
 - **Validation**: Move complex validation to server-side functions
@@ -294,34 +338,35 @@ if (eventCreated && !hostGuestCreated) {
 
 ### Main Files Involved
 
-| Component | File Path | Responsibility |
-|-----------|-----------|----------------|
-| **Route Handler** | `app/host/events/create/page.tsx` | Route entry point |
-| **Main Controller** | `components/features/events/CreateEventWizard.tsx` | Wizard orchestration, DB operations |
-| **Form Steps** | `components/features/events/EventBasicsStep.tsx` | Basic event info collection |
-| | `components/features/events/EventImageStep.tsx` | Image upload handling |
-| | `components/features/events/GuestImportStep.tsx` | Guest import options (placeholder) |
-| | `components/features/events/EventReviewStep.tsx` | Final review before submission |
-| **Validation** | `lib/validations.ts` | Zod schemas and validation functions |
-| **Database Client** | `lib/supabase/client.ts` | Supabase client configuration |
-| **Types** | `app/reference/supabase.types.ts` | Generated database types |
-| **Schema** | `app/reference/schema.sql` | Database schema and RLS policies |
+| Component           | File Path                                          | Responsibility                       |
+| ------------------- | -------------------------------------------------- | ------------------------------------ |
+| **Route Handler**   | `app/host/events/create/page.tsx`                  | Route entry point                    |
+| **Main Controller** | `components/features/events/CreateEventWizard.tsx` | Wizard orchestration, DB operations  |
+| **Form Steps**      | `components/features/events/EventBasicsStep.tsx`   | Basic event info collection          |
+|                     | `components/features/events/EventImageStep.tsx`    | Image upload handling                |
+|                     | `components/features/events/GuestImportStep.tsx`   | Guest import options (placeholder)   |
+|                     | `components/features/events/EventReviewStep.tsx`   | Final review before submission       |
+| **Validation**      | `lib/validations.ts`                               | Zod schemas and validation functions |
+| **Database Client** | `lib/supabase/client.ts`                           | Supabase client configuration        |
+| **Types**           | `app/reference/supabase.types.ts`                  | Generated database types             |
+| **Schema**          | `app/reference/schema.sql`                         | Database schema and RLS policies     |
 
 ### Key Functions
 
-| Function | Location | Purpose |
-|----------|----------|---------|
-| `handleCreateEvent()` | `CreateEventWizard.tsx:162` | Main event creation logic |
-| `validateCurrentStep()` | `CreateEventWizard.tsx:90` | Step-by-step validation |
-| `updateFormData()` | `CreateEventWizard.tsx:81` | Form state management |
-| `eventCreateSchema` | `lib/validations.ts:22` | Form validation schema |
-| `is_event_host()` | `schema.sql:157` | RLS security function |
+| Function                | Location                    | Purpose                   |
+| ----------------------- | --------------------------- | ------------------------- |
+| `handleCreateEvent()`   | `CreateEventWizard.tsx:162` | Main event creation logic |
+| `validateCurrentStep()` | `CreateEventWizard.tsx:90`  | Step-by-step validation   |
+| `updateFormData()`      | `CreateEventWizard.tsx:81`  | Form state management     |
+| `eventCreateSchema`     | `lib/validations.ts:22`     | Form validation schema    |
+| `is_event_host()`       | `schema.sql:157`            | RLS security function     |
 
 ---
 
 ## 8. Testing Considerations
 
 ### Manual Testing Checklist
+
 - [ ] Form validation on each step
 - [ ] Image upload (various file types/sizes)
 - [ ] Authentication timeout scenarios
@@ -332,6 +377,7 @@ if (eventCreated && !hostGuestCreated) {
 - [ ] Cross-browser compatibility
 
 ### Automated Testing Gaps
+
 - **Integration tests**: Full event creation flow
 - **Unit tests**: Individual validation functions
 - **E2E tests**: User journey from start to dashboard
@@ -343,18 +389,21 @@ if (eventCreated && !hostGuestCreated) {
 ## 9. Future Considerations
 
 ### Immediate Improvements (1-2 sprints)
+
 1. **Service Layer Refactoring**: Move database logic to services
 2. **Atomic Transactions**: Ensure data consistency
 3. **Enhanced Error Messages**: More specific user guidance
 4. **Performance Monitoring**: Track creation success rates
 
 ### Medium-term Enhancements (1-2 months)
+
 1. **Bulk Event Creation**: Support for event planners
 2. **Template System**: Reusable event templates
 3. **Advanced Image Processing**: Automatic optimization, multiple formats
 4. **Guest Import Implementation**: CSV upload, manual entry
 
 ### Long-term Scalability (3-6 months)
+
 1. **Event Cloning**: Duplicate existing events
 2. **Multi-host Events**: Collaborative event management
 3. **Advanced Analytics**: Creation funnel optimization

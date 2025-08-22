@@ -19,6 +19,7 @@ When making UI changes, several issues can cause the user to not see the updates
 Before making UI changes, always:
 
 ### 1. Identify All Usage Points
+
 ```bash
 # Find all files using the component you're changing
 rg "ComponentName" --type tsx --type ts -l
@@ -28,12 +29,14 @@ rg "import.*ComponentName" --type tsx --type ts
 ```
 
 ### 2. Check Page-Level Usage
+
 ```bash
 # Find usage in page files specifically
 rg "ComponentName" **/page.tsx **/Page.tsx
 ```
 
 ### 3. Verify Routing
+
 ```bash
 # Check for multiple pages that might serve the same route
 find . -name "page.tsx" -path "*/messages/*" | head -10
@@ -42,6 +45,7 @@ find . -name "page.tsx" -path "*/messages/*" | head -10
 ## Making Changes Safely
 
 ### 1. Component Updates
+
 When updating components:
 
 - ✅ **Create new component** instead of modifying existing one (for major changes)
@@ -51,6 +55,7 @@ When updating components:
 - ✅ **Test in development** before considering complete
 
 ### 2. Page-Level Updates
+
 When updating pages that render components:
 
 - ✅ **Check for CardContainer wrappers** that might conflict with component styling
@@ -61,6 +66,7 @@ When updating pages that render components:
 ## Post-Change Verification
 
 ### 1. Automated Verification Script
+
 Run the verification script after making changes:
 
 ```bash
@@ -69,6 +75,7 @@ npx ts-node scripts/verify-ui-changes.ts
 ```
 
 This script will:
+
 - Check for old component usage in page files
 - Verify new components are being used
 - Run TypeScript and ESLint checks
@@ -77,18 +84,21 @@ This script will:
 ### 2. Manual Verification Steps
 
 1. **Clear Browser Cache**
+
    ```bash
    # In browser dev tools
    Right-click refresh → Empty Cache and Hard Reload
    ```
 
 2. **Clear Next.js Cache**
+
    ```bash
    rm -rf .next
    npm run dev
    ```
 
 3. **Test Navigation Flow**
+
    - Start from dashboard
    - Navigate to the changed UI
    - Verify the correct component is rendered
@@ -114,11 +124,13 @@ npm run start
 ### Issue: Changes Not Visible
 
 **Possible Causes:**
+
 1. Wrong component being imported in page file
 2. Browser cache showing old version
 3. Component export not updated
 
 **Solution:**
+
 ```bash
 # Check what component is actually being used
 rg "import.*MessageCenter" app/host/events/\[eventId\]/messages/page.tsx
@@ -130,11 +142,13 @@ grep -r "MessageCenterMVP" components/features/messaging/host/index.ts
 ### Issue: TypeScript Errors
 
 **Possible Causes:**
+
 1. Component props interface changed
 2. Import path incorrect
 3. Missing component export
 
 **Solution:**
+
 ```bash
 # Check TypeScript errors
 npx tsc --noEmit
@@ -146,10 +160,12 @@ cat components/features/messaging/host/index.ts
 ### Issue: Multiple Pages Conflict
 
 **Possible Causes:**
+
 1. Multiple page.tsx files in same route
 2. Different components in different files
 
 **Solution:**
+
 ```bash
 # Find all page files in route
 find . -path "*/messages/*" -name "page.tsx"
@@ -197,21 +213,25 @@ jobs:
 ## Best Practices
 
 ### 1. Component Naming
+
 - Use descriptive, unique names (`MessageCenterMVP` not `MessageCenter2`)
 - Follow consistent naming patterns
 - Avoid generic names that might conflict
 
 ### 2. File Organization
+
 - Keep related components in same directory
 - Update index.ts exports immediately
 - Use TypeScript for better error catching
 
 ### 3. Testing Strategy
+
 - Test both development and production builds
 - Test navigation from all entry points
 - Test on different browsers and devices
 
 ### 4. Documentation
+
 - Document which pages use which components
 - Keep migration notes when changing major UI components
 - Update README with new component usage
@@ -221,15 +241,17 @@ jobs:
 If changes aren't visible in production:
 
 1. **Immediate Check**
+
    ```bash
    # Check what's actually deployed
    curl -I https://your-app.com/host/events/123/messages
-   
+
    # Check component in browser source
    # View Page Source → Search for component name
    ```
 
 2. **Quick Fix**
+
    ```bash
    # Force rebuild and redeploy
    rm -rf .next
@@ -244,4 +266,4 @@ If changes aren't visible in production:
 
 ---
 
-*Follow this process for all UI changes to ensure consistency and prevent user-facing issues.*
+_Follow this process for all UI changes to ensure consistency and prevent user-facing issues._

@@ -38,7 +38,7 @@ describe('Messaging Recipient Consistency', () => {
         user_full_name: null,
         user_phone: null,
         user_email: null,
-        has_valid_phone: true
+        has_valid_phone: true,
       },
       {
         event_guest_id: 'guest-2',
@@ -53,8 +53,8 @@ describe('Messaging Recipient Consistency', () => {
         user_full_name: null,
         user_phone: null,
         user_email: null,
-        has_valid_phone: true
-      }
+        has_valid_phone: true,
+      },
     ];
 
     vi.spyOn(supabase, 'rpc').mockResolvedValue({
@@ -68,9 +68,9 @@ describe('Messaging Recipient Consistency', () => {
 
     expect(error).toBeNull();
     expect(data).toHaveLength(2);
-    
+
     // Verify canonical scope fields are present
-    data.forEach(recipient => {
+    data.forEach((recipient) => {
       expect(recipient).toHaveProperty('event_guest_id');
       expect(recipient).toHaveProperty('guest_display_name');
       expect(recipient).toHaveProperty('has_valid_phone');
@@ -87,15 +87,15 @@ describe('Messaging Recipient Consistency', () => {
         role: 'host',
         guest_display_name: 'Host User',
         has_valid_phone: true,
-        sms_opt_out: false
+        sms_opt_out: false,
       },
       {
         event_guest_id: 'guest-1',
         role: 'guest',
         guest_display_name: 'Guest User',
         has_valid_phone: true,
-        sms_opt_out: false
-      }
+        sms_opt_out: false,
+      },
     ];
 
     vi.spyOn(supabase, 'rpc').mockResolvedValue({
@@ -107,7 +107,7 @@ describe('Messaging Recipient Consistency', () => {
       p_event_id: mockEventId,
     });
 
-    const roles = data.map(r => r.role);
+    const roles = data.map((r) => r.role);
     expect(roles).toContain('host');
     expect(roles).toContain('guest');
   });

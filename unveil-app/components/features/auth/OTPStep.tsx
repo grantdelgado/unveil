@@ -44,7 +44,8 @@ export const OTPStep: React.FC<OTPStepProps> = ({
 
         {isDev && (
           <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
-            <strong>Development Mode:</strong> Enter any 6-digit code to continue
+            <strong>Development Mode:</strong> Enter any 6-digit code to
+            continue
           </div>
         )}
 
@@ -71,11 +72,12 @@ export const OTPStep: React.FC<OTPStepProps> = ({
 
       <div className="mt-6">
         <MicroCopy>
-          Code will verify automatically when entered. Didn&apos;t receive it? Wait 30 seconds and try again.
+          Code will verify automatically when entered. Didn&apos;t receive it?
+          Wait 30 seconds and try again.
         </MicroCopy>
       </div>
     </>
   );
 };
 
-OTPStep.displayName = 'OTPStep'; 
+OTPStep.displayName = 'OTPStep';

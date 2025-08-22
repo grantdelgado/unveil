@@ -57,7 +57,7 @@ export class GuestManagementErrorBoundary extends Component<Props, State> {
             <p className="text-gray-600 mb-6">
               We encountered an error loading your guest list. Please try again.
             </p>
-            
+
             <button
               onClick={this.handleRetry}
               className="px-4 py-2 bg-[#FF6B6B] text-white rounded-lg hover:bg-[#FF5555] transition-colors"

@@ -29,4 +29,4 @@ export const PageWrapper: React.FC<PageWrapperProps> = ({
   );
 };
 
-PageWrapper.displayName = 'PageWrapper'; 
+PageWrapper.displayName = 'PageWrapper';

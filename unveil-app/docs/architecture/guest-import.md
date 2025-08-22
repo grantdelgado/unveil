@@ -108,11 +108,13 @@ Add Guest → Validate → Update Count → Submit Batch
 ## CSV Format Specification
 
 ### Required Headers
+
 ```csv
 name,phone
 ```
 
 ### Complete Format
+
 ```csv
 name,phone,email,role,notes,tags
 "John Doe","+1234567890","john@example.com","guest","Best man","groomsmen;vip"
@@ -121,18 +123,19 @@ name,phone,email,role,notes,tags
 
 ### Field Specifications
 
-| Field | Type | Required | Validation | Example |
-|-------|------|----------|------------|---------|
-| `name` | string | ✅ | 1-100 chars | "John Doe" |
-| `phone` | string | ✅ | E.164 format | "+1234567890" |
-| `email` | string | ❌ | Valid email | "john@example.com" |
-| `role` | enum | ❌ | guest\|host | "guest" |
-| `notes` | string | ❌ | Max 1000 chars | "Best man" |
-| `tags` | string[] | ❌ | Semicolon separated | "family;vip" |
+| Field   | Type     | Required | Validation          | Example            |
+| ------- | -------- | -------- | ------------------- | ------------------ |
+| `name`  | string   | ✅       | 1-100 chars         | "John Doe"         |
+| `phone` | string   | ✅       | E.164 format        | "+1234567890"      |
+| `email` | string   | ❌       | Valid email         | "john@example.com" |
+| `role`  | enum     | ❌       | guest\|host         | "guest"            |
+| `notes` | string   | ❌       | Max 1000 chars      | "Best man"         |
+| `tags`  | string[] | ❌       | Semicolon separated | "family;vip"       |
 
 ### Validation Rules
 
 **Phone Number Normalization:**
+
 ```typescript
 // Input formats accepted:
 "+1234567890"     → "+1234567890"
@@ -142,6 +145,7 @@ name,phone,email,role,notes,tags
 ```
 
 **Data Constraints:**
+
 - Maximum 500 guests per CSV import
 - File size limit: 5MB
 - Duplicate phone numbers within event are rejected
@@ -160,6 +164,7 @@ static async importGuests(
 ```
 
 **Features:**
+
 - ✅ **Permission Validation**: Only event hosts can import
 - ✅ **Data Validation**: Zod schema validation
 - ✅ **Batch Processing**: 100 guests per database transaction
@@ -174,20 +179,22 @@ const BATCH_SIZE = 100;
 
 for (let i = 0; i < guests.length; i += BATCH_SIZE) {
   const batch = guests.slice(i, i + BATCH_SIZE);
-  
+
   try {
     await supabase.from('event_guests').insert(guestInserts);
     imported_count += batch.length;
   } catch (error) {
     // Track failed guests with specific error details
-    failed_rows.push(...batch.map(guest => ({
-      row_index: i + batchIndex,
-      guest_data: guest,
-      error_code: error.code,
-      error_message: mapGuestInsertError(error)
-    })));
+    failed_rows.push(
+      ...batch.map((guest) => ({
+        row_index: i + batchIndex,
+        guest_data: guest,
+        error_code: error.code,
+        error_message: mapGuestInsertError(error),
+      })),
+    );
   }
-  
+
   // Prevent database overload
   await delay(100);
 }
@@ -198,10 +205,14 @@ for (let i = 0; i < guests.length; i += BATCH_SIZE) {
 ```typescript
 // Comprehensive error mapping
 switch (error.code) {
-  case '23505': return 'Guest with this phone already exists';
-  case '23503': return 'Invalid event reference';
-  case '23514': return 'Invalid guest data format';
-  default: return `Database error: ${error.message}`;
+  case '23505':
+    return 'Guest with this phone already exists';
+  case '23503':
+    return 'Invalid event reference';
+  case '23514':
+    return 'Invalid guest data format';
+  default:
+    return `Database error: ${error.message}`;
 }
 
 // No rollback needed - failed batches don't affect successful ones
@@ -214,8 +225,8 @@ switch (error.code) {
 
 ```sql
 -- Only event hosts can insert guests
-CREATE POLICY "event_guests_host_management" 
-ON event_guests FOR ALL 
+CREATE POLICY "event_guests_host_management"
+ON event_guests FOR ALL
 USING (is_event_host(event_id));
 
 -- Validation function ensures host permissions
@@ -223,8 +234,8 @@ CREATE OR REPLACE FUNCTION is_event_host(p_event_id uuid)
 RETURNS boolean AS $$
 BEGIN
   RETURN EXISTS (
-    SELECT 1 FROM events 
-    WHERE id = p_event_id 
+    SELECT 1 FROM events
+    WHERE id = p_event_id
     AND host_user_id = auth.uid()
   );
 END;
@@ -236,7 +247,7 @@ $$;
 ```typescript
 // Multi-level security checks
 1. Session Validation → auth.getSession()
-2. Event Host Check → events.host_user_id = userId  
+2. Event Host Check → events.host_user_id = userId
 3. RLS Enforcement → Automatic policy application
 4. Data Validation → Zod schema validation
 ```
@@ -302,13 +313,13 @@ const ErrorDisplay = ({ errors }: { errors: CSVParseError[] }) => (
 
 ### Scalability Metrics
 
-| Operation | Limit | Performance |
-|-----------|-------|-------------|
-| **CSV File Size** | 5MB | < 2s parse time |
-| **Guests per Import** | 500 | < 10s import time |
-| **Batch Size** | 100 | < 1s per batch |
-| **Concurrent Imports** | 10 | No degradation |
-| **Error Recovery** | Instant | No data loss |
+| Operation              | Limit   | Performance       |
+| ---------------------- | ------- | ----------------- |
+| **CSV File Size**      | 5MB     | < 2s parse time   |
+| **Guests per Import**  | 500     | < 10s import time |
+| **Batch Size**         | 100     | < 1s per batch    |
+| **Concurrent Imports** | 10      | No degradation    |
+| **Error Recovery**     | Instant | No data loss      |
 
 ### Optimization Features
 
@@ -321,24 +332,28 @@ const ErrorDisplay = ({ errors }: { errors: CSVParseError[] }) => (
 ## Testing Strategy
 
 ### Unit Tests
+
 - [ ] CSV parsing with various formats
 - [ ] Validation schema compliance
 - [ ] Error mapping accuracy
 - [ ] Batch processing logic
 
 ### Integration Tests
+
 - [ ] End-to-end import flow
 - [ ] Permission validation
 - [ ] RLS policy enforcement
 - [ ] Error recovery scenarios
 
 ### Load Tests
+
 - [ ] 500 guest CSV import
 - [ ] Concurrent user imports
 - [ ] Large file upload handling
 - [ ] Database performance under load
 
 ### Security Tests
+
 - [ ] Unauthorized import attempts
 - [ ] Cross-event data isolation
 - [ ] SQL injection prevention
@@ -349,6 +364,7 @@ const ErrorDisplay = ({ errors }: { errors: CSVParseError[] }) => (
 ### Common Error Scenarios
 
 **1. Permission Errors**
+
 ```typescript
 Error: "PERMISSION_DENIED"
 Cause: User is not the event host
@@ -356,6 +372,7 @@ Solution: Verify user owns the event
 ```
 
 **2. Validation Errors**
+
 ```typescript
 Error: "VALIDATION_ERROR"
 Cause: Invalid guest data format
@@ -363,6 +380,7 @@ Solution: Check CSV format and data types
 ```
 
 **3. Duplicate Guests**
+
 ```typescript
 Error: "23505 - Unique constraint violation"
 Cause: Phone number already exists for event
@@ -370,6 +388,7 @@ Solution: Remove duplicates or update existing guest
 ```
 
 **4. File Format Errors**
+
 ```typescript
 Error: "CSV_PARSE_ERROR"
 Cause: Invalid CSV structure
@@ -379,12 +398,14 @@ Solution: Verify headers and data format
 ### Recovery Procedures
 
 **Partial Import Failures:**
+
 1. Review failed rows in import result
 2. Fix data issues in original file
 3. Create new CSV with only failed guests
 4. Re-import corrected data
 
 **System Errors:**
+
 1. Check network connectivity
 2. Verify authentication status
 3. Retry import operation
@@ -440,22 +461,22 @@ const handleImportComplete = (result: GuestImportResult) => {
 
 ### Primary Files
 
-| Component | File Path | Responsibility |
-|-----------|-----------|----------------|
-| **UI Component** | `components/features/events/GuestImportStep.tsx` | User interface |
-| **Service Layer** | `lib/services/eventCreation.ts` | Business logic |
-| **Validation** | `lib/validations.ts` | Data validation schemas |
-| **Types** | `lib/services/eventCreation.ts` | TypeScript interfaces |
+| Component         | File Path                                        | Responsibility          |
+| ----------------- | ------------------------------------------------ | ----------------------- |
+| **UI Component**  | `components/features/events/GuestImportStep.tsx` | User interface          |
+| **Service Layer** | `lib/services/eventCreation.ts`                  | Business logic          |
+| **Validation**    | `lib/validations.ts`                             | Data validation schemas |
+| **Types**         | `lib/services/eventCreation.ts`                  | TypeScript interfaces   |
 
 ### Key Functions
 
-| Function | Location | Purpose |
-|----------|----------|---------|
-| `importGuests()` | `EventCreationService` | Main import method |
-| `parseCSV()` | `EventCreationService` | CSV file parsing |
-| `validateGuestData()` | `EventCreationService` | Data validation |
-| `performBatchGuestImport()` | `EventCreationService` | Batch processing |
-| `validateGuestImport()` | `lib/validations.ts` | Schema validation |
+| Function                    | Location               | Purpose            |
+| --------------------------- | ---------------------- | ------------------ |
+| `importGuests()`            | `EventCreationService` | Main import method |
+| `parseCSV()`                | `EventCreationService` | CSV file parsing   |
+| `validateGuestData()`       | `EventCreationService` | Data validation    |
+| `performBatchGuestImport()` | `EventCreationService` | Batch processing   |
+| `validateGuestImport()`     | `lib/validations.ts`   | Schema validation  |
 
 ### Database Schema
 
@@ -476,7 +497,7 @@ CREATE TABLE event_guests (
     sms_opt_out boolean DEFAULT false,
     created_at timestamptz DEFAULT now(),
     updated_at timestamptz DEFAULT now(),
-    
+
     -- Constraints
     UNIQUE(event_id, phone) -- Prevent duplicate phones per event
 );
@@ -485,18 +506,21 @@ CREATE TABLE event_guests (
 ## Future Enhancements
 
 ### Short-term (1-2 sprints)
+
 - [ ] **Excel File Support**: .xlsx file parsing
 - [ ] **Duplicate Detection**: Advanced phone/email matching
 - [ ] **CSV Templates**: Downloadable format templates
 - [ ] **Import History**: Track all import operations
 
 ### Medium-term (1-2 months)
+
 - [ ] **Progressive Import**: Real-time progress bars
 - [ ] **Data Mapping**: Custom column mapping interface
 - [ ] **Bulk Actions**: Update/delete imported guests
 - [ ] **Import Scheduling**: Delayed import processing
 
 ### Long-term (3-6 months)
+
 - [ ] **Contact Integration**: Import from Google/Apple Contacts
 - [ ] **Social Media Import**: Facebook/LinkedIn integration
 - [ ] **AI Validation**: Smart duplicate detection

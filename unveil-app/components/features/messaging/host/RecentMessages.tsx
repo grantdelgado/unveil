@@ -4,7 +4,11 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { formatMessageTimestamp } from '@/lib/utils/date';
 import { useScheduledMessages } from '@/hooks/messaging/useScheduledMessages';
-import { fromUTCToEventZone, getTimezoneInfo, isValidTimezone } from '@/lib/utils/timezone';
+import {
+  fromUTCToEventZone,
+  getTimezoneInfo,
+  isValidTimezone,
+} from '@/lib/utils/timezone';
 import { supabase } from '@/lib/supabase/client';
 import type { Database } from '@/app/reference/supabase.types';
 
@@ -37,20 +41,20 @@ export function RecentMessages({
   messages,
   eventId,
   isLoading = false,
-  className
+  className,
 }: RecentMessagesProps) {
   // State for timezone toggle
   const [showMyTime, setShowMyTime] = React.useState(false);
   const [eventTimezone, setEventTimezone] = React.useState<string | null>(null);
-  
+
   // Two-phase loading: track initial boot vs live updates
   const [hasInitiallyLoaded, setHasInitiallyLoaded] = React.useState(false);
-  
+
   // Fetch scheduled messages
-  const { 
-    scheduledMessages, 
-    loading: scheduledLoading, 
-    cancelScheduledMessage 
+  const {
+    scheduledMessages,
+    loading: scheduledLoading,
+    cancelScheduledMessage,
   } = useScheduledMessages({ eventId });
 
   // Only show skeleton on initial load, not subsequent updates
@@ -73,19 +77,19 @@ export function RecentMessages({
           .select('time_zone')
           .eq('id', eventId)
           .single();
-        
+
         setEventTimezone(data?.time_zone || null);
       } catch (error) {
         console.warn('Failed to fetch event timezone:', error);
       }
     };
-    
+
     fetchEventTimezone();
   }, [eventId]);
 
   // Combine and transform messages with stable dependencies
   const unifiedMessages: UnifiedMessage[] = React.useMemo(() => {
-    const sentMessages: UnifiedMessage[] = messages.map(msg => ({
+    const sentMessages: UnifiedMessage[] = messages.map((msg) => ({
       id: msg.id,
       content: msg.content,
       created_at: msg.created_at || '',
@@ -98,7 +102,7 @@ export function RecentMessages({
       failure_count: msg.failed_count || 0,
     }));
 
-    const scheduledMsgs: UnifiedMessage[] = scheduledMessages.map(msg => ({
+    const scheduledMsgs: UnifiedMessage[] = scheduledMessages.map((msg) => ({
       id: msg.id,
       content: msg.content,
       created_at: msg.created_at || '',
@@ -128,7 +132,7 @@ export function RecentMessages({
           return -1; // Upcoming scheduled before everything else
         }
       }
-      
+
       if (b.type === 'scheduled' && b.status === 'scheduled' && b.send_at) {
         const sendTime = new Date(b.send_at);
         if (sendTime > new Date()) {
@@ -155,12 +159,17 @@ export function RecentMessages({
 
     switch (message.status) {
       case 'scheduled':
-        const isUpcoming = message.send_at && new Date(message.send_at) > new Date();
+        const isUpcoming =
+          message.send_at && new Date(message.send_at) > new Date();
         return (
-          <span className={cn(
-            "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium",
-            isUpcoming ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-700"
-          )}>
+          <span
+            className={cn(
+              'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium',
+              isUpcoming
+                ? 'bg-blue-100 text-blue-700'
+                : 'bg-gray-100 text-gray-700',
+            )}
+          >
             ⏰ {isUpcoming ? 'Scheduled' : 'Past Due'}
           </span>
         );
@@ -198,11 +207,11 @@ export function RecentMessages({
     if (message.type === 'sent') {
       return formatMessageTimestamp(message.sent_at || message.created_at);
     }
-    
+
     if (message.status === 'scheduled' && message.send_at) {
       const sendTime = new Date(message.send_at);
       const now = new Date();
-      
+
       // Format time based on timezone preference
       let timeDisplay: string;
       if (eventTimezone && isValidTimezone(eventTimezone) && !showMyTime) {
@@ -218,18 +227,18 @@ export function RecentMessages({
         // Show user's local time
         timeDisplay = formatMessageTimestamp(message.send_at);
       }
-      
+
       if (sendTime > now) {
         return `Scheduled for ${timeDisplay}`;
       } else {
         return `Was scheduled for ${timeDisplay}`;
       }
     }
-    
+
     if (message.sent_at) {
       return `Sent ${formatMessageTimestamp(message.sent_at)}`;
     }
-    
+
     return formatMessageTimestamp(message.created_at);
   };
 
@@ -244,7 +253,10 @@ export function RecentMessages({
     return (
       <div className={cn('space-y-4', className)}>
         {Array.from({ length: 3 }, (_, i) => (
-          <div key={i} className="animate-pulse bg-gray-100 rounded-lg p-4 h-20" />
+          <div
+            key={i}
+            className="animate-pulse bg-gray-100 rounded-lg p-4 h-20"
+          />
         ))}
       </div>
     );
@@ -265,17 +277,21 @@ export function RecentMessages({
   }
 
   // Separate upcoming and past messages
-  const upcomingMessages = unifiedMessages.filter(msg => 
-    msg.type === 'scheduled' && 
-    msg.status === 'scheduled' && 
-    msg.send_at && 
-    new Date(msg.send_at) > new Date()
+  const upcomingMessages = unifiedMessages.filter(
+    (msg) =>
+      msg.type === 'scheduled' &&
+      msg.status === 'scheduled' &&
+      msg.send_at &&
+      new Date(msg.send_at) > new Date(),
   );
-  const pastMessages = unifiedMessages.filter(msg => 
-    !(msg.type === 'scheduled' && 
-      msg.status === 'scheduled' && 
-      msg.send_at && 
-      new Date(msg.send_at) > new Date())
+  const pastMessages = unifiedMessages.filter(
+    (msg) =>
+      !(
+        msg.type === 'scheduled' &&
+        msg.status === 'scheduled' &&
+        msg.send_at &&
+        new Date(msg.send_at) > new Date()
+      ),
   );
 
   return (
@@ -284,10 +300,12 @@ export function RecentMessages({
         <h3 className="text-lg font-semibold text-gray-900">
           Message History ({unifiedMessages.length})
           {isLiveUpdating && (
-            <span className="ml-2 text-xs text-blue-600 animate-pulse">Updating...</span>
+            <span className="ml-2 text-xs text-blue-600 animate-pulse">
+              Updating...
+            </span>
           )}
         </h3>
-        
+
         {/* Timezone Toggle for Scheduled Messages */}
         {eventTimezone && upcomingMessages.length > 0 && (
           <button
@@ -298,7 +316,7 @@ export function RecentMessages({
           </button>
         )}
       </div>
-      
+
       {/* Upcoming Scheduled Messages */}
       {upcomingMessages.length > 0 && (
         <div>
@@ -316,30 +334,35 @@ export function RecentMessages({
                     <p className="text-sm text-gray-900 mb-2">
                       {message.content}
                     </p>
-                    
+
                     <div className="flex items-center gap-4 text-xs text-gray-600 mb-2">
                       <span>{getDisplayTime(message)}</span>
                       {getStatusBadge(message)}
                       <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
                         {message.message_type}
                       </span>
-                      {message.recipient_count && message.recipient_count > 0 && (
-                        <span className="text-gray-500">
-                          {message.recipient_count} {message.recipient_count === 1 ? 'person' : 'people'}
-                        </span>
-                      )}
+                      {message.recipient_count &&
+                        message.recipient_count > 0 && (
+                          <span className="text-gray-500">
+                            {message.recipient_count}{' '}
+                            {message.recipient_count === 1
+                              ? 'person'
+                              : 'people'}
+                          </span>
+                        )}
                     </div>
                   </div>
-                  
+
                   {/* Cancel button for scheduled messages */}
-                  {message.type === 'scheduled' && message.status === 'scheduled' && (
-                    <button
-                      onClick={() => handleCancelScheduled(message.id)}
-                      className="ml-2 text-xs text-red-600 hover:text-red-800 px-2 py-1 border border-red-300 rounded hover:bg-red-50 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                  )}
+                  {message.type === 'scheduled' &&
+                    message.status === 'scheduled' && (
+                      <button
+                        onClick={() => handleCancelScheduled(message.id)}
+                        className="ml-2 text-xs text-red-600 hover:text-red-800 px-2 py-1 border border-red-300 rounded hover:bg-red-50 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    )}
                 </div>
               </div>
             ))}
@@ -351,7 +374,8 @@ export function RecentMessages({
       {pastMessages.length > 0 && (
         <div>
           <h4 className="text-md font-medium text-gray-800 mb-3">
-            {upcomingMessages.length > 0 ? 'Past Messages' : 'All Messages'} ({pastMessages.length})
+            {upcomingMessages.length > 0 ? 'Past Messages' : 'All Messages'} (
+            {pastMessages.length})
           </h4>
           <div className="space-y-3">
             {pastMessages.map((message) => (
@@ -364,28 +388,35 @@ export function RecentMessages({
                     <p className="text-sm text-gray-900 mb-2">
                       {message.content}
                     </p>
-                    
+
                     <div className="flex items-center gap-4 text-xs text-gray-500">
                       <span>{getDisplayTime(message)}</span>
                       {getStatusBadge(message)}
                       <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
                         {message.message_type}
                       </span>
-                      
+
                       {/* Delivery stats */}
-                      {(message.success_count || message.failure_count) ? (
+                      {message.success_count || message.failure_count ? (
                         <span className="text-gray-500">
                           {message.success_count || 0} delivered
-                          {message.failure_count && message.failure_count > 0 && (
-                            <span className="text-red-600 ml-1">
-                              • {message.failure_count} failed
-                            </span>
-                          )}
+                          {message.failure_count &&
+                            message.failure_count > 0 && (
+                              <span className="text-red-600 ml-1">
+                                • {message.failure_count} failed
+                              </span>
+                            )}
                         </span>
-                      ) : message.recipient_count && message.recipient_count > 0 && (
-                        <span className="text-gray-500">
-                          {message.recipient_count} {message.recipient_count === 1 ? 'person' : 'people'}
-                        </span>
+                      ) : (
+                        message.recipient_count &&
+                        message.recipient_count > 0 && (
+                          <span className="text-gray-500">
+                            {message.recipient_count}{' '}
+                            {message.recipient_count === 1
+                              ? 'person'
+                              : 'people'}
+                          </span>
+                        )
                       )}
                     </div>
                   </div>
@@ -397,4 +428,4 @@ export function RecentMessages({
       )}
     </div>
   );
-} 
+}

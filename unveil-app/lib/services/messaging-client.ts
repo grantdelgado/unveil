@@ -1,9 +1,9 @@
 import { supabase } from '@/lib/supabase/client';
-import type { 
-  SendMessageRequest, 
-  ScheduledMessageFilters, 
+import type {
+  SendMessageRequest,
+  ScheduledMessageFilters,
   CreateScheduledMessageData,
-  RecipientFilter 
+  RecipientFilter,
 } from '@/lib/types/messaging';
 
 /**
@@ -19,8 +19,8 @@ import type {
  * Uses Supabase resolve_message_recipients function for optimal performance
  */
 export async function resolveMessageRecipients(
-  eventId: string, 
-  filter: RecipientFilter
+  eventId: string,
+  filter: RecipientFilter,
 ): Promise<{ guestIds: string[]; recipientCount: number }> {
   try {
     // Handle simple 'all' filter
@@ -30,19 +30,19 @@ export async function resolveMessageRecipients(
         .select('id')
         .eq('event_id', eventId)
         .not('phone', 'is', null); // Only guests with phone numbers
-      
+
       if (error) throw error;
-      return { 
-        guestIds: guests?.map(g => g.id) || [], 
-        recipientCount: guests?.length || 0 
+      return {
+        guestIds: guests?.map((g) => g.id) || [],
+        recipientCount: guests?.length || 0,
       };
     }
 
     // Handle individual guest selection
     if (filter.type === 'individual' && filter.guestIds) {
-      return { 
-        guestIds: filter.guestIds, 
-        recipientCount: filter.guestIds.length 
+      return {
+        guestIds: filter.guestIds,
+        recipientCount: filter.guestIds.length,
       };
     }
 
@@ -50,38 +50,49 @@ export async function resolveMessageRecipients(
     if (filter.type === 'explicit_selection' && filter.selectedGuestIds) {
       // Validate that we have at least one recipient
       if (filter.selectedGuestIds.length === 0) {
-        throw new Error('No recipients selected. Please select at least one guest to send the message to.');
+        throw new Error(
+          'No recipients selected. Please select at least one guest to send the message to.',
+        );
       }
-      
-      return { 
-        guestIds: filter.selectedGuestIds, 
-        recipientCount: filter.selectedGuestIds.length 
+
+      return {
+        guestIds: filter.selectedGuestIds,
+        recipientCount: filter.selectedGuestIds.length,
       };
     }
 
     // Use Supabase function for complex filtering
-    const { data: recipients, error } = await supabase.rpc('resolve_message_recipients', {
-      msg_event_id: eventId,
-      target_guest_ids: filter.guestIds || undefined,
-      target_tags: filter.tags || undefined,
-      require_all_tags: filter.requireAllTags || false,
-      target_rsvp_statuses: filter.rsvpStatuses || undefined, // Will be deprecated post-cutover
-      include_declined: filter.includeDeclined || false
-    });
+    const { data: recipients, error } = await supabase.rpc(
+      'resolve_message_recipients',
+      {
+        msg_event_id: eventId,
+        target_guest_ids: filter.guestIds || undefined,
+        target_tags: filter.tags || undefined,
+        require_all_tags: filter.requireAllTags || false,
+        target_rsvp_statuses: filter.rsvpStatuses || undefined, // Will be deprecated post-cutover
+        include_declined: filter.includeDeclined || false,
+      },
+    );
 
     if (error) throw error;
 
     // Map the enhanced RPC response to guest IDs
-    const guestIds = recipients?.map((r: Record<string, unknown>) => r.guest_id as string) || [];
-    
+    const guestIds =
+      recipients?.map((r: Record<string, unknown>) => r.guest_id as string) ||
+      [];
+
     // Log recipient details for debugging (but don't expose sensitive data)
     console.log('Resolved recipients:', {
       eventId,
       totalRecipients: recipients?.length || 0,
-      smsEligible: recipients?.filter((r: Record<string, unknown>) => r.can_receive_sms).length || 0,
-      optedOut: recipients?.filter((r: Record<string, unknown>) => r.sms_opt_out).length || 0
+      smsEligible:
+        recipients?.filter((r: Record<string, unknown>) => r.can_receive_sms)
+          .length || 0,
+      optedOut:
+        recipients?.filter((r: Record<string, unknown>) => r.sms_opt_out)
+          .length || 0,
     });
-    
+
     return { guestIds, recipientCount: guestIds.length };
   } catch (error) {
     console.error('Error resolving message recipients:', error);
@@ -94,7 +105,10 @@ export async function resolveMessageRecipients(
  * This ensures proper RLS policy handling and delivery record creation
  * Supports both legacy filters and new explicit recipient selection
  */
-export async function sendMessageToEvent(request: SendMessageRequest, retryCount = 0): Promise<{
+export async function sendMessageToEvent(
+  request: SendMessageRequest,
+  retryCount = 0,
+): Promise<{
   success: boolean;
   data?: {
     message: Record<string, unknown>;
@@ -107,7 +121,7 @@ export async function sendMessageToEvent(request: SendMessageRequest, retryCount
   error?: Record<string, unknown>;
 }> {
   const MAX_RETRIES = 1;
-  
+
   try {
     // Basic client-side validation
     if (!request.content?.trim()) {
@@ -118,7 +132,11 @@ export async function sendMessageToEvent(request: SendMessageRequest, retryCount
       throw new Error('Message content exceeds 1000 character limit');
     }
 
-    if (!request.sendVia.push && !request.sendVia.sms && !request.sendVia.email) {
+    if (
+      !request.sendVia.push &&
+      !request.sendVia.sms &&
+      !request.sendVia.email
+    ) {
       throw new Error('At least one delivery method must be selected');
     }
 
@@ -128,7 +146,7 @@ export async function sendMessageToEvent(request: SendMessageRequest, retryCount
       recipientFilter: request.recipientFilter,
       recipientEventGuestIds: request.recipientEventGuestIds,
       explicitSelection: !!request.recipientEventGuestIds,
-      sendVia: request.sendVia
+      sendVia: request.sendVia,
     });
 
     // Send request to server-side API route
@@ -144,26 +162,33 @@ export async function sendMessageToEvent(request: SendMessageRequest, retryCount
 
     if (!response.ok) {
       // Handle specific error cases with retry logic
-      if (retryCount < MAX_RETRIES && (
-        response.status >= 500 || // Server errors
-        result.error?.includes('network') ||
-        result.error?.includes('timeout')
-      )) {
+      if (
+        retryCount < MAX_RETRIES &&
+        (response.status >= 500 || // Server errors
+          result.error?.includes('network') ||
+          result.error?.includes('timeout'))
+      ) {
         console.log(`Retrying message send (attempt ${retryCount + 1})`);
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
         return sendMessageToEvent(request, retryCount + 1);
       }
-      
-      const errorMsg = (result.error && typeof result.error === 'object' && 'message' in result.error) 
-        ? (result.error as { message: string }).message 
-        : `HTTP ${response.status}: Failed to send message`;
+
+      const errorMsg =
+        result.error &&
+        typeof result.error === 'object' &&
+        'message' in result.error
+          ? (result.error as { message: string }).message
+          : `HTTP ${response.status}: Failed to send message`;
       throw new Error(errorMsg);
     }
 
     if (!result.success) {
-      const errorMsg = (result.error && typeof result.error === 'object' && 'message' in result.error) 
-        ? (result.error as { message: string }).message 
-        : 'Failed to send message';
+      const errorMsg =
+        result.error &&
+        typeof result.error === 'object' &&
+        'message' in result.error
+          ? (result.error as { message: string }).message
+          : 'Failed to send message';
       throw new Error(errorMsg);
     }
 
@@ -171,22 +196,24 @@ export async function sendMessageToEvent(request: SendMessageRequest, retryCount
       messageId: result.data.message.id,
       recipientCount: result.data.recipientCount,
       smsDelivered: result.data.smsDelivered,
-      smsFailed: result.data.smsFailed
+      smsFailed: result.data.smsFailed,
     });
 
     return result;
-
   } catch (error: unknown) {
     console.error('Error sending message:', {
       error: error instanceof Error ? error.message : String(error),
       eventId: request.eventId,
       recipientFilter: request.recipientFilter,
-      retryCount
+      retryCount,
     });
-    
-    return { 
-      success: false, 
-      error: { message: error instanceof Error ? error.message : 'Failed to send message' } 
+
+    return {
+      success: false,
+      error: {
+        message:
+          error instanceof Error ? error.message : 'Failed to send message',
+      },
     };
   }
 }
@@ -231,7 +258,9 @@ export async function getScheduledMessages(filters: ScheduledMessageFilters) {
 /**
  * Create scheduled message with enhanced recipient filtering support
  */
-export async function createScheduledMessage(messageData: CreateScheduledMessageData): Promise<{
+export async function createScheduledMessage(
+  messageData: CreateScheduledMessageData,
+): Promise<{
   success: boolean;
   data?: Record<string, unknown>;
   error?: Record<string, unknown>;
@@ -281,12 +310,14 @@ export async function createScheduledMessage(messageData: CreateScheduledMessage
       case 'rsvp_status':
         // For RSVP filtering, we'll store as tags for now
         // The actual filtering will happen at send time
-        targetGuestTags = recipientFilter.rsvpStatuses?.map(status => `rsvp:${status}`) || [];
+        targetGuestTags =
+          recipientFilter.rsvpStatuses?.map((status) => `rsvp:${status}`) || [];
         break;
       case 'combined':
         targetGuestTags = [
           ...(recipientFilter.tags || []),
-          ...(recipientFilter.rsvpStatuses?.map(status => `rsvp:${status}`) || [])
+          ...(recipientFilter.rsvpStatuses?.map((status) => `rsvp:${status}`) ||
+            []),
         ];
         targetGuestIds = recipientFilter.guestIds || [];
         break;
@@ -295,7 +326,7 @@ export async function createScheduledMessage(messageData: CreateScheduledMessage
     // Pre-calculate recipient count for scheduling
     const { recipientCount, guestIds } = await resolveMessageRecipients(
       messageData.eventId,
-      recipientFilter
+      recipientFilter,
     );
 
     // Optional: Create recipient snapshot for audit purposes (behind feature flag)
@@ -306,8 +337,9 @@ export async function createScheduledMessage(messageData: CreateScheduledMessage
       name: string;
       channel: string;
     }> | null = null;
-    const enableRecipientSnapshot = process.env.NEXT_PUBLIC_ENABLE_RECIPIENT_SNAPSHOT === 'true';
-    
+    const enableRecipientSnapshot =
+      process.env.NEXT_PUBLIC_ENABLE_RECIPIENT_SNAPSHOT === 'true';
+
     if (enableRecipientSnapshot && guestIds.length > 0) {
       try {
         // Fetch guest details for snapshot
@@ -318,12 +350,12 @@ export async function createScheduledMessage(messageData: CreateScheduledMessage
           .in('id', guestIds);
 
         if (!guestError && guestDetails) {
-          recipientSnapshot = guestDetails.map(guest => ({
+          recipientSnapshot = guestDetails.map((guest) => ({
             guest_id: guest.id,
             user_id: guest.user_id || undefined,
             phone: guest.phone || '',
             name: guest.guest_name || 'Guest',
-            channel: 'sms' // Default channel for now
+            channel: 'sms', // Default channel for now
           }));
         }
       } catch (snapshotError) {
@@ -333,7 +365,9 @@ export async function createScheduledMessage(messageData: CreateScheduledMessage
     }
 
     if (recipientCount === 0) {
-      throw new Error('No valid recipients found for the specified filter criteria');
+      throw new Error(
+        'No valid recipients found for the specified filter criteria',
+      );
     }
 
     // Server-side validation: Verify UTC conversion is correct
@@ -341,29 +375,37 @@ export async function createScheduledMessage(messageData: CreateScheduledMessage
       try {
         // Re-compute UTC time from local time and timezone
         const localDateTime = new Date(`${messageData.scheduledLocal}:00`);
-        const expectedUTC = localDateTime.toLocaleString('sv-SE', { 
-          timeZone: messageData.scheduledTz 
-        }).replace(' ', 'T') + 'Z';
-        
+        const expectedUTC =
+          localDateTime
+            .toLocaleString('sv-SE', {
+              timeZone: messageData.scheduledTz,
+            })
+            .replace(' ', 'T') + 'Z';
+
         const storedUTC = new Date(messageData.sendAt).toISOString();
         const expectedUTCTime = new Date(expectedUTC).getTime();
         const storedUTCTime = new Date(storedUTC).getTime();
-        
+
         // Allow up to 1 minute difference to account for DST transitions
         const timeDifference = Math.abs(expectedUTCTime - storedUTCTime);
-        if (timeDifference > 60000) { // 60 seconds
+        if (timeDifference > 60000) {
+          // 60 seconds
           console.warn('UTC conversion mismatch detected:', {
             scheduledLocal: messageData.scheduledLocal,
             scheduledTz: messageData.scheduledTz,
             expectedUTC,
             storedUTC,
-            differenceMs: timeDifference
+            differenceMs: timeDifference,
           });
-          throw new Error('Invalid scheduled time. Please check the date and time, especially during daylight saving transitions.');
+          throw new Error(
+            'Invalid scheduled time. Please check the date and time, especially during daylight saving transitions.',
+          );
         }
       } catch (conversionError) {
         console.error('UTC validation error:', conversionError);
-        throw new Error('Invalid scheduled time or timezone. Please check your inputs.');
+        throw new Error(
+          'Invalid scheduled time or timezone. Please check your inputs.',
+        );
       }
     }
 
@@ -399,15 +441,20 @@ export async function createScheduledMessage(messageData: CreateScheduledMessage
       sendAt: messageData.sendAt,
       recipientCount,
       messageType: messageData.messageType,
-      eventId: messageData.eventId
+      eventId: messageData.eventId,
     });
 
     return { success: true, data };
   } catch (error: unknown) {
     console.error('Error creating scheduled message:', error);
-    return { 
-      success: false, 
-      error: { message: error instanceof Error ? error.message : 'Failed to create scheduled message' } 
+    return {
+      success: false,
+      error: {
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Failed to create scheduled message',
+      },
     };
   }
 }
@@ -432,9 +479,14 @@ export async function cancelScheduledMessage(messageId: string): Promise<{
     return { success: true };
   } catch (error: unknown) {
     console.error('Error cancelling scheduled message:', error);
-    return { 
-      success: false, 
-      error: { message: error instanceof Error ? error.message : 'Failed to cancel scheduled message' } 
+    return {
+      success: false,
+      error: {
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Failed to cancel scheduled message',
+      },
     };
   }
 }
@@ -459,9 +511,14 @@ export async function deleteScheduledMessage(messageId: string): Promise<{
     return { success: true };
   } catch (error: unknown) {
     console.error('Error deleting scheduled message:', error);
-    return { 
-      success: false, 
-      error: { message: error instanceof Error ? error.message : 'Failed to delete scheduled message' } 
+    return {
+      success: false,
+      error: {
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Failed to delete scheduled message',
+      },
     };
   }
 }

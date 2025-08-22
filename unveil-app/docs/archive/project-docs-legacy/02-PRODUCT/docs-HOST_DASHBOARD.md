@@ -7,10 +7,11 @@ The Host Dashboard is the primary interface for wedding hosts to manage their ev
 ## Architecture
 
 ### Component Structure
+
 ```
 components/features/host-dashboard/
 ├── EventHeader.tsx           # Event details with gradient design
-├── TabNavigation.tsx         # Tab switching with swipe support  
+├── TabNavigation.tsx         # Tab switching with swipe support
 ├── GuestManagement.tsx       # Main guest management interface
 ├── GuestStatusSummary.tsx    # RSVP status filter pills
 ├── GuestStatusCard.tsx       # RSVP summary card
@@ -26,6 +27,7 @@ components/features/host-dashboard/
 ```
 
 ### Custom Hooks
+
 ```
 hooks/common/
 ├── useHapticFeedback.ts     # Mobile haptic feedback
@@ -41,6 +43,7 @@ hooks/common/
 Displays event information with a beautiful gradient background and host badge.
 
 **Props:**
+
 ```typescript
 interface EventHeaderProps {
   event: {
@@ -56,8 +59,9 @@ interface EventHeaderProps {
 ```
 
 **Usage:**
+
 ```tsx
-<EventHeader 
+<EventHeader
   event={eventData}
   participantCount={participants.length}
   isHost={true}
@@ -67,6 +71,7 @@ interface EventHeaderProps {
 ```
 
 **Features:**
+
 - Purple-to-coral gradient background
 - Responsive layout (mobile-first)
 - Host crown badge (👑)
@@ -78,6 +83,7 @@ interface EventHeaderProps {
 Enhanced tab navigation with swipe gesture support and badge indicators.
 
 **Props:**
+
 ```typescript
 interface TabNavigationProps {
   tabs: TabItem[];
@@ -96,20 +102,22 @@ interface TabItem {
 ```
 
 **Usage:**
+
 ```tsx
 const tabs = [
   { key: 'guests', label: 'Guests', icon: '👥', badge: pendingCount },
-  { key: 'messages', label: 'Messages', icon: '💬' }
+  { key: 'messages', label: 'Messages', icon: '💬' },
 ];
 
-<TabNavigation 
+<TabNavigation
   tabs={tabs}
   activeTab={currentTab}
   onTabChange={setCurrentTab}
-/>
+/>;
 ```
 
 **Features:**
+
 - Swipe gesture navigation (mobile)
 - Badge support for notifications
 - Disabled state handling
@@ -121,6 +129,7 @@ const tabs = [
 Main component for managing event participants with filtering, search, and bulk actions.
 
 **Props:**
+
 ```typescript
 interface GuestManagementProps {
   eventId: string;
@@ -131,8 +140,9 @@ interface GuestManagementProps {
 ```
 
 **Usage:**
+
 ```tsx
-<GuestManagement 
+<GuestManagement
   eventId={eventId}
   onGuestUpdated={refetchData}
   onImportGuests={openImportWizard}
@@ -141,6 +151,7 @@ interface GuestManagementProps {
 ```
 
 **Features:**
+
 - Real-time search with 300ms debouncing
 - RSVP status filtering via pills
 - Bulk selection and actions
@@ -154,6 +165,7 @@ interface GuestManagementProps {
 Unified messaging interface combining composition, templates, and history.
 
 **Props:**
+
 ```typescript
 interface EnhancedMessageCenterProps {
   eventId: string;
@@ -164,8 +176,9 @@ interface EnhancedMessageCenterProps {
 ```
 
 **Usage:**
+
 ```tsx
-<EnhancedMessageCenter 
+<EnhancedMessageCenter
   eventId={eventId}
   participants={participants}
   onMessageSent={refetchMessages}
@@ -173,6 +186,7 @@ interface EnhancedMessageCenterProps {
 ```
 
 **Features:**
+
 - Compose/History toggle interface
 - Template integration with auto-fill
 - Recipient targeting with context
@@ -184,6 +198,7 @@ interface EnhancedMessageCenterProps {
 Message composition form with template support and validation.
 
 **Props:**
+
 ```typescript
 interface MessageComposerProps {
   eventId: string;
@@ -197,8 +212,9 @@ interface MessageComposerProps {
 ```
 
 **Usage:**
+
 ```tsx
-<MessageComposer 
+<MessageComposer
   eventId={eventId}
   participants={participants}
   selectedTemplate={template}
@@ -208,6 +224,7 @@ interface MessageComposerProps {
 ```
 
 **Features:**
+
 - 500 character limit with visual feedback
 - Template auto-fill with cursor positioning
 - Recipient context display
@@ -222,19 +239,21 @@ interface MessageComposerProps {
 Provides cross-platform haptic feedback for mobile devices.
 
 **API:**
+
 ```typescript
 const { triggerHaptic, isSupported } = useHapticFeedback();
 
 // Trigger different patterns
-triggerHaptic('light');    // 10ms single pulse
-triggerHaptic('medium');   // 20ms single pulse
-triggerHaptic('heavy');    // 30ms single pulse
-triggerHaptic('success');  // 10-10-10ms triple pulse
-triggerHaptic('warning');  // 20-20ms double pulse
-triggerHaptic('error');    // 30-10-30ms error pattern
+triggerHaptic('light'); // 10ms single pulse
+triggerHaptic('medium'); // 20ms single pulse
+triggerHaptic('heavy'); // 30ms single pulse
+triggerHaptic('success'); // 10-10-10ms triple pulse
+triggerHaptic('warning'); // 20-20ms double pulse
+triggerHaptic('error'); // 30-10-30ms error pattern
 ```
 
 **Usage:**
+
 ```tsx
 const { triggerHaptic } = useHapticFeedback();
 
@@ -250,6 +269,7 @@ const handleRSVPUpdate = () => {
 Detects touch-based swipe gestures for navigation and interactions.
 
 **API:**
+
 ```typescript
 const { attachSwipeListeners } = useSwipeGesture({
   onSwipeLeft: () => void,
@@ -262,12 +282,13 @@ const { attachSwipeListeners } = useSwipeGesture({
 ```
 
 **Usage:**
+
 ```tsx
 const containerRef = useRef<HTMLDivElement>(null);
 const { attachSwipeListeners } = useSwipeGesture({
   onSwipeLeft: () => nextTab(),
   onSwipeRight: () => prevTab(),
-  minSwipeDistance: 60
+  minSwipeDistance: 60,
 });
 
 useEffect(() => {
@@ -280,6 +301,7 @@ useEffect(() => {
 Implements native mobile pull-to-refresh functionality.
 
 **API:**
+
 ```typescript
 const {
   isPulling,
@@ -296,13 +318,14 @@ const {
 ```
 
 **Usage:**
+
 ```tsx
 const containerRef = useRef<HTMLDivElement>(null);
 const pullToRefresh = usePullToRefresh({
   onRefresh: async () => {
     await refetchData();
     triggerHaptic('success');
-  }
+  },
 });
 
 useEffect(() => {
@@ -315,19 +338,21 @@ useEffect(() => {
 Debounces rapidly changing values to optimize performance.
 
 **API:**
+
 ```typescript
 const debouncedValue = useDebounce(value, delay);
 ```
 
 **Usage:**
+
 ```tsx
 const [searchTerm, setSearchTerm] = useState('');
 const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
 // Use debouncedSearchTerm for filtering to avoid excessive renders
 const filteredResults = useMemo(() => {
-  return data.filter(item => 
-    item.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+  return data.filter((item) =>
+    item.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()),
   );
 }, [data, debouncedSearchTerm]);
 ```
@@ -335,22 +360,26 @@ const filteredResults = useMemo(() => {
 ## Design System Integration
 
 ### Colors
+
 - **Primary Accent**: `#FF6B6B` (coral) - buttons, focus rings, active states
 - **Background**: `#fdfffc` (off-white) - main background
 - **Text**: `#333333` - primary text color
 - **Muted**: `#888888` - secondary text
 
 ### Touch Targets
+
 - **Minimum**: 44px height for all interactive elements
 - **Optimal**: 48px+ for primary actions
 - **Spacing**: 8px minimum between touch targets
 
 ### Typography
+
 - **Font**: Inter (system fallback: -apple-system, system-ui)
 - **Base Size**: 16px (1rem) for body text
 - **Line Height**: 1.6 for readability
 
 ### Animations
+
 - **Duration**: 150-200ms for interactions
 - **Easing**: `ease-out` for natural feel
 - **Reduced Motion**: Respects `prefers-reduced-motion: reduce`
@@ -358,15 +387,17 @@ const filteredResults = useMemo(() => {
 ## Accessibility Features
 
 ### WCAG 2.1 AA Compliance
+
 - **Color Contrast**: 4.5:1 minimum for normal text
 - **Focus Indicators**: 2px coral outline with 2px offset
 - **ARIA Labels**: Comprehensive labeling for screen readers
 - **Keyboard Navigation**: Full keyboard accessibility
 
 ### Screen Reader Support
+
 ```tsx
 // Example ARIA usage
-<button 
+<button
   aria-label={`Mark ${participant.name} as attending`}
   aria-pressed={isAttending}
   role="button"
@@ -376,6 +407,7 @@ const filteredResults = useMemo(() => {
 ```
 
 ### Motion Preferences
+
 - Automatic animation disable for `prefers-reduced-motion: reduce`
 - Essential feedback maintained (haptics, visual states)
 - Smooth degradation without breaking functionality
@@ -383,17 +415,20 @@ const filteredResults = useMemo(() => {
 ## Performance Optimizations
 
 ### React Optimizations
+
 - **useMemo**: Expensive calculations (filtering, sorting)
 - **useCallback**: Event handlers and functions passed to children
 - **React.memo**: Individual guest cards and template items
 - **Debouncing**: Search inputs to reduce re-renders
 
 ### Bundle Optimization
+
 - **Code Splitting**: Route-level splitting for dashboard pages
 - **Tree Shaking**: Only used components included in build
 - **Dynamic Imports**: Heavy components loaded on demand
 
 ### Runtime Performance
+
 - **Virtualization**: Large guest lists (100+ participants)
 - **Intersection Observer**: Lazy loading of off-screen content
 - **RequestAnimationFrame**: Smooth animations and scrolling
@@ -401,6 +436,7 @@ const filteredResults = useMemo(() => {
 ## Testing Strategies
 
 ### Unit Testing
+
 ```tsx
 // Example test for GuestManagement
 import { render, screen, fireEvent } from '@testing-library/react';
@@ -408,7 +444,7 @@ import { GuestManagement } from './GuestManagement';
 
 test('filters guests by RSVP status', () => {
   render(<GuestManagement eventId="test" />);
-  
+
   fireEvent.click(screen.getByText('Attending'));
   expect(screen.getByText('John Doe')).toBeInTheDocument();
   expect(screen.queryByText('Jane Smith')).not.toBeInTheDocument();
@@ -416,11 +452,13 @@ test('filters guests by RSVP status', () => {
 ```
 
 ### Integration Testing
+
 - **Supabase Integration**: Mock database calls
 - **Real-time Updates**: Test subscription handling
 - **Error States**: Network failures and recovery
 
 ### E2E Testing
+
 - **Mobile Devices**: iOS Safari, Android Chrome
 - **Gesture Testing**: Swipe navigation, pull-to-refresh
 - **Accessibility**: Screen reader compatibility
@@ -428,6 +466,7 @@ test('filters guests by RSVP status', () => {
 ## Best Practices
 
 ### Component Development
+
 1. **Start Mobile-First**: Design for mobile, enhance for desktop
 2. **Accessibility by Default**: Include ARIA labels and keyboard support
 3. **Performance Conscious**: Use React.memo and hooks appropriately
@@ -435,12 +474,14 @@ test('filters guests by RSVP status', () => {
 5. **TypeScript**: Strong typing for all props and state
 
 ### State Management
+
 1. **Local State**: Use useState for component-specific state
 2. **Shared State**: Props drilling for parent-child communication
 3. **Optimistic Updates**: Update UI immediately, rollback on error
 4. **Error Handling**: Graceful degradation and user feedback
 
 ### Styling
+
 1. **Utility-First**: Tailwind CSS for consistency
 2. **Responsive Design**: Mobile-first with desktop enhancements
 3. **Design Tokens**: Use CSS custom properties for theming
@@ -451,21 +492,25 @@ test('filters guests by RSVP status', () => {
 ### Common Issues
 
 **Swipe Gestures Not Working**
+
 - Ensure touch events are not prevented by parent elements
 - Check minimum swipe distance and timing thresholds
 - Verify passive event listeners are properly attached
 
 **Haptic Feedback Silent**
+
 - Check device support with `isSupported` flag
 - Ensure user has enabled vibration in device settings
 - Test on physical device (not simulator/emulator)
 
 **Pull-to-Refresh Conflicts**
+
 - Disable native browser pull-to-refresh if needed
 - Check scroll position detection logic
 - Verify preventDefault is called appropriately
 
 **Performance Issues**
+
 - Check for unnecessary re-renders with React DevTools
 - Verify debouncing is working for search inputs
 - Consider virtualization for large lists (100+ items)
@@ -478,10 +523,10 @@ Enable debug logging for custom hooks:
 // Add to your component for debugging
 useEffect(() => {
   if (process.env.NODE_ENV === 'development') {
-    console.log('GuestManagement render:', { 
+    console.log('GuestManagement render:', {
       participants: participants.length,
       filtered: filteredParticipants.length,
-      searchTerm: debouncedSearchTerm
+      searchTerm: debouncedSearchTerm,
     });
   }
 }, [participants, filteredParticipants, debouncedSearchTerm]);
@@ -490,6 +535,7 @@ useEffect(() => {
 ## Deployment Checklist
 
 ### Pre-deployment
+
 - [ ] All Lighthouse scores ≥95% accessibility, ≥85% performance
 - [ ] Cross-browser testing complete (Chrome, Safari, Firefox)
 - [ ] Mobile device testing on iOS and Android
@@ -497,6 +543,7 @@ useEffect(() => {
 - [ ] Analytics and monitoring configured
 
 ### Production Monitoring
+
 - [ ] Performance monitoring for Core Web Vitals
 - [ ] Error tracking for JavaScript exceptions
 - [ ] User feedback collection for UX issues
@@ -504,5 +551,5 @@ useEffect(() => {
 
 ---
 
-*Last updated: January 17, 2025*
-*Version: 1.0.0 (MVP Release)* 
+_Last updated: January 17, 2025_
+_Version: 1.0.0 (MVP Release)_

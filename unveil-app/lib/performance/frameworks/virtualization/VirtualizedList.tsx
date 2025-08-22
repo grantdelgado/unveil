@@ -1,25 +1,31 @@
 /**
  * 🚀 WEEK 4 OPTIMIZATION: Virtualized Scrolling Implementation
- * 
+ *
  * Virtualized scrolling for large lists provides:
  * - Handles 1000+ items without performance degradation
  * - Constant memory usage regardless of list size
  * - Smooth scrolling with consistent frame rates
  * - Optimized for mobile devices and large datasets
- * 
+ *
  * Use cases in Unveil app:
  * - Guest lists with 100+ attendees
  * - Photo galleries with many images
  * - Message history with long conversations
  * - Event search results
- * 
+ *
  * Expected Impact:
  * - 90% performance improvement for large lists
  * - Consistent 60fps scrolling regardless of list size
  * - Reduced memory usage and better mobile performance
  */
 
-import React, { useMemo, useRef, useEffect, useState, useCallback } from 'react';
+import React, {
+  useMemo,
+  useRef,
+  useEffect,
+  useState,
+  useCallback,
+} from 'react';
 
 interface VirtualizedListProps<T> {
   items: T[];
@@ -55,7 +61,7 @@ export function VirtualizedList<T>({
     const startIndex = Math.floor(scrollTop / itemHeight);
     const endIndex = Math.min(
       startIndex + Math.ceil(containerHeight / itemHeight),
-      items.length - 1
+      items.length - 1,
     );
 
     return {
@@ -78,31 +84,37 @@ export function VirtualizedList<T>({
   }, [items, visibleRange.start, visibleRange.end, itemHeight]);
 
   // Handle scroll events with throttling
-  const handleScroll = useCallback((event: React.UIEvent<HTMLDivElement>) => {
-    const scrollTop = event.currentTarget.scrollTop;
-    setScrollTop(scrollTop);
-    setIsScrolling(true);
+  const handleScroll = useCallback(
+    (event: React.UIEvent<HTMLDivElement>) => {
+      const scrollTop = event.currentTarget.scrollTop;
+      setScrollTop(scrollTop);
+      setIsScrolling(true);
 
-    // Clear existing timeout
-    if (scrollTimeoutRef.current) {
-      clearTimeout(scrollTimeoutRef.current);
-    }
+      // Clear existing timeout
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
 
-    // Set timeout to detect scroll end
-    scrollTimeoutRef.current = setTimeout(() => {
-      setIsScrolling(false);
-      onScrollEnd?.();
-    }, 150);
-  }, [onScrollEnd]);
+      // Set timeout to detect scroll end
+      scrollTimeoutRef.current = setTimeout(() => {
+        setIsScrolling(false);
+        onScrollEnd?.();
+      }, 150);
+    },
+    [onScrollEnd],
+  );
 
   // Scroll to specific index
-  const scrollToIndex = useCallback((index: number) => {
-    if (containerRef.current) {
-      const scrollTop = index * itemHeight;
-      containerRef.current.scrollTop = scrollTop;
-      setScrollTop(scrollTop);
-    }
-  }, [itemHeight]);
+  const scrollToIndex = useCallback(
+    (index: number) => {
+      if (containerRef.current) {
+        const scrollTop = index * itemHeight;
+        containerRef.current.scrollTop = scrollTop;
+        setScrollTop(scrollTop);
+      }
+    },
+    [itemHeight],
+  );
 
   // Scroll to top - disabled eslint as this is part of the API
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -145,7 +157,7 @@ export function VirtualizedList<T>({
             {renderItem(item, index)}
           </div>
         ))}
-        
+
         {/* Scrolling indicator */}
         {isScrolling && (
           <div className="absolute top-2 right-2 bg-black bg-opacity-20 text-white px-2 py-1 rounded text-xs">
@@ -209,7 +221,7 @@ export function VirtualizedGrid<T>({
   gap = 8,
 }: VirtualizedGridProps<T>) {
   const [scrollTop, setScrollTop] = useState(0);
-  
+
   // Calculate grid dimensions
   const itemsPerRow = Math.floor((containerWidth + gap) / (itemWidth + gap));
   const totalRows = Math.ceil(items.length / itemsPerRow);
@@ -219,7 +231,7 @@ export function VirtualizedGrid<T>({
   const startRow = Math.floor(scrollTop / rowHeight);
   const endRow = Math.min(
     totalRows - 1,
-    startRow + Math.ceil(containerHeight / rowHeight) + 1
+    startRow + Math.ceil(containerHeight / rowHeight) + 1,
   );
 
   // Get visible items

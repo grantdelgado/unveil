@@ -17,7 +17,7 @@ import {
   PrimaryButton,
   SecondaryButton,
   BackButton,
-  LoadingSpinner
+  LoadingSpinner,
 } from '@/components/ui';
 
 interface UserProfile {
@@ -52,10 +52,10 @@ export default function ProfilePage() {
   };
 
   // Check if there are any changes to enable/disable save button
-  const hasChanges = userProfile && (
-    displayName !== (userProfile.full_name || '') ||
-    email !== (userProfile.email || '')
-  );
+  const hasChanges =
+    userProfile &&
+    (displayName !== (userProfile.full_name || '') ||
+      email !== (userProfile.email || ''));
 
   // Check if form is valid
   const isFormValid = displayName.trim() && isValidEmail(email);
@@ -68,15 +68,15 @@ export default function ProfilePage() {
       try {
         setIsLoading(true);
         setMessage('');
-        
+
         // Get current auth user with timeout
         const {
           data: { user },
           error: authError,
         } = await supabase.auth.getUser();
-        
+
         if (signal.aborted) return;
-        
+
         if (authError || !user) {
           setMessage('Unable to load your profile. Please sign in again.');
           setIsLoading(false);
@@ -91,19 +91,26 @@ export default function ProfilePage() {
             .select('id, email, full_name, phone, avatar_url')
             .eq('id', user.id)
             .single(),
-          
+
           // Fetch user events
           supabase
             .from('events')
             .select('id, title')
-            .eq('host_user_id', user.id)
+            .eq('host_user_id', user.id),
         ]);
 
         if (signal.aborted) return;
 
         // Handle profile result
-        if (profileResult.status === 'rejected' || profileResult.value.error || !profileResult.value.data) {
-          const error = profileResult.status === 'rejected' ? profileResult.reason : profileResult.value.error;
+        if (
+          profileResult.status === 'rejected' ||
+          profileResult.value.error ||
+          !profileResult.value.data
+        ) {
+          const error =
+            profileResult.status === 'rejected'
+              ? profileResult.reason
+              : profileResult.value.error;
           console.error('Profile fetch error:', error);
           setMessage('Unable to load profile data. Please try again.');
           setIsLoading(false);
@@ -121,18 +128,19 @@ export default function ProfilePage() {
           setUserEvents(events);
         }
         // Events error is non-critical, don't block profile loading
-
       } catch (error) {
         if (signal.aborted) return;
         console.error('Unexpected error fetching profile:', error);
-        setMessage('Something went wrong loading your profile. Please try again.');
+        setMessage(
+          'Something went wrong loading your profile. Please try again.',
+        );
       } finally {
         if (!signal.aborted) {
           setIsLoading(false);
         }
       }
     };
-    
+
     fetchProfile();
 
     // 🧹 CLEANUP: Abort requests when component unmounts or navigates away
@@ -143,7 +151,7 @@ export default function ProfilePage() {
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!userProfile) {
       setMessage('Profile not loaded. Please refresh the page.');
       return;
@@ -153,10 +161,10 @@ export default function ProfilePage() {
       setMessage('Please check that all fields are filled correctly.');
       return;
     }
-    
+
     setIsSaving(true);
     setMessage('');
-    
+
     try {
       // Prepare email value (null if empty, otherwise trimmed)
       const emailValue = email.trim() || null;
@@ -177,7 +185,9 @@ export default function ProfilePage() {
         }
 
         if (existingUsers && existingUsers.length > 0) {
-          setMessage('This email address is already taken. Please use a different email.');
+          setMessage(
+            'This email address is already taken. Please use a different email.',
+          );
           setIsSaving(false);
           return;
         }
@@ -186,9 +196,9 @@ export default function ProfilePage() {
       // Update the users table with both email and full_name
       const { error: dbError } = await supabase
         .from('users')
-        .update({ 
+        .update({
           full_name: displayName.trim(),
-          email: emailValue 
+          email: emailValue,
         })
         .eq('id', userProfile.id);
 
@@ -203,7 +213,7 @@ export default function ProfilePage() {
       const authUpdateData: { data: { full_name: string }; email?: string } = {
         data: { full_name: displayName.trim() },
       };
-      
+
       if (emailValue) {
         authUpdateData.email = emailValue;
       }
@@ -211,13 +221,16 @@ export default function ProfilePage() {
       await supabase.auth.updateUser(authUpdateData);
 
       // Update local state
-      setUserProfile(prev => prev ? { 
-        ...prev, 
-        full_name: displayName.trim(),
-        email: emailValue 
-      } : null);
+      setUserProfile((prev) =>
+        prev
+          ? {
+              ...prev,
+              full_name: displayName.trim(),
+              email: emailValue,
+            }
+          : null,
+      );
       setMessage('Profile updated successfully!');
-      
     } catch (error) {
       console.error('Unexpected error updating profile:', error);
       setMessage('Something went wrong. Please try again.');
@@ -245,15 +258,23 @@ export default function ProfilePage() {
         <CardContainer maxWidth="md">
           <div className="text-center space-y-4">
             <div className="text-red-600">
-              <svg className="mx-auto h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.314 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              <svg
+                className="mx-auto h-12 w-12"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.314 16.5c-.77.833.192 2.5 1.732 2.5z"
+                />
               </svg>
             </div>
             <PageTitle>Profile Not Found</PageTitle>
             <SubTitle>We couldn&apos;t load your profile information.</SubTitle>
-            {message && (
-              <p className="text-sm text-red-600">{message}</p>
-            )}
+            {message && <p className="text-sm text-red-600">{message}</p>}
             <div className="space-y-2">
               <PrimaryButton onClick={() => window.location.reload()}>
                 Try Again
@@ -272,7 +293,7 @@ export default function ProfilePage() {
     <div className="min-h-mobile bg-[#FAFAFA] flex flex-col safe-x">
       {/* Header with safe area */}
       <header className="safe-top flex-shrink-0 px-6 py-4 bg-[#FAFAFA]/95 backdrop-blur-sm border-b border-gray-200/50">
-        <BackButton 
+        <BackButton
           href="/select-event"
           variant="subtle"
           className="text-gray-900 hover:text-gray-700"
@@ -284,22 +305,26 @@ export default function ProfilePage() {
       {/* Scrollable content */}
       <main className="flex-1 min-h-0 overflow-auto scroll-container">
         <div className="max-w-2xl mx-auto px-6 py-8 space-y-8">
-
           {/* Profile Section */}
           <CardContainer maxWidth="xl">
             <div className="space-y-8">
               <div className="text-center space-y-4">
                 <div className="w-20 h-20 bg-gradient-to-r from-rose-400 to-purple-500 rounded-full flex items-center justify-center mx-auto">
                   {userProfile.avatar_url ? (
-                    <Image 
-                      src={userProfile.avatar_url} 
-                      alt="Profile" 
+                    <Image
+                      src={userProfile.avatar_url}
+                      alt="Profile"
                       width={80}
                       height={80}
                       className="w-full h-full rounded-full object-cover"
                     />
                   ) : (
-                    <svg width="32" height="32" fill="white" viewBox="0 0 24 24">
+                    <svg
+                      width="32"
+                      height="32"
+                      fill="white"
+                      viewBox="0 0 24 24"
+                    >
                       <circle cx="12" cy="8" r="4" />
                       <ellipse cx="12" cy="17" rx="7" ry="4" />
                     </svg>
@@ -307,7 +332,9 @@ export default function ProfilePage() {
                 </div>
                 <div className="space-y-2">
                   <PageTitle>Your Profile</PageTitle>
-                  <SubTitle>Manage your account settings and preferences</SubTitle>
+                  <SubTitle>
+                    Manage your account settings and preferences
+                  </SubTitle>
                 </div>
               </div>
 
@@ -335,7 +362,9 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="space-y-2">
-                  <FieldLabel htmlFor="email">Email Address (Optional)</FieldLabel>
+                  <FieldLabel htmlFor="email">
+                    Email Address (Optional)
+                  </FieldLabel>
                   <TextInput
                     type="email"
                     id="email"
@@ -343,17 +372,25 @@ export default function ProfilePage() {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Enter your email address (optional)"
                     disabled={isSaving}
-                    className={email && !isValidEmail(email) ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''}
+                    className={
+                      email && !isValidEmail(email)
+                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
+                        : ''
+                    }
                   />
                   {email && !isValidEmail(email) && (
-                    <p className="text-sm text-red-600">Please enter a valid email address</p>
+                    <p className="text-sm text-red-600">
+                      Please enter a valid email address
+                    </p>
                   )}
                 </div>
 
                 {message && (
                   <div
                     className={`p-4 rounded-lg text-center text-sm ${
-                      message.includes('wrong') || message.includes('Unable') || message.includes('already taken')
+                      message.includes('wrong') ||
+                      message.includes('Unable') ||
+                      message.includes('already taken')
                         ? 'bg-red-100 text-red-800 border border-red-200 shadow-sm'
                         : 'bg-green-50 text-green-700 border border-green-100'
                     }`}
@@ -426,8 +463,10 @@ export default function ProfilePage() {
             disabled={isSaving || !isFormValid || !hasChanges}
             loading={isSaving}
             className={cn(
-              "w-full",
-              !hasChanges ? 'bg-gray-300 text-gray-500 cursor-not-allowed hover:bg-gray-300' : ''
+              'w-full',
+              !hasChanges
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed hover:bg-gray-300'
+                : '',
             )}
           >
             {isSaving ? 'Saving...' : 'Save Changes'}

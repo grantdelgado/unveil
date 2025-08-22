@@ -20,7 +20,7 @@ import {
   PrimaryButton,
   BackButton,
   MicroCopy,
-  LoadingSpinner
+  LoadingSpinner,
 } from '@/components/ui';
 
 type Event = Database['public']['Tables']['events']['Row'];
@@ -242,9 +242,10 @@ export default function EditEventPage() {
         const fileName = `${userId}/${Date.now()}.${fileExt}`;
 
         try {
-          const { data: uploadData, error: uploadError } = await supabase.storage
-            .from('event-images')
-            .upload(fileName, headerImage);
+          const { data: uploadData, error: uploadError } =
+            await supabase.storage
+              .from('event-images')
+              .upload(fileName, headerImage);
 
           setImageUploadProgress(50);
 
@@ -283,9 +284,7 @@ export default function EditEventPage() {
                 .split('/')
                 .slice(-2)
                 .join('/');
-              await supabase.storage
-                .from('event-images')
-                .remove([oldPath]);
+              await supabase.storage.from('event-images').remove([oldPath]);
             } catch (deleteError) {
               console.warn('Failed to delete old image:', deleteError);
             }
@@ -307,9 +306,7 @@ export default function EditEventPage() {
             .split('/')
             .slice(-2)
             .join('/');
-          await supabase.storage
-            .from('event-images')
-            .remove([oldPath]);
+          await supabase.storage.from('event-images').remove([oldPath]);
           headerImageUrl = null;
         } catch (deleteError) {
           console.warn('Failed to delete image:', deleteError);
@@ -378,7 +375,7 @@ export default function EditEventPage() {
                 The event you&apos;re trying to edit could not be found.
               </SubTitle>
             </div>
-            <PrimaryButton 
+            <PrimaryButton
               onClick={() => router.push('/select-event')}
               fullWidth={false}
             >
@@ -395,7 +392,7 @@ export default function EditEventPage() {
       <div className="max-w-3xl mx-auto">
         {/* Back Navigation */}
         <div className="mb-6">
-          <BackButton 
+          <BackButton
             href={`/host/events/${eventId}/dashboard`}
             fallback="/select-event"
           >
@@ -424,7 +421,8 @@ export default function EditEventPage() {
               {/* Event Name */}
               <div className="space-y-2">
                 <FieldLabel htmlFor="title" required>
-                  What would you like your guests to see as the title of your wedding?
+                  What would you like your guests to see as the title of your
+                  wedding?
                 </FieldLabel>
                 <TextInput
                   id="title"
@@ -447,7 +445,9 @@ export default function EditEventPage() {
                     type="date"
                     id="event_date"
                     value={formData.event_date}
-                    onChange={(e) => handleInputChange('event_date', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange('event_date', e.target.value)
+                    }
                     disabled={isLoading}
                     error={errors.event_date}
                   />
@@ -462,7 +462,9 @@ export default function EditEventPage() {
                     type="time"
                     id="event_time"
                     value={formData.event_time}
-                    onChange={(e) => handleInputChange('event_time', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange('event_time', e.target.value)
+                    }
                     disabled={isLoading}
                     error={errors.event_time}
                   />
@@ -475,7 +477,9 @@ export default function EditEventPage() {
                 <TextInput
                   id="location"
                   value={formData.location}
-                  onChange={(e) => handleInputChange('location', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange('location', e.target.value)
+                  }
                   placeholder="e.g., Central Park, New York"
                   disabled={isLoading}
                 />
@@ -487,13 +491,17 @@ export default function EditEventPage() {
                 <textarea
                   id="description"
                   value={formData.description}
-                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange('description', e.target.value)
+                  }
                   placeholder="Tell your guests about your special day..."
                   rows={4}
                   className="w-full py-3 px-4 border border-gray-300 rounded-lg text-base placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-300 focus:border-pink-400 transition-colors duration-200 resize-none"
                   disabled={isLoading}
                 />
-                <MicroCopy>Optional: Share details about your celebration</MicroCopy>
+                <MicroCopy>
+                  Optional: Share details about your celebration
+                </MicroCopy>
               </div>
             </div>
 
@@ -645,7 +653,9 @@ export default function EditEventPage() {
                     type="checkbox"
                     id="is_public"
                     checked={formData.is_public}
-                    onChange={(e) => handleInputChange('is_public', e.target.checked)}
+                    onChange={(e) =>
+                      handleInputChange('is_public', e.target.checked)
+                    }
                     className="h-5 w-5 text-[#FF6B6B] focus:ring-pink-300 border-gray-300 rounded mt-0.5"
                     disabled={isLoading}
                   />
@@ -657,7 +667,8 @@ export default function EditEventPage() {
                       Make this wedding hub discoverable
                     </label>
                     <MicroCopy>
-                      Guests will be able to find your event when they sign up with their invited phone number
+                      Guests will be able to find your event when they sign up
+                      with their invited phone number
                     </MicroCopy>
                   </div>
                 </div>
@@ -727,8 +738,6 @@ export default function EditEventPage() {
             )}
           </form>
         </CardContainer>
-
-
       </div>
     </PageWrapper>
   );

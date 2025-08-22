@@ -10,6 +10,7 @@ This document describes the idempotency mechanism implemented to prevent duplica
 ## 🚨 Problem Solved
 
 **Issue**: Users could create duplicate events by:
+
 - Double-clicking the "Create Wedding Hub" button
 - Browser back/forward navigation during submission
 - Network timeouts causing client retries
@@ -25,12 +26,12 @@ The core solution uses a **creation_key** column with unique constraints:
 
 ```sql
 -- New column for idempotency
-ALTER TABLE public.events 
+ALTER TABLE public.events
 ADD COLUMN creation_key UUID NULL;
 
 -- Unique constraint prevents duplicates
-CREATE UNIQUE INDEX idx_events_creation_key_unique 
-ON public.events(creation_key) 
+CREATE UNIQUE INDEX idx_events_creation_key_unique
+ON public.events(creation_key)
 WHERE creation_key IS NOT NULL;
 ```
 
@@ -52,6 +53,7 @@ Server: Check existing event with same creation_key
 ### 1. Database Schema
 
 **New Column**: `events.creation_key UUID`
+
 - **Nullable**: Yes (for backward compatibility)
 - **Unique**: Yes (via partial unique index)
 - **Indexed**: Yes (for efficient lookups)
@@ -63,17 +65,17 @@ The `create_event_with_host_atomic()` function now:
 ```sql
 -- Check for existing event with same creation_key
 IF creation_key_param IS NOT NULL THEN
-    SELECT * INTO existing_event 
-    FROM public.events 
-    WHERE creation_key = creation_key_param 
+    SELECT * INTO existing_event
+    FROM public.events
+    WHERE creation_key = creation_key_param
     AND host_user_id = current_user_id;
-    
+
     -- Return existing event if found
     IF existing_event.id IS NOT NULL THEN
-        RETURN QUERY SELECT 
-            true, 
-            existing_event.id, 
-            existing_event.created_at, 
+        RETURN QUERY SELECT
+            true,
+            existing_event.id,
+            existing_event.created_at,
             NULL::text,
             'returned_existing';
         RETURN;
@@ -124,19 +126,20 @@ if (!creationKeyRef.current) {
 ### ✅ Race Condition Handling
 
 ```sql
-EXCEPTION 
+EXCEPTION
     WHEN unique_violation THEN
         -- Handle concurrent requests with same key
-        SELECT * INTO existing_event 
-        FROM public.events 
+        SELECT * INTO existing_event
+        FROM public.events
         WHERE creation_key = creation_key_param;
-        
+
         RETURN QUERY SELECT true, existing_event.id, ...
 ```
 
 ### ✅ Operation Transparency
 
 Response includes operation type:
+
 - `"operation": "created"` → New event created
 - `"operation": "returned_existing"` → Existing event returned
 
@@ -170,8 +173,14 @@ Returns potential duplicates with timing analysis.
 const creationKey = crypto.randomUUID();
 
 const [result1, result2] = await Promise.all([
-  EventCreationService.createEventWithHost({...eventData, creation_key: creationKey}, userId),
-  EventCreationService.createEventWithHost({...eventData, creation_key: creationKey}, userId)
+  EventCreationService.createEventWithHost(
+    { ...eventData, creation_key: creationKey },
+    userId,
+  ),
+  EventCreationService.createEventWithHost(
+    { ...eventData, creation_key: creationKey },
+    userId,
+  ),
 ]);
 
 // Expected: Same event_id, one "created", one "returned_existing"
@@ -182,8 +191,14 @@ assert(result1.data.event_id === result2.data.event_id);
 
 ```typescript
 // Different creation keys = different events
-const result1 = await EventCreationService.createEventWithHost({...eventData}, userId);
-const result2 = await EventCreationService.createEventWithHost({...eventData}, userId);
+const result1 = await EventCreationService.createEventWithHost(
+  { ...eventData },
+  userId,
+);
+const result2 = await EventCreationService.createEventWithHost(
+  { ...eventData },
+  userId,
+);
 
 // Expected: Different event_ids, both "created"
 assert(result1.data.event_id !== result2.data.event_id);
@@ -195,9 +210,9 @@ assert(result1.data.event_id !== result2.data.event_id);
 
 ```sql
 -- Events with creation keys
-SELECT id, title, creation_key, created_at 
-FROM events 
-WHERE creation_key IS NOT NULL 
+SELECT id, title, creation_key, created_at
+FROM events
+WHERE creation_key IS NOT NULL
 ORDER BY created_at DESC;
 ```
 
@@ -205,10 +220,10 @@ ORDER BY created_at DESC;
 
 ```sql
 -- Should return empty (unique constraint prevents this)
-SELECT creation_key, COUNT(*) 
-FROM events 
-WHERE creation_key IS NOT NULL 
-GROUP BY creation_key 
+SELECT creation_key, COUNT(*)
+FROM events
+WHERE creation_key IS NOT NULL
+GROUP BY creation_key
 HAVING COUNT(*) > 1;
 ```
 
@@ -216,14 +231,14 @@ HAVING COUNT(*) > 1;
 
 ```sql
 -- Recent event creation timing
-SELECT 
+SELECT
   host_user_id,
   title,
   creation_key,
   created_at,
   LAG(created_at) OVER (PARTITION BY host_user_id ORDER BY created_at) as prev_created,
   created_at - LAG(created_at) OVER (PARTITION BY host_user_id ORDER BY created_at) as time_diff
-FROM events 
+FROM events
 WHERE created_at > NOW() - INTERVAL '1 day'
 ORDER BY created_at DESC;
 ```
@@ -275,6 +290,7 @@ ALTER TABLE events DROP COLUMN creation_key;
 ## 🎉 Success Metrics
 
 After implementation:
+
 - ✅ **Zero duplicate events** from double submissions
 - ✅ **Transparent user experience** (same UX for new vs. existing)
 - ✅ **Backward compatibility** (existing code works unchanged)

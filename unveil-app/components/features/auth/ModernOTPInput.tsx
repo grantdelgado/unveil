@@ -1,7 +1,17 @@
-import React, { useRef, useEffect, useState, useCallback, KeyboardEvent, ClipboardEvent } from 'react';
+import React, {
+  useRef,
+  useEffect,
+  useState,
+  useCallback,
+  KeyboardEvent,
+  ClipboardEvent,
+} from 'react';
 import { cn } from '@/lib/utils';
 import { ValidationResult } from '@/lib/utils/validation';
-import { ValidationIcon, ValidationMessage } from '@/components/ui/inputs/InputValidation';
+import {
+  ValidationIcon,
+  ValidationMessage,
+} from '@/components/ui/inputs/InputValidation';
 
 interface ModernOTPInputProps {
   value: string;
@@ -40,12 +50,14 @@ export const ModernOTPInput: React.FC<ModernOTPInputProps> = ({
   length = 6,
   id,
 }) => {
-  const [internalValidation, setInternalValidation] = useState<ValidationResult | undefined>();
+  const [internalValidation, setInternalValidation] = useState<
+    ValidationResult | undefined
+  >();
   const [hasBlurred, setHasBlurred] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  
+
   const validationResult = validation || internalValidation;
-  
+
   // Initialize refs array
   useEffect(() => {
     inputRefs.current = inputRefs.current.slice(0, length);
@@ -64,39 +76,52 @@ export const ModernOTPInput: React.FC<ModernOTPInputProps> = ({
   // Pad or trim value to match length
   const digits = value.padEnd(length, '').slice(0, length).split('');
 
-  const handleValidation = useCallback((value: string) => {
-    if (!validationFn) return;
+  const handleValidation = useCallback(
+    (value: string) => {
+      if (!validationFn) return;
 
-    const result = validationFn(value);
-    setInternalValidation(result);
-    onValidationChange?.(result);
-  }, [validationFn, onValidationChange]);
+      const result = validationFn(value);
+      setInternalValidation(result);
+      onValidationChange?.(result);
+    },
+    [validationFn, onValidationChange],
+  );
 
-  const updateValue = useCallback((newDigits: string[]) => {
-    const newValue = newDigits.join('').replace(/\s/g, '');
-    onChange(newValue);
-    
-    if (realTimeValidation && (hasBlurred || newValue.length > 0)) {
-      handleValidation(newValue);
-    }
-    
-    // Auto-complete when all digits are filled
-    if (newValue.length === length && onComplete) {
-      setTimeout(() => {
-        onComplete(newValue);
-      }, 100);
-    }
-  }, [onChange, onComplete, handleValidation, realTimeValidation, hasBlurred, length]);
+  const updateValue = useCallback(
+    (newDigits: string[]) => {
+      const newValue = newDigits.join('').replace(/\s/g, '');
+      onChange(newValue);
+
+      if (realTimeValidation && (hasBlurred || newValue.length > 0)) {
+        handleValidation(newValue);
+      }
+
+      // Auto-complete when all digits are filled
+      if (newValue.length === length && onComplete) {
+        setTimeout(() => {
+          onComplete(newValue);
+        }, 100);
+      }
+    },
+    [
+      onChange,
+      onComplete,
+      handleValidation,
+      realTimeValidation,
+      hasBlurred,
+      length,
+    ],
+  );
 
   const handleInputChange = (index: number, inputValue: string) => {
     // Only allow single digit
     const digit = inputValue.replace(/\D/g, '').slice(-1);
-    
+
     const newDigits = [...digits];
     newDigits[index] = digit;
-    
+
     updateValue(newDigits);
-    
+
     // Auto-advance to next input if digit was entered
     if (digit && index < length - 1) {
       inputRefs.current[index + 1]?.focus();
@@ -107,7 +132,7 @@ export const ModernOTPInput: React.FC<ModernOTPInputProps> = ({
     if (e.key === 'Backspace') {
       e.preventDefault();
       const newDigits = [...digits];
-      
+
       if (newDigits[index]) {
         // Clear current digit
         newDigits[index] = '';
@@ -116,7 +141,7 @@ export const ModernOTPInput: React.FC<ModernOTPInputProps> = ({
         newDigits[index - 1] = '';
         inputRefs.current[index - 1]?.focus();
       }
-      
+
       updateValue(newDigits);
     } else if (e.key === 'ArrowLeft' && index > 0) {
       e.preventDefault();
@@ -130,7 +155,7 @@ export const ModernOTPInput: React.FC<ModernOTPInputProps> = ({
       const newDigits = [...digits];
       newDigits[index] = e.key;
       updateValue(newDigits);
-      
+
       // Auto-advance to next input
       if (index < length - 1) {
         inputRefs.current[index + 1]?.focus();
@@ -142,35 +167,45 @@ export const ModernOTPInput: React.FC<ModernOTPInputProps> = ({
     e.preventDefault();
     const pastedData = e.clipboardData.getData('text');
     const pastedDigits = pastedData.replace(/\D/g, '').slice(0, length);
-    
+
     if (pastedDigits.length > 0) {
-      const newDigits = pastedDigits.split('').concat(Array(length).fill('')).slice(0, length);
+      const newDigits = pastedDigits
+        .split('')
+        .concat(Array(length).fill(''))
+        .slice(0, length);
       updateValue(newDigits);
-      
+
       // Focus the next empty input or last input
-      const nextEmptyIndex = newDigits.findIndex(digit => !digit);
+      const nextEmptyIndex = newDigits.findIndex((digit) => !digit);
       const focusIndex = nextEmptyIndex !== -1 ? nextEmptyIndex : length - 1;
       inputRefs.current[focusIndex]?.focus();
     }
   };
 
-  const handleBlur = useCallback((e: React.FocusEvent<HTMLInputElement>) => {
-    setHasBlurred(true);
-    
-    if (realTimeValidation) {
-      handleValidation(value);
-    }
-    
-    onBlur?.(e);
-  }, [value, handleValidation, realTimeValidation, onBlur]);
+  const handleBlur = useCallback(
+    (e: React.FocusEvent<HTMLInputElement>) => {
+      setHasBlurred(true);
 
-  const inputId = id || `modern-otp-input-${Math.random().toString(36).substr(2, 9)}`;
+      if (realTimeValidation) {
+        handleValidation(value);
+      }
+
+      onBlur?.(e);
+    },
+    [value, handleValidation, realTimeValidation, onBlur],
+  );
+
+  const inputId =
+    id || `modern-otp-input-${Math.random().toString(36).substr(2, 9)}`;
   const hasError = !!error || (validationResult && !validationResult.isValid);
 
   return (
     <div className={cn('space-y-2', className)}>
       {label && (
-        <label htmlFor={`${inputId}-0`} className="block text-sm font-medium text-gray-700">
+        <label
+          htmlFor={`${inputId}-0`}
+          className="block text-sm font-medium text-gray-700"
+        >
           {label}
         </label>
       )}
@@ -211,12 +246,12 @@ export const ModernOTPInput: React.FC<ModernOTPInputProps> = ({
                 hasError
                   ? 'border-red-300 focus:border-red-500 focus:ring-red-200 bg-red-50'
                   : validationResult?.isValid
-                  ? 'border-green-300 focus:border-green-500 focus:ring-green-200 bg-green-50'
-                  : 'border-gray-300 focus:border-pink-500 focus:ring-pink-200 bg-white',
+                    ? 'border-green-300 focus:border-green-500 focus:ring-green-200 bg-green-50'
+                    : 'border-gray-300 focus:border-pink-500 focus:ring-pink-200 bg-white',
                 // Filled state
                 digits[index] && 'border-pink-400 bg-pink-50',
                 // Text color
-                'text-gray-900 placeholder-gray-400'
+                'text-gray-900 placeholder-gray-400',
               )}
               aria-invalid={hasError}
               aria-describedby={`${inputId}-feedback ${inputId}-help`}
@@ -248,10 +283,7 @@ export const ModernOTPInput: React.FC<ModernOTPInputProps> = ({
 
       {/* Help text */}
       {helpText && !error && !validationResult && (
-        <p 
-          id={`${inputId}-help`}
-          className="text-sm text-gray-600"
-        >
+        <p id={`${inputId}-help`} className="text-sm text-gray-600">
           {helpText}
         </p>
       )}

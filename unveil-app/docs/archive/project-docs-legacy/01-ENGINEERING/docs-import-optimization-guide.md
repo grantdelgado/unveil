@@ -9,21 +9,25 @@ This guide documents the import/export pattern optimizations implemented to impr
 ### 1. Optimized Barrel Exports
 
 #### `/lib/types/index.ts`
+
 - **Before**: Wildcard exports (`export * from './errors'`)
 - **After**: Specific type exports (`export type { DatabaseError, AuthError... }`)
 - **Impact**: Better tree-shaking, reduced type bloat
 
 #### `/services/index.ts`
+
 - **Before**: 120+ individual function exports causing massive bundle bloat
 - **After**: Namespace exports + essential functions only
 - **Impact**: ~60% reduction in barrel export surface area
 
 #### `/hooks/index.ts`
+
 - **Before**: Wildcard exports from all hook modules
 - **After**: Specific exports for most-used hooks + namespace exports
 - **Impact**: Better tree-shaking, cleaner imports
 
 #### `/components/features/index.ts`
+
 - **Before**: Wildcard exports from all feature modules
 - **After**: Specific exports for lightweight components + lazy loading for heavy ones
 - **Impact**: Reduced initial bundle, better code splitting
@@ -58,17 +62,19 @@ import type { Database } from '@/app/reference/supabase.types';
 ### ✅ DO
 
 1. **Use specific imports when possible**:
+
    ```typescript
    // Good
    import { getCurrentUser } from '@/services/auth';
    import { useDebounce } from '@/hooks/common/useDebounce';
-   
+
    // Avoid (unless importing multiple items)
    import { AuthService } from '@/services';
    import * from '@/hooks';
    ```
 
 2. **Use namespace imports for multiple items**:
+
    ```typescript
    // Good for multiple imports from same module
    import { AuthService } from '@/services';
@@ -86,6 +92,7 @@ import type { Database } from '@/app/reference/supabase.types';
 ### ❌ AVOID
 
 1. **Wildcard barrel imports**:
+
    ```typescript
    // Avoid - can bundle unused code
    import * from '@/services';
@@ -93,10 +100,11 @@ import type { Database } from '@/app/reference/supabase.types';
    ```
 
 2. **Importing from barrel when you need one thing**:
+
    ```typescript
    // Avoid
    import { useAuth } from '@/hooks'; // Bundles all hooks
-   
+
    // Prefer
    import { useAuth } from '@/hooks/auth/useAuth';
    ```
@@ -133,16 +141,18 @@ npx webpack-bundle-analyzer .next/static/chunks/*.js
 ### For existing files using barrel imports:
 
 1. **Identify your actual usage**:
+
    ```bash
    # Find files using barrel imports
    grep -r "from '@/hooks'" --include="*.tsx" --include="*.ts"
    ```
 
 2. **Replace with specific imports**:
+
    ```typescript
    // Before
    import { useAuth, useDebounce, useEventDetails } from '@/hooks';
-   
+
    // After
    import { useAuth } from '@/hooks/auth/useAuth';
    import { useDebounce } from '@/hooks/common/useDebounce';
@@ -162,6 +172,7 @@ npx webpack-bundle-analyzer .next/static/chunks/*.js
 ### Common Patterns to Avoid
 
 1. **Barrel re-exports creating cycles**:
+
    ```typescript
    // In /hooks/index.ts - AVOID
    export * from './auth'; // if auth imports from another hook

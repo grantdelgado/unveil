@@ -16,7 +16,7 @@ export interface LinkGuestRecordsResult {
 /**
  * Core function to link guest records to a user account
  * Links ALL guest records with matching phone where user_id IS NULL
- * 
+ *
  * @param userId - The user ID to link to
  * @param phone - The phone number in E.164 format
  * @param useServerClient - Whether to use server-side client (for API routes)
@@ -25,18 +25,18 @@ export interface LinkGuestRecordsResult {
 export async function linkGuestRecordsToUser(
   userId: string,
   phone: string,
-  useServerClient: boolean = false
+  useServerClient: boolean = false,
 ): Promise<LinkGuestRecordsResult> {
   try {
     logger.info('Starting guest record linking', {
       userId,
       phone,
-      useServerClient
+      useServerClient,
     });
 
     // Use appropriate Supabase client
-    const supabaseClient = useServerClient 
-      ? supabaseAdmin  // Use admin client for server operations to avoid RLS issues
+    const supabaseClient = useServerClient
+      ? supabaseAdmin // Use admin client for server operations to avoid RLS issues
       : supabase;
 
     // Validate inputs
@@ -44,13 +44,13 @@ export async function linkGuestRecordsToUser(
       return {
         success: false,
         linkedCount: 0,
-        error: 'User ID and phone number are required'
+        error: 'User ID and phone number are required',
       };
     }
 
     // Normalize and validate phone number format
     let normalizedPhone = phone;
-    
+
     // If phone doesn't start with +, try to normalize it
     if (!phone.startsWith('+')) {
       const digits = phone.replace(/\D/g, '');
@@ -62,12 +62,12 @@ export async function linkGuestRecordsToUser(
         logger.error('Invalid phone number format for linking', {
           originalPhone: phone,
           digitsOnly: digits,
-          userId
+          userId,
         });
         return {
           success: false,
           linkedCount: 0,
-          error: `Invalid phone number format: ${phone}. Expected E.164 format (e.g., +12345678901)`
+          error: `Invalid phone number format: ${phone}. Expected E.164 format (e.g., +12345678901)`,
         };
       }
     }
@@ -77,27 +77,27 @@ export async function linkGuestRecordsToUser(
       logger.error('Phone number failed E.164 validation after normalization', {
         originalPhone: phone,
         normalizedPhone,
-        userId
+        userId,
       });
       return {
         success: false,
         linkedCount: 0,
-        error: `Phone number must be in E.164 format. Got: ${normalizedPhone}`
+        error: `Phone number must be in E.164 format. Got: ${normalizedPhone}`,
       };
     }
 
     logger.info('Phone number normalized for linking', {
       originalPhone: phone,
       normalizedPhone,
-      userId
+      userId,
     });
 
     // Update all guest records with matching phone where user_id IS NULL
     const { data, error } = await (supabaseClient as unknown as typeof supabase)
       .from('event_guests')
-      .update({ 
+      .update({
         user_id: userId,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .eq('phone', normalizedPhone)
       .is('user_id', null)
@@ -108,12 +108,12 @@ export async function linkGuestRecordsToUser(
         userId,
         phone: normalizedPhone,
         originalPhone: phone,
-        error: error.message
+        error: error.message,
       });
       return {
         success: false,
         linkedCount: 0,
-        error: `Database error: ${error.message}`
+        error: `Database error: ${error.message}`,
       };
     }
 
@@ -124,25 +124,24 @@ export async function linkGuestRecordsToUser(
       phone: normalizedPhone,
       originalPhone: phone,
       linkedCount,
-      linkedRecords: data
+      linkedRecords: data,
     });
 
     return {
       success: true,
-      linkedCount
+      linkedCount,
     };
-
   } catch (error) {
     logger.error('Unexpected error during guest record linking', {
       userId,
       phone,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
 
     return {
       success: false,
       linkedCount: 0,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     };
   }
 }
@@ -150,18 +149,18 @@ export async function linkGuestRecordsToUser(
 /**
  * Check if a user exists with the given phone number
  * Used during guest import to enable immediate linking
- * 
+ *
  * @param phone - Phone number in E.164 format
  * @param useServerClient - Whether to use server-side client
  * @returns User ID if found, null otherwise
  */
 export async function findUserByPhone(
   phone: string,
-  useServerClient: boolean = false
+  useServerClient: boolean = false,
 ): Promise<string | null> {
   try {
-    const supabaseClient = useServerClient 
-      ? supabaseAdmin  // Use admin client for server operations to avoid RLS issues
+    const supabaseClient = useServerClient
+      ? supabaseAdmin // Use admin client for server operations to avoid RLS issues
       : supabase;
 
     const { data, error } = await (supabaseClient as unknown as typeof supabase)
@@ -174,17 +173,16 @@ export async function findUserByPhone(
       // PGRST116 = No rows found (expected for non-existent users)
       logger.error('Error finding user by phone', {
         phone,
-        error: error.message
+        error: error.message,
       });
       return null;
     }
 
     return data?.id || null;
-
   } catch (error) {
     logger.error('Unexpected error finding user by phone', {
       phone,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
     return null;
   }
@@ -193,7 +191,7 @@ export async function findUserByPhone(
 /**
  * Get statistics about guest linking for a specific phone number
  * Useful for debugging and monitoring
- * 
+ *
  * @param phone - Phone number in E.164 format
  * @returns Statistics about linked vs unlinked guests
  */
@@ -214,21 +212,21 @@ export async function getGuestLinkingStats(phone: string): Promise<{
     }
 
     const totalGuests = data.length;
-    const linkedGuests = data.filter(guest => guest.user_id !== null).length;
+    const linkedGuests = data.filter((guest) => guest.user_id !== null).length;
     const unlinkedGuests = totalGuests - linkedGuests;
-    const linkedToUserId = data.find(guest => guest.user_id !== null)?.user_id || undefined;
+    const linkedToUserId =
+      data.find((guest) => guest.user_id !== null)?.user_id || undefined;
 
     return {
       totalGuests,
       linkedGuests,
       unlinkedGuests,
-      linkedToUserId
+      linkedToUserId,
     };
-
   } catch (error) {
     logger.error('Error getting guest linking stats', {
       phone,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
     return { totalGuests: 0, linkedGuests: 0, unlinkedGuests: 0 };
   }

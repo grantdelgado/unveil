@@ -5,8 +5,10 @@ import type { Database } from '@/app/reference/supabase.types';
 
 type Message = Database['public']['Tables']['messages']['Row'];
 type MessageInsert = Database['public']['Tables']['messages']['Insert'];
-type ScheduledMessage = Database['public']['Tables']['scheduled_messages']['Row'];
-type ScheduledMessageInsert = Database['public']['Tables']['scheduled_messages']['Insert'];
+type ScheduledMessage =
+  Database['public']['Tables']['scheduled_messages']['Row'];
+type ScheduledMessageInsert =
+  Database['public']['Tables']['scheduled_messages']['Insert'];
 
 interface SendMessageRequest {
   eventId: string;
@@ -26,10 +28,12 @@ interface UseMessagesReturn {
   scheduledMessages: ScheduledMessage[] | null;
   loading: boolean;
   error: Error | null;
-  
+
   // Actions
   sendMessage: (request: SendMessageRequest) => Promise<Message>;
-  scheduleMessage: (messageData: ScheduledMessageInsert) => Promise<ScheduledMessage>;
+  scheduleMessage: (
+    messageData: ScheduledMessageInsert,
+  ) => Promise<ScheduledMessage>;
   getEventMessages: (eventId: string) => Promise<Message[]>;
   getScheduledMessages: (eventId: string) => Promise<ScheduledMessage[]>;
   deleteMessage: (id: string) => Promise<void>;
@@ -39,22 +43,28 @@ interface UseMessagesReturn {
 
 export function useMessages(eventId?: string): UseMessagesReturn {
   const queryClient = useQueryClient();
-  
+
   // Get messages for event
-  const { data: messages, isLoading: loading, error } = useQuery({
+  const {
+    data: messages,
+    isLoading: loading,
+    error,
+  } = useQuery({
     queryKey: ['messages', eventId],
     queryFn: async () => {
       if (!eventId) return [];
-      
+
       const { data, error } = await supabase
         .from('messages')
-        .select(`
+        .select(
+          `
           *,
           sender:users!messages_sender_user_id_fkey(*)
-        `)
+        `,
+        )
         .eq('event_id', eventId)
         .order('created_at', { ascending: true });
-      
+
       if (error) throw new Error(error.message);
       return data;
     },
@@ -66,13 +76,13 @@ export function useMessages(eventId?: string): UseMessagesReturn {
     queryKey: ['scheduled-messages', eventId],
     queryFn: async () => {
       if (!eventId) return [];
-      
+
       const { data, error } = await supabase
         .from('scheduled_messages')
         .select('*')
         .eq('event_id', eventId)
         .order('send_at', { ascending: true });
-      
+
       if (error) throw new Error(error.message);
       return data;
     },
@@ -82,7 +92,9 @@ export function useMessages(eventId?: string): UseMessagesReturn {
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async (request: SendMessageRequest): Promise<Message> => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
       const messageData: MessageInsert = {
@@ -97,40 +109,43 @@ export function useMessages(eventId?: string): UseMessagesReturn {
         .insert(messageData)
         .select('*')
         .single();
-      
+
       if (error) throw new Error(error.message);
       return data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['messages', variables.eventId] });
+      queryClient.invalidateQueries({
+        queryKey: ['messages', variables.eventId],
+      });
     },
   });
 
   // Schedule message mutation
   const scheduleMessageMutation = useMutation({
-    mutationFn: async (messageData: ScheduledMessageInsert): Promise<ScheduledMessage> => {
+    mutationFn: async (
+      messageData: ScheduledMessageInsert,
+    ): Promise<ScheduledMessage> => {
       const { data, error } = await supabase
         .from('scheduled_messages')
         .insert(messageData)
         .select('*')
         .single();
-      
+
       if (error) throw new Error(error.message);
       return data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['scheduled-messages', variables.event_id] });
+      queryClient.invalidateQueries({
+        queryKey: ['scheduled-messages', variables.event_id],
+      });
     },
   });
 
   // Delete message mutation
   const deleteMessageMutation = useMutation({
     mutationFn: async (id: string): Promise<void> => {
-      const { error } = await supabase
-        .from('messages')
-        .delete()
-        .eq('id', id);
-      
+      const { error } = await supabase.from('messages').delete().eq('id', id);
+
       if (error) throw new Error(error.message);
     },
     onSuccess: () => {
@@ -145,7 +160,7 @@ export function useMessages(eventId?: string): UseMessagesReturn {
         .from('scheduled_messages')
         .delete()
         .eq('id', id);
-      
+
       if (error) throw new Error(error.message);
     },
     onSuccess: () => {
@@ -154,32 +169,43 @@ export function useMessages(eventId?: string): UseMessagesReturn {
   });
 
   // Helper functions
-  const getEventMessages = useCallback(async (eventId: string): Promise<Message[]> => {
-    const { data, error } = await supabase
-      .from('messages')
-      .select('*')
-      .eq('event_id', eventId)
-      .order('created_at', { ascending: true });
-    
-    if (error) throw new Error(error.message);
-    return data;
-  }, []);
+  const getEventMessages = useCallback(
+    async (eventId: string): Promise<Message[]> => {
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('event_id', eventId)
+        .order('created_at', { ascending: true });
 
-  const getScheduledMessages = useCallback(async (eventId: string): Promise<ScheduledMessage[]> => {
-    const { data, error } = await supabase
-      .from('scheduled_messages')
-      .select('*')
-      .eq('event_id', eventId)
-      .order('send_at', { ascending: true });
-    
-    if (error) throw new Error(error.message);
-    return data;
-  }, []);
+      if (error) throw new Error(error.message);
+      return data;
+    },
+    [],
+  );
 
-  const refreshMessages = useCallback(async (eventId: string): Promise<void> => {
-    await queryClient.invalidateQueries({ queryKey: ['messages', eventId] });
-    await queryClient.invalidateQueries({ queryKey: ['scheduled-messages', eventId] });
-  }, [queryClient]);
+  const getScheduledMessages = useCallback(
+    async (eventId: string): Promise<ScheduledMessage[]> => {
+      const { data, error } = await supabase
+        .from('scheduled_messages')
+        .select('*')
+        .eq('event_id', eventId)
+        .order('send_at', { ascending: true });
+
+      if (error) throw new Error(error.message);
+      return data;
+    },
+    [],
+  );
+
+  const refreshMessages = useCallback(
+    async (eventId: string): Promise<void> => {
+      await queryClient.invalidateQueries({ queryKey: ['messages', eventId] });
+      await queryClient.invalidateQueries({
+        queryKey: ['scheduled-messages', eventId],
+      });
+    },
+    [queryClient],
+  );
 
   return {
     messages: messages || null,

@@ -9,16 +9,19 @@ interface GuestEventLayoutProps {
   params: Promise<{ eventId: string }>;
 }
 
-export default async function GuestEventLayout({ 
+export default async function GuestEventLayout({
   children,
-  params 
+  params,
 }: GuestEventLayoutProps) {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { eventId } = await params;
-  
+
   return (
     <>
-      <meta name="x-build" content={process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || 'dev'} />
+      <meta
+        name="x-build"
+        content={process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || 'dev'}
+      />
       {children}
     </>
   );

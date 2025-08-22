@@ -6,21 +6,25 @@ export async function getEventById(eventId: string) {
   try {
     const { data, error } = await supabase
       .from('events')
-      .select(`
+      .select(
+        `
         *,
         host_user:users!events_host_user_id_fkey(*)
-      `)
+      `,
+      )
       .eq('id', eventId)
       .single();
 
     if (error) throw error;
 
     // Transform data to match EventWithHost type
-    const transformedData = data ? {
-      ...data,
-      host: data.host_user,
-      host_user: undefined // Remove the original property
-    } : null;
+    const transformedData = data
+      ? {
+          ...data,
+          host: data.host_user,
+          host_user: undefined, // Remove the original property
+        }
+      : null;
 
     return { success: true, data: transformedData };
   } catch (error) {
@@ -51,29 +55,33 @@ export async function getHostEvents(userId: string) {
 export async function getEventGuests(eventId: string) {
   try {
     // Use RPC function to get guests with computed display names
-    const { data, error } = await supabase
-      .rpc('get_event_guests_with_display_names', {
+    const { data, error } = await supabase.rpc(
+      'get_event_guests_with_display_names',
+      {
         p_event_id: eventId,
         p_limit: undefined,
-        p_offset: 0
-      });
+        p_offset: 0,
+      },
+    );
 
     if (error) throw error;
 
     // Transform to include users object for compatibility
-    const transformedData = (data || []).map(guest => ({
+    const transformedData = (data || []).map((guest) => ({
       ...guest,
-      users: guest.user_id ? {
-        id: guest.user_id,
-        full_name: guest.user_full_name,
-        email: guest.user_email,
-        phone: guest.user_phone,
-        avatar_url: guest.user_avatar_url,
-        created_at: guest.user_created_at,
-        updated_at: guest.user_updated_at,
-        intended_redirect: guest.user_intended_redirect,
-        onboarding_completed: guest.user_onboarding_completed || false,
-      } : null,
+      users: guest.user_id
+        ? {
+            id: guest.user_id,
+            full_name: guest.user_full_name,
+            email: guest.user_email,
+            phone: guest.user_phone,
+            avatar_url: guest.user_avatar_url,
+            created_at: guest.user_created_at,
+            updated_at: guest.user_updated_at,
+            intended_redirect: guest.user_intended_redirect,
+            onboarding_completed: guest.user_onboarding_completed || false,
+          }
+        : null,
     }));
 
     return { success: true, data: transformedData };
@@ -85,12 +93,14 @@ export async function getEventGuests(eventId: string) {
 
 // Update event details (MVP fields only)
 export async function updateEventDetails(
-  eventId: string, 
-  formData: EventDetailsFormData
+  eventId: string,
+  formData: EventDetailsFormData,
 ) {
   try {
     // Import transform function to avoid circular dependency
-    const { transformEventDetailsForDB } = await import('@/lib/validation/events');
+    const { transformEventDetailsForDB } = await import(
+      '@/lib/validation/events'
+    );
     const updateData = transformEventDetailsForDB(formData);
 
     const { data, error } = await supabase
@@ -105,8 +115,11 @@ export async function updateEventDetails(
       if (error.code === 'PGRST116') {
         throw new Error('Event not found');
       }
-      if (error.code === '42501' || error.message?.includes('permission denied')) {
-        throw new Error('You don\'t have permission to edit this event');
+      if (
+        error.code === '42501' ||
+        error.message?.includes('permission denied')
+      ) {
+        throw new Error("You don't have permission to edit this event");
       }
       throw error;
     }
@@ -114,12 +127,11 @@ export async function updateEventDetails(
     return { success: true, data };
   } catch (error) {
     console.error('Error updating event details:', error);
-    
+
     // Return user-friendly error messages
-    const message = error instanceof Error 
-      ? error.message 
-      : 'Failed to update event details';
-      
+    const message =
+      error instanceof Error ? error.message : 'Failed to update event details';
+
     return { success: false, error: message };
   }
 }
@@ -127,8 +139,9 @@ export async function updateEventDetails(
 // Verify host permissions for event editing
 export async function verifyHostPermissions(eventId: string) {
   try {
-    const { data: isHost, error } = await supabase
-      .rpc('is_event_host', { p_event_id: eventId });
+    const { data: isHost, error } = await supabase.rpc('is_event_host', {
+      p_event_id: eventId,
+    });
 
     if (error) {
       console.error('Host permission check failed:', error);
@@ -136,7 +149,10 @@ export async function verifyHostPermissions(eventId: string) {
     }
 
     if (!isHost) {
-      return { success: false, error: 'You don\'t have permission to edit this event' };
+      return {
+        success: false,
+        error: "You don't have permission to edit this event",
+      };
     }
 
     return { success: true, data: true };
@@ -144,4 +160,4 @@ export async function verifyHostPermissions(eventId: string) {
     console.error('Error verifying host permissions:', error);
     return { success: false, error: 'Permission verification failed' };
   }
-} 
+}

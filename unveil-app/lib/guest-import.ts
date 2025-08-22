@@ -1,8 +1,5 @@
 import { z } from 'zod';
-import {
-  isValidEmail,
-  isValidPhoneNumber,
-} from './utils/validation';
+import { isValidEmail, isValidPhoneNumber } from './utils/validation';
 import { normalizePhoneNumberSimple as normalizePhoneNumber } from './utils/phone';
 import type { EventGuestInsert } from './supabase';
 
@@ -87,7 +84,7 @@ export const parseCSVFile = async (file: File): Promise<ParsedFileResult> => {
   try {
     // Dynamic import of papaparse
     const Papa = await import('papaparse');
-    
+
     return new Promise((resolve) => {
       Papa.default.parse(file, {
         header: true,
@@ -134,7 +131,7 @@ export const parseExcelFile = async (file: File): Promise<ParsedFileResult> => {
   try {
     // Dynamic import of xlsx
     const XLSX = await import('xlsx');
-    
+
     return new Promise((resolve) => {
       const reader = new FileReader();
 
@@ -163,7 +160,9 @@ export const parseExcelFile = async (file: File): Promise<ParsedFileResult> => {
           }
 
           // Extract headers and normalize
-          const headers = jsonData[0].map((h) => String(h).trim().toLowerCase());
+          const headers = jsonData[0].map((h) =>
+            String(h).trim().toLowerCase(),
+          );
 
           // Convert to object format
           const parsedData = jsonData

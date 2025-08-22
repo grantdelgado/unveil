@@ -42,11 +42,9 @@ const createMockSupabaseClient = () => ({
   storage: {
     from: vi.fn().mockReturnValue({
       upload: vi.fn().mockResolvedValue({ data: null, error: null }),
-      getPublicUrl: vi
-        .fn()
-        .mockReturnValue({
-          data: { publicUrl: 'https://example.com/image.jpg' },
-        }),
+      getPublicUrl: vi.fn().mockReturnValue({
+        data: { publicUrl: 'https://example.com/image.jpg' },
+      }),
     }),
   },
 });
@@ -128,11 +126,17 @@ export const mockAuthenticatedUser = (
 export const resetMockSupabaseClient = () => {
   // Clear all mock calls and reset to default implementations
   vi.clearAllMocks();
-  
+
   // Reset auth mocks to default
-  mockSupabaseClient.auth.getUser.mockResolvedValue({ data: { user: null }, error: null });
-  mockSupabaseClient.auth.getSession.mockResolvedValue({ data: { session: null }, error: null });
-  
+  mockSupabaseClient.auth.getUser.mockResolvedValue({
+    data: { user: null },
+    error: null,
+  });
+  mockSupabaseClient.auth.getSession.mockResolvedValue({
+    data: { session: null },
+    error: null,
+  });
+
   // Reset other mocks
   mockSupabaseClient.from.mockReturnValue({
     select: vi.fn().mockReturnThis(),
@@ -150,14 +154,14 @@ export const resetMockSupabaseClient = () => {
     single: vi.fn().mockResolvedValue({ data: null, error: null }),
     maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
   });
-  
+
   mockSupabaseClient.rpc.mockResolvedValue({ data: [], error: null });
-  
+
   mockSupabaseClient.storage.from.mockReturnValue({
     upload: vi.fn().mockResolvedValue({ data: null, error: null }),
     getPublicUrl: vi.fn().mockReturnValue({
-      data: { publicUrl: 'https://example.com/image.jpg' }
-    })
+      data: { publicUrl: 'https://example.com/image.jpg' },
+    }),
   });
 };
 

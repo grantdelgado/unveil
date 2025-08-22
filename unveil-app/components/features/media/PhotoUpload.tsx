@@ -135,7 +135,9 @@ export default function PhotoUpload({
       const filesToProcess = validFiles.slice(0, maxFiles - currentUploads);
 
       if (filesToProcess.length < validFiles.length) {
-        onUploadError?.(`Only uploading first ${filesToProcess.length} files (limit: ${maxFiles})`);
+        onUploadError?.(
+          `Only uploading first ${filesToProcess.length} files (limit: ${maxFiles})`,
+        );
       }
 
       // Initialize upload progress for each file
@@ -170,9 +172,7 @@ export default function PhotoUpload({
             processedFile = await compressImage(file);
             setUploads((prev) =>
               prev.map((upload, idx) =>
-                idx === uploadIndex
-                  ? { ...upload, progress: 30 }
-                  : upload,
+                idx === uploadIndex ? { ...upload, progress: 30 } : upload,
               ),
             );
           }
@@ -181,7 +181,11 @@ export default function PhotoUpload({
           const result = await uploadEventMedia(eventId, processedFile, userId);
 
           if (result.error) {
-            throw new Error(result.error instanceof Error ? result.error.message : 'Upload failed');
+            throw new Error(
+              result.error instanceof Error
+                ? result.error.message
+                : 'Upload failed',
+            );
           }
 
           // Update progress to complete
@@ -227,24 +231,27 @@ export default function PhotoUpload({
   // Handle camera capture
   const handleCameraCapture = useCallback(() => {
     if (disabled || !cameraInputRef.current) return;
-    
+
     cameraInputRef.current.click();
   }, [disabled]);
 
   // Handle file picker
   const handleFilePicker = useCallback(() => {
     if (disabled || !fileInputRef.current) return;
-    
+
     fileInputRef.current.click();
   }, [disabled]);
 
   // Handle drag and drop
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    if (!disabled) {
-      setIsDragOver(true);
-    }
-  }, [disabled]);
+  const handleDragOver = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      if (!disabled) {
+        setIsDragOver(true);
+      }
+    },
+    [disabled],
+  );
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -255,7 +262,7 @@ export default function PhotoUpload({
     (e: React.DragEvent) => {
       e.preventDefault();
       setIsDragOver(false);
-      
+
       if (disabled) return;
 
       const files = e.dataTransfer.files;
@@ -271,21 +278,25 @@ export default function PhotoUpload({
     setUploads((prev) => {
       const newUploads = [...prev];
       const upload = newUploads[index];
-      
+
       // Revoke preview URL to prevent memory leaks
       if (upload.preview) {
         URL.revokeObjectURL(upload.preview);
       }
-      
+
       newUploads.splice(index, 1);
       return newUploads;
     });
   }, []);
 
   // Calculate upload stats
-  const activeUploads = uploads.filter(upload => upload.status !== 'complete').length;
+  const activeUploads = uploads.filter(
+    (upload) => upload.status !== 'complete',
+  ).length;
   const canUploadMore = activeUploads < maxFiles;
-  const hasActiveUploads = uploads.some(upload => upload.status === 'uploading');
+  const hasActiveUploads = uploads.some(
+    (upload) => upload.status === 'uploading',
+  );
 
   return (
     <div className={cn('space-y-4', className)}>
@@ -318,7 +329,9 @@ export default function PhotoUpload({
                 {isMobile ? 'Add photos & videos' : 'Drop photos & videos here'}
               </p>
               <p className="text-xs text-gray-500">
-                {acceptVideo ? 'PNG, JPG, MP4 up to 50MB' : 'PNG, JPG up to 50MB'}
+                {acceptVideo
+                  ? 'PNG, JPG, MP4 up to 50MB'
+                  : 'PNG, JPG up to 50MB'}
               </p>
             </div>
 
@@ -388,7 +401,7 @@ export default function PhotoUpload({
         ref={fileInputRef}
         type="file"
         multiple
-        accept={acceptVideo ? "image/*,video/*" : "image/*"}
+        accept={acceptVideo ? 'image/*,video/*' : 'image/*'}
         className="hidden"
         onChange={(e) => {
           if (e.target.files) {
@@ -402,7 +415,7 @@ export default function PhotoUpload({
       <input
         ref={cameraInputRef}
         type="file"
-        accept={acceptVideo ? "image/*,video/*" : "image/*"}
+        accept={acceptVideo ? 'image/*,video/*' : 'image/*'}
         capture="environment" // Use rear camera by default
         className="hidden"
         onChange={(e) => {
@@ -419,7 +432,7 @@ export default function PhotoUpload({
           <h4 className="text-sm font-medium text-gray-900">
             {hasActiveUploads ? 'Uploading...' : 'Recent Uploads'}
           </h4>
-          
+
           <div className="space-y-2">
             {uploads.map((upload, index) => (
               <div
@@ -493,4 +506,4 @@ export default function PhotoUpload({
       )}
     </div>
   );
-} 
+}

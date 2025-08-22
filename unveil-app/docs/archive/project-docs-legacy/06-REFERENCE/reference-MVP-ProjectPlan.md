@@ -1,20 +1,21 @@
 # 🎯 Unveil Wedding App - MVP Project Plan
 
 > **🏆 WEEK 2 STATUS: COMPLETE** ✅
-> 
+>
 > **Core Features:** Media Upload ✅ | Real-time Messaging ✅ | Guest Management ✅ | RSVP System ✅
-> 
+>
 > **Testing Results:** Build ✅ | 41/41 Tests ✅ | Database ✅ | Components ✅ | Performance ✅
-> 
+>
 > **Next Phase:** Week 3 - Polish & Production Readiness
-> 
+>
 > **Source of Truth:** Supabase Managed Cloud Project `wvhtbqvnamerdkkjknuv`
 
 ---
 
 ## 📊 **Current State Analysis**
 
-### ✅ **What's Already Complete** 
+### ✅ **What's Already Complete**
+
 - **Schema:** Clean 5-table structure (users, events, event_participants, media, messages)
 - **Authentication:** Phone-first OTP with development mode support
 - **Core UI:** Next.js App Router with Tailwind CSS + shadcn/ui components
@@ -23,6 +24,7 @@
 - **Basic Flows:** Landing page, authentication, event selection, basic dashboard
 
 ### ⚠️ **Gaps Identified**
+
 - Media upload functionality incomplete
 - Real-time messaging needs WebSocket integration
 - Guest import CSV processing needs refinement
@@ -34,6 +36,7 @@
 ## 🛠 **Week 1 – Foundation Cleanup & Performance**
 
 ### **Schema & Database Optimization**
+
 - [x] ✅ Verify all tables use canonical names (events, users, event_participants, media, messages)
 - [x] ✅ Confirm all RLS policies and functions reference correct tables
 - [x] ✅ Validate TypeScript types are current
@@ -51,11 +54,13 @@
 - [ ] 📱 Test authentication flow edge cases (phone validation, rate limiting)
 
 ### **Type Generation & Integration**
+
 - [ ] 🔄 Update `app/reference/supabase.types.ts` with latest generated types
 - [ ] 🔍 Audit all service layer functions for type consistency
 - [ ] 🧪 Run full TypeScript build validation
 
 **Acceptance Criteria:**
+
 - All database queries under 100ms for typical loads
 - Zero TypeScript compilation errors
 - All RLS policies tested and working
@@ -66,6 +71,7 @@
 ## ⚙️ **Week 2 – Feature Completion** ✅ **COMPLETE**
 
 ### **Media Upload with Supabase Storage** ✅ **COMPLETE**
+
 - [x] 📸 **Implement file upload to Supabase Storage** ✅ **COMPLETE**
   - **Files:** `services/storage.ts`, `components/features/media/PhotoUpload.tsx`
   - **Features:** Image compression (1920x1080, 80% quality), drag-drop interface, mobile camera capture, multiple file upload (max 5 files, 50MB each)
@@ -81,6 +87,7 @@
   - Implemented with `capture="environment"` for mobile optimization
 
 ### **Real-time Messaging System** ✅ **COMPLETE**
+
 - [x] 🔌 **Implement Supabase Realtime subscriptions** ✅ **COMPLETE**
   - **Files:** `hooks/realtime/useRealtimeSubscription.ts`, `components/features/messaging/GuestMessaging.tsx`
   - **Features:** Live message updates with deduplication, connection status indicator (green/red), auto-scroll to new messages
@@ -96,6 +103,7 @@
   - `text-base` class to prevent iOS zoom, autoComplete/autoCorrect optimization
 
 ### **Guest Import & Management** ✅ **COMPLETE**
+
 - [x] 📄 **Complete CSV parsing and validation** ✅ **COMPLETE**
   - **Files:** `lib/guest-import.ts`, `components/features/guests/GuestImportWizard.tsx`
   - **Features:** CSV/Excel parsing, auto-column mapping, duplicate detection, batch processing, manual entry wizard
@@ -107,6 +115,7 @@
   - Status-based filtering and search functionality
 
 ### **RSVP Flow Enhancement** ✅ **COMPLETE**
+
 - [x] ✅ **Add optimistic updates for RSVP changes** ✅ **COMPLETE**
   - Implemented with haptic feedback in GuestManagement component
 - [x] 📊 **Real-time RSVP count updates for hosts** ✅ **COMPLETE**
@@ -117,6 +126,7 @@
   - Date validation and status tracking implemented
 
 **✅ Acceptance Criteria - ALL MET:**
+
 - ✅ Photo upload works smoothly on all devices (desktop drag-drop, mobile camera capture)
 - ✅ Messages appear in real-time across all connected clients with connection monitoring
 - ✅ Guest import handles 100+ guests without performance issues (CSV/Excel + validation)
@@ -127,6 +137,7 @@
 - ✅ Real-time subscriptions with connection monitoring and race condition fixes
 
 **🧪 Testing Results:**
+
 - ✅ Build compilation: All TypeScript errors resolved
 - ✅ Unit tests: 41/41 passing (validations, UI components, realtime)
 - ✅ Database connection: MCP verified, 2 events found
@@ -138,11 +149,12 @@
 ## 🧽 **Week 3 – Polish & Production Readiness**
 
 ### **Infrastructure Setup & Manual Configuration**
+
 - [x] 🗄️ **Storage Bucket Manual Setup** ✅ **COMPLETE**
   - ✅ Created comprehensive setup guide: `docs/storage-bucket-setup-guide.md`
   - ✅ Created verification script: `scripts/verify-storage-setup.ts`
   - ✅ **COMPLETED:** Created 'event-media' bucket in Supabase Dashboard
-  - ✅ **COMPLETED:** Configured public access, MIME types (image/*, video/*), 50MB limit
+  - ✅ **COMPLETED:** Configured public access, MIME types (image/_, video/_), 50MB limit
   - ✅ **COMPLETED:** Verified bucket security with RLS policies working correctly
 - [x] 🔧 **Environment variables properly configured for production** ✅ **COMPLETE**
   - ✅ Created production environment setup guide: `docs/production-environment-setup.md`
@@ -161,6 +173,7 @@
   - ✅ Added PerformanceMonitor component in app layout
 
 ### **Error Handling & User Experience**
+
 - [x] 🛡️ **Enhanced error boundaries with user-friendly messages** ✅ **COMPLETE**
   - ✅ Enhanced existing `components/ui/ErrorBoundary.tsx` with comprehensive error handling
   - ✅ Created `components/ui/StorageErrorFallback.tsx` for storage-specific errors
@@ -181,6 +194,7 @@
   - Queue messages for when connection returns
 
 ### **Performance Optimization** ✅ **PARTIALLY COMPLETE**
+
 - [x] 🚀 **Implement lazy loading for all heavy components** ✅ **COMPLETE**
   - **Files:** `components/ui/LazyWrapper.tsx` - Used throughout app
 - [x] 🖼️ **Optimize images with `next/image` and Supabase CDN** ✅ **COMPLETE**
@@ -198,6 +212,7 @@
   - ✅ Integrated threshold detection and smooth animations
 
 ### **Mobile Experience Polish** ✅ **PARTIALLY COMPLETE**
+
 - [x] 📱 **Touch gesture improvements** ✅ **PARTIAL**
   - Basic touch support implemented, need swipe gestures
 - [x] ⌨️ **Keyboard handling optimization** ✅ **COMPLETE**
@@ -208,6 +223,7 @@
   - Applied to RSVP changes and critical actions
 
 ### **Testing & Quality Assurance**
+
 - [x] 🧪 **End-to-end testing for critical user flows** ✅ **COMPLETE**
   - ✅ Created comprehensive E2E test suite: `playwright-tests/mvp-flows.spec.ts`
   - ✅ Host workflow: Create event, import guests, send invites
@@ -237,6 +253,7 @@
   - ✅ Performance thresholds: 90+ for all categories, <2.5s LCP, <0.1 CLS
 
 ### **Production Readiness Checklist** ✅ **WEEK 4 COMPLETE**
+
 - [x] 🔒 **Security headers validated** ✅ **COMPLETE**
   - ✅ CSP, HSTS, X-Frame-Options, X-Content-Type-Options configured
   - ✅ Security audit passed with 17/17 tests
@@ -252,8 +269,9 @@
   - ✅ Feature usage tracking implemented
 
 **Acceptance Criteria:**
+
 - ✅ All Week 2 features working in production environment
-- App works smoothly on all major mobile browsers  
+- App works smoothly on all major mobile browsers
 - All critical flows tested end-to-end
 - Lighthouse score > 90 for performance
 - Zero critical security vulnerabilities
@@ -264,6 +282,7 @@
 ## 🚀 **Production Deployment Checklist**
 
 ### **Infrastructure & Monitoring**
+
 - [ ] 🔧 Environment variables properly configured
 - [ ] 📊 Error tracking setup (Sentry or similar)
 - [ ] 📈 Performance monitoring
@@ -271,6 +290,7 @@
 - [ ] 💾 Database backup strategy confirmed
 
 ### **Feature Flags & Rollout**
+
 - [ ] 🎛️ Feature flags for gradual rollout
 - [ ] 📱 Beta testing with select users
 - [ ] 📊 Analytics tracking for key metrics
@@ -281,6 +301,7 @@
 ## 🎯 **MVP Success Metrics**
 
 ### **Core Functionality**
+
 - [ ] User can register and authenticate in < 30 seconds
 - [ ] Event creation completes in < 2 minutes
 - [ ] Photo upload completes in < 10 seconds for 5MB files
@@ -288,12 +309,14 @@
 - [ ] RSVP status updates reflect immediately
 
 ### **Performance Targets**
+
 - [ ] Initial page load < 2 seconds
 - [ ] Navigation transitions < 500ms
 - [ ] Zero critical runtime errors
 - [ ] 99%+ uptime during testing period
 
 ### **User Experience**
+
 - [ ] Mobile-first design works seamlessly on phones
 - [ ] Intuitive navigation (users complete flows without help)
 - [ ] Graceful error handling with clear recovery paths
@@ -304,24 +327,28 @@
 ## 🛡️ **Risk Mitigation** ✅ **UPDATED BASED ON LEARNINGS**
 
 ### **High Priority Risks** ✅ **ADDRESSED IN WEEK 2**
+
 1. ✅ **Real-time message performance** → **COMPLETE**: Rate limiting (10/min), connection monitoring, race condition fixes
 2. ✅ **File upload reliability** → **COMPLETE**: Progress tracking, error handling, compression, retry logic
 3. ✅ **Mobile browser compatibility** → **COMPLETE**: iOS zoom prevention, mobile camera, responsive design
 4. ✅ **Database performance under load** → **COMPLETE**: 6 performance indexes applied, query optimization
 
 ### **Remaining Risks for Week 3**
+
 1. **Storage bucket permissions** → Manual setup required due to RLS constraints
-2. **Production environment differences** → Thorough testing needed on live environment  
+2. **Production environment differences** → Thorough testing needed on live environment
 3. **Real-time scaling** → Monitor connection limits and implement graceful degradation
 4. **Mobile network reliability** → Implement offline queuing and retry mechanisms
 
 ### **Contingency Plans** ✅ **PROVEN EFFECTIVE**
+
 - ✅ **Realtime messaging fails:** Connection status indicator implemented, graceful degradation working
 - ✅ **File uploads fail:** Comprehensive error messages and retry options implemented
 - ✅ **Performance issues:** Lazy loading, image compression, pagination all working
 - ✅ **Authentication issues:** Phone-first auth stable with proper error handling
 
 ### **New Learnings from Week 2**
+
 - **MCP Integration:** Excellent for database operations, schema management, and testing
 - **TypeScript Strict Mode:** Caught critical null pointer and type safety issues
 - **Mobile Optimization:** iOS-specific fixes crucial (zoom prevention, touch targets)
@@ -343,13 +370,15 @@ An Unveil MVP is ready when:
 ### **Week 2 Completion Status: 🎉 FEATURES COMPLETE**
 
 **✅ Core Functionality Implemented:**
+
 - Media upload with compression, drag-drop, mobile camera capture
-- Real-time messaging with connection monitoring and rate limiting  
+- Real-time messaging with connection monitoring and rate limiting
 - Guest management with CSV import, bulk actions, RSVP tracking
 - Performance optimization with 6 database indexes and lazy loading
 - Mobile-first responsive design with iOS optimizations
 
 **⚠️ Manual Setup Required (Week 3):**
+
 - Storage bucket creation (requires Supabase admin access)
 - Production environment testing and monitoring setup
 - Cross-browser compatibility validation
@@ -361,6 +390,7 @@ An Unveil MVP is ready when:
 ## 🚀 **Week 4 – Production Prep & QA Finalization** ✅ **COMPLETE**
 
 ### **Infrastructure Setup & Production Readiness** ✅ **ALL COMPLETE**
+
 - [x] 🔧 **Environment variables properly configured for production** ✅ **COMPLETE**
   - ✅ Created production environment setup guide: `docs/production-environment-setup.md`
   - ✅ Created environment validation script: `scripts/validate-production-env.ts`
@@ -378,6 +408,7 @@ An Unveil MVP is ready when:
   - ✅ Added PerformanceMonitor component in app layout
 
 ### **Comprehensive Testing & QA** ✅ **ALL COMPLETE**
+
 - [x] 🧪 **End-to-end testing for critical user flows** ✅ **COMPLETE**
   - ✅ Created comprehensive E2E test suite: `playwright-tests/mvp-flows.spec.ts`
   - ✅ Host workflow: Create event, import guests, send invites
@@ -404,6 +435,7 @@ An Unveil MVP is ready when:
   - ✅ Performance thresholds: 90+ for all categories, <2.5s LCP, <0.1 CLS
 
 ### **Production Deployment Readiness** ✅ **ALL COMPLETE**
+
 - [x] 🔒 **Security headers validated** ✅ **COMPLETE**
   - ✅ CSP, HSTS, X-Frame-Options, X-Content-Type-Options configured
   - ✅ Security audit passed with 17/17 tests
@@ -421,24 +453,28 @@ An Unveil MVP is ready when:
 ### **Week 4 Completion Status: 🎉 MVP PRODUCTION READY + TECHNICAL ISSUES RESOLVED**
 
 **✅ Infrastructure & Monitoring:**
+
 - Complete environment variable validation and production setup guide
 - Sentry error tracking with custom context for Unveil-specific errors
 - Performance monitoring with Web Vitals and custom metrics
 - Comprehensive security headers and CSP configuration
 
 **✅ Testing & Quality Assurance:**
+
 - Full E2E test suite covering all critical user flows
 - Security audit with 17/17 tests passed (file uploads, database, API endpoints)
 - Lighthouse performance audit framework with mobile-first testing
 - Cross-device synchronization and mobile feature testing
 
 **✅ Production Deployment Infrastructure:**
+
 - Environment validation scripts for deployment confidence
 - Automated performance and security auditing
 - Error tracking and monitoring ready for production traffic
 - Rollback procedures and backup strategies documented
 
 **✅ Technical Issues Resolved (Post-Week 4):**
+
 - ✅ **Sentry Integration Fixed:** Migrated from deprecated `sentry.client.config.ts` to proper Next.js instrumentation pattern
 - ✅ **Web Vitals API Updated:** Fixed web-vitals v5 compatibility (onCLS, onINP, onFCP, onLCP, onTTFB)
 - ✅ **TypeScript Errors Resolved:** Added proper type definitions for Google Analytics gtag function
@@ -446,4 +482,4 @@ An Unveil MVP is ready when:
 - ✅ **Global Error Handling:** Added comprehensive error boundaries with Sentry integration
 - ✅ **Build Process Optimized:** All TypeScript compilation errors resolved, production build successful
 
-**🚀 READY FOR PRODUCTION LAUNCH - ALL SYSTEMS OPERATIONAL! 🚀** 
+**🚀 READY FOR PRODUCTION LAUNCH - ALL SYSTEMS OPERATIONAL! 🚀**

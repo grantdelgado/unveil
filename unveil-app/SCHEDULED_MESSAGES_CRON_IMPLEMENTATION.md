@@ -11,18 +11,22 @@ This implementation enables Vercel Cron to automatically process scheduled messa
 ## Architecture Changes
 
 ### 🔄 **Shared Processing Logic**
+
 - **Function**: `processDueScheduledMessages(options: ProcessingOptions)`
 - **Purpose**: Centralized processing logic used by both GET (cron) and POST (manual) handlers
 - **Features**: Idempotency, rate limiting, structured logging, error handling
 
 ### 🔍 **Cron Detection**
+
 The system detects cron requests via:
+
 1. `x-vercel-cron-signature` header (Vercel automatic)
 2. `user-agent: vercel-cron/*` header
 3. `x-cron-key` header presence
 4. `?mode=cron` query parameter (explicit)
 
 ### 🛡️ **Safety Rails**
+
 - **Rate Limiting**: `SCHEDULED_MAX_PER_TICK` environment variable (default: 100)
 - **Authentication**: Required for all processing operations
 - **Jitter**: ±10s random delay to prevent overlapping cron invocations
@@ -35,6 +39,7 @@ The system detects cron requests via:
 **Behavior depends on request type:**
 
 #### 1. Cron Processing (with cron headers)
+
 ```bash
 # Vercel Cron (automatic)
 GET /api/messages/process-scheduled
@@ -46,6 +51,7 @@ Headers: x-cron-key: <secret>
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -68,11 +74,13 @@ Headers: x-cron-key: <secret>
 ```
 
 #### 2. Health Check
+
 ```bash
 GET /api/messages/process-scheduled?health=1
 ```
 
 **Response:**
+
 ```json
 {
   "ok": true,
@@ -83,11 +91,13 @@ GET /api/messages/process-scheduled?health=1
 ```
 
 #### 3. Status Check (no cron headers)
+
 ```bash
 GET /api/messages/process-scheduled
 ```
 
 **Response (Production):**
+
 ```json
 {
   "success": true,
@@ -102,6 +112,7 @@ GET /api/messages/process-scheduled
 ```
 
 **Response (Development):**
+
 ```json
 {
   "success": true,
@@ -141,6 +152,7 @@ GET /api/messages/process-scheduled
 ### POST `/api/messages/process-scheduled` (Unchanged)
 
 **Manual Processing:**
+
 ```bash
 # Dry run
 POST /api/messages/process-scheduled?dryRun=1
@@ -153,11 +165,11 @@ Headers: x-cron-key: <secret>
 
 ## Environment Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `CRON_SECRET` | *required* | Authentication secret for cron/manual processing |
-| `SCHEDULED_MAX_PER_TICK` | `100` | Maximum messages to process per cron invocation |
-| `NODE_ENV` | - | Controls diagnostic information exposure |
+| Variable                 | Default    | Description                                      |
+| ------------------------ | ---------- | ------------------------------------------------ |
+| `CRON_SECRET`            | _required_ | Authentication secret for cron/manual processing |
+| `SCHEDULED_MAX_PER_TICK` | `100`      | Maximum messages to process per cron invocation  |
+| `NODE_ENV`               | -          | Controls diagnostic information exposure         |
 
 ## Authentication Methods
 
@@ -170,36 +182,43 @@ The system accepts any of these authentication methods:
 ## Logging & Observability
 
 ### Structured Logging
+
 All operations include structured log data:
+
 - **Job ID**: Unique identifier per processing run (`job_<timestamp>_<random>`)
 - **Processing Metrics**: Start/end times, counts, duration
 - **Error Context**: Detailed error information with context
 
 ### Log Examples
+
 ```javascript
 // Cron start
-logger.api('Cron-triggered scheduled message processing', { 
-  jobId: 'job_1724259000_abc123', 
-  isCron: true, 
-  cronMode: false 
+logger.api('Cron-triggered scheduled message processing', {
+  jobId: 'job_1724259000_abc123',
+  isCron: true,
+  cronMode: false,
 });
 
 // Processing complete
-logger.api('Cron processing completed', { 
+logger.api('Cron processing completed', {
   jobId: 'job_1724259000_abc123',
   totalProcessed: 2,
   successful: 2,
   failed: 0,
-  processingTimeMs: 1250
+  processingTimeMs: 1250,
 });
 
 // Individual message
-logger.api('Processed scheduled message msg-123: sent, delivered: 3, failed: 0', { 
-  jobId: 'job_1724259000_abc123'
-});
+logger.api(
+  'Processed scheduled message msg-123: sent, delivered: 3, failed: 0',
+  {
+    jobId: 'job_1724259000_abc123',
+  },
+);
 ```
 
 ### Warnings
+
 - Non-cron GET requests generate warnings
 - Unauthorized processing attempts are logged
 - Processing errors include full context
@@ -209,23 +228,27 @@ logger.api('Processed scheduled message msg-123: sent, delivered: 3, failed: 0',
 ### Manual Testing
 
 #### Dry Run (Development)
+
 ```bash
 curl -X POST "http://localhost:3000/api/messages/process-scheduled?dryRun=1" \
   -H "x-cron-key: your-cron-secret"
 ```
 
 #### Cron Simulation
+
 ```bash
 curl -X GET "http://localhost:3000/api/messages/process-scheduled?mode=cron" \
   -H "x-cron-key: your-cron-secret"
 ```
 
 #### Health Check
+
 ```bash
 curl -X GET "http://localhost:3000/api/messages/process-scheduled?health=1"
 ```
 
 #### Status Check (Development)
+
 ```bash
 curl -X GET "http://localhost:3000/api/messages/process-scheduled"
 ```
@@ -233,15 +256,17 @@ curl -X GET "http://localhost:3000/api/messages/process-scheduled"
 ### Production Testing
 
 #### Verify Cron Execution (Production)
+
 1. Check Vercel Function logs for cron invocations
 2. Monitor database for scheduled message status transitions
 3. Verify delivery records are created
 
 #### Validate Processing
+
 ```sql
 -- Check for processed messages
-SELECT id, status, sent_at, success_count, failure_count 
-FROM scheduled_messages 
+SELECT id, status, sent_at, success_count, failure_count
+FROM scheduled_messages
 WHERE status IN ('sent', 'partially_failed', 'failed')
 ORDER BY sent_at DESC;
 
@@ -262,6 +287,7 @@ ORDER BY md.created_at DESC;
 ## Acceptance Criteria
 
 ### ✅ **Functional Requirements**
+
 - [x] Cron GET requests trigger message processing
 - [x] Manual POST requests work exactly as before
 - [x] Dry run mode prevents actual SMS/email sending
@@ -269,6 +295,7 @@ ORDER BY md.created_at DESC;
 - [x] Development diagnostics show pending messages
 
 ### ✅ **Safety Requirements**
+
 - [x] Authentication required for all processing
 - [x] Rate limiting via `SCHEDULED_MAX_PER_TICK`
 - [x] Idempotency prevents duplicate sends
@@ -276,12 +303,14 @@ ORDER BY md.created_at DESC;
 - [x] Error handling prevents system crashes
 
 ### ✅ **Observability Requirements**
+
 - [x] Structured logging with job IDs
 - [x] Processing metrics (duration, counts, errors)
 - [x] Cron detection and warning logs
 - [x] Development diagnostic information
 
 ### ✅ **Backward Compatibility**
+
 - [x] POST endpoint behavior unchanged
 - [x] Existing authentication methods work
 - [x] API response formats maintained
@@ -290,6 +319,7 @@ ORDER BY md.created_at DESC;
 ## Monitoring & Alerts
 
 ### Key Metrics to Monitor
+
 1. **Cron Execution**: Vercel function logs every minute
 2. **Processing Success Rate**: `successful / totalProcessed`
 3. **Processing Duration**: `processingTimeMs` trends
@@ -297,6 +327,7 @@ ORDER BY md.created_at DESC;
 5. **Error Rates**: Failed message processing
 
 ### Recommended Alerts
+
 - Cron execution failures (no logs for >5 minutes)
 - High failure rates (>10% failed messages)
 - Long processing times (>30 seconds)
@@ -307,16 +338,19 @@ ORDER BY md.created_at DESC;
 ### Common Issues
 
 #### Cron Not Executing
+
 1. **Check Vercel Dashboard**: Verify cron is configured and running
 2. **Check Environment Variables**: Ensure `CRON_SECRET` is set in production
 3. **Check Function Logs**: Look for authentication errors
 
 #### Messages Not Processing
+
 1. **Check RPC Function**: Verify `get_scheduled_messages_for_processing` exists
 2. **Check Database Schema**: Ensure `messages.scheduled_message_id` column exists
 3. **Check Message Status**: Verify messages are in `scheduled` status
 
 #### Authentication Errors
+
 1. **Verify CRON_SECRET**: Check environment variable in Vercel
 2. **Check Headers**: Ensure cron requests include proper headers
 3. **Review Logs**: Look for specific authentication failure details
@@ -324,29 +358,33 @@ ORDER BY md.created_at DESC;
 ### Debug Commands
 
 #### Check Pending Messages
+
 ```sql
-SELECT id, send_at, status, recipient_count 
-FROM scheduled_messages 
-WHERE status = 'scheduled' 
-AND send_at <= now() 
+SELECT id, send_at, status, recipient_count
+FROM scheduled_messages
+WHERE status = 'scheduled'
+AND send_at <= now()
 ORDER BY send_at;
 ```
 
 #### Test RPC Function
+
 ```sql
 SELECT * FROM get_scheduled_messages_for_processing(10, now());
 ```
 
 #### Check Recent Processing
+
 ```sql
-SELECT * FROM scheduled_messages 
-WHERE updated_at > now() - interval '1 hour' 
+SELECT * FROM scheduled_messages
+WHERE updated_at > now() - interval '1 hour'
 ORDER BY updated_at DESC;
 ```
 
 ## File Changes
 
 ### Modified Files
+
 1. **`app/api/messages/process-scheduled/route.ts`**
    - Extracted shared processing logic
    - Updated GET handler for cron processing
@@ -354,12 +392,15 @@ ORDER BY updated_at DESC;
    - Maintained backward compatibility
 
 ### New Files
+
 1. **`__tests__/api/process-scheduled-cron.test.ts`**
+
    - Unit tests for cron functionality
    - Authentication and detection tests
    - Error handling tests
 
 2. **`__tests__/integration/scheduled-messages-cron-integration.test.ts`**
+
    - End-to-end integration tests
    - Full processing flow validation
    - Error scenarios and idempotency
@@ -370,6 +411,7 @@ ORDER BY updated_at DESC;
    - Testing and troubleshooting guide
 
 ### Unchanged Files
+
 - `vercel.json` - Cron configuration remains the same
 - Database schema - No additional schema changes
 - Client code - No breaking changes
@@ -377,11 +419,13 @@ ORDER BY updated_at DESC;
 ## Next Steps
 
 ### Immediate Actions
+
 1. **Deploy to Production**: Merge and deploy the implementation
 2. **Monitor Logs**: Watch for successful cron execution
 3. **Verify Processing**: Check that scheduled messages are sent
 
 ### Future Enhancements
+
 1. **Last Run Tracking**: Implement caching for health endpoint
 2. **Metrics Dashboard**: Add monitoring for processing metrics
 3. **Alert Integration**: Set up alerts for processing failures

@@ -2,7 +2,7 @@
 
 /**
  * UI Changes Verification Script
- * 
+ *
  * This script helps verify that UI changes are properly reflected in the application
  * by checking component imports and usage patterns.
  */
@@ -29,20 +29,20 @@ class UIChangeVerifier {
    */
   async findComponentUsages(componentName: string): Promise<ComponentUsage[]> {
     const usages: ComponentUsage[] = [];
-    
+
     try {
       // Use ripgrep to find component usages
       const result = execSync(
         `rg "${componentName}" --type typescript --type tsx --line-number --no-heading`,
-        { 
+        {
           cwd: this.workspaceRoot,
           encoding: 'utf8',
-          stdio: ['pipe', 'pipe', 'ignore'] // Ignore stderr
-        }
+          stdio: ['pipe', 'pipe', 'ignore'], // Ignore stderr
+        },
       );
 
       const lines = result.trim().split('\n');
-      
+
       for (const line of lines) {
         const match = line.match(/^([^:]+):(\d+):(.+)$/);
         if (match) {
@@ -50,7 +50,7 @@ class UIChangeVerifier {
           usages.push({
             file,
             line: parseInt(lineNum),
-            content: content.trim()
+            content: content.trim(),
           });
         }
       }
@@ -68,30 +68,27 @@ class UIChangeVerifier {
   async verifyMessagingComponents(): Promise<boolean> {
     console.log('🔍 Verifying messaging component usage...\n');
 
-    const oldComponents = [
-      'MessageCenterEnhanced',
-      'EnhancedMessageComposer'
-    ];
+    const oldComponents = ['MessageCenterEnhanced', 'EnhancedMessageComposer'];
 
-    const pageFiles = await glob('**/page.tsx', { 
+    const pageFiles = await glob('**/page.tsx', {
       cwd: this.workspaceRoot,
-      ignore: ['node_modules/**', '.next/**', 'dist/**']
+      ignore: ['node_modules/**', '.next/**', 'dist/**'],
     });
 
     let hasIssues = false;
 
     for (const component of oldComponents) {
       const usages = await this.findComponentUsages(component);
-      
+
       // Filter to only page files and component files
-      const pageUsages = usages.filter(usage => 
-        usage.file.includes('page.tsx') || 
-        usage.file.includes('Page.tsx')
+      const pageUsages = usages.filter(
+        (usage) =>
+          usage.file.includes('page.tsx') || usage.file.includes('Page.tsx'),
       );
 
       if (pageUsages.length > 0) {
         console.log(`❌ Found ${component} still being used in page files:`);
-        pageUsages.forEach(usage => {
+        pageUsages.forEach((usage) => {
           console.log(`   📄 ${usage.file}:${usage.line}`);
           console.log(`      ${usage.content}`);
         });
@@ -103,14 +100,14 @@ class UIChangeVerifier {
 
     // Check that MVP component is being used
     const mvpUsages = await this.findComponentUsages('MessageCenterMVP');
-    const mvpPageUsages = mvpUsages.filter(usage => 
-      usage.file.includes('page.tsx') || 
-      usage.file.includes('Page.tsx')
+    const mvpPageUsages = mvpUsages.filter(
+      (usage) =>
+        usage.file.includes('page.tsx') || usage.file.includes('Page.tsx'),
     );
 
     if (mvpPageUsages.length > 0) {
       console.log(`✅ MessageCenterMVP is being used in page files:`);
-      mvpPageUsages.forEach(usage => {
+      mvpPageUsages.forEach((usage) => {
         console.log(`   📄 ${usage.file}:${usage.line}`);
       });
     } else {
@@ -130,9 +127,9 @@ class UIChangeVerifier {
     try {
       // Check TypeScript compilation
       console.log('📝 Running TypeScript check...');
-      execSync('npx tsc --noEmit', { 
+      execSync('npx tsc --noEmit', {
         cwd: this.workspaceRoot,
-        stdio: 'inherit'
+        stdio: 'inherit',
       });
       console.log('✅ TypeScript check passed');
 
@@ -140,7 +137,7 @@ class UIChangeVerifier {
       console.log('\n📝 Running ESLint check...');
       execSync('npx eslint . --max-warnings 0', {
         cwd: this.workspaceRoot,
-        stdio: 'inherit'
+        stdio: 'inherit',
       });
       console.log('✅ ESLint check passed');
 
@@ -156,23 +153,27 @@ class UIChangeVerifier {
    */
   async runFullVerification(): Promise<boolean> {
     console.log('🚀 Starting UI Changes Verification\n');
-    console.log('=' .repeat(50));
+    console.log('='.repeat(50));
 
     const messagingOk = await this.verifyMessagingComponents();
     const errorsOk = await this.checkForErrors();
 
-    console.log('\n' + '=' .repeat(50));
+    console.log('\n' + '='.repeat(50));
     console.log('📋 Verification Summary:');
     console.log(`   Messaging Components: ${messagingOk ? '✅' : '❌'}`);
     console.log(`   No Errors: ${errorsOk ? '✅' : '❌'}`);
 
     const overallSuccess = messagingOk && errorsOk;
-    console.log(`\n🎯 Overall Result: ${overallSuccess ? '✅ PASSED' : '❌ FAILED'}`);
+    console.log(
+      `\n🎯 Overall Result: ${overallSuccess ? '✅ PASSED' : '❌ FAILED'}`,
+    );
 
     if (!overallSuccess) {
       console.log('\n💡 Next Steps:');
       if (!messagingOk) {
-        console.log('   - Update page files to use MessageCenterMVP instead of old components');
+        console.log(
+          '   - Update page files to use MessageCenterMVP instead of old components',
+        );
       }
       if (!errorsOk) {
         console.log('   - Fix TypeScript and ESLint errors before deploying');
@@ -186,11 +187,12 @@ class UIChangeVerifier {
 // Run verification if called directly
 if (require.main === module) {
   const verifier = new UIChangeVerifier();
-  verifier.runFullVerification()
-    .then(success => {
+  verifier
+    .runFullVerification()
+    .then((success) => {
       process.exit(success ? 0 : 1);
     })
-    .catch(error => {
+    .catch((error) => {
       console.error('Verification failed:', error);
       process.exit(1);
     });

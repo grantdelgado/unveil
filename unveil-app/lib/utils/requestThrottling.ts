@@ -19,7 +19,7 @@ class RequestThrottler {
   throttle<T extends (...args: unknown[]) => unknown>(
     key: string,
     fn: T,
-    delay: number = this.defaultDelay
+    delay: number = this.defaultDelay,
   ): (...args: Parameters<T>) => void {
     return (...args: Parameters<T>) => {
       const now = Date.now();
@@ -32,10 +32,13 @@ class RequestThrottler {
         }
 
         // Set new timeout to call function after delay
-        entry.timeoutId = setTimeout(() => {
-          fn(...args);
-          this.cache.set(key, { lastCalled: Date.now() });
-        }, delay - (now - entry.lastCalled));
+        entry.timeoutId = setTimeout(
+          () => {
+            fn(...args);
+            this.cache.set(key, { lastCalled: Date.now() });
+          },
+          delay - (now - entry.lastCalled),
+        );
 
         return;
       }
@@ -53,7 +56,7 @@ class RequestThrottler {
   debounce<T extends (...args: unknown[]) => unknown>(
     key: string,
     fn: T,
-    delay: number = this.defaultDelay
+    delay: number = this.defaultDelay,
   ): (...args: Parameters<T>) => void {
     return (...args: Parameters<T>) => {
       const entry = this.cache.get(key);
@@ -88,7 +91,7 @@ class RequestThrottler {
    * Clear all throttle caches
    */
   clearAll(): void {
-    this.cache.forEach(entry => {
+    this.cache.forEach((entry) => {
       if (entry.timeoutId) {
         clearTimeout(entry.timeoutId);
       }
@@ -102,7 +105,7 @@ class RequestThrottler {
   isThrottled(key: string, delay: number = this.defaultDelay): boolean {
     const entry = this.cache.get(key);
     if (!entry) return false;
-    
+
     return Date.now() - entry.lastCalled < delay;
   }
 }
@@ -116,7 +119,7 @@ const globalThrottler = new RequestThrottler();
 export function throttleGuestFetch(
   eventId: string,
   fetchFn: () => Promise<void>,
-  delay: number = 5000 // 5 seconds
+  delay: number = 5000, // 5 seconds
 ): () => void {
   const key = `guest-fetch-${eventId}`;
   return globalThrottler.throttle(key, fetchFn, delay);
@@ -128,7 +131,7 @@ export function throttleGuestFetch(
 export function debounceGuestUpdate(
   eventId: string,
   updateFn: () => Promise<void>,
-  delay: number = 2000 // 2 seconds
+  delay: number = 2000, // 2 seconds
 ): () => void {
   const key = `guest-update-${eventId}`;
   return globalThrottler.debounce(key, updateFn, delay);
@@ -140,7 +143,7 @@ export function debounceGuestUpdate(
 export function throttleSMSSend(
   eventId: string,
   smsFn: () => Promise<void>,
-  delay: number = 10000 // 10 seconds
+  delay: number = 10000, // 10 seconds
 ): () => void {
   const key = `sms-send-${eventId}`;
   return globalThrottler.throttle(key, smsFn, delay);
@@ -160,18 +163,18 @@ export function clearEventThrottles(eventId: string): void {
  */
 export function createEventRequestManager(eventId: string) {
   return {
-    throttledFetch: (fetchFn: () => Promise<void>) => 
+    throttledFetch: (fetchFn: () => Promise<void>) =>
       throttleGuestFetch(eventId, fetchFn),
-    debouncedUpdate: (updateFn: () => Promise<void>) => 
+    debouncedUpdate: (updateFn: () => Promise<void>) =>
       debounceGuestUpdate(eventId, updateFn),
-    throttledSMS: (smsFn: () => Promise<void>) => 
+    throttledSMS: (smsFn: () => Promise<void>) =>
       throttleSMSSend(eventId, smsFn),
     clearAll: () => clearEventThrottles(eventId),
     isThrottled: (type: 'fetch' | 'update' | 'sms', customDelay?: number) => {
       const delays = { fetch: 5000, update: 2000, sms: 10000 };
       const delay = customDelay || delays[type];
       return globalThrottler.isThrottled(`guest-${type}-${eventId}`, delay);
-    }
+    },
   };
 }
 

@@ -1,11 +1,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { EventCreationService } from '@/lib/services/eventCreation';
-import type { 
-  EventCreationInput, 
+import type {
+  EventCreationInput,
   EventCreationResult,
-  HostGuestProfile
+  HostGuestProfile,
 } from '@/lib/services/eventCreation';
-import { mockSupabaseClient, mockAuthenticatedUser, resetMockSupabaseClient } from '@/src/test/setup';
+import {
+  mockSupabaseClient,
+  mockAuthenticatedUser,
+  resetMockSupabaseClient,
+} from '@/src/test/setup';
 import { logger } from '@/lib/logger';
 
 // Mock the logger module
@@ -22,7 +26,7 @@ const mockLogger = vi.mocked(logger);
 describe('EventCreationService', () => {
   const mockUserId = 'test-user-123';
   const mockEventId = 'event-123';
-  
+
   const validEventInput: EventCreationInput = {
     title: 'Test Wedding',
     event_date: '2024-12-25',
@@ -33,7 +37,7 @@ describe('EventCreationService', () => {
 
   const mockHostProfile: HostGuestProfile = {
     full_name: 'John Doe',
-    phone: '+1234567890'
+    phone: '+1234567890',
   };
 
   beforeEach(() => {
@@ -41,13 +45,13 @@ describe('EventCreationService', () => {
     resetMockSupabaseClient();
     // Set up authenticated user session that will pass validation
     mockSupabaseClient.auth.getSession.mockResolvedValue({
-      data: { 
-        session: { 
+      data: {
+        session: {
           user: { id: mockUserId },
-          access_token: 'test-token'
-        } 
+          access_token: 'test-token',
+        },
       },
-      error: null
+      error: null,
     });
     mockSupabaseClient.auth.getUser.mockResolvedValue({
       data: { user: { id: mockUserId, email: 'test@example.com' } },
@@ -72,12 +76,12 @@ describe('EventCreationService', () => {
                 id: mockEventId,
                 title: validEventInput.title,
                 host_user_id: mockUserId,
-                created_at: '2024-01-01T00:00:00Z'
+                created_at: '2024-01-01T00:00:00Z',
               },
-              error: null
-            })
-          })
-        })
+              error: null,
+            }),
+          }),
+        }),
       });
 
       // Mock successful host profile fetch
@@ -86,25 +90,26 @@ describe('EventCreationService', () => {
           eq: vi.fn().mockReturnValueOnce({
             single: vi.fn().mockResolvedValueOnce({
               data: mockHostProfile,
-              error: null
-            })
-          })
-        })
+              error: null,
+            }),
+          }),
+        }),
       });
 
       // Mock successful host guest creation
       mockSupabaseClient.from.mockReturnValueOnce({
         insert: vi.fn().mockResolvedValueOnce({
           data: null,
-          error: null
-        })
+          error: null,
+        }),
       });
 
       // Execute the test
-      const result: EventCreationResult = await EventCreationService.createEventWithHost(
-        validEventInput,
-        mockUserId
-      );
+      const result: EventCreationResult =
+        await EventCreationService.createEventWithHost(
+          validEventInput,
+          mockUserId,
+        );
 
       // Assertions
       expect(result.success).toBe(true);
@@ -119,28 +124,28 @@ describe('EventCreationService', () => {
         'Starting event creation',
         expect.objectContaining({
           userId: mockUserId,
-          title: validEventInput.title
-        })
+          title: validEventInput.title,
+        }),
       );
 
       expect(mockLogger.info).toHaveBeenCalledWith(
         'Event creation completed successfully',
         expect.objectContaining({
-          eventId: mockEventId
-        })
+          eventId: mockEventId,
+        }),
       );
     });
 
     it('should handle successful creation without image', async () => {
       // Mock successful session validation
       mockSupabaseClient.auth.getSession.mockResolvedValueOnce({
-        data: { 
-          session: { 
+        data: {
+          session: {
             user: { id: mockUserId },
-            access_token: 'test-token'
-          } 
+            access_token: 'test-token',
+          },
         },
-        error: null
+        error: null,
       });
 
       // Mock successful event creation
@@ -152,12 +157,12 @@ describe('EventCreationService', () => {
                 id: mockEventId,
                 title: validEventInput.title,
                 host_user_id: mockUserId,
-                created_at: '2024-01-01T00:00:00Z'
+                created_at: '2024-01-01T00:00:00Z',
               },
-              error: null
-            })
-          })
-        })
+              error: null,
+            }),
+          }),
+        }),
       });
 
       // Mock host profile and guest creation
@@ -167,21 +172,21 @@ describe('EventCreationService', () => {
             eq: vi.fn().mockReturnValueOnce({
               single: vi.fn().mockResolvedValueOnce({
                 data: mockHostProfile,
-                error: null
-              })
-            })
-          })
+                error: null,
+              }),
+            }),
+          }),
         })
         .mockReturnValueOnce({
           insert: vi.fn().mockResolvedValueOnce({
             data: null,
-            error: null
-          })
+            error: null,
+          }),
         });
 
       const result = await EventCreationService.createEventWithHost(
         validEventInput,
-        mockUserId
+        mockUserId,
       );
 
       expect(result.success).toBe(true);
@@ -194,23 +199,25 @@ describe('EventCreationService', () => {
       // Mock failed session validation
       mockSupabaseClient.auth.getSession.mockResolvedValueOnce({
         data: { session: null },
-        error: { message: 'Not authenticated' }
+        error: { message: 'Not authenticated' },
       });
 
       const result = await EventCreationService.createEventWithHost(
         validEventInput,
-        mockUserId
+        mockUserId,
       );
 
       expect(result.success).toBe(false);
       expect(result.error?.code).toBe('AUTH_ERROR');
-      expect(result.error?.message).toBe('Authentication error. Please try logging in again.');
+      expect(result.error?.message).toBe(
+        'Authentication error. Please try logging in again.',
+      );
     });
 
     it('should handle image upload failure', async () => {
       const eventInputWithImage: EventCreationInput = {
         ...validEventInput,
-        header_image: new File(['test'], 'test.jpg', { type: 'image/jpeg' })
+        header_image: new File(['test'], 'test.jpg', { type: 'image/jpeg' }),
       };
 
       // Session validation is handled in beforeEach
@@ -219,16 +226,16 @@ describe('EventCreationService', () => {
       mockSupabaseClient.storage.from.mockReturnValue({
         upload: vi.fn().mockResolvedValue({
           data: null,
-          error: { message: 'Upload failed' }
+          error: { message: 'Upload failed' },
         }),
         getPublicUrl: vi.fn().mockReturnValue({
-          data: { publicUrl: 'https://example.com/image.jpg' }
-        })
+          data: { publicUrl: 'https://example.com/image.jpg' },
+        }),
       });
 
       const result = await EventCreationService.createEventWithHost(
         eventInputWithImage,
-        mockUserId
+        mockUserId,
       );
 
       expect(result.success).toBe(false);
@@ -245,15 +252,15 @@ describe('EventCreationService', () => {
           select: vi.fn().mockReturnValueOnce({
             single: vi.fn().mockResolvedValueOnce({
               data: null,
-              error: { code: '23505', message: 'Duplicate key violation' }
-            })
-          })
-        })
+              error: { code: '23505', message: 'Duplicate key violation' },
+            }),
+          }),
+        }),
       });
 
       const result = await EventCreationService.createEventWithHost(
         validEventInput,
-        mockUserId
+        mockUserId,
       );
 
       expect(result.success).toBe(false);
@@ -263,13 +270,13 @@ describe('EventCreationService', () => {
     it('should handle guest insert failure with rollback', async () => {
       // Mock successful session validation
       mockSupabaseClient.auth.getSession.mockResolvedValueOnce({
-        data: { 
-          session: { 
+        data: {
+          session: {
             user: { id: mockUserId },
-            access_token: 'test-token'
-          } 
+            access_token: 'test-token',
+          },
         },
-        error: null
+        error: null,
       });
 
       // Mock successful event creation
@@ -281,12 +288,12 @@ describe('EventCreationService', () => {
                 id: mockEventId,
                 title: validEventInput.title,
                 host_user_id: mockUserId,
-                created_at: '2024-01-01T00:00:00Z'
+                created_at: '2024-01-01T00:00:00Z',
               },
-              error: null
-            })
-          })
-        })
+              error: null,
+            }),
+          }),
+        }),
       });
 
       // Mock successful host profile fetch
@@ -295,18 +302,18 @@ describe('EventCreationService', () => {
           eq: vi.fn().mockReturnValueOnce({
             single: vi.fn().mockResolvedValueOnce({
               data: mockHostProfile,
-              error: null
-            })
-          })
-        })
+              error: null,
+            }),
+          }),
+        }),
       });
 
       // Mock failed host guest creation
       mockSupabaseClient.from.mockReturnValueOnce({
         insert: vi.fn().mockResolvedValueOnce({
           data: null,
-          error: { code: '23514', message: 'Check constraint violation' }
-        })
+          error: { code: '23514', message: 'Check constraint violation' },
+        }),
       });
 
       // Mock successful rollback (event deletion)
@@ -314,20 +321,22 @@ describe('EventCreationService', () => {
         delete: vi.fn().mockReturnValueOnce({
           eq: vi.fn().mockResolvedValueOnce({
             data: null,
-            error: null
-          })
-        })
+            error: null,
+          }),
+        }),
       });
 
       const result = await EventCreationService.createEventWithHost(
         validEventInput,
-        mockUserId
+        mockUserId,
       );
 
       // Assertions
       expect(result.success).toBe(false);
       expect(result.error?.code).toBe('HOST_GUEST_ERROR');
-      expect(result.error?.message).toBe('Failed to create host guest entry. Event creation rolled back.');
+      expect(result.error?.message).toBe(
+        'Failed to create host guest entry. Event creation rolled back.',
+      );
 
       // Verify rollback logging was called
       expect(mockLogger.warn).toHaveBeenCalledWith(
@@ -337,30 +346,30 @@ describe('EventCreationService', () => {
           userId: mockUserId,
           error: expect.objectContaining({
             code: '23514',
-            message: 'Check constraint violation'
-          })
-        })
+            message: 'Check constraint violation',
+          }),
+        }),
       );
 
       // Verify rollback success logging
       expect(mockLogger.info).toHaveBeenCalledWith(
         'Event creation rolled back successfully',
         expect.objectContaining({
-          eventId: mockEventId
-        })
+          eventId: mockEventId,
+        }),
       );
     });
 
     it('should handle rollback failure gracefully', async () => {
       // Mock successful session validation
       mockSupabaseClient.auth.getSession.mockResolvedValueOnce({
-        data: { 
-          session: { 
+        data: {
+          session: {
             user: { id: mockUserId },
-            access_token: 'test-token'
-          } 
+            access_token: 'test-token',
+          },
         },
-        error: null
+        error: null,
       });
 
       // Mock successful event creation
@@ -372,12 +381,12 @@ describe('EventCreationService', () => {
                 id: mockEventId,
                 title: validEventInput.title,
                 host_user_id: mockUserId,
-                created_at: '2024-01-01T00:00:00Z'
+                created_at: '2024-01-01T00:00:00Z',
               },
-              error: null
-            })
-          })
-        })
+              error: null,
+            }),
+          }),
+        }),
       });
 
       // Mock successful host profile fetch
@@ -386,18 +395,18 @@ describe('EventCreationService', () => {
           eq: vi.fn().mockReturnValueOnce({
             single: vi.fn().mockResolvedValueOnce({
               data: mockHostProfile,
-              error: null
-            })
-          })
-        })
+              error: null,
+            }),
+          }),
+        }),
       });
 
       // Mock failed host guest creation
       mockSupabaseClient.from.mockReturnValueOnce({
         insert: vi.fn().mockResolvedValueOnce({
           data: null,
-          error: { code: '23514', message: 'Check constraint violation' }
-        })
+          error: { code: '23514', message: 'Check constraint violation' },
+        }),
       });
 
       // Mock failed rollback (event deletion fails)
@@ -405,14 +414,14 @@ describe('EventCreationService', () => {
         delete: vi.fn().mockReturnValueOnce({
           eq: vi.fn().mockResolvedValueOnce({
             data: null,
-            error: { message: 'Delete failed' }
-          })
-        })
+            error: { message: 'Delete failed' },
+          }),
+        }),
       });
 
       const result = await EventCreationService.createEventWithHost(
         validEventInput,
-        mockUserId
+        mockUserId,
       );
 
       // Should still return failure even if rollback fails
@@ -423,13 +432,13 @@ describe('EventCreationService', () => {
     it('should handle missing host profile gracefully', async () => {
       // Mock successful session validation
       mockSupabaseClient.auth.getSession.mockResolvedValueOnce({
-        data: { 
-          session: { 
+        data: {
+          session: {
             user: { id: mockUserId },
-            access_token: 'test-token'
-          } 
+            access_token: 'test-token',
+          },
         },
-        error: null
+        error: null,
       });
 
       // Mock successful event creation
@@ -441,12 +450,12 @@ describe('EventCreationService', () => {
                 id: mockEventId,
                 title: validEventInput.title,
                 host_user_id: mockUserId,
-                created_at: '2024-01-01T00:00:00Z'
+                created_at: '2024-01-01T00:00:00Z',
               },
-              error: null
-            })
-          })
-        })
+              error: null,
+            }),
+          }),
+        }),
       });
 
       // Mock failed host profile fetch (no phone number)
@@ -455,10 +464,10 @@ describe('EventCreationService', () => {
           eq: vi.fn().mockReturnValueOnce({
             single: vi.fn().mockResolvedValueOnce({
               data: { full_name: 'John Doe', phone: null },
-              error: null
-            })
-          })
-        })
+              error: null,
+            }),
+          }),
+        }),
       });
 
       // Mock rollback
@@ -466,14 +475,14 @@ describe('EventCreationService', () => {
         delete: vi.fn().mockReturnValueOnce({
           eq: vi.fn().mockResolvedValueOnce({
             data: null,
-            error: null
-          })
-        })
+            error: null,
+          }),
+        }),
       });
 
       const result = await EventCreationService.createEventWithHost(
         validEventInput,
-        mockUserId
+        mockUserId,
       );
 
       expect(result.success).toBe(false);
@@ -490,13 +499,13 @@ describe('EventCreationService', () => {
 
       // Mock successful session validation
       mockSupabaseClient.auth.getSession.mockResolvedValueOnce({
-        data: { 
-          session: { 
+        data: {
+          session: {
             user: { id: mockUserId },
-            access_token: 'test-token'
-          } 
+            access_token: 'test-token',
+          },
         },
-        error: null
+        error: null,
       });
 
       // Mock event creation failure due to constraint
@@ -505,15 +514,15 @@ describe('EventCreationService', () => {
           select: vi.fn().mockReturnValueOnce({
             single: vi.fn().mockResolvedValueOnce({
               data: null,
-              error: { code: '23502', message: 'Not null violation' }
-            })
-          })
-        })
+              error: { code: '23502', message: 'Not null violation' },
+            }),
+          }),
+        }),
       });
 
       const result = await EventCreationService.createEventWithHost(
         invalidInput,
-        mockUserId
+        mockUserId,
       );
 
       expect(result.success).toBe(false);
@@ -523,13 +532,13 @@ describe('EventCreationService', () => {
     it('should handle unexpected errors gracefully', async () => {
       // Mock successful session validation
       mockSupabaseClient.auth.getSession.mockResolvedValueOnce({
-        data: { 
-          session: { 
+        data: {
+          session: {
             user: { id: mockUserId },
-            access_token: 'test-token'
-          } 
+            access_token: 'test-token',
+          },
         },
-        error: null
+        error: null,
       });
 
       // Mock unexpected error during event creation
@@ -539,11 +548,13 @@ describe('EventCreationService', () => {
 
       const result = await EventCreationService.createEventWithHost(
         validEventInput,
-        mockUserId
+        mockUserId,
       );
 
       expect(result.success).toBe(false);
-      expect(result.error?.message).toBe('An unexpected error occurred. Please try again.');
+      expect(result.error?.message).toBe(
+        'An unexpected error occurred. Please try again.',
+      );
     });
   });
 });

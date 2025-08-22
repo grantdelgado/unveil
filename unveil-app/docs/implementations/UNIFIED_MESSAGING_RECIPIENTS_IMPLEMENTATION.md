@@ -5,12 +5,14 @@
 ### Where Old Recipient Queries Came From
 
 **Messaging Components:**
+
 - `useGuestSelection`: Direct `event_guests` query (line 68-93) - **MISSING `removed_at IS NULL`**
 - `useRecipientPreview`: Direct `event_guests` query with `users(*)` join (line 47-55) - **MISSING `removed_at IS NULL`**
 - Send API validation: Direct `event_guests` query (line 79-83) - **MISSING `removed_at IS NULL`**
 
 **Guest Management (Canonical):**
-- Uses `get_event_guests_with_display_names` RPC 
+
+- Uses `get_event_guests_with_display_names` RPC
 - Includes: `WHERE eg.event_id = p_event_id AND eg.removed_at IS NULL`
 
 ### The Problem
@@ -34,6 +36,7 @@ get_messaging_recipients(p_event_id UUID)
 **Canonical Scope:** `event_guests WHERE event_id = $id AND removed_at IS NULL`
 
 **Returns:** One row per `event_guests.id` with no duplicates:
+
 - `event_guest_id`, `guest_name`, `phone`, `sms_opt_out`, `declined_at`, `role`
 - `invited_at`, `guest_tags`, `guest_display_name`
 - `user_full_name`, `user_phone`, `user_email`, `has_valid_phone`
@@ -45,11 +48,13 @@ get_messaging_recipients(p_event_id UUID)
 ### 3. Updated Messaging Components
 
 **`useGuestSelection`:**
+
 - Now uses `useMessagingRecipients` instead of direct query
 - Transforms data to `GuestWithDisplayName` format for compatibility
 - Maintains existing selection logic and eligibility rules
 
 **`useRecipientPreview`:**
+
 - Now uses `useMessagingRecipients` instead of direct query with joins
 - Eliminates potential duplicate issues from `users(*)` join
 - Maintains existing filtering and preview logic
@@ -57,11 +62,13 @@ get_messaging_recipients(p_event_id UUID)
 ### 4. Enhanced Server-Side Validation
 
 **Send API (`/api/messages/send`):**
+
 - Added `removed_at IS NULL` check to all recipient validation queries
 - Added specific error message for removed/stale guest IDs
 - Enhanced validation for explicit selection, individual selection, and "all" filter
 
 **Scheduled Message Processing:**
+
 - Added `removed_at IS NULL` check to all recipient resolution queries
 - Ensures scheduled messages cannot target removed guests
 
@@ -102,12 +109,14 @@ get_messaging_recipients(p_event_id UUID)
 ## Before/After Summary
 
 **Before:**
+
 - Messaging could show removed guests
 - Different queries used by messaging vs Guest Management
 - Potential for duplicate recipients from joins
 - Server validation didn't check canonical scope
 
 **After:**
+
 - Messaging uses same canonical scope as Guest Management
 - Single source of truth via shared RPC
 - No duplicates (one row per event_guests.id)

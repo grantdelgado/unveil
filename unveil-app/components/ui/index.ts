@@ -14,27 +14,23 @@ export { Pagination } from './Pagination';
 
 export { StorageErrorFallback } from './StorageErrorFallback';
 // Typography components (individual exports)
-export { 
+export {
   PageTitle,
-  SubTitle, 
+  SubTitle,
   SectionTitle,
   FieldLabel,
-  MicroCopy
+  MicroCopy,
 } from './Typography';
 
 // Button components
-export { 
-  PrimaryButton,
-  SecondaryButton,
-  IconButton
-} from './UnveilButton';
+export { PrimaryButton, SecondaryButton, IconButton } from './UnveilButton';
 
 // Loading components
 export { SkeletonLoader } from './EmptyState';
 
 // Backward compatibility exports (if needed)
 export {
-  PrimaryButton as UnveilButton,  // If code expects UnveilButton
+  PrimaryButton as UnveilButton, // If code expects UnveilButton
 } from './UnveilButton';
 
 // Create a Typography namespace object (if needed)
@@ -42,7 +38,11 @@ import * as TypographyComponents from './Typography';
 export const Typography = TypographyComponents;
 
 // Legacy Input (deprecated - use focused inputs instead)
-export { TextInput as UnveilTextInput, PhoneNumberInput as UnveilPhoneInput, OTPInput as UnveilOTPInput } from './UnveilInput';
+export {
+  TextInput as UnveilTextInput,
+  PhoneNumberInput as UnveilPhoneInput,
+  OTPInput as UnveilOTPInput,
+} from './UnveilInput';
 
 // Also export with standard names for compatibility
 export { PhoneNumberInput, TextInput, OTPInput } from './UnveilInput';

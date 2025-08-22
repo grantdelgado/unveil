@@ -90,15 +90,13 @@ export const guestImportSchema = z.object({
     .min(1, 'Phone number is required')
     .max(20, 'Phone number must be less than 20 characters')
     .regex(/^[\+]?[1-9][\d]{0,15}$/, 'Invalid phone number format')
-    .transform(val => val.replace(/[\s\-\(\)]/g, '')), // Clean phone number
+    .transform((val) => val.replace(/[\s\-\(\)]/g, '')), // Clean phone number
   guest_email: z
     .string()
     .email('Invalid email format')
     .optional()
     .or(z.literal('')),
-  role: z
-    .enum(['guest', 'host', 'admin'])
-    .default('guest'),
+  role: z.enum(['guest', 'host', 'admin']).default('guest'),
   notes: z
     .string()
     .max(1000, 'Notes must be less than 1000 characters')
@@ -116,9 +114,7 @@ export const guestImportBatchSchema = z.object({
     .array(guestImportSchema)
     .min(1, 'At least one guest is required')
     .max(500, 'Maximum 500 guests per import'),
-  event_id: z
-    .string()
-    .uuid('Invalid event ID format'),
+  event_id: z.string().uuid('Invalid event ID format'),
 });
 
 // CSV file validation schema
@@ -234,10 +230,10 @@ export const validateCSVHeader = (data: unknown) =>
  * Validates phone number format
  * Accepts various formats and normalizes to E.164
  */
-export function validatePhoneNumber(phone: string): { 
-  isValid: boolean; 
-  normalized?: string; 
-  error?: string 
+export function validatePhoneNumber(phone: string): {
+  isValid: boolean;
+  normalized?: string;
+  error?: string;
 } {
   if (!phone || typeof phone !== 'string') {
     return { isValid: false, error: 'Phone number is required' };
@@ -248,34 +244,34 @@ export function validatePhoneNumber(phone: string): {
 
   // Check for development numbers
   if (digits.startsWith('555000000')) {
-    return { 
-      isValid: true, 
+    return {
+      isValid: true,
       normalized: `+1${digits}`,
-      error: undefined 
+      error: undefined,
     };
   }
 
   // US phone number validation (10 digits)
   if (digits.length === 10) {
-    return { 
-      isValid: true, 
+    return {
+      isValid: true,
       normalized: `+1${digits}`,
-      error: undefined 
+      error: undefined,
     };
   }
 
   // E.164 format (11 digits starting with 1)
   if (digits.length === 11 && digits.startsWith('1')) {
-    return { 
-      isValid: true, 
+    return {
+      isValid: true,
       normalized: `+${digits}`,
-      error: undefined 
+      error: undefined,
     };
   }
 
-  return { 
-    isValid: false, 
-    error: 'Please enter a valid US phone number (10 digits)' 
+  return {
+    isValid: false,
+    error: 'Please enter a valid US phone number (10 digits)',
   };
 }
 
@@ -310,11 +306,17 @@ export function validateEventTitle(title: string): {
   }
 
   if (title.trim().length < 3) {
-    return { isValid: false, error: 'Event title must be at least 3 characters' };
+    return {
+      isValid: false,
+      error: 'Event title must be at least 3 characters',
+    };
   }
 
   if (title.length > 100) {
-    return { isValid: false, error: 'Event title must be less than 100 characters' };
+    return {
+      isValid: false,
+      error: 'Event title must be less than 100 characters',
+    };
   }
 
   return { isValid: true };
@@ -336,7 +338,10 @@ export function validateMessageContent(content: string): {
   }
 
   if (content.length > 1000) {
-    return { isValid: false, error: 'Message must be less than 1000 characters' };
+    return {
+      isValid: false,
+      error: 'Message must be less than 1000 characters',
+    };
   }
 
   return { isValid: true };

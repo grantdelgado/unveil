@@ -178,13 +178,15 @@ export const MessagingErrorFallback: React.FC<ErrorFallbackProps> = ({
     window.location.reload();
   };
 
-  const isNetworkError = error.message.includes('network') || 
-                        error.message.includes('fetch') ||
-                        error.message.includes('connection');
+  const isNetworkError =
+    error.message.includes('network') ||
+    error.message.includes('fetch') ||
+    error.message.includes('connection');
 
-  const isPermissionError = error.message.includes('permission') ||
-                           error.message.includes('access') ||
-                           error.message.includes('unauthorized');
+  const isPermissionError =
+    error.message.includes('permission') ||
+    error.message.includes('access') ||
+    error.message.includes('unauthorized');
 
   return (
     <div className="bg-app rounded-xl shadow-sm border border-rose-200 p-8">
@@ -210,15 +212,29 @@ export const MessagingErrorFallback: React.FC<ErrorFallbackProps> = ({
         </h3>
 
         <p className="text-stone-600 mb-6">
-          {isNetworkError && "We're having trouble connecting to our servers. Please check your internet connection."}
-          {isPermissionError && "You don't have permission to access this messaging feature. Please contact support if this seems wrong."}
-          {!isNetworkError && !isPermissionError && "We're experiencing an issue with the messaging system. Our team has been notified."}
+          {isNetworkError &&
+            "We're having trouble connecting to our servers. Please check your internet connection."}
+          {isPermissionError &&
+            "You don't have permission to access this messaging feature. Please contact support if this seems wrong."}
+          {!isNetworkError &&
+            !isPermissionError &&
+            "We're experiencing an issue with the messaging system. Our team has been notified."}
         </p>
 
         <div className="space-y-3">
           <Button onClick={resetError} className="w-full">
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            <svg
+              className="w-4 h-4 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
             </svg>
             Try Again
           </Button>
@@ -229,8 +245,18 @@ export const MessagingErrorFallback: React.FC<ErrorFallbackProps> = ({
               onClick={handleRefresh}
               className="w-full"
             >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              <svg
+                className="w-4 h-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
               </svg>
               Refresh Page
             </Button>
@@ -241,8 +267,18 @@ export const MessagingErrorFallback: React.FC<ErrorFallbackProps> = ({
             onClick={() => window.history.back()}
             className="w-full"
           >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            <svg
+              className="w-4 h-4 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
             </svg>
             Go Back
           </Button>

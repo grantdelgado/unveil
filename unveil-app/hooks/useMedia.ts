@@ -17,7 +17,7 @@ interface UseMediaReturn {
   media: Media[] | null;
   loading: boolean;
   error: Error | null;
-  
+
   // Actions
   uploadMedia: (request: UploadMediaRequest) => Promise<Media>;
   deleteMedia: (id: string) => Promise<void>;
@@ -28,22 +28,28 @@ interface UseMediaReturn {
 
 export function useMedia(eventId?: string): UseMediaReturn {
   const queryClient = useQueryClient();
-  
+
   // Get media for event
-  const { data: media, isLoading: loading, error } = useQuery({
+  const {
+    data: media,
+    isLoading: loading,
+    error,
+  } = useQuery({
     queryKey: ['media', eventId],
     queryFn: async () => {
       if (!eventId) return [];
-      
+
       const { data, error } = await supabase
         .from('media')
-        .select(`
+        .select(
+          `
           *,
           uploader:users!media_uploader_user_id_fkey(*)
-        `)
+        `,
+        )
         .eq('event_id', eventId)
         .order('created_at', { ascending: false });
-      
+
       if (error) throw new Error(error.message);
       return data;
     },
@@ -53,7 +59,9 @@ export function useMedia(eventId?: string): UseMediaReturn {
   // Upload media mutation
   const uploadMediaMutation = useMutation({
     mutationFn: async (request: UploadMediaRequest): Promise<Media> => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
       // Create unique filename
@@ -69,7 +77,9 @@ export function useMedia(eventId?: string): UseMediaReturn {
       if (uploadError) throw new Error(uploadError.message);
 
       // Determine media type
-      const mediaType = request.file.type.startsWith('video/') ? 'video' : 'image';
+      const mediaType = request.file.type.startsWith('video/')
+        ? 'video'
+        : 'image';
 
       // Create media record
       const mediaData: MediaInsert = {
@@ -85,7 +95,7 @@ export function useMedia(eventId?: string): UseMediaReturn {
         .insert(mediaData)
         .select('*')
         .single();
-      
+
       if (error) throw new Error(error.message);
       return data;
     },
@@ -114,11 +124,8 @@ export function useMedia(eventId?: string): UseMediaReturn {
       if (storageError) throw new Error(storageError.message);
 
       // Delete from database
-      const { error } = await supabase
-        .from('media')
-        .delete()
-        .eq('id', id);
-      
+      const { error } = await supabase.from('media').delete().eq('id', id);
+
       if (error) throw new Error(error.message);
     },
     onSuccess: () => {
@@ -127,29 +134,38 @@ export function useMedia(eventId?: string): UseMediaReturn {
   });
 
   // Helper functions
-  const getEventMedia = useCallback(async (eventId: string): Promise<Media[]> => {
-    const { data, error } = await supabase
-      .from('media')
-      .select('*')
-      .eq('event_id', eventId)
-      .order('created_at', { ascending: false });
-    
-    if (error) throw new Error(error.message);
-    return data;
-  }, []);
+  const getEventMedia = useCallback(
+    async (eventId: string): Promise<Media[]> => {
+      const { data, error } = await supabase
+        .from('media')
+        .select('*')
+        .eq('event_id', eventId)
+        .order('created_at', { ascending: false });
 
-  const getMediaUrl = useCallback(async (storagePath: string): Promise<string> => {
-    const { data, error } = await supabase.storage
-      .from('media')
-      .createSignedUrl(storagePath, 3600); // 1 hour expiry
-    
-    if (error) throw new Error(error.message);
-    return data.signedUrl;
-  }, []);
+      if (error) throw new Error(error.message);
+      return data;
+    },
+    [],
+  );
 
-  const refreshMedia = useCallback(async (eventId: string): Promise<void> => {
-    await queryClient.invalidateQueries({ queryKey: ['media', eventId] });
-  }, [queryClient]);
+  const getMediaUrl = useCallback(
+    async (storagePath: string): Promise<string> => {
+      const { data, error } = await supabase.storage
+        .from('media')
+        .createSignedUrl(storagePath, 3600); // 1 hour expiry
+
+      if (error) throw new Error(error.message);
+      return data.signedUrl;
+    },
+    [],
+  );
+
+  const refreshMedia = useCallback(
+    async (eventId: string): Promise<void> => {
+      await queryClient.invalidateQueries({ queryKey: ['media', eventId] });
+    },
+    [queryClient],
+  );
 
   return {
     media: media || null,

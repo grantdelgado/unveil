@@ -1,6 +1,7 @@
 # Compose Message Recipients Update - Implementation Summary
 
 ## Overview
+
 Updated the Compose Message recipients system to use `display_name` and always include hosts by default. This eliminates the need for the "Advanced Options → Include hosts" toggle and provides a better user experience.
 
 ## Changes Made
@@ -10,6 +11,7 @@ Updated the Compose Message recipients system to use `display_name` and always i
 **Migration:** `supabase/migrations/20250207000001_update_messaging_recipients_always_include_hosts.sql`
 
 - **Updated `get_messaging_recipients` function:**
+
   - Changed `p_include_hosts` default from `false` to `true`
   - Updated display_name logic: `COALESCE(display_name, full_name, guest_name, 'Guest')`
   - Hosts are now included by default and appear first in results (ordered by role)
@@ -20,27 +22,32 @@ Updated the Compose Message recipients system to use `display_name` and always i
 ### 2. Frontend Hook Updates ✅
 
 **File:** `hooks/messaging/useMessagingRecipients.ts`
+
 - Always passes `p_include_hosts: true` to RPC
 - Updated comments to reflect that hosts are always included
 - Removed dependency on `options.includeHosts` in useEffect
 
 **File:** `hooks/messaging/useGuestSelection.ts`
+
 - Removed `includeHosts` parameter from options interface
 - Updated function signature to remove `includeHosts` parameter
 - Always calls `useMessagingRecipients` without host filtering
 
 **File:** `hooks/messaging/useRecipientPreview.ts`
+
 - Updated to always include hosts (removed host filtering)
 
 ### 3. UI Component Updates ✅
 
 **File:** `components/features/messaging/host/MessageComposer.tsx`
+
 - **Removed:** `includeHosts` state variable
 - **Removed:** `HostInclusionToggle` import and usage
 - **Removed:** Entire "Advanced Options" section from UI
 - Updated `useGuestSelection` call to remove `includeHosts` parameter
 
 **File:** `components/features/messaging/host/HostInclusionToggle.tsx`
+
 - **Deleted:** Component no longer needed since hosts are always included
 
 ### 4. TypeScript Types ✅
@@ -59,6 +66,7 @@ Updated the Compose Message recipients system to use `display_name` and always i
 ## Display Name Fallback Logic
 
 The RPC now uses this priority order for display names:
+
 ```sql
 COALESCE(
     NULLIF(eg.display_name, ''),  -- Use event_guests.display_name first
@@ -95,18 +103,22 @@ COALESCE(
 ## Files Modified
 
 ### Database
+
 - `supabase/migrations/20250207000001_update_messaging_recipients_always_include_hosts.sql` (new)
 
 ### Hooks
+
 - `hooks/messaging/useMessagingRecipients.ts` (modified)
 - `hooks/messaging/useGuestSelection.ts` (modified)
 - `hooks/messaging/useRecipientPreview.ts` (modified)
 
 ### Components
+
 - `components/features/messaging/host/MessageComposer.tsx` (modified)
 - `components/features/messaging/host/HostInclusionToggle.tsx` (deleted)
 
 ### Tests
+
 - `lib/utils/url.test.ts` (new - display name fallback logic tests)
 
 ## Summary

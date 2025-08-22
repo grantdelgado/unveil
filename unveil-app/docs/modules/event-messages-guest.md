@@ -6,15 +6,15 @@ The Guest View Event Messages module provides a read-only message feed for guest
 
 ## File Map
 
-| File Path | Purpose |
-|-----------|---------|
-| `app/guest/events/[eventId]/home/page.tsx` | Main guest event page containing the messaging card |
-| `components/features/messaging/guest/GuestMessaging.tsx` | Container component orchestrating guest messaging UI |
-| `components/features/messaging/guest/GuestMessageInput.tsx` | Input component for composing guest replies |
-| `components/features/messaging/guest/ResponseIndicator.tsx` | Status indicator showing if replies are enabled |
-| `components/features/messaging/common/MessageBubble.tsx` | Shared message display component |
-| `hooks/messaging/useGuestMessages.ts` | Hook for fetching messages and sending guest replies |
-| `lib/services/messaging-client.ts` | Client service for message operations including sendMessageToEvent |
+| File Path                                                   | Purpose                                                            |
+| ----------------------------------------------------------- | ------------------------------------------------------------------ |
+| `app/guest/events/[eventId]/home/page.tsx`                  | Main guest event page containing the messaging card                |
+| `components/features/messaging/guest/GuestMessaging.tsx`    | Container component orchestrating guest messaging UI               |
+| `components/features/messaging/guest/GuestMessageInput.tsx` | Input component for composing guest replies                        |
+| `components/features/messaging/guest/ResponseIndicator.tsx` | Status indicator showing if replies are enabled                    |
+| `components/features/messaging/common/MessageBubble.tsx`    | Shared message display component                                   |
+| `hooks/messaging/useGuestMessages.ts`                       | Hook for fetching messages and sending guest replies               |
+| `lib/services/messaging-client.ts`                          | Client service for message operations including sendMessageToEvent |
 
 ## Guest Reply Submission Flow
 
@@ -71,13 +71,15 @@ CREATE TABLE public.messages (
 ```
 
 **Key Relationships:**
+
 - `event_id` → `events.id`: Links message to specific event
 - `sender_user_id` → `users.id`: Identifies message sender (host or guest)
 - No separate replies table - guest responses use same schema
 
 **Message Types:**
+
 - `direct`: Guest replies and direct messages
-- `announcement`: Host announcements 
+- `announcement`: Host announcements
 - `channel`: Reserved for future use
 
 ## RLS Policies & Permissions
@@ -121,32 +123,32 @@ BEGIN
     -- Check if public event FIRST
     IF EXISTS (
         SELECT 1 FROM public.events e
-        WHERE e.id = p_event_id 
+        WHERE e.id = p_event_id
         AND e.is_public = true
     ) THEN
         RETURN true;
     END IF;
-    
+
     -- Cache auth values
     current_user_id := (SELECT auth.uid());
     current_phone := (auth.jwt() ->> 'phone');
-    
+
     -- Host access check
     IF current_user_id IS NOT NULL AND EXISTS (
         SELECT 1 FROM public.events e
-        WHERE e.id = p_event_id 
+        WHERE e.id = p_event_id
         AND e.host_user_id = current_user_id
     ) THEN
         RETURN true;
     END IF;
-    
+
     -- Guest access check
     RETURN EXISTS (
         SELECT 1 FROM public.event_guests eg
-        WHERE eg.event_id = p_event_id 
+        WHERE eg.event_id = p_event_id
         AND (
             (current_user_id IS NOT NULL AND eg.user_id = current_user_id)
-            OR 
+            OR
             (current_phone IS NOT NULL AND eg.phone = current_phone)
         )
     );
@@ -162,10 +164,12 @@ $$;
 // useGuestMessages.ts - Initial fetch
 const { data, error: fetchError } = await supabase
   .from('messages')
-  .select(`
+  .select(
+    `
     *,
     sender:users!messages_sender_user_id_fkey(*)
-  `)
+  `,
+  )
   .eq('event_id', eventId)
   .order('created_at', { ascending: true });
 ```
@@ -186,7 +190,7 @@ const subscription = supabase
     },
     () => {
       fetchMessages(); // Refetch on any change
-    }
+    },
   )
   .subscribe();
 ```
@@ -200,14 +204,12 @@ const sendMessage = async (content: string) => {
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) throw new Error('Not authenticated');
 
-    const { error: sendError } = await supabase
-      .from('messages')
-      .insert({
-        event_id: eventId,
-        content,
-        sender_user_id: user.user.id,
-        message_type: 'direct',
-      });
+    const { error: sendError } = await supabase.from('messages').insert({
+      event_id: eventId,
+      content,
+      sender_user_id: user.user.id,
+      message_type: 'direct',
+    });
 
     if (sendError) throw sendError;
   } catch (err) {
@@ -224,6 +226,7 @@ const sendMessage = async (content: string) => {
 **Current Implementation:** All event participants (hosts and guests) can see all messages including guest replies.
 
 **RLS Enforcement:** The `can_access_event()` function grants access to:
+
 1. Event hosts (via `events.host_user_id = auth.uid()`)
 2. Event guests (via `event_guests` table match on `user_id` or `phone`)
 3. Public events (if `events.is_public = true`)
@@ -236,12 +239,12 @@ Guest replies trigger notifications via the `sendMessageToEvent` service:
 // From messaging-client.ts
 // SMS delivery for guest replies
 if (request.sendVia.sms && guestIds.length > 0) {
-  const smsMessages = guestsWithPhones.map(guest => ({
+  const smsMessages = guestsWithPhones.map((guest) => ({
     to: guest.phone,
     message: request.content,
     eventId: request.eventId,
     guestId: guest.id,
-    messageType: request.messageType
+    messageType: request.messageType,
   }));
 
   const smsResult = await sendSMSViaAPI(smsMessages);
@@ -258,7 +261,7 @@ CREATE TABLE message_deliveries (
   guest_id uuid REFERENCES event_guests(id),
   phone_number varchar(20),
   sms_status varchar(20) DEFAULT 'pending',
-  push_status varchar(20) DEFAULT 'pending', 
+  push_status varchar(20) DEFAULT 'pending',
   email_status varchar(20) DEFAULT 'pending',
   has_responded boolean DEFAULT false,
   response_message_id uuid REFERENCES messages(id)
@@ -272,6 +275,7 @@ CREATE TABLE message_deliveries (
 **Current State:** Guest replies are always enabled (`canRespond = true` hardcoded).
 
 **UI Components:**
+
 - `ResponseIndicator`: Shows "Replies enabled" vs "Replies disabled" status
 - `GuestMessageInput`: Disabled when `previewMode={!canRespond}`
 - Send button shows "Send a response" vs "Responses disabled"
@@ -312,27 +316,29 @@ const validateResponse = useCallback((content: string) => {
 
 ```jsx
 // GuestMessageInput.tsx - Spam protection notice
-{!previewMode && (
-  <div className="text-xs text-gray-500 text-center">
-    <p>Responses are monitored for spam and inappropriate content.</p>
-  </div>
-)}
+{
+  !previewMode && (
+    <div className="text-xs text-gray-500 text-center">
+      <p>Responses are monitored for spam and inappropriate content.</p>
+    </div>
+  );
+}
 ```
 
 ## Edge Cases & Error Handling
 
 ### Behavior Matrix
 
-| Condition | Expected Behavior | Enforced Where |
-|-----------|------------------|----------------|
-| No authenticated user | Cannot send replies | RLS policy + client auth check |
-| User not in event_guests | Cannot access messages | `can_access_event()` function |
-| Network failure during send | Shows error, message not sent | Try/catch in `sendMessage()` |
-| Duplicate send (double-tap) | Prevented by disabled state | `sending` state in component |
-| Message too long | Validation error shown | Client validation |
-| Empty message | Send button disabled | Client validation |
-| Realtime disconnect | No live updates, manual refresh works | Subscription error handling |
-| RLS policy blocks access | Empty message list | Silent failure in fetch |
+| Condition                   | Expected Behavior                     | Enforced Where                 |
+| --------------------------- | ------------------------------------- | ------------------------------ |
+| No authenticated user       | Cannot send replies                   | RLS policy + client auth check |
+| User not in event_guests    | Cannot access messages                | `can_access_event()` function  |
+| Network failure during send | Shows error, message not sent         | Try/catch in `sendMessage()`   |
+| Duplicate send (double-tap) | Prevented by disabled state           | `sending` state in component   |
+| Message too long            | Validation error shown                | Client validation              |
+| Empty message               | Send button disabled                  | Client validation              |
+| Realtime disconnect         | No live updates, manual refresh works | Subscription error handling    |
+| RLS policy blocks access    | Empty message list                    | Silent failure in fetch        |
 
 ### Error Handling Patterns
 
@@ -366,8 +372,9 @@ try {
 ### Fixed-Height Scrollable Design
 
 The module uses a responsive fixed-height layout:
+
 - **Height:** `60vh` on mobile, `50vh` on desktop
-- **Min Height:** 400px mobile, 500px desktop  
+- **Min Height:** 400px mobile, 500px desktop
 - **Max Height:** 600px mobile, 700px desktop
 - **Scrollable Area:** Only the message list scrolls, header and input stay fixed
 
@@ -381,17 +388,20 @@ if (isNewMessage && (isAtBottom || shouldAutoScroll)) {
 ```
 
 **Auto-scroll triggers:**
+
 - User sends a message (always scrolls)
 - New message arrives AND user is at bottom (50px threshold)
 - Initial message load (instant scroll, no animation)
 
 **No auto-scroll when:**
+
 - User has manually scrolled up from bottom
 - User is reading older messages
 
 ### Jump to Latest Button
 
 When user scrolls up, a floating button appears:
+
 - **Position:** Bottom-right of scroll area
 - **Styling:** Rose-colored pill with chevron icon
 - **Accessibility:** Proper ARIA label and focus states

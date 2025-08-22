@@ -4,7 +4,7 @@
  */
 export function throttle<T extends (...args: unknown[]) => void>(
   func: T,
-  delay: number
+  delay: number,
 ): (...args: Parameters<T>) => void {
   let timeoutId: NodeJS.Timeout | null = null;
   let lastExecutedTime = 0;
@@ -19,10 +19,13 @@ export function throttle<T extends (...args: unknown[]) => void>(
       if (timeoutId) {
         clearTimeout(timeoutId);
       }
-      timeoutId = setTimeout(() => {
-        func(...args);
-        lastExecutedTime = Date.now();
-      }, delay - (currentTime - lastExecutedTime));
+      timeoutId = setTimeout(
+        () => {
+          func(...args);
+          lastExecutedTime = Date.now();
+        },
+        delay - (currentTime - lastExecutedTime),
+      );
     }
   };
 }

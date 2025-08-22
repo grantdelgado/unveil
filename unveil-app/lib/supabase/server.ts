@@ -36,7 +36,7 @@ export async function createServerSupabaseClient() {
           }
         },
       },
-    }
+    },
   );
 }
 
@@ -54,11 +54,11 @@ export function createApiSupabaseClient(request: Request) {
         get(name: string) {
           const cookies = request.headers.get('cookie');
           if (!cookies) return undefined;
-          
+
           const cookie = cookies
             .split(';')
-            .find(c => c.trim().startsWith(`${name}=`));
-          
+            .find((c) => c.trim().startsWith(`${name}=`));
+
           return cookie ? cookie.split('=')[1] : undefined;
         },
         set() {
@@ -66,10 +66,10 @@ export function createApiSupabaseClient(request: Request) {
           // This is intentionally empty for API route clients
         },
         remove() {
-          // API routes handle removing cookies via response headers  
+          // API routes handle removing cookies via response headers
           // This is intentionally empty for API route clients
         },
       },
-    }
+    },
   );
 }

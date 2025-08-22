@@ -1,12 +1,12 @@
 /**
  * Feature Components Barrel - OPTIMIZED FOR TREE-SHAKING
- * 
+ *
  * WARNING: Wildcard exports can significantly bloat your bundle.
  * RECOMMENDED: Import components directly:
  * - import { LogoutButton } from '@/components/features/auth'
  * - import { GuestManagement } from '@/components/features/host-dashboard'
  * - import { GuestMessaging } from '@/components/features/messaging/guest'
- * 
+ *
  * Use this barrel only when importing multiple components from the same feature.
  */
 
@@ -28,39 +28,55 @@ export * as MessagingComponents from './messaging';
 export * as SchedulingComponents from './scheduling';
 
 // Lazy-loaded exports for heavy components
-import { lazy } from 'react'
+import { lazy } from 'react';
 
 // Host Dashboard Components (heavy with charts, tables, etc.)
-export const EventAnalytics = lazy(() => 
-  import('./host-dashboard/EventAnalytics').then(module => ({ default: module.EventAnalytics }))
-)
-export const GuestManagement = lazy(() => 
-  import('./host-dashboard/GuestManagement').then(module => ({ default: module.GuestManagement }))
-)
-export const MessageComposer = lazy(() => 
-  import('./messaging/host/MessageComposer').then(module => ({ default: module.MessageComposer }))
-)
-export const MessageCenter = lazy(() => 
-  import('./messaging/host/MessageCenter').then(module => ({ default: module.MessageCenter }))
-)
-export const NotificationCenter = lazy(() => 
-  import('./host-dashboard/NotificationCenter').then(module => ({ default: module.NotificationCenter }))
-)
-export const SMSAnnouncementModal = lazy(() => 
-  import('./host-dashboard/SMSAnnouncementModal').then(module => ({ default: module.SMSAnnouncementModal }))
-)
+export const EventAnalytics = lazy(() =>
+  import('./host-dashboard/EventAnalytics').then((module) => ({
+    default: module.EventAnalytics,
+  })),
+);
+export const GuestManagement = lazy(() =>
+  import('./host-dashboard/GuestManagement').then((module) => ({
+    default: module.GuestManagement,
+  })),
+);
+export const MessageComposer = lazy(() =>
+  import('./messaging/host/MessageComposer').then((module) => ({
+    default: module.MessageComposer,
+  })),
+);
+export const MessageCenter = lazy(() =>
+  import('./messaging/host/MessageCenter').then((module) => ({
+    default: module.MessageCenter,
+  })),
+);
+export const NotificationCenter = lazy(() =>
+  import('./host-dashboard/NotificationCenter').then((module) => ({
+    default: module.NotificationCenter,
+  })),
+);
+export const SMSAnnouncementModal = lazy(() =>
+  import('./host-dashboard/SMSAnnouncementModal').then((module) => ({
+    default: module.SMSAnnouncementModal,
+  })),
+);
 
 // Guest Components (media-heavy)
-export const GuestImportWizard = lazy(() => 
-  import('./guests/GuestImportWizard').then(module => ({ default: module.GuestImportWizard }))
-)
-export const GuestPhotoGallery = lazy(() => 
-  import('./media/GuestPhotoGallery')
-)
+export const GuestImportWizard = lazy(() =>
+  import('./guests/GuestImportWizard').then((module) => ({
+    default: module.GuestImportWizard,
+  })),
+);
+export const GuestPhotoGallery = lazy(
+  () => import('./media/GuestPhotoGallery'),
+);
 
 // Messaging Components
-export const GuestMessaging = lazy(() => 
-  import('./messaging/guest/GuestMessaging').then(module => ({ default: module.GuestMessaging }))
-)
+export const GuestMessaging = lazy(() =>
+  import('./messaging/guest/GuestMessaging').then((module) => ({
+    default: module.GuestMessaging,
+  })),
+);
 
 // Development Components (removed - not needed for production)

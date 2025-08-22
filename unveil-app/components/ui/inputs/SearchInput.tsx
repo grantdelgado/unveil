@@ -16,7 +16,7 @@ export function SearchInput({
   value,
   onChange,
   className,
-  disabled = false
+  disabled = false,
 }: SearchInputProps) {
   return (
     <div className={cn('relative', className)}>
@@ -46,7 +46,7 @@ export function SearchInput({
           'focus:ring-2 focus:ring-purple-500 focus:border-transparent',
           'placeholder:text-gray-400',
           'disabled:bg-gray-50 disabled:text-gray-500',
-          className
+          className,
         )}
         style={{ minHeight: '48px' }} // Ensure ≥44px touch target
       />
@@ -57,8 +57,18 @@ export function SearchInput({
           disabled={disabled}
           className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
         >
-          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          <svg
+            className="h-5 w-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
           </svg>
         </button>
       )}

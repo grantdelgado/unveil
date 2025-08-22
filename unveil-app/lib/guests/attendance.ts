@@ -1,6 +1,6 @@
 /**
  * Guest Attendance Utilities (RSVP-Lite)
- * 
+ *
  * Centralized helpers for guest attendance logic using declined_at semantics.
  * This is the single source of truth for attendance calculations.
  */
@@ -34,7 +34,9 @@ export function isDeclined(guest: GuestAttendance): boolean {
  * @param guest Guest record with declined_at field
  * @returns 'attending' or 'declined'
  */
-export function getAttendanceStatus(guest: GuestAttendance): 'attending' | 'declined' {
+export function getAttendanceStatus(
+  guest: GuestAttendance,
+): 'attending' | 'declined' {
   return isAttending(guest) ? 'attending' : 'declined';
 }
 
@@ -43,14 +45,16 @@ export function getAttendanceStatus(guest: GuestAttendance): 'attending' | 'decl
  * @param guests Array of guest records with declined_at field
  * @returns Object with attending, declined, and total counts
  */
-export function calculateAttendanceCounts<T extends GuestAttendance>(guests: T[]) {
+export function calculateAttendanceCounts<T extends GuestAttendance>(
+  guests: T[],
+) {
   const attending = guests.filter(isAttending).length;
   const declined = guests.filter(isDeclined).length;
-  
+
   return {
     total: guests.length,
     attending,
-    declined
+    declined,
   };
 }
 
@@ -61,8 +65,8 @@ export function calculateAttendanceCounts<T extends GuestAttendance>(guests: T[]
  * @returns Filtered array of guests
  */
 export function filterGuestsByAttendance<T extends GuestAttendance>(
-  guests: T[], 
-  status: 'all' | 'attending' | 'declined'
+  guests: T[],
+  status: 'all' | 'attending' | 'declined',
 ): T[] {
   switch (status) {
     case 'attending':

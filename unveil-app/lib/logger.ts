@@ -24,7 +24,12 @@ interface LogEntry {
   level: LogLevel;
   category: LogCategory;
   message: string;
-  data?: Record<string, string | number | boolean | null> | string | number | boolean | null;
+  data?:
+    | Record<string, string | number | boolean | null>
+    | string
+    | number
+    | boolean
+    | null;
   timestamp: string;
   context?: string;
 }
@@ -117,7 +122,12 @@ class Logger {
     level: LogLevel,
     category: LogCategory,
     message: string,
-    data?: Record<string, string | number | boolean | null> | string | number | boolean | null,
+    data?:
+      | Record<string, string | number | boolean | null>
+      | string
+      | number
+      | boolean
+      | null,
     context?: string,
   ): LogEntry {
     return {
@@ -136,12 +146,18 @@ class Logger {
     // Filter out expected development mode WebSocket errors to reduce noise
     if (process.env.NODE_ENV === 'development') {
       const messageStr = typeof entry.message === 'string' ? entry.message : '';
-      const isExpectedDevError = messageStr.includes('WebSocket connection') && 
-                                messageStr.includes('WebSocket is closed before the connection is established');
-      
+      const isExpectedDevError =
+        messageStr.includes('WebSocket connection') &&
+        messageStr.includes(
+          'WebSocket is closed before the connection is established',
+        );
+
       if (isExpectedDevError) {
         // Only log these as debug level in development
-        console.debug('🔧 Development mode WebSocket warning (expected in React Strict Mode):', entry);
+        console.debug(
+          '🔧 Development mode WebSocket warning (expected in React Strict Mode):',
+          entry,
+        );
         return;
       }
     }
@@ -201,7 +217,12 @@ class Logger {
     level: LogLevel,
     category: LogCategory,
     message: string,
-    data?: Record<string, string | number | boolean | null> | string | number | boolean | null,
+    data?:
+      | Record<string, string | number | boolean | null>
+      | string
+      | number
+      | boolean
+      | null,
     context?: string,
   ): void {
     if (!this.shouldLog(level, category)) {
@@ -213,7 +234,9 @@ class Logger {
   }
 
   // Helper method to safely handle unknown error types
-  private serializeError(error: unknown): Record<string, string | number | boolean | null> | string {
+  private serializeError(
+    error: unknown,
+  ): Record<string, string | number | boolean | null> | string {
     if (error instanceof Error) {
       return {
         name: error.name,
@@ -235,7 +258,16 @@ class Logger {
   }
 
   // Category-specific logging methods
-  auth(message: string, data?: Record<string, string | number | boolean | null> | string | number | boolean | null, context?: string): void {
+  auth(
+    message: string,
+    data?:
+      | Record<string, string | number | boolean | null>
+      | string
+      | number
+      | boolean
+      | null,
+    context?: string,
+  ): void {
     this.log('info', 'auth', message, data, context);
   }
 
@@ -288,7 +320,13 @@ class Logger {
   }
 
   navigationError(message: string, error?: unknown, context?: string): void {
-    this.log('error', 'navigation', message, this.serializeError(error), context);
+    this.log(
+      'error',
+      'navigation',
+      message,
+      this.serializeError(error),
+      context,
+    );
   }
 
   validation(message: string, data?: unknown, context?: string): void {
@@ -296,15 +334,33 @@ class Logger {
   }
 
   validationError(message: string, error?: unknown, context?: string): void {
-    this.log('error', 'validation', message, this.serializeError(error), context);
+    this.log(
+      'error',
+      'validation',
+      message,
+      this.serializeError(error),
+      context,
+    );
   }
 
   performance(message: string, data?: unknown, context?: string): void {
-    this.log('info', 'performance', message, this.serializeError(data), context);
+    this.log(
+      'info',
+      'performance',
+      message,
+      this.serializeError(data),
+      context,
+    );
   }
 
   performanceWarn(message: string, data?: unknown, context?: string): void {
-    this.log('warn', 'performance', message, this.serializeError(data), context);
+    this.log(
+      'warn',
+      'performance',
+      message,
+      this.serializeError(data),
+      context,
+    );
   }
 
   error(message: string, error?: unknown, context?: string): void {

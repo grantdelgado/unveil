@@ -1,10 +1,10 @@
 #!/usr/bin/env tsx
 /**
  * Test script for event creation idempotency
- * 
+ *
  * Usage:
  *   npx tsx scripts/test-event-creation-idempotency.ts
- * 
+ *
  * This script validates:
  * 1. Parallel requests with same creation_key only create one event
  * 2. Different creation_keys create different events
@@ -43,13 +43,13 @@ interface TestResult {
 
 async function cleanupTestEvents() {
   console.log('🧹 Cleaning up existing test events...');
-  
+
   const { error } = await supabase
     .from('events')
     .delete()
     .eq('host_user_id', TEST_USER_ID)
     .like('title', `${TEST_EVENT_TITLE}%`);
-    
+
   if (error) {
     console.warn('Warning: Could not cleanup test events:', error.message);
   } else {
@@ -60,7 +60,7 @@ async function cleanupTestEvents() {
 async function testParallelSameKey(): Promise<TestResult> {
   const testName = 'Parallel Requests with Same Creation Key';
   const startTime = Date.now();
-  
+
   try {
     const creationKey = crypto.randomUUID();
     const eventInput: EventCreationInput = {
@@ -68,13 +68,13 @@ async function testParallelSameKey(): Promise<TestResult> {
       event_date: '2026-06-01',
       location: 'Test Location',
       is_public: true,
-      creation_key: creationKey
+      creation_key: creationKey,
     };
 
     // Fire two parallel requests with same creation_key
     const [result1, result2] = await Promise.all([
       EventCreationService.createEventWithHost(eventInput, TEST_USER_ID),
-      EventCreationService.createEventWithHost(eventInput, TEST_USER_ID)
+      EventCreationService.createEventWithHost(eventInput, TEST_USER_ID),
     ]);
 
     // Both should succeed
@@ -83,7 +83,7 @@ async function testParallelSameKey(): Promise<TestResult> {
         testName,
         success: false,
         details: `One request failed: ${result1.error?.message || result2.error?.message}`,
-        duration: Date.now() - startTime
+        duration: Date.now() - startTime,
       };
     }
 
@@ -93,20 +93,23 @@ async function testParallelSameKey(): Promise<TestResult> {
         testName,
         success: false,
         details: `Different event IDs returned: ${result1.data!.event_id} vs ${result2.data!.event_id}`,
-        duration: Date.now() - startTime
+        duration: Date.now() - startTime,
       };
     }
 
     // One should be "created", one should be "returned_existing"
-    const operations = [result1.data!.operation, result2.data!.operation].sort();
+    const operations = [
+      result1.data!.operation,
+      result2.data!.operation,
+    ].sort();
     const expectedOps = ['created', 'returned_existing'].sort();
-    
+
     if (JSON.stringify(operations) !== JSON.stringify(expectedOps)) {
       return {
         testName,
         success: false,
         details: `Unexpected operations: ${JSON.stringify(operations)}, expected: ${JSON.stringify(expectedOps)}`,
-        duration: Date.now() - startTime
+        duration: Date.now() - startTime,
       };
     }
 
@@ -114,15 +117,14 @@ async function testParallelSameKey(): Promise<TestResult> {
       testName,
       success: true,
       details: `✅ Same event ID (${result1.data!.event_id}), operations: ${operations.join(', ')}`,
-      duration: Date.now() - startTime
+      duration: Date.now() - startTime,
     };
-
   } catch (error) {
     return {
       testName,
       success: false,
       details: `Exception: ${error instanceof Error ? error.message : String(error)}`,
-      duration: Date.now() - startTime
+      duration: Date.now() - startTime,
     };
   }
 }
@@ -130,14 +132,14 @@ async function testParallelSameKey(): Promise<TestResult> {
 async function testDifferentKeys(): Promise<TestResult> {
   const testName = 'Parallel Requests with Different Creation Keys';
   const startTime = Date.now();
-  
+
   try {
     const eventInput1: EventCreationInput = {
       title: `${TEST_EVENT_TITLE} - Different Keys 1`,
       event_date: '2026-06-02',
       location: 'Test Location 1',
       is_public: true,
-      creation_key: crypto.randomUUID()
+      creation_key: crypto.randomUUID(),
     };
 
     const eventInput2: EventCreationInput = {
@@ -145,13 +147,13 @@ async function testDifferentKeys(): Promise<TestResult> {
       event_date: '2026-06-03',
       location: 'Test Location 2',
       is_public: true,
-      creation_key: crypto.randomUUID()
+      creation_key: crypto.randomUUID(),
     };
 
     // Fire two parallel requests with different creation_keys
     const [result1, result2] = await Promise.all([
       EventCreationService.createEventWithHost(eventInput1, TEST_USER_ID),
-      EventCreationService.createEventWithHost(eventInput2, TEST_USER_ID)
+      EventCreationService.createEventWithHost(eventInput2, TEST_USER_ID),
     ]);
 
     // Both should succeed
@@ -160,7 +162,7 @@ async function testDifferentKeys(): Promise<TestResult> {
         testName,
         success: false,
         details: `One request failed: ${result1.error?.message || result2.error?.message}`,
-        duration: Date.now() - startTime
+        duration: Date.now() - startTime,
       };
     }
 
@@ -170,17 +172,20 @@ async function testDifferentKeys(): Promise<TestResult> {
         testName,
         success: false,
         details: `Same event ID returned: ${result1.data!.event_id}`,
-        duration: Date.now() - startTime
+        duration: Date.now() - startTime,
       };
     }
 
     // Both should be "created"
-    if (result1.data!.operation !== 'created' || result2.data!.operation !== 'created') {
+    if (
+      result1.data!.operation !== 'created' ||
+      result2.data!.operation !== 'created'
+    ) {
       return {
         testName,
         success: false,
         details: `Unexpected operations: ${result1.data!.operation}, ${result2.data!.operation}`,
-        duration: Date.now() - startTime
+        duration: Date.now() - startTime,
       };
     }
 
@@ -188,15 +193,14 @@ async function testDifferentKeys(): Promise<TestResult> {
       testName,
       success: true,
       details: `✅ Different event IDs: ${result1.data!.event_id} vs ${result2.data!.event_id}`,
-      duration: Date.now() - startTime
+      duration: Date.now() - startTime,
     };
-
   } catch (error) {
     return {
       testName,
       success: false,
       details: `Exception: ${error instanceof Error ? error.message : String(error)}`,
-      duration: Date.now() - startTime
+      duration: Date.now() - startTime,
     };
   }
 }
@@ -204,24 +208,27 @@ async function testDifferentKeys(): Promise<TestResult> {
 async function testNoCreationKey(): Promise<TestResult> {
   const testName = 'Request without Creation Key (Backward Compatibility)';
   const startTime = Date.now();
-  
+
   try {
     const eventInput: EventCreationInput = {
       title: `${TEST_EVENT_TITLE} - No Key`,
       event_date: '2026-06-04',
       location: 'Test Location',
-      is_public: true
+      is_public: true,
       // No creation_key provided
     };
 
-    const result = await EventCreationService.createEventWithHost(eventInput, TEST_USER_ID);
+    const result = await EventCreationService.createEventWithHost(
+      eventInput,
+      TEST_USER_ID,
+    );
 
     if (!result.success) {
       return {
         testName,
         success: false,
         details: `Request failed: ${result.error?.message}`,
-        duration: Date.now() - startTime
+        duration: Date.now() - startTime,
       };
     }
 
@@ -230,7 +237,7 @@ async function testNoCreationKey(): Promise<TestResult> {
         testName,
         success: false,
         details: `Unexpected operation: ${result.data!.operation}`,
-        duration: Date.now() - startTime
+        duration: Date.now() - startTime,
       };
     }
 
@@ -238,15 +245,14 @@ async function testNoCreationKey(): Promise<TestResult> {
       testName,
       success: true,
       details: `✅ Event created without key: ${result.data!.event_id}`,
-      duration: Date.now() - startTime
+      duration: Date.now() - startTime,
     };
-
   } catch (error) {
     return {
       testName,
       success: false,
       details: `Exception: ${error instanceof Error ? error.message : String(error)}`,
-      duration: Date.now() - startTime
+      duration: Date.now() - startTime,
     };
   }
 }
@@ -254,7 +260,7 @@ async function testNoCreationKey(): Promise<TestResult> {
 async function testRetryScenario(): Promise<TestResult> {
   const testName = 'Retry Scenario (Client Retry with Same Key)';
   const startTime = Date.now();
-  
+
   try {
     const creationKey = crypto.randomUUID();
     const eventInput: EventCreationInput = {
@@ -262,33 +268,39 @@ async function testRetryScenario(): Promise<TestResult> {
       event_date: '2026-06-05',
       location: 'Test Location',
       is_public: true,
-      creation_key: creationKey
+      creation_key: creationKey,
     };
 
     // First request
-    const result1 = await EventCreationService.createEventWithHost(eventInput, TEST_USER_ID);
-    
+    const result1 = await EventCreationService.createEventWithHost(
+      eventInput,
+      TEST_USER_ID,
+    );
+
     if (!result1.success) {
       return {
         testName,
         success: false,
         details: `First request failed: ${result1.error?.message}`,
-        duration: Date.now() - startTime
+        duration: Date.now() - startTime,
       };
     }
 
     // Simulate retry after 1 second
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
     // Retry with same creation_key
-    const result2 = await EventCreationService.createEventWithHost(eventInput, TEST_USER_ID);
+    const result2 = await EventCreationService.createEventWithHost(
+      eventInput,
+      TEST_USER_ID,
+    );
 
     if (!result2.success) {
       return {
         testName,
         success: false,
         details: `Retry request failed: ${result2.error?.message}`,
-        duration: Date.now() - startTime
+        duration: Date.now() - startTime,
       };
     }
 
@@ -298,16 +310,19 @@ async function testRetryScenario(): Promise<TestResult> {
         testName,
         success: false,
         details: `Different events on retry: ${result1.data!.event_id} vs ${result2.data!.event_id}`,
-        duration: Date.now() - startTime
+        duration: Date.now() - startTime,
       };
     }
 
-    if (result1.data!.operation !== 'created' || result2.data!.operation !== 'returned_existing') {
+    if (
+      result1.data!.operation !== 'created' ||
+      result2.data!.operation !== 'returned_existing'
+    ) {
       return {
         testName,
         success: false,
         details: `Unexpected operations: ${result1.data!.operation}, ${result2.data!.operation}`,
-        duration: Date.now() - startTime
+        duration: Date.now() - startTime,
       };
     }
 
@@ -315,22 +330,21 @@ async function testRetryScenario(): Promise<TestResult> {
       testName,
       success: true,
       details: `✅ Retry returned same event: ${result1.data!.event_id}`,
-      duration: Date.now() - startTime
+      duration: Date.now() - startTime,
     };
-
   } catch (error) {
     return {
       testName,
       success: false,
       details: `Exception: ${error instanceof Error ? error.message : String(error)}`,
-      duration: Date.now() - startTime
+      duration: Date.now() - startTime,
     };
   }
 }
 
 async function runAllTests(): Promise<void> {
   console.log('🧪 TESTING EVENT CREATION IDEMPOTENCY\n');
-  
+
   await cleanupTestEvents();
   console.log('');
 
@@ -338,7 +352,7 @@ async function runAllTests(): Promise<void> {
     testParallelSameKey,
     testDifferentKeys,
     testNoCreationKey,
-    testRetryScenario
+    testRetryScenario,
   ];
 
   const results: TestResult[] = [];
@@ -347,7 +361,7 @@ async function runAllTests(): Promise<void> {
     console.log(`Running: ${test.name}...`);
     const result = await test();
     results.push(result);
-    
+
     if (result.success) {
       console.log(`✅ ${result.testName}`);
       console.log(`   ${result.details}`);
@@ -359,16 +373,18 @@ async function runAllTests(): Promise<void> {
   }
 
   // Summary
-  const passed = results.filter(r => r.success).length;
-  const failed = results.filter(r => !r.success).length;
-  
+  const passed = results.filter((r) => r.success).length;
+  const failed = results.filter((r) => !r.success).length;
+
   console.log('📊 TEST SUMMARY:');
   console.log(`   Passed: ${passed}`);
   console.log(`   Failed: ${failed}`);
   console.log(`   Total:  ${results.length}`);
-  
+
   if (failed > 0) {
-    console.log('\n❌ SOME TESTS FAILED - Idempotency implementation needs review');
+    console.log(
+      '\n❌ SOME TESTS FAILED - Idempotency implementation needs review',
+    );
     process.exit(1);
   } else {
     console.log('\n✅ ALL TESTS PASSED - Idempotency working correctly!');
@@ -379,7 +395,7 @@ async function runAllTests(): Promise<void> {
 }
 
 // Run the tests
-runAllTests().catch(error => {
+runAllTests().catch((error) => {
   console.error('Test suite failed:', error);
   process.exit(1);
 });

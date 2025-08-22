@@ -22,7 +22,7 @@ export function SMSRetryButton({
   eventId,
   className,
   onSuccess,
-  onError
+  onError,
 }: SMSRetryButtonProps) {
   const [isRetrying, setIsRetrying] = useState(false);
   const [lastResult, setLastResult] = useState<string | null>(null);
@@ -42,25 +42,26 @@ export function SMSRetryButton({
         const message = `SMS sent to ${result.sent} guests${result.skipped > 0 ? ` (${result.skipped} skipped - recently sent)` : ''}`;
         setLastResult(message);
         onSuccess?.(result);
-        
+
         logger.info('Manual SMS retry completed', {
           eventId,
           sent: result.sent,
           failed: result.failed,
-          skipped: result.skipped
+          skipped: result.skipped,
         });
       } else {
         throw new Error(result.message);
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to send SMS';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to send SMS';
       setLastResult(`Error: ${errorMessage}`);
       onError?.(errorMessage);
-      
+
       logger.error('Manual SMS retry failed', { eventId, error: errorMessage });
     } finally {
       setIsRetrying(false);
-      
+
       // Clear result message after 5 seconds
       setTimeout(() => setLastResult(null), 5000);
     }
@@ -80,9 +81,11 @@ export function SMSRetryButton({
         )}
         {isRetrying ? 'Sending...' : 'Send SMS Invites'}
       </SecondaryButton>
-      
+
       {lastResult && (
-        <div className={`mt-2 text-sm ${lastResult.startsWith('Error') ? 'text-red-600' : 'text-green-600'}`}>
+        <div
+          className={`mt-2 text-sm ${lastResult.startsWith('Error') ? 'text-red-600' : 'text-green-600'}`}
+        >
           {lastResult}
         </div>
       )}

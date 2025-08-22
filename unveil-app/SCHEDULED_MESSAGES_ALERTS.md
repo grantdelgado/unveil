@@ -7,21 +7,25 @@ This document outlines the monitoring strategy and recommended alerts for the sc
 ## Key Metrics to Monitor
 
 ### 1. Cron Execution Health
+
 - **Metric**: Successful cron job executions every minute
 - **Alert**: No cron runs detected in 10 minutes
 - **Query Pattern**: Look for log entries containing `"GET-triggered scheduled message processing"`
 
 ### 2. Processing Success Rate
+
 - **Metric**: Ratio of successful vs failed scheduled message processing
 - **Alert**: `failed > 0` in any processing run
 - **Query Pattern**: Look for `"successful": X, "failed": Y` in processing results
 
 ### 3. Database Connectivity
+
 - **Metric**: RPC function execution success
 - **Alert**: Database errors in processing route
 - **Query Pattern**: Look for `"Failed to fetch scheduled messages"` or RPC errors
 
 ### 4. Message Delivery Success
+
 - **Metric**: SMS delivery success rate via Twilio
 - **Alert**: High delivery failure rate (>10% failures)
 - **Query Pattern**: Look for Twilio error codes in delivery logs
@@ -29,6 +33,7 @@ This document outlines the monitoring strategy and recommended alerts for the sc
 ## Log Patterns to Monitor
 
 ### Successful Processing
+
 ```json
 {
   "level": "info",
@@ -42,7 +47,7 @@ This document outlines the monitoring strategy and recommended alerts for the sc
 
 ```json
 {
-  "level": "info", 
+  "level": "info",
   "message": "Cron processing completed",
   "data": {
     "jobId": "job_1755800855221_qgxvli",
@@ -55,6 +60,7 @@ This document outlines the monitoring strategy and recommended alerts for the sc
 ```
 
 ### Error Patterns to Alert On
+
 ```json
 {
   "level": "error",
@@ -74,21 +80,25 @@ This document outlines the monitoring strategy and recommended alerts for the sc
 ## Recommended Alert Rules
 
 ### 1. Cron Health Check
+
 **Condition**: No log entries matching `"GET-triggered scheduled message processing"` in last 10 minutes
 **Severity**: Critical
 **Action**: Check Vercel cron configuration and function deployment
 
 ### 2. Processing Failures
+
 **Condition**: Any log entry with `"failed": N` where N > 0
 **Severity**: High
 **Action**: Check database connectivity and message validity
 
 ### 3. High Processing Duration
+
 **Condition**: `"processingTimeMs"` > 30000 (30 seconds)
 **Severity**: Medium
 **Action**: Check for database performance issues or large message batches
 
 ### 4. RPC Errors
+
 **Condition**: Log entries containing `"Failed to fetch scheduled messages"`
 **Severity**: High
 **Action**: Check Supabase connectivity and RPC function status
@@ -96,31 +106,34 @@ This document outlines the monitoring strategy and recommended alerts for the sc
 ## Manual Verification Commands
 
 ### Check Recent Processing Activity
+
 ```bash
 # View recent function logs
 vercel logs <deployment-url> --json | grep "scheduled message"
 ```
 
 ### Database Health Check
+
 ```sql
 -- Check for stuck messages (in 'sending' status for >5 minutes)
 SELECT id, status, send_at, updated_at
-FROM scheduled_messages 
-WHERE status = 'sending' 
+FROM scheduled_messages
+WHERE status = 'sending'
   AND updated_at < now() - interval '5 minutes';
 
 -- Check recent processing success
-SELECT 
+SELECT
   status,
   COUNT(*) as count,
   AVG(success_count) as avg_success,
   AVG(failure_count) as avg_failures
-FROM scheduled_messages 
+FROM scheduled_messages
 WHERE updated_at > now() - interval '1 hour'
 GROUP BY status;
 ```
 
 ### Manual Processing Test
+
 ```bash
 # Dry run test (requires CRON_SECRET)
 curl -X POST "https://your-deployment.vercel.app/api/messages/process-scheduled?dryRun=1" \
@@ -133,19 +146,23 @@ curl -X GET "https://your-deployment.vercel.app/api/messages/process-scheduled?h
 ## Break-Glass Procedures
 
 ### 1. Stuck Message Recovery
+
 If messages are stuck in 'sending' status:
+
 ```sql
 -- Reset stuck messages back to scheduled (use carefully)
-UPDATE scheduled_messages 
-SET status = 'scheduled', 
+UPDATE scheduled_messages
+SET status = 'scheduled',
     updated_at = now()
-WHERE status = 'sending' 
+WHERE status = 'sending'
   AND updated_at < now() - interval '10 minutes'
   AND id = 'SPECIFIC_MESSAGE_ID'; -- Always specify exact ID
 ```
 
 ### 2. Manual Processing Trigger
+
 If cron stops working:
+
 ```bash
 # Trigger processing manually (requires authentication)
 curl -X POST "https://your-deployment.vercel.app/api/messages/process-scheduled" \
@@ -153,10 +170,12 @@ curl -X POST "https://your-deployment.vercel.app/api/messages/process-scheduled"
 ```
 
 ### 3. Emergency Message Cancellation
+
 To prevent a problematic message from sending:
+
 ```sql
 -- Cancel a specific scheduled message
-UPDATE scheduled_messages 
+UPDATE scheduled_messages
 SET status = 'cancelled',
     updated_at = now()
 WHERE id = 'MESSAGE_ID_TO_CANCEL'
@@ -166,6 +185,7 @@ WHERE id = 'MESSAGE_ID_TO_CANCEL'
 ## Twilio Error Codes Reference
 
 Common Twilio error codes to monitor:
+
 - **21211**: Invalid phone number format
 - **21614**: Message body exceeds character limit
 - **30007**: Message delivery failure
@@ -174,7 +194,7 @@ Common Twilio error codes to monitor:
 ## Implementation Notes
 
 - All processing includes unique `jobId` for correlation
-- Processing duration is logged for performance monitoring  
+- Processing duration is logged for performance monitoring
 - Individual message failures don't crash the entire job
 - FOR UPDATE SKIP LOCKED prevents duplicate processing
 - Rate limiting via `SCHEDULED_MAX_PER_TICK` environment variable

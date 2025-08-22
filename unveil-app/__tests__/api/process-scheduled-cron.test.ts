@@ -7,7 +7,7 @@ vi.mock('@/lib/logger', () => ({
   logger: {
     api: vi.fn(),
     apiError: vi.fn(),
-  }
+  },
 }));
 
 vi.mock('@/lib/supabase/admin', () => ({
@@ -16,20 +16,20 @@ vi.mock('@/lib/supabase/admin', () => ({
     from: vi.fn(() => ({
       update: vi.fn(() => ({
         eq: vi.fn(() => ({
-          eq: vi.fn(() => ({ error: null }))
-        }))
+          eq: vi.fn(() => ({ error: null })),
+        })),
       })),
       insert: vi.fn(() => ({
         select: vi.fn(() => ({
-          single: vi.fn(() => ({ data: { id: 'message-123' }, error: null }))
-        }))
-      }))
-    }))
-  }
+          single: vi.fn(() => ({ data: { id: 'message-123' }, error: null })),
+        })),
+      })),
+    })),
+  },
 }));
 
 vi.mock('@/lib/sms', () => ({
-  sendBulkSMS: vi.fn(() => ({ sent: 3, failed: 0 }))
+  sendBulkSMS: vi.fn(() => ({ sent: 3, failed: 0 })),
 }));
 
 describe('Scheduled Messages Cron Processing', () => {
@@ -48,13 +48,16 @@ describe('Scheduled Messages Cron Processing', () => {
       const { supabase } = await import('@/lib/supabase/admin');
       (supabase.rpc as any) = mockRpc;
 
-      const request = new NextRequest('http://localhost:3000/api/messages/process-scheduled', {
-        method: 'GET',
-        headers: {
-          'x-vercel-cron-signature': 'test-signature',
-          'user-agent': 'vercel-cron/1.0'
-        }
-      });
+      const request = new NextRequest(
+        'http://localhost:3000/api/messages/process-scheduled',
+        {
+          method: 'GET',
+          headers: {
+            'x-vercel-cron-signature': 'test-signature',
+            'user-agent': 'vercel-cron/1.0',
+          },
+        },
+      );
 
       const response = await GET(request);
       const data = await response.json();
@@ -67,9 +70,12 @@ describe('Scheduled Messages Cron Processing', () => {
     });
 
     it('should return status only when no cron headers are present', async () => {
-      const request = new NextRequest('http://localhost:3000/api/messages/process-scheduled', {
-        method: 'GET'
-      });
+      const request = new NextRequest(
+        'http://localhost:3000/api/messages/process-scheduled',
+        {
+          method: 'GET',
+        },
+      );
 
       const response = await GET(request);
       const data = await response.json();
@@ -77,13 +83,18 @@ describe('Scheduled Messages Cron Processing', () => {
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
       expect(data.stats).toBeDefined();
-      expect(data.stats.message).toBe('Use useMessages hook for real-time message data');
+      expect(data.stats.message).toBe(
+        'Use useMessages hook for real-time message data',
+      );
     });
 
     it('should require authentication for cron processing', async () => {
-      const request = new NextRequest('http://localhost:3000/api/messages/process-scheduled?mode=cron', {
-        method: 'GET'
-      });
+      const request = new NextRequest(
+        'http://localhost:3000/api/messages/process-scheduled?mode=cron',
+        {
+          method: 'GET',
+        },
+      );
 
       const response = await GET(request);
       const data = await response.json();
@@ -98,12 +109,15 @@ describe('Scheduled Messages Cron Processing', () => {
       const { supabase } = await import('@/lib/supabase/admin');
       (supabase.rpc as any) = mockRpc;
 
-      const request = new NextRequest('http://localhost:3000/api/messages/process-scheduled?mode=cron', {
-        method: 'GET',
-        headers: {
-          'x-cron-key': 'test-secret-key'
-        }
-      });
+      const request = new NextRequest(
+        'http://localhost:3000/api/messages/process-scheduled?mode=cron',
+        {
+          method: 'GET',
+          headers: {
+            'x-cron-key': 'test-secret-key',
+          },
+        },
+      );
 
       const response = await GET(request);
       const data = await response.json();
@@ -114,9 +128,12 @@ describe('Scheduled Messages Cron Processing', () => {
     });
 
     it('should return health check data', async () => {
-      const request = new NextRequest('http://localhost:3000/api/messages/process-scheduled?health=1', {
-        method: 'GET'
-      });
+      const request = new NextRequest(
+        'http://localhost:3000/api/messages/process-scheduled?health=1',
+        {
+          method: 'GET',
+        },
+      );
 
       const response = await GET(request);
       const data = await response.json();
@@ -130,7 +147,7 @@ describe('Scheduled Messages Cron Processing', () => {
 
     it('should provide development diagnostics in non-production', async () => {
       process.env.NODE_ENV = 'development';
-      
+
       // Mock RPC to return pending messages
       const mockRpc = vi.fn().mockResolvedValue({
         data: [
@@ -138,17 +155,20 @@ describe('Scheduled Messages Cron Processing', () => {
             id: 'msg-123',
             send_at: '2025-08-21T16:38:00Z',
             status: 'scheduled',
-            recipient_count: 3
-          }
+            recipient_count: 3,
+          },
         ],
-        error: null
+        error: null,
       });
       const { supabase } = await import('@/lib/supabase/admin');
       (supabase.rpc as any) = mockRpc;
 
-      const request = new NextRequest('http://localhost:3000/api/messages/process-scheduled', {
-        method: 'GET'
-      });
+      const request = new NextRequest(
+        'http://localhost:3000/api/messages/process-scheduled',
+        {
+          method: 'GET',
+        },
+      );
 
       const response = await GET(request);
       const data = await response.json();
@@ -169,12 +189,15 @@ describe('Scheduled Messages Cron Processing', () => {
       const { supabase } = await import('@/lib/supabase/admin');
       (supabase.rpc as any) = mockRpc;
 
-      const request = new NextRequest('http://localhost:3000/api/messages/process-scheduled', {
-        method: 'POST',
-        headers: {
-          'x-cron-key': 'test-secret-key'
-        }
-      });
+      const request = new NextRequest(
+        'http://localhost:3000/api/messages/process-scheduled',
+        {
+          method: 'POST',
+          headers: {
+            'x-cron-key': 'test-secret-key',
+          },
+        },
+      );
 
       const response = await POST(request);
       const data = await response.json();
@@ -197,20 +220,23 @@ describe('Scheduled Messages Cron Processing', () => {
             content: 'Test message content for dry run',
             recipient_count: 3,
             scheduled_tz: 'America/Denver',
-            scheduled_local: '2025-08-21T10:38:00'
-          }
+            scheduled_local: '2025-08-21T10:38:00',
+          },
         ],
-        error: null
+        error: null,
       });
       const { supabase } = await import('@/lib/supabase/admin');
       (supabase.rpc as any) = mockRpc;
 
-      const request = new NextRequest('http://localhost:3000/api/messages/process-scheduled?dryRun=1', {
-        method: 'POST',
-        headers: {
-          'x-cron-key': 'test-secret-key'
-        }
-      });
+      const request = new NextRequest(
+        'http://localhost:3000/api/messages/process-scheduled?dryRun=1',
+        {
+          method: 'POST',
+          headers: {
+            'x-cron-key': 'test-secret-key',
+          },
+        },
+      );
 
       const response = await POST(request);
       const data = await response.json();
@@ -225,9 +251,12 @@ describe('Scheduled Messages Cron Processing', () => {
     });
 
     it('should require authentication', async () => {
-      const request = new NextRequest('http://localhost:3000/api/messages/process-scheduled', {
-        method: 'POST'
-      });
+      const request = new NextRequest(
+        'http://localhost:3000/api/messages/process-scheduled',
+        {
+          method: 'POST',
+        },
+      );
 
       const response = await POST(request);
       const data = await response.json();
@@ -238,24 +267,30 @@ describe('Scheduled Messages Cron Processing', () => {
 
     it('should respect SCHEDULED_MAX_PER_TICK rate limit', async () => {
       process.env.SCHEDULED_MAX_PER_TICK = '5';
-      
+
       const mockRpc = vi.fn().mockResolvedValue({ data: [], error: null });
       const { supabase } = await import('@/lib/supabase/admin');
       (supabase.rpc as any) = mockRpc;
 
-      const request = new NextRequest('http://localhost:3000/api/messages/process-scheduled', {
-        method: 'POST',
-        headers: {
-          'x-cron-key': 'test-secret-key'
-        }
-      });
+      const request = new NextRequest(
+        'http://localhost:3000/api/messages/process-scheduled',
+        {
+          method: 'POST',
+          headers: {
+            'x-cron-key': 'test-secret-key',
+          },
+        },
+      );
 
       await POST(request);
 
-      expect(mockRpc).toHaveBeenCalledWith('get_scheduled_messages_for_processing', {
-        p_limit: 5,
-        p_current_time: expect.any(String)
-      });
+      expect(mockRpc).toHaveBeenCalledWith(
+        'get_scheduled_messages_for_processing',
+        {
+          p_limit: 5,
+          p_current_time: expect.any(String),
+        },
+      );
     });
   });
 
@@ -265,12 +300,15 @@ describe('Scheduled Messages Cron Processing', () => {
       const { supabase } = await import('@/lib/supabase/admin');
       (supabase.rpc as any) = mockRpc;
 
-      const request = new NextRequest('http://localhost:3000/api/messages/process-scheduled', {
-        method: 'POST',
-        headers: {
-          'authorization': 'Bearer test-secret-key'
-        }
-      });
+      const request = new NextRequest(
+        'http://localhost:3000/api/messages/process-scheduled',
+        {
+          method: 'POST',
+          headers: {
+            authorization: 'Bearer test-secret-key',
+          },
+        },
+      );
 
       const response = await POST(request);
       expect(response.status).toBe(200);
@@ -281,12 +319,15 @@ describe('Scheduled Messages Cron Processing', () => {
       const { supabase } = await import('@/lib/supabase/admin');
       (supabase.rpc as any) = mockRpc;
 
-      const request = new NextRequest('http://localhost:3000/api/messages/process-scheduled', {
-        method: 'POST',
-        headers: {
-          'x-cron-key': 'test-secret-key'
-        }
-      });
+      const request = new NextRequest(
+        'http://localhost:3000/api/messages/process-scheduled',
+        {
+          method: 'POST',
+          headers: {
+            'x-cron-key': 'test-secret-key',
+          },
+        },
+      );
 
       const response = await POST(request);
       expect(response.status).toBe(200);
@@ -297,12 +338,15 @@ describe('Scheduled Messages Cron Processing', () => {
       const { supabase } = await import('@/lib/supabase/admin');
       (supabase.rpc as any) = mockRpc;
 
-      const request = new NextRequest('http://localhost:3000/api/messages/process-scheduled', {
-        method: 'POST',
-        headers: {
-          'x-vercel-cron-signature': 'valid-signature'
-        }
-      });
+      const request = new NextRequest(
+        'http://localhost:3000/api/messages/process-scheduled',
+        {
+          method: 'POST',
+          headers: {
+            'x-vercel-cron-signature': 'valid-signature',
+          },
+        },
+      );
 
       const response = await POST(request);
       expect(response.status).toBe(200);
@@ -315,12 +359,15 @@ describe('Scheduled Messages Cron Processing', () => {
       const { supabase } = await import('@/lib/supabase/admin');
       (supabase.rpc as any) = mockRpc;
 
-      const request = new NextRequest('http://localhost:3000/api/messages/process-scheduled', {
-        method: 'GET',
-        headers: {
-          'x-vercel-cron-signature': 'test-signature'
-        }
-      });
+      const request = new NextRequest(
+        'http://localhost:3000/api/messages/process-scheduled',
+        {
+          method: 'GET',
+          headers: {
+            'x-vercel-cron-signature': 'test-signature',
+          },
+        },
+      );
 
       const response = await GET(request);
       const data = await response.json();
@@ -334,13 +381,16 @@ describe('Scheduled Messages Cron Processing', () => {
       const { supabase } = await import('@/lib/supabase/admin');
       (supabase.rpc as any) = mockRpc;
 
-      const request = new NextRequest('http://localhost:3000/api/messages/process-scheduled', {
-        method: 'GET',
-        headers: {
-          'user-agent': 'vercel-cron/1.0',
-          'x-cron-key': 'test-secret-key' // Need auth for processing
-        }
-      });
+      const request = new NextRequest(
+        'http://localhost:3000/api/messages/process-scheduled',
+        {
+          method: 'GET',
+          headers: {
+            'user-agent': 'vercel-cron/1.0',
+            'x-cron-key': 'test-secret-key', // Need auth for processing
+          },
+        },
+      );
 
       const response = await GET(request);
       const data = await response.json();
@@ -354,12 +404,15 @@ describe('Scheduled Messages Cron Processing', () => {
       const { supabase } = await import('@/lib/supabase/admin');
       (supabase.rpc as any) = mockRpc;
 
-      const request = new NextRequest('http://localhost:3000/api/messages/process-scheduled', {
-        method: 'GET',
-        headers: {
-          'x-cron-key': 'test-secret-key'
-        }
-      });
+      const request = new NextRequest(
+        'http://localhost:3000/api/messages/process-scheduled',
+        {
+          method: 'GET',
+          headers: {
+            'x-cron-key': 'test-secret-key',
+          },
+        },
+      );
 
       const response = await GET(request);
       const data = await response.json();

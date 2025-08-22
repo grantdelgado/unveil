@@ -12,15 +12,17 @@ export function trackWebVitals() {
   if (typeof window === 'undefined') return;
 
   // Track Core Web Vitals
-  import('web-vitals').then(({ onCLS, onINP, onFCP, onLCP, onTTFB }) => {
-    onCLS(sendToAnalytics);
-    onINP(sendToAnalytics);
-    onFCP(sendToAnalytics);
-    onLCP(sendToAnalytics);
-    onTTFB(sendToAnalytics);
-  }).catch((error) => {
-    console.warn('Failed to load web-vitals:', error);
-  });
+  import('web-vitals')
+    .then(({ onCLS, onINP, onFCP, onLCP, onTTFB }) => {
+      onCLS(sendToAnalytics);
+      onINP(sendToAnalytics);
+      onFCP(sendToAnalytics);
+      onLCP(sendToAnalytics);
+      onTTFB(sendToAnalytics);
+    })
+    .catch((error) => {
+      console.warn('Failed to load web-vitals:', error);
+    });
 }
 
 // Send metrics to analytics services
@@ -50,14 +52,20 @@ function sendToAnalytics(metric: {
     windowWithGtag.gtag('event', metric.name, {
       event_category: 'Web Vitals',
       event_label: metric.id,
-      value: Math.round(metric.name === 'CLS' ? metric.value * 1000 : metric.value),
+      value: Math.round(
+        metric.name === 'CLS' ? metric.value * 1000 : metric.value,
+      ),
       non_interaction: true,
     });
   }
 }
 
 // Track custom performance metrics
-export function trackCustomMetric(name: string, value: number, unit: string = 'ms') {
+export function trackCustomMetric(
+  name: string,
+  value: number,
+  unit: string = 'ms',
+) {
   // Send to Sentry
   Sentry.addBreadcrumb({
     category: 'custom_metric',
@@ -79,7 +87,11 @@ export function trackCustomMetric(name: string, value: number, unit: string = 'm
 }
 
 // Track user interactions
-export function trackUserInteraction(action: string, category: string, label?: string) {
+export function trackUserInteraction(
+  action: string,
+  category: string,
+  label?: string,
+) {
   // Send to Sentry
   Sentry.addBreadcrumb({
     category: 'user_interaction',
@@ -99,7 +111,11 @@ export function trackUserInteraction(action: string, category: string, label?: s
 }
 
 // Track API performance
-export function trackAPIPerformance(endpoint: string, duration: number, status: number) {
+export function trackAPIPerformance(
+  endpoint: string,
+  duration: number,
+  status: number,
+) {
   const metric = {
     endpoint,
     duration,
@@ -117,12 +133,18 @@ export function trackAPIPerformance(endpoint: string, duration: number, status: 
 
   // Track slow API calls
   if (duration > 2000) {
-    Sentry.captureMessage(`Slow API call: ${endpoint} took ${duration}ms`, 'warning');
+    Sentry.captureMessage(
+      `Slow API call: ${endpoint} took ${duration}ms`,
+      'warning',
+    );
   }
 }
 
 // Track feature usage
-export function trackFeatureUsage(feature: string, metadata?: Record<string, string | number | boolean>) {
+export function trackFeatureUsage(
+  feature: string,
+  metadata?: Record<string, string | number | boolean>,
+) {
   // Send to Sentry
   Sentry.addBreadcrumb({
     category: 'feature_usage',
@@ -151,19 +173,23 @@ export function initializePerformanceMonitoring() {
 
   // Track route changes
   let startTime = Date.now();
-  
+
   // Listen for route changes (Next.js)
   if (typeof window !== 'undefined') {
     const originalPushState = window.history.pushState;
     const originalReplaceState = window.history.replaceState;
 
-    window.history.pushState = function(...args: Parameters<typeof originalPushState>) {
+    window.history.pushState = function (
+      ...args: Parameters<typeof originalPushState>
+    ) {
       trackCustomMetric('route_change_duration', Date.now() - startTime);
       startTime = Date.now();
       return originalPushState.apply(this, args);
     };
 
-    window.history.replaceState = function(...args: Parameters<typeof originalReplaceState>) {
+    window.history.replaceState = function (
+      ...args: Parameters<typeof originalReplaceState>
+    ) {
       trackCustomMetric('route_change_duration', Date.now() - startTime);
       startTime = Date.now();
       return originalReplaceState.apply(this, args);
@@ -174,7 +200,7 @@ export function initializePerformanceMonitoring() {
   document.addEventListener('visibilitychange', () => {
     trackUserInteraction(
       document.hidden ? 'page_hidden' : 'page_visible',
-      'Page Visibility'
+      'Page Visibility',
     );
   });
 
@@ -184,7 +210,7 @@ export function initializePerformanceMonitoring() {
   });
 
   // Only log in debug mode to reduce console noise
-if (process.env.UNVEIL_DEBUG === 'true') {
-  logger.system('Performance monitoring initialized');
+  if (process.env.UNVEIL_DEBUG === 'true') {
+    logger.system('Performance monitoring initialized');
+  }
 }
-} 

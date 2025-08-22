@@ -37,13 +37,12 @@ export function useUserEvents(): UseUserEventsReturn {
   // Memoized sorting logic to prevent unnecessary re-computations
   const events = useMemo(() => {
     // Sort events: Host events first, then guest events by date (ascending)
-    const sortedEvents = (rawEvents || []).sort(
-      (a: GetUserEventsReturn, b: GetUserEventsReturn) => {
+    const sortedEvents = (rawEvents || [])
+      .sort((a: GetUserEventsReturn, b: GetUserEventsReturn) => {
         // If both are host events or both are guest events, sort by date
         if (a.role === b.role) {
           return (
-            new Date(a.event_date).getTime() -
-            new Date(b.event_date).getTime()
+            new Date(a.event_date).getTime() - new Date(b.event_date).getTime()
           );
         }
 
@@ -59,16 +58,18 @@ export function useUserEvents(): UseUserEventsReturn {
         return (
           new Date(a.event_date).getTime() - new Date(b.event_date).getTime()
         );
-      },
-    ).map((event: GetUserEventsReturn): UserEvent => ({
-      event_id: event.id, // Map database 'id' to frontend 'event_id'
-      title: event.title,
-      event_date: event.event_date,
-      location: event.location,
-      user_role: event.role, // Map database 'role' to frontend 'user_role'
+      })
+      .map(
+        (event: GetUserEventsReturn): UserEvent => ({
+          event_id: event.id, // Map database 'id' to frontend 'event_id'
+          title: event.title,
+          event_date: event.event_date,
+          location: event.location,
+          user_role: event.role, // Map database 'role' to frontend 'user_role'
 
-      is_primary_host: event.is_host, // Map database 'is_host' to frontend 'is_primary_host'
-    }));
+          is_primary_host: event.is_host, // Map database 'is_host' to frontend 'is_primary_host'
+        }),
+      );
 
     return sortedEvents;
   }, [rawEvents]);
@@ -123,4 +124,4 @@ export function useUserEvents(): UseUserEventsReturn {
     error,
     refetch,
   };
-} 
+}

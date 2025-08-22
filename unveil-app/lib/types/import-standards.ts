@@ -307,7 +307,7 @@ export const ImportUtils = {
   /**
    * Convert relative import to absolute import
    */
-   
+
   toAbsoluteImport: (importStatement: string): string => {
     // Implementation would depend on file structure analysis
     // This is a placeholder for the concept

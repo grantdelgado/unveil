@@ -32,7 +32,11 @@ export function useHostEvents(userId: string | null): UseHostEventsReturn {
       const hostResult = await getHostEvents(userId);
 
       if (!hostResult.success && hostResult.error) {
-        throw new Error(hostResult.error instanceof Error ? hostResult.error.message : 'Failed to fetch hosted events');
+        throw new Error(
+          hostResult.error instanceof Error
+            ? hostResult.error.message
+            : 'Failed to fetch hosted events',
+        );
       }
 
       setHostedEvents(hostResult.success ? hostResult.data || [] : []);

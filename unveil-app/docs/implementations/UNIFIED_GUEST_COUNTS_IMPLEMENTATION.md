@@ -5,10 +5,12 @@
 ### Where Old Counts Came From
 
 **Host Dashboard (`EventSummaryCard`):**
+
 - Header count: Direct query `event_guests.select('declined_at').eq('event_id', eventId)` → `total = data.length`
 - Attendance bar: Same query, split by `declined_at IS NULL` (attending) vs `declined_at IS NOT NULL` (declined)
 
 **Guest Management (`useSimpleGuestStore` + `GuestManagement`):**
+
 - Used `get_event_guests_with_display_names` RPC (already excludes `removed_at IS NULL`)
 - Total: `statusCounts.total` from attendance helper
 - Invited: `guests.filter(g => g.invited_at && !g.declined_at).length`
@@ -19,7 +21,8 @@
 
 **Decision:** Both surfaces now include hosts in counts, matching Guest Management's existing behavior.
 
-**Rationale:** 
+**Rationale:**
+
 - Guest Management's "All" filter shows hosts (verified: role='host' exists in event_guests)
 - Hosts can be invited, decline, etc. (they're event participants)
 - Simpler to maintain consistency by including rather than special-casing exclusion
@@ -35,8 +38,9 @@ get_event_guest_counts(p_event_id UUID)
 **Base Scope:** `event_guests WHERE event_id = $id AND removed_at IS NULL`
 
 **Returns:**
+
 - `total_guests`: All active guests (includes hosts)
-- `total_invited`: `COUNT(*) WHERE invited_at IS NOT NULL` 
+- `total_invited`: `COUNT(*) WHERE invited_at IS NOT NULL`
 - `attending`: `COUNT(*) WHERE invited_at IS NOT NULL AND declined_at IS NULL`
 - `declined`: `COUNT(*) WHERE declined_at IS NOT NULL`
 - `not_invited`: `COUNT(*) WHERE invited_at IS NULL AND declined_at IS NULL`
@@ -48,10 +52,12 @@ get_event_guest_counts(p_event_id UUID)
 ### 3. Updated Components
 
 **Host Dashboard:**
+
 - Header count: Now shows `total_invited` (with "invited" label for clarity)
 - Attendance bar: Uses `attending` and `declined` from unified counts
 
 **Guest Management:**
+
 - Filter pills: Use unified counts for consistency
 - All refresh operations now also refresh unified counts
 

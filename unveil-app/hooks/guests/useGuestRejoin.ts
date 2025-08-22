@@ -19,7 +19,7 @@ interface UseGuestRejoinReturn {
  */
 export function useGuestRejoin({
   eventId,
-  onRejoinSuccess
+  onRejoinSuccess,
 }: UseGuestRejoinOptions): UseGuestRejoinReturn {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,9 +37,12 @@ export function useGuestRejoin({
     try {
       logger.api('Rejoining event', { eventId });
 
-      const { data, error: rpcError } = await supabase.rpc('guest_rejoin_event', {
-        p_event_id: eventId
-      });
+      const { data, error: rpcError } = await supabase.rpc(
+        'guest_rejoin_event',
+        {
+          p_event_id: eventId,
+        },
+      );
 
       if (rpcError) {
         logger.databaseError('Error rejoining event', rpcError);
@@ -47,22 +50,22 @@ export function useGuestRejoin({
       }
 
       const success = data as boolean;
-      
+
       if (!success) {
         logger.error('RPC returned failure', { data });
         throw new Error('Failed to rejoin event');
       }
 
-      logger.api('Successfully rejoined event', { 
-        eventId
+      logger.api('Successfully rejoined event', {
+        eventId,
       });
 
       onRejoinSuccess?.();
 
       return { success: true };
-
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Failed to rejoin event';
+      const errorMsg =
+        err instanceof Error ? err.message : 'Failed to rejoin event';
       setError(errorMsg);
       logger.error('Guest rejoin error', err);
       return { success: false, error: errorMsg };
@@ -74,6 +77,6 @@ export function useGuestRejoin({
   return {
     rejoinEvent,
     isLoading,
-    error
+    error,
   };
 }

@@ -1,7 +1,8 @@
 import React from 'react';
 import { ValidationResult } from '@/lib/utils/validation';
 
-export interface BaseInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+export interface BaseInputProps
+  extends React.InputHTMLAttributes<HTMLInputElement> {
   error?: string;
   className?: string;
   validation?: ValidationResult;
@@ -22,4 +23,4 @@ export interface OTPInputProps extends Omit<BaseInputProps, 'onChange'> {
   onChange: (value: string) => void;
   onComplete?: (code: string) => void;
   autoFocus?: boolean;
-} 
+}

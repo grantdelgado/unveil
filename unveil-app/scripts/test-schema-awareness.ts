@@ -230,9 +230,9 @@ function testRelationshipAwareness() {
     // events.host_user_id → users.id
     eventToHost: 'events.host_user_id → users.id',
 
-        // event_guests.event_id → events.id
+    // event_guests.event_id → events.id
     participantToEvent: 'event_guests.event_id → events.id',
-    
+
     // event_guests.user_id → users.id
     participantToUser: 'event_guests.user_id → users.id',
 

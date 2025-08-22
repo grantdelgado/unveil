@@ -11,7 +11,7 @@ describe('Date Formatting Utilities', () => {
     it('should handle different dates consistently', () => {
       const result1 = formatEventDate('2025-12-25');
       const result2 = formatEventDate('2025-01-01');
-      
+
       expect(result1).toMatch(/December 25, 2025/);
       expect(result2).toMatch(/January 1, 2025/);
     });
@@ -29,7 +29,9 @@ describe('Date Formatting Utilities', () => {
     it('should warn for invalid date format', () => {
       const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       formatEventDate('2025-13-45'); // Invalid month and day
-      expect(consoleSpy).toHaveBeenCalledWith('Invalid date format: 2025-13-45. Expected YYYY-MM-DD');
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'Invalid date format: 2025-13-45. Expected YYYY-MM-DD',
+      );
       consoleSpy.mockRestore();
     });
 
@@ -40,32 +42,32 @@ describe('Date Formatting Utilities', () => {
     it('should preserve calendar day regardless of timezone', () => {
       // Mock different timezone offsets to simulate users around the world
       const originalTimezoneOffset = Date.prototype.getTimezoneOffset;
-      
+
       // Test PST (UTC-8): +480 minutes
       Date.prototype.getTimezoneOffset = vi.fn(() => 480);
       const pstResult = formatEventDate('2025-08-31');
-      
+
       // Test EST (UTC-5): +300 minutes
       Date.prototype.getTimezoneOffset = vi.fn(() => 300);
       const estResult = formatEventDate('2025-08-31');
-      
+
       // Test UTC: 0 minutes
       Date.prototype.getTimezoneOffset = vi.fn(() => 0);
       const utcResult = formatEventDate('2025-08-31');
-      
+
       // Test JST (UTC+9): -540 minutes
       Date.prototype.getTimezoneOffset = vi.fn(() => -540);
       const jstResult = formatEventDate('2025-08-31');
-      
+
       // Restore original function
       Date.prototype.getTimezoneOffset = originalTimezoneOffset;
-      
+
       // All should show the same calendar day
       expect(pstResult).toMatch(/August 31, 2025/);
       expect(estResult).toMatch(/August 31, 2025/);
       expect(utcResult).toMatch(/August 31, 2025/);
       expect(jstResult).toMatch(/August 31, 2025/);
-      
+
       // They should all be identical
       expect(pstResult).toBe(estResult);
       expect(estResult).toBe(utcResult);

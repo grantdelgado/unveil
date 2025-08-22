@@ -38,10 +38,7 @@ function EventAnalyticsComponent({ eventId }: EventAnalyticsProps) {
       // Fetch all analytics data in parallel
       const [guestsResponse, messagesResponse, mediaResponse] =
         await Promise.all([
-          supabase
-            .from('event_guests')
-            .select('*')
-            .eq('event_id', eventId),
+          supabase.from('event_guests').select('*').eq('event_id', eventId),
 
           supabase
             .from('messages')
@@ -77,11 +74,17 @@ function EventAnalyticsComponent({ eventId }: EventAnalyticsProps) {
 
   // Asynchronous analytics calculations to prevent blocking main thread
   const [analytics, setAnalytics] = useState<{
-    rsvpStats: { total: number; attending: number; declined: number; maybe: number; pending: number };
-    engagementStats: { 
-      totalMessages: number; 
+    rsvpStats: {
+      total: number;
+      attending: number;
+      declined: number;
+      maybe: number;
+      pending: number;
+    };
+    engagementStats: {
+      totalMessages: number;
       totalMedia: number;
-      announcements: number; 
+      announcements: number;
       directMessages: number;
       images: number;
       videos: number;
@@ -89,10 +92,10 @@ function EventAnalyticsComponent({ eventId }: EventAnalyticsProps) {
     recentActivity: ActivityItem[];
   }>({
     rsvpStats: { total: 0, attending: 0, declined: 0, maybe: 0, pending: 0 },
-    engagementStats: { 
-      totalMessages: 0, 
+    engagementStats: {
+      totalMessages: 0,
       totalMedia: 0,
-      announcements: 0, 
+      announcements: 0,
       directMessages: 0,
       images: 0,
       videos: 0,
@@ -104,27 +107,36 @@ function EventAnalyticsComponent({ eventId }: EventAnalyticsProps) {
   useEffect(() => {
     const calculateAnalytics = async () => {
       // Use setTimeout to break computation into chunks
-      const rsvpStats = await new Promise<typeof analytics.rsvpStats>((resolve) => {
-        setTimeout(() => {
-          const stats = guests.reduce(
-            (acc, guest) => {
-              const status = guest.rsvp_status || 'pending';
-              acc.total++;
-              acc[status as keyof typeof acc] = (acc[status as keyof typeof acc] || 0) + 1;
-              return acc;
-            },
-            { total: 0, attending: 0, declined: 0, maybe: 0, pending: 0 }
-          );
-          resolve(stats);
-        }, 0);
-      });
+      const rsvpStats = await new Promise<typeof analytics.rsvpStats>(
+        (resolve) => {
+          setTimeout(() => {
+            const stats = guests.reduce(
+              (acc, guest) => {
+                const status = guest.rsvp_status || 'pending';
+                acc.total++;
+                acc[status as keyof typeof acc] =
+                  (acc[status as keyof typeof acc] || 0) + 1;
+                return acc;
+              },
+              { total: 0, attending: 0, declined: 0, maybe: 0, pending: 0 },
+            );
+            resolve(stats);
+          }, 0);
+        },
+      );
 
-      const engagementStats = await new Promise<typeof analytics.engagementStats>((resolve) => {
+      const engagementStats = await new Promise<
+        typeof analytics.engagementStats
+      >((resolve) => {
         setTimeout(() => {
           // Pre-filter media to avoid multiple filters
-          const imageCount = media.filter(m => m.media_type === 'image').length;
-          const videoCount = media.filter(m => m.media_type === 'video').length;
-          
+          const imageCount = media.filter(
+            (m) => m.media_type === 'image',
+          ).length;
+          const videoCount = media.filter(
+            (m) => m.media_type === 'video',
+          ).length;
+
           const messageStats = messages.reduce(
             (acc, message) => {
               acc.totalMessages++;
@@ -132,14 +144,14 @@ function EventAnalyticsComponent({ eventId }: EventAnalyticsProps) {
               if (message.message_type === 'direct') acc.directMessages++;
               return acc;
             },
-            { 
-              totalMessages: 0, 
+            {
+              totalMessages: 0,
               totalMedia: media.length,
-              announcements: 0, 
+              announcements: 0,
               directMessages: 0,
               images: imageCount,
               videos: videoCount,
-            }
+            },
           );
           resolve(messageStats);
         }, 0);
@@ -160,7 +172,11 @@ function EventAnalyticsComponent({ eventId }: EventAnalyticsProps) {
             })),
           ]
             .filter((activity) => activity.timestamp)
-            .sort((a, b) => new Date(b.timestamp!).getTime() - new Date(a.timestamp!).getTime())
+            .sort(
+              (a, b) =>
+                new Date(b.timestamp!).getTime() -
+                new Date(a.timestamp!).getTime(),
+            )
             .slice(0, 10);
           resolve(activity);
         }, 0);
@@ -253,9 +269,11 @@ function EventAnalyticsComponent({ eventId }: EventAnalyticsProps) {
             </span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
+            <div
               className="bg-[#FF6B6B] h-2 rounded-full transition-all duration-300"
-              style={{ width: `${(rsvpStats.attending / rsvpStats.total) * 100}%` }}
+              style={{
+                width: `${(rsvpStats.attending / rsvpStats.total) * 100}%`,
+              }}
             />
           </div>
           <div className="flex justify-between text-xs text-gray-500 mt-2">
@@ -316,14 +334,18 @@ function EventAnalyticsComponent({ eventId }: EventAnalyticsProps) {
           <div className="space-y-3">
             {recentActivity.slice(0, 5).map((activity, index) => (
               <div key={index} className="flex items-center space-x-3 py-2">
-                <div className="text-lg">{activity.type === 'message' ? '💬' : '📸'}</div>
+                <div className="text-lg">
+                  {activity.type === 'message' ? '💬' : '📸'}
+                </div>
                 <div className="flex-1">
                   <p className="text-sm text-gray-800 truncate">
                     {activity.content}
                   </p>
-                                     <p className="text-xs text-gray-500">
-                     {activity.timestamp ? new Date(activity.timestamp).toLocaleString() : 'Unknown time'}
-                   </p>
+                  <p className="text-xs text-gray-500">
+                    {activity.timestamp
+                      ? new Date(activity.timestamp).toLocaleString()
+                      : 'Unknown time'}
+                  </p>
                 </div>
               </div>
             ))}
@@ -344,7 +366,8 @@ function EventAnalyticsComponent({ eventId }: EventAnalyticsProps) {
               Event Highlights
             </h3>
             <p className="text-gray-500">
-              Get ready for an amazing celebration! Keep an eye on guest responses and engagement leading up to your event.
+              Get ready for an amazing celebration! Keep an eye on guest
+              responses and engagement leading up to your event.
             </p>
           </div>
 
@@ -356,7 +379,10 @@ function EventAnalyticsComponent({ eventId }: EventAnalyticsProps) {
 
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-gray-700">
-                  {Math.round(((rsvpStats.attending / rsvpStats.total) * 100) || 0)}%
+                  {Math.round(
+                    (rsvpStats.attending / rsvpStats.total) * 100 || 0,
+                  )}
+                  %
                 </div>
                 <MicroCopy>Response Rate</MicroCopy>
                 <div className="text-xs text-gray-600">Expected Attendance</div>
@@ -385,4 +411,3 @@ function EventAnalyticsComponent({ eventId }: EventAnalyticsProps) {
 
 // Memoize the component to prevent unnecessary re-renders
 export const EventAnalytics = memo(EventAnalyticsComponent);
-

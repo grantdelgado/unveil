@@ -13,7 +13,7 @@ import {
   LoadingSpinner,
   CardContainer,
   PageTitle,
-  SubTitle
+  SubTitle,
 } from '@/components/ui';
 import type { Database } from '@/app/reference/supabase.types';
 
@@ -23,12 +23,12 @@ export default function EventDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const eventId = params.eventId as string;
-  
+
   // State management
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Hooks
   const { updateEvent } = useEventDetails();
 
@@ -52,13 +52,17 @@ export default function EventDetailsPage() {
 
         // Fetch event data
         const result = await getEventById(eventId);
-        
+
         if (!result.success) {
-          if (result.error && typeof result.error === 'object' && 'code' in result.error) {
+          if (
+            result.error &&
+            typeof result.error === 'object' &&
+            'code' in result.error
+          ) {
             if (result.error.code === 'PGRST116') {
               setError('Event not found');
             } else if (result.error.code === '42501') {
-              setError('You don\'t have permission to edit this event');
+              setError("You don't have permission to edit this event");
             } else {
               setError('Failed to load event data');
             }
@@ -100,7 +104,11 @@ export default function EventDetailsPage() {
   // Handle preview guest view
   const handlePreviewGuestView = () => {
     // Open guest view in new tab
-    window.open(`/guest/events/${eventId}/home`, '_blank', 'noopener,noreferrer');
+    window.open(
+      `/guest/events/${eventId}/home`,
+      '_blank',
+      'noopener,noreferrer',
+    );
   };
 
   // Loading state
@@ -112,7 +120,7 @@ export default function EventDetailsPage() {
           <div className="mb-6">
             <div className="animate-pulse h-10 bg-gray-200 rounded-lg w-32"></div>
           </div>
-          
+
           {/* Loading content */}
           <div className="space-y-6">
             <CardContainer className="p-6">
@@ -124,7 +132,7 @@ export default function EventDetailsPage() {
                 </div>
               </div>
             </CardContainer>
-            
+
             {/* Form skeleton */}
             {[1, 2, 3, 4].map((i) => (
               <CardContainer key={i} className="p-6">
@@ -150,7 +158,7 @@ export default function EventDetailsPage() {
         <div className="max-w-4xl mx-auto">
           {/* Back Navigation */}
           <div className="mb-6">
-            <BackButton 
+            <BackButton
               href={`/host/events/${eventId}/dashboard`}
               fallback="/select-event"
             >
@@ -165,18 +173,20 @@ export default function EventDetailsPage() {
               </div>
               <div className="space-y-2">
                 <PageTitle>
-                  {error?.includes('permission') 
-                    ? 'Access Denied' 
-                    : 'Unable to Load Event'
-                  }
+                  {error?.includes('permission')
+                    ? 'Access Denied'
+                    : 'Unable to Load Event'}
                 </PageTitle>
                 <SubTitle>
-                  {error || 'This event could not be found or you may not have permission to edit it.'}
+                  {error ||
+                    'This event could not be found or you may not have permission to edit it.'}
                 </SubTitle>
               </div>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <button
-                  onClick={() => router.push(`/host/events/${eventId}/dashboard`)}
+                  onClick={() =>
+                    router.push(`/host/events/${eventId}/dashboard`)
+                  }
                   className="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg border border-gray-300 transition-colors"
                 >
                   Back to Dashboard
@@ -201,7 +211,7 @@ export default function EventDetailsPage() {
       <div className="max-w-4xl mx-auto">
         {/* Back Navigation */}
         <div className="mb-6">
-          <BackButton 
+          <BackButton
             href={`/host/events/${eventId}/dashboard`}
             fallback="/select-event"
           >

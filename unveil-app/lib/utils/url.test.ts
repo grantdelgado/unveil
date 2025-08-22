@@ -14,58 +14,62 @@ describe('Display Name Fallback Logic', () => {
       input: {
         display_name: 'John Smith',
         full_name: 'John Doe',
-        guest_name: 'Johnny'
+        guest_name: 'Johnny',
       },
-      expected: 'John Smith'
+      expected: 'John Smith',
     },
     {
       name: 'should use full_name when display_name is empty',
       input: {
         display_name: '',
         full_name: 'John Doe',
-        guest_name: 'Johnny'
+        guest_name: 'Johnny',
       },
-      expected: 'John Doe'
+      expected: 'John Doe',
     },
     {
       name: 'should use guest_name when display_name and full_name are empty',
       input: {
         display_name: '',
         full_name: '',
-        guest_name: 'Johnny'
+        guest_name: 'Johnny',
       },
-      expected: 'Johnny'
+      expected: 'Johnny',
     },
     {
       name: 'should use Guest when all names are empty',
       input: {
         display_name: '',
         full_name: '',
-        guest_name: ''
+        guest_name: '',
       },
-      expected: 'Guest'
+      expected: 'Guest',
     },
     {
       name: 'should handle null values',
       input: {
         display_name: null,
         full_name: null,
-        guest_name: 'Johnny'
+        guest_name: 'Johnny',
       },
-      expected: 'Johnny'
-    }
+      expected: 'Johnny',
+    },
   ];
 
   testCases.forEach(({ name, input, expected }) => {
     it(name, () => {
       // This simulates the COALESCE logic from the RPC function:
       // COALESCE(NULLIF(eg.display_name, ''), NULLIF(u.full_name, ''), NULLIF(eg.guest_name, ''), 'Guest')
-      
-      const result = input.display_name && input.display_name !== '' ? input.display_name :
-                    input.full_name && input.full_name !== '' ? input.full_name :
-                    input.guest_name && input.guest_name !== '' ? input.guest_name :
-                    'Guest';
-      
+
+      const result =
+        input.display_name && input.display_name !== ''
+          ? input.display_name
+          : input.full_name && input.full_name !== ''
+            ? input.full_name
+            : input.guest_name && input.guest_name !== ''
+              ? input.guest_name
+              : 'Guest';
+
       expect(result).toBe(expected);
     });
   });

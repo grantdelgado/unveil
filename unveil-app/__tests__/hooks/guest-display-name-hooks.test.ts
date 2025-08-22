@@ -15,10 +15,10 @@ vi.mock('@/lib/supabase/client', () => ({
     rpc: vi.fn(),
     from: vi.fn(() => ({
       select: vi.fn(() => ({
-        eq: vi.fn(() => Promise.resolve({ count: 3 }))
-      }))
-    }))
-  }
+        eq: vi.fn(() => Promise.resolve({ count: 3 })),
+      })),
+    })),
+  },
 }));
 
 // Mock logger
@@ -27,20 +27,20 @@ vi.mock('@/lib/logger', () => ({
     info: vi.fn(),
     error: vi.fn(),
     databaseError: vi.fn(),
-    api: vi.fn()
-  }
+    api: vi.fn(),
+  },
 }));
 
 // Mock realtime hooks
 vi.mock('@/hooks/realtime', () => ({
   useEventSubscription: vi.fn(() => ({
     // Return mock subscription
-  }))
+  })),
 }));
 
 // Mock debounce hook
 vi.mock('@/hooks/common', () => ({
-  useDebounce: vi.fn((value) => value)
+  useDebounce: vi.fn((value) => value),
 }));
 
 describe('Guest Display Name in Hooks', () => {
@@ -80,7 +80,7 @@ describe('Guest Display Name in Hooks', () => {
           user_created_at: '2024-01-01T00:00:00Z',
           user_updated_at: '2024-01-01T00:00:00Z',
           user_intended_redirect: null,
-          user_onboarding_completed: true
+          user_onboarding_completed: true,
         },
         {
           id: 'guest-2',
@@ -107,21 +107,21 @@ describe('Guest Display Name in Hooks', () => {
           user_created_at: null,
           user_updated_at: null,
           user_intended_redirect: null,
-          user_onboarding_completed: null
-        }
+          user_onboarding_completed: null,
+        },
       ];
 
       vi.mocked(supabase.rpc).mockResolvedValueOnce({
         data: mockGuestData,
-        error: null
+        error: null,
       });
 
-      const { result } = renderHook(() => 
-        useGuestData({ 
+      const { result } = renderHook(() =>
+        useGuestData({
           eventId: 'event-1',
           pageSize: 50,
-          enablePagination: true 
-        })
+          enablePagination: true,
+        }),
       );
 
       // Wait for the hook to finish loading
@@ -130,7 +130,7 @@ describe('Guest Display Name in Hooks', () => {
       });
 
       expect(result.current.guests).toHaveLength(2);
-      
+
       // Test first guest with linked user
       expect(result.current.guests[0].guest_display_name).toBe('John Smith');
       expect(result.current.guests[0].guest_name).toBe('John From Guest');
@@ -147,23 +147,26 @@ describe('Guest Display Name in Hooks', () => {
 
       vi.mocked(supabase.rpc).mockResolvedValueOnce({
         data: mockGuestData,
-        error: null
+        error: null,
       });
 
-      renderHook(() => 
-        useGuestData({ 
+      renderHook(() =>
+        useGuestData({
           eventId: 'event-1',
           pageSize: 25,
-          enablePagination: true 
-        })
+          enablePagination: true,
+        }),
       );
 
       await waitFor(() => {
-        expect(supabase.rpc).toHaveBeenCalledWith('get_event_guests_with_display_names', {
-          p_event_id: 'event-1',
-          p_limit: 25,
-          p_offset: 0
-        });
+        expect(supabase.rpc).toHaveBeenCalledWith(
+          'get_event_guests_with_display_names',
+          {
+            p_event_id: 'event-1',
+            p_limit: 25,
+            p_offset: 0,
+          },
+        );
       });
     });
 
@@ -175,18 +178,18 @@ describe('Guest Display Name in Hooks', () => {
           guest_name: 'Johnny',
           guest_email: 'john@example.com',
           // ... other required fields
-        }
+        },
       ];
 
       vi.mocked(supabase.rpc).mockResolvedValueOnce({
         data: mockGuestData,
-        error: null
+        error: null,
       });
 
-      const { result } = renderHook(() => 
-        useGuestData({ 
-          eventId: 'event-1'
-        })
+      const { result } = renderHook(() =>
+        useGuestData({
+          eventId: 'event-1',
+        }),
       );
 
       await waitFor(() => {
@@ -195,7 +198,7 @@ describe('Guest Display Name in Hooks', () => {
 
       // Search should work with display name
       result.current.setSearchTerm('Smith');
-      
+
       // The search filtering happens in the component, but we can verify
       // the guest_display_name is available for filtering
       expect(result.current.guests[0].guest_display_name).toBe('John Smith');
@@ -210,15 +213,15 @@ describe('Guest Display Name in Hooks', () => {
 
       vi.mocked(supabase.rpc).mockResolvedValueOnce({
         data: mockGuestData,
-        error: null
+        error: null,
       });
 
-      const { result } = renderHook(() => 
-        useGuestData({ 
+      const { result } = renderHook(() =>
+        useGuestData({
           eventId: 'event-1',
           pageSize: 5,
-          enablePagination: true 
-        })
+          enablePagination: true,
+        }),
       );
 
       await waitFor(() => {
@@ -229,11 +232,14 @@ describe('Guest Display Name in Hooks', () => {
       await result.current.goToPage(2);
 
       await waitFor(() => {
-        expect(supabase.rpc).toHaveBeenCalledWith('get_event_guests_with_display_names', {
-          p_event_id: 'event-1',
-          p_limit: 5,
-          p_offset: 5 // Second page
-        });
+        expect(supabase.rpc).toHaveBeenCalledWith(
+          'get_event_guests_with_display_names',
+          {
+            p_event_id: 'event-1',
+            p_limit: 5,
+            p_offset: 5, // Second page
+          },
+        );
       });
     });
   });
@@ -250,20 +256,20 @@ describe('Guest Display Name in Hooks', () => {
           user_full_name: 'Display Name',
           rsvp_status: 'attending',
           // ... other required fields
-        }
+        },
       ];
 
       vi.mocked(supabase.rpc).mockResolvedValueOnce({
         data: mockGuestData,
-        error: null
+        error: null,
       });
 
-      const { result } = renderHook(() => 
-        useGuests({ 
+      const { result } = renderHook(() =>
+        useGuests({
           eventId: 'event-1',
           pageSize: 50,
-          enablePagination: true 
-        })
+          enablePagination: true,
+        }),
       );
 
       await waitFor(() => {
@@ -278,13 +284,13 @@ describe('Guest Display Name in Hooks', () => {
     it('should handle errors gracefully', async () => {
       vi.mocked(supabase.rpc).mockResolvedValueOnce({
         data: null,
-        error: new Error('Database error')
+        error: new Error('Database error'),
       });
 
-      const { result } = renderHook(() => 
-        useGuests({ 
-          eventId: 'event-1'
-        })
+      const { result } = renderHook(() =>
+        useGuests({
+          eventId: 'event-1',
+        }),
       );
 
       await waitFor(() => {
@@ -324,25 +330,23 @@ describe('Guest Display Name in Hooks', () => {
           user_created_at: '2024-01-01T00:00:00Z',
           user_updated_at: '2024-01-01T00:00:00Z',
           user_intended_redirect: '/dashboard',
-          user_onboarding_completed: true
-        }
+          user_onboarding_completed: true,
+        },
       ];
 
       vi.mocked(supabase.rpc).mockResolvedValueOnce({
         data: mockRpcData,
-        error: null
+        error: null,
       });
 
-      const { result } = renderHook(() => 
-        useGuestData({ eventId: 'event-1' })
-      );
+      const { result } = renderHook(() => useGuestData({ eventId: 'event-1' }));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
       });
 
       const guest = result.current.guests[0];
-      
+
       // Verify all fields are properly mapped
       expect(guest.id).toBe('guest-1');
       expect(guest.guest_display_name).toBe('User Full Name');
@@ -361,17 +365,15 @@ describe('Guest Display Name in Hooks', () => {
           user_full_name: null,
           user_email: null,
           // ... other fields
-        }
+        },
       ];
 
       vi.mocked(supabase.rpc).mockResolvedValueOnce({
         data: mockRpcData,
-        error: null
+        error: null,
       });
 
-      const { result } = renderHook(() => 
-        useGuestData({ eventId: 'event-1' })
-      );
+      const { result } = renderHook(() => useGuestData({ eventId: 'event-1' }));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -387,12 +389,10 @@ describe('Guest Display Name in Hooks', () => {
     it('should only call RPC function once per data fetch', async () => {
       vi.mocked(supabase.rpc).mockResolvedValueOnce({
         data: [],
-        error: null
+        error: null,
       });
 
-      renderHook(() => 
-        useGuestData({ eventId: 'event-1' })
-      );
+      renderHook(() => useGuestData({ eventId: 'event-1' }));
 
       await waitFor(() => {
         expect(supabase.rpc).toHaveBeenCalledTimes(1);
@@ -402,14 +402,14 @@ describe('Guest Display Name in Hooks', () => {
     it('should properly handle count query for pagination', async () => {
       vi.mocked(supabase.rpc).mockResolvedValueOnce({
         data: [],
-        error: null
+        error: null,
       });
 
-      renderHook(() => 
-        useGuestData({ 
+      renderHook(() =>
+        useGuestData({
           eventId: 'event-1',
-          enablePagination: true 
-        })
+          enablePagination: true,
+        }),
       );
 
       await waitFor(() => {

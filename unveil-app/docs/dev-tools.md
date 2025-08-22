@@ -9,6 +9,7 @@ Development debug tools are **hidden by default** to reduce visual noise. This g
 ## Quick Start
 
 ### Enable All Tools
+
 ```bash
 # Method 1: URL parameter (temporary)
 http://localhost:3000/your-page?debug=1
@@ -21,11 +22,12 @@ Ctrl+Shift+D
 ```
 
 ### Enable Specific Tools
+
 ```bash
 # React Query Devtools only
 http://localhost:3000/your-page?debug=rq
 
-# Message Debug Overlay only  
+# Message Debug Overlay only
 http://localhost:3000/your-page?debug=msg
 ```
 
@@ -34,16 +36,19 @@ http://localhost:3000/your-page?debug=msg
 ## Available Tools
 
 ### 1. React Query Devtools
+
 **Location**: Bottom-left floating button  
 **Purpose**: Inspect React Query cache, queries, mutations, and performance
 
 **When to Use**:
+
 - Debugging slow API calls
 - Checking query invalidation
 - Monitoring cache behavior
 - Performance optimization
 
 **Features**:
+
 - Query timeline and status
 - Cache inspection
 - Mutation tracking
@@ -52,22 +57,26 @@ http://localhost:3000/your-page?debug=msg
 ---
 
 ### 2. Message Debug Overlay
+
 **Location**: Bottom-right red "🐛 MSG" button  
 **Purpose**: Debug SMS delivery, message routing, and guest records
 
 **When to Use**:
+
 - SMS messages not delivering
-- Guest RSVP/invitation issues  
+- Guest RSVP/invitation issues
 - Message delivery status problems
 - Testing message flows
 
 **Features**:
+
 - Message delivery records
 - SMS status tracking
 - Event guest details
 - Error diagnostics
 
-**Requirements**: 
+**Requirements**:
+
 - Must be on a page with event context (`/events/[eventId]`)
 - User must be authenticated
 - Only shows for guest messaging pages
@@ -77,15 +86,17 @@ http://localhost:3000/your-page?debug=msg
 ## Activation Methods
 
 ### URL Parameters (Recommended)
+
 Best for temporary debugging sessions:
 
-| Parameter | Effect |
-|-----------|--------|
-| `?debug=1` or `?debug=all` | Enable all tools |
-| `?debug=rq` or `?debug=query` | React Query only |
+| Parameter                          | Effect             |
+| ---------------------------------- | ------------------ |
+| `?debug=1` or `?debug=all`         | Enable all tools   |
+| `?debug=rq` or `?debug=query`      | React Query only   |
 | `?debug=msg` or `?debug=messaging` | Message debug only |
 
 ### Environment Variable
+
 Best for persistent development:
 
 ```bash
@@ -94,7 +105,9 @@ NEXT_PUBLIC_DEBUG_OVERLAYS=true
 ```
 
 ### Keyboard Shortcut
+
 Quick toggle during development:
+
 - **Ctrl+Shift+D** - Toggle all tools on/off
 
 ---
@@ -102,8 +115,9 @@ Quick toggle during development:
 ## Visual Indicators
 
 When dev tools are active, you'll see:
+
 - **🛠️ DEV** indicator in top-right corner
-- **RQ** suffix if React Query tools enabled  
+- **RQ** suffix if React Query tools enabled
 - **MSG** suffix if Message debug enabled
 
 ---
@@ -111,17 +125,20 @@ When dev tools are active, you'll see:
 ## Troubleshooting
 
 ### Tools Not Appearing
+
 1. Verify you're in development mode (`NODE_ENV=development`)
 2. Check the URL parameter is correct
 3. Try the keyboard shortcut (Ctrl+Shift+D)
 4. Check browser console for errors
 
 ### Message Debug Not Showing
+
 1. Ensure you're on an event page (`/events/[eventId]`)
 2. Verify you're authenticated
 3. Check that the page has messaging context
 
 ### React Query Tools Missing
+
 1. Confirm the page uses React Query
 2. Check network tab for query activity
 3. Try refreshing after enabling
@@ -142,10 +159,11 @@ When dev tools are active, you'll see:
 To quickly disable all tools:
 
 1. **Remove URL parameter**: Delete `?debug=...` from URL
-2. **Clear environment**: Remove `NEXT_PUBLIC_DEBUG_OVERLAYS` from `.env.local`  
+2. **Clear environment**: Remove `NEXT_PUBLIC_DEBUG_OVERLAYS` from `.env.local`
 3. **Code rollback**: Revert the DevToolsGate integration in `app/layout.tsx`
 
 For emergency disable, set:
+
 ```bash
 NEXT_PUBLIC_DEBUG_OVERLAYS=false
 ```
@@ -155,6 +173,7 @@ NEXT_PUBLIC_DEBUG_OVERLAYS=false
 ## Development Workflow
 
 ### Typical Debugging Session
+
 1. Navigate to the problematic page
 2. Add `?debug=1` to URL
 3. Use appropriate tool:
@@ -163,6 +182,7 @@ NEXT_PUBLIC_DEBUG_OVERLAYS=false
 4. Remove URL parameter when done
 
 ### Best Practices
+
 - Use specific tool parameters (`?debug=rq`) to reduce visual noise
 - Enable tools only when needed
 - Document findings in issue reports
@@ -173,12 +193,14 @@ NEXT_PUBLIC_DEBUG_OVERLAYS=false
 ## Technical Details
 
 ### Implementation
+
 - Centralized in `lib/dev/DevToolsGate.tsx`
 - Integrated at root layout level
 - Uses Next.js `useSearchParams` for URL detection
 - Respects `NODE_ENV` checks
 
 ### Performance
+
 - Zero impact when disabled
 - Minimal overhead when enabled (development only)
 - Tools lazy-load when activated

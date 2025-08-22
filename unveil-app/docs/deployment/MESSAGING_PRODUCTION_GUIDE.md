@@ -46,6 +46,7 @@ npx supabase db pull --schema public
 
 1. **Login to Twilio Console**: https://console.twilio.com/
 2. **Configure Webhook**:
+
    - Go to Phone Numbers > Manage > Active Numbers
    - Select your messaging number
    - Set webhook URL: `https://your-domain.com/api/webhooks/twilio`
@@ -80,6 +81,7 @@ npm run validate-messaging-pipeline
 ```
 
 This will check:
+
 - ✅ Environment configuration
 - ✅ Database connectivity
 - ✅ Twilio integration
@@ -89,6 +91,7 @@ This will check:
 ### **Manual Testing Steps**
 
 1. **Test Immediate Messages**:
+
    ```bash
    # Create a test event with guests having valid phone numbers
    # Send a test message using the messaging UI
@@ -96,6 +99,7 @@ This will check:
    ```
 
 2. **Test Scheduled Messages**:
+
    ```bash
    # Schedule a message for 2 minutes in the future
    # Wait for cron job to process (runs every minute)
@@ -112,21 +116,25 @@ This will check:
 ## 🚨 **Critical Production Requirements**
 
 ### **Security**
+
 - ✅ CRON_SECRET must be 32+ characters
 - ✅ Supabase service role key properly secured
 - ✅ Twilio credentials in environment variables (never in code)
 
 ### **Performance**
+
 - ✅ Rate limiting: 100ms delay between SMS messages
 - ✅ Batch processing: Max 100 scheduled messages per cron run
 - ✅ Database indexes for phone number lookups
 
 ### **Reliability**
+
 - ✅ Retry logic: 1 retry max for network failures
 - ✅ Idempotency: Scheduled message processing prevents duplicates
 - ✅ Error handling: Graceful failure with detailed logging
 
 ### **Monitoring**
+
 - ✅ Comprehensive logging for all delivery attempts
 - ✅ Delivery tracking via webhooks
 - ✅ Analytics dashboard for success rates
@@ -136,10 +144,12 @@ This will check:
 ### **Key Metrics to Monitor**
 
 1. **SMS Delivery Rates**:
+
    - Target: >95% delivery success rate
    - Monitor via: Twilio console + message_deliveries table
 
 2. **Scheduled Processing**:
+
    - Target: <2 minute processing delay
    - Monitor via: Vercel function logs
 
@@ -149,18 +159,19 @@ This will check:
 
 ### **Common Issues & Solutions**
 
-| Issue | Symptoms | Solution |
-|-------|----------|----------|
-| Messages not sending | UI shows success, no SMS received | Check Twilio credentials and webhook setup |
-| Scheduled messages not processing | Messages stuck in 'scheduled' status | Verify CRON_SECRET and Vercel cron configuration |
-| High failure rates | Many messages in 'failed' status | Check phone number formatting and Twilio account balance |
-| Webhook not updating status | SMS sent but delivery status not updating | Verify webhook URL configuration in Twilio |
+| Issue                             | Symptoms                                  | Solution                                                 |
+| --------------------------------- | ----------------------------------------- | -------------------------------------------------------- |
+| Messages not sending              | UI shows success, no SMS received         | Check Twilio credentials and webhook setup               |
+| Scheduled messages not processing | Messages stuck in 'scheduled' status      | Verify CRON_SECRET and Vercel cron configuration         |
+| High failure rates                | Many messages in 'failed' status          | Check phone number formatting and Twilio account balance |
+| Webhook not updating status       | SMS sent but delivery status not updating | Verify webhook URL configuration in Twilio               |
 
 ## 🔧 **Troubleshooting**
 
 ### **Debug Message Delivery**
 
 1. **Check Logs**:
+
    ```bash
    # Vercel function logs
    vercel logs --project your-project
@@ -170,20 +181,22 @@ This will check:
    ```
 
 2. **Verify Database State**:
+
    ```sql
    -- Check scheduled messages
-   SELECT id, status, send_at, success_count, failure_count 
-   FROM scheduled_messages 
-   WHERE status IN ('scheduled', 'sending') 
+   SELECT id, status, send_at, success_count, failure_count
+   FROM scheduled_messages
+   WHERE status IN ('scheduled', 'sending')
    ORDER BY send_at;
 
    -- Check delivery records
-   SELECT sms_status, COUNT(*) 
-   FROM message_deliveries 
+   SELECT sms_status, COUNT(*)
+   FROM message_deliveries
    GROUP BY sms_status;
    ```
 
 3. **Test API Endpoints**:
+
    ```bash
    # Test webhook (replace with your domain)
    curl -X POST https://your-domain.com/api/webhooks/twilio \
@@ -197,10 +210,12 @@ This will check:
 ### **Performance Optimization**
 
 1. **Database Queries**:
+
    - Ensure phone number indexes are active
    - Monitor query performance in Supabase dashboard
 
 2. **SMS Rate Limiting**:
+
    - Default: 1 message per 100ms (600 messages/minute)
    - Twilio limit: Varies by account type
    - Adjust delay in `sendBulkSMS` if needed
@@ -222,11 +237,13 @@ Before marking the deployment as successful, verify:
 ## 📞 **Support & Emergency Contacts**
 
 ### **Twilio Support**
+
 - Console: https://console.twilio.com/
 - Support: https://support.twilio.com/
 - Status: https://status.twilio.com/
 
 ### **Vercel Support**
+
 - Dashboard: https://vercel.com/dashboard
 - Documentation: https://vercel.com/docs
 - Status: https://www.vercel-status.com/

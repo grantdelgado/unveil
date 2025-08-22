@@ -50,7 +50,14 @@ export interface ChannelDeliveryResult {
 let currentSession: {
   sessionId: string;
   startTime: Date;
-  metrics: Omit<ProcessingMetrics, 'sessionId' | 'startTime' | 'endTime' | 'averageProcessingTimeMs' | 'throughputPerMinute'>;
+  metrics: Omit<
+    ProcessingMetrics,
+    | 'sessionId'
+    | 'startTime'
+    | 'endTime'
+    | 'averageProcessingTimeMs'
+    | 'throughputPerMinute'
+  >;
   channelResults: ChannelDeliveryResult[];
   messageTimings: Array<{ messageId: string; startTime: Date; endTime?: Date }>;
 } | null = null;
@@ -60,7 +67,7 @@ let currentSession: {
  */
 export function startProcessingSession(): string {
   const sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
-  
+
   currentSession = {
     sessionId,
     startTime: new Date(),
@@ -79,7 +86,7 @@ export function startProcessingSession(): string {
     channelResults: [],
     messageTimings: [],
   };
-  
+
   logger.performance(`Started processing metrics session: ${sessionId}`);
   return sessionId;
 }
@@ -92,32 +99,40 @@ export function recordMessageStart(messageId: string): void {
     logger.warn('No active processing session for message start recording');
     return;
   }
-  
+
   currentSession.messageTimings.push({
     messageId,
     startTime: new Date(),
   });
-  
+
   currentSession.metrics.totalMessages++;
 }
 
 /**
  * Record that processing has completed for a message
  */
-export function recordMessageComplete(messageId: string, success: boolean, error?: string): void {
+export function recordMessageComplete(
+  messageId: string,
+  success: boolean,
+  error?: string,
+): void {
   if (!currentSession) {
-    logger.warn('No active processing session for message completion recording');
+    logger.warn(
+      'No active processing session for message completion recording',
+    );
     return;
   }
-  
+
   // Find and update the timing record
-  const timingRecord = currentSession.messageTimings.find(t => t.messageId === messageId);
+  const timingRecord = currentSession.messageTimings.find(
+    (t) => t.messageId === messageId,
+  );
   if (timingRecord) {
     timingRecord.endTime = new Date();
   }
-  
+
   currentSession.metrics.processedMessages++;
-  
+
   if (success) {
     currentSession.metrics.successfulMessages++;
   } else {
@@ -140,22 +155,24 @@ export function recordChannelDelivery(result: ChannelDeliveryResult): void {
     logger.warn('No active processing session for channel delivery recording');
     return;
   }
-  
+
   currentSession.channelResults.push(result);
-  
-  const channelStats = currentSession.metrics.deliveryChannelStats[result.channel];
+
+  const channelStats =
+    currentSession.metrics.deliveryChannelStats[result.channel];
   channelStats.attempted++;
-  
+
   if (result.success) {
     channelStats.successful++;
   } else {
     channelStats.failed++;
   }
-  
+
   // Update success rate
-  channelStats.successRate = channelStats.attempted > 0 
-    ? (channelStats.successful / channelStats.attempted) * 100 
-    : 0;
+  channelStats.successRate =
+    channelStats.attempted > 0
+      ? (channelStats.successful / channelStats.attempted) * 100
+      : 0;
 }
 
 /**
@@ -166,25 +183,30 @@ export function completeProcessingSession(): ProcessingMetrics | null {
     logger.warn('No active processing session to complete');
     return null;
   }
-  
+
   const endTime = new Date();
   const durationMs = endTime.getTime() - currentSession.startTime.getTime();
   const durationMinutes = durationMs / (1000 * 60);
-  
+
   // Calculate average processing time per message
-  const completedTimings = currentSession.messageTimings.filter(t => t.endTime);
-  const averageProcessingTimeMs = completedTimings.length > 0 
-    ? completedTimings.reduce((sum, timing) => {
-        const duration = timing.endTime!.getTime() - timing.startTime.getTime();
-        return sum + duration;
-      }, 0) / completedTimings.length 
-    : 0;
-  
+  const completedTimings = currentSession.messageTimings.filter(
+    (t) => t.endTime,
+  );
+  const averageProcessingTimeMs =
+    completedTimings.length > 0
+      ? completedTimings.reduce((sum, timing) => {
+          const duration =
+            timing.endTime!.getTime() - timing.startTime.getTime();
+          return sum + duration;
+        }, 0) / completedTimings.length
+      : 0;
+
   // Calculate throughput
-  const throughputPerMinute = durationMinutes > 0 
-    ? currentSession.metrics.processedMessages / durationMinutes 
-    : 0;
-  
+  const throughputPerMinute =
+    durationMinutes > 0
+      ? currentSession.metrics.processedMessages / durationMinutes
+      : 0;
+
   const finalMetrics: ProcessingMetrics = {
     sessionId: currentSession.sessionId,
     startTime: currentSession.startTime,
@@ -193,24 +215,30 @@ export function completeProcessingSession(): ProcessingMetrics | null {
     averageProcessingTimeMs,
     throughputPerMinute,
   };
-  
-  logger.performance(`Completed processing session ${currentSession.sessionId}`, {
-    duration: `${Math.round(durationMs / 1000)}s`,
-    processed: currentSession.metrics.processedMessages,
-    successful: currentSession.metrics.successfulMessages,
-    failed: currentSession.metrics.failedMessages,
-    throughput: `${throughputPerMinute.toFixed(2)} msg/min`,
-    avgProcessingTime: `${averageProcessingTimeMs.toFixed(0)}ms`,
-  });
-  
+
+  logger.performance(
+    `Completed processing session ${currentSession.sessionId}`,
+    {
+      duration: `${Math.round(durationMs / 1000)}s`,
+      processed: currentSession.metrics.processedMessages,
+      successful: currentSession.metrics.successfulMessages,
+      failed: currentSession.metrics.failedMessages,
+      throughput: `${throughputPerMinute.toFixed(2)} msg/min`,
+      avgProcessingTime: `${averageProcessingTimeMs.toFixed(0)}ms`,
+    },
+  );
+
   // Store metrics for historical analysis
-  storeMetricsToDatabase(finalMetrics).catch(error => {
-    logger.performanceWarn('Failed to store processing metrics to database', error);
+  storeMetricsToDatabase(finalMetrics).catch((error) => {
+    logger.performanceWarn(
+      'Failed to store processing metrics to database',
+      error,
+    );
   });
-  
+
   // Clear the current session
   currentSession = null;
-  
+
   return finalMetrics;
 }
 
@@ -221,23 +249,28 @@ export function getCurrentSessionMetrics(): Partial<ProcessingMetrics> | null {
   if (!currentSession) {
     return null;
   }
-  
+
   const now = new Date();
   const durationMs = now.getTime() - currentSession.startTime.getTime();
   const durationMinutes = durationMs / (1000 * 60);
-  
-  const completedTimings = currentSession.messageTimings.filter(t => t.endTime);
-  const averageProcessingTimeMs = completedTimings.length > 0 
-    ? completedTimings.reduce((sum, timing) => {
-        const duration = timing.endTime!.getTime() - timing.startTime.getTime();
-        return sum + duration;
-      }, 0) / completedTimings.length 
-    : 0;
-  
-  const throughputPerMinute = durationMinutes > 0 
-    ? currentSession.metrics.processedMessages / durationMinutes 
-    : 0;
-  
+
+  const completedTimings = currentSession.messageTimings.filter(
+    (t) => t.endTime,
+  );
+  const averageProcessingTimeMs =
+    completedTimings.length > 0
+      ? completedTimings.reduce((sum, timing) => {
+          const duration =
+            timing.endTime!.getTime() - timing.startTime.getTime();
+          return sum + duration;
+        }, 0) / completedTimings.length
+      : 0;
+
+  const throughputPerMinute =
+    durationMinutes > 0
+      ? currentSession.metrics.processedMessages / durationMinutes
+      : 0;
+
   return {
     sessionId: currentSession.sessionId,
     startTime: currentSession.startTime,
@@ -251,15 +284,17 @@ export function getCurrentSessionMetrics(): Partial<ProcessingMetrics> | null {
 /**
  * Store processing metrics to database for historical analysis
  */
-async function storeMetricsToDatabase(metrics: ProcessingMetrics): Promise<void> {
+async function storeMetricsToDatabase(
+  metrics: ProcessingMetrics,
+): Promise<void> {
   try {
     // Store in a simple format that can be queried for analytics
     const metricsRecord = {
       session_id: metrics.sessionId,
       start_time: metrics.startTime.toISOString(),
       end_time: metrics.endTime?.toISOString(),
-      duration_ms: metrics.endTime 
-        ? metrics.endTime.getTime() - metrics.startTime.getTime() 
+      duration_ms: metrics.endTime
+        ? metrics.endTime.getTime() - metrics.startTime.getTime()
         : null,
       total_messages: metrics.totalMessages,
       processed_messages: metrics.processedMessages,
@@ -282,16 +317,16 @@ async function storeMetricsToDatabase(metrics: ProcessingMetrics): Promise<void>
       errors: JSON.stringify(metrics.errors),
       created_at: new Date().toISOString(),
     };
-    
+
     // FUTURE: Create processing_metrics table in Phase 6 analytics expansion
     // For now, we'll log the metrics for manual analysis
     logger.performance('Processing Metrics (would store to DB)', metricsRecord);
-    
+
     // In the future, this would be:
     // const { error } = await supabase
     //   .from('processing_metrics')
     //   .insert(metricsRecord);
-    // 
+    //
     // if (error) throw error;
   } catch (error) {
     logger.performanceWarn('Error storing processing metrics', error);
@@ -340,7 +375,7 @@ export function createChannelResult(
   messageId: string,
   success: boolean,
   processingTimeMs: number,
-  error?: string
+  error?: string,
 ): ChannelDeliveryResult {
   return {
     channel,
@@ -360,4 +395,4 @@ export function safeRecordMetrics(fn: () => void): void {
   } catch (error) {
     logger.warn('Non-critical error recording processing metrics', error);
   }
-} 
+}

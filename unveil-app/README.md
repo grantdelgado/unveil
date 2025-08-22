@@ -9,11 +9,13 @@ Unveil is a production-ready wedding event management application that enables h
 ## 🚀 Quick Start
 
 ### **New Team Members**
+
 1. **[📚 Read the Documentation](./docs/)** — Complete platform overview and development guides
 2. **[🏗️ Architecture Overview](./docs/ARCHITECTURE.md)** — Technical foundation and design patterns
 3. **[🔧 Development Setup](./docs/DEVELOPMENT_GUIDE.md)** — Workflow, standards, and contribution guidelines
 
 ### **Production Deployment**
+
 1. **[📋 Release Checklist](./docs/RELEASE_CHECKLIST.md)** — Step-by-step production deployment guide
 2. **[⚙️ Deployment Guide](./docs/DEPLOYMENT.md)** — Environment setup and operations
 
@@ -26,6 +28,7 @@ Unveil is a production-ready wedding event management application that enables h
 **Documentation**: ✅ Complete and centralized in [`/docs`](./docs/)
 
 ### 🏆 Key Achievements
+
 - **🔐 Authentication**: Phone-first OTP with Supabase Auth + Twilio
 - **📱 Mobile Experience**: Responsive design optimized for phones
 - **⚡ Real-time Features**: Live messaging and photo sharing
@@ -37,13 +40,15 @@ Unveil is a production-ready wedding event management application that enables h
 ## 🎯 MVP Features
 
 ### For Event Hosts
+
 - **Event Creation & Management** — Create weddings, manage details and timelines
-- **Guest Management** — Invite participants, track RSVPs, manage roles  
+- **Guest Management** — Invite participants, track RSVPs, manage roles
 - **Real-time Messaging** — Send announcements to all guests
 - **Media Gallery** — View and organize all uploaded photos/videos
 - **Analytics Dashboard** — Monitor guest engagement and metrics
 
 ### For Event Guests
+
 - **RSVP Management** — Confirm attendance and update status
 - **Photo Sharing** — Upload and view event photos in real-time
 - **Messaging** — Communicate with hosts and other guests
@@ -68,16 +73,16 @@ Unveil is a production-ready wedding event management application that enables h
 
 All documentation has been consolidated and organized in the **[`/docs`](./docs/)** folder:
 
-| **Document** | **Purpose** |
-|-------------|-------------|
-| **[📋 System Overview](./docs/SYSTEM_OVERVIEW.md)** | High-level platform overview and current status |
-| **[🏗️ Architecture](./docs/ARCHITECTURE.md)** | Complete technical architecture and design patterns |
-| **[🔧 Development Guide](./docs/DEVELOPMENT_GUIDE.md)** | Workflow, coding standards, and team guidelines |
-| **[📋 MVP Features](./docs/MVP_FEATURES.md)** | Current scope, included/excluded features, roadmap |
-| **[🛡️ Security](./docs/SECURITY.md)** | Security implementation and best practices |
-| **[🎨 Design System](./docs/DESIGN_SYSTEM.md)** | UI components and design patterns |
-| **[⚙️ Deployment](./docs/DEPLOYMENT.md)** | Production environment setup procedures |
-| **[📋 Release Checklist](./docs/RELEASE_CHECKLIST.md)** | Comprehensive deployment checklist |
+| **Document**                                            | **Purpose**                                         |
+| ------------------------------------------------------- | --------------------------------------------------- |
+| **[📋 System Overview](./docs/SYSTEM_OVERVIEW.md)**     | High-level platform overview and current status     |
+| **[🏗️ Architecture](./docs/ARCHITECTURE.md)**           | Complete technical architecture and design patterns |
+| **[🔧 Development Guide](./docs/DEVELOPMENT_GUIDE.md)** | Workflow, coding standards, and team guidelines     |
+| **[📋 MVP Features](./docs/MVP_FEATURES.md)**           | Current scope, included/excluded features, roadmap  |
+| **[🛡️ Security](./docs/SECURITY.md)**                   | Security implementation and best practices          |
+| **[🎨 Design System](./docs/DESIGN_SYSTEM.md)**         | UI components and design patterns                   |
+| **[⚙️ Deployment](./docs/DEPLOYMENT.md)**               | Production environment setup procedures             |
+| **[📋 Release Checklist](./docs/RELEASE_CHECKLIST.md)** | Comprehensive deployment checklist                  |
 
 **👉 [Browse All Documentation](./docs/)**
 
@@ -86,6 +91,7 @@ All documentation has been consolidated and organized in the **[`/docs`](./docs/
 ## 🔧 Development
 
 ### Local Setup
+
 ```bash
 # Install dependencies
 pnpm install
@@ -102,6 +108,7 @@ pnpm dev
 ```
 
 ### Code Quality
+
 ```bash
 # Lint and format
 pnpm lint
@@ -120,6 +127,7 @@ pnpm test:e2e
 ## 🚀 Deployment
 
 ### Production Checklist
+
 - ✅ Clean TypeScript build
 - ✅ All tests passing
 - ✅ Environment variables configured
@@ -138,6 +146,6 @@ pnpm test:e2e
 
 ---
 
-*Unveil represents world-class product development with comprehensive documentation, enterprise-grade security, and production-ready architecture suitable for scaling teams and investor presentations.*
+_Unveil represents world-class product development with comprehensive documentation, enterprise-grade security, and production-ready architecture suitable for scaling teams and investor presentations._
 
-**Last Updated**: January 2025 | **Status**: Production Ready | **Docs**: ✅ Complete 
+**Last Updated**: January 2025 | **Status**: Production Ready | **Docs**: ✅ Complete

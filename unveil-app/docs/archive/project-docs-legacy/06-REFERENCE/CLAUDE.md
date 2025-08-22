@@ -5,14 +5,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Development Commands
 
 ### Core Development
+
 - `pnpm dev` - Start development server (runs on http://localhost:3000)
-- `pnpm build` - Build for production 
+- `pnpm build` - Build for production
 - `pnpm start` - Start production server
 - `pnpm lint` - Run ESLint checks
 - `pnpm lint:fix` - Fix auto-fixable ESLint issues
 - `pnpm format` - Format code with Prettier
 
 ### Testing
+
 - `pnpm test` - Run unit tests with Vitest
 - `pnpm test:watch` - Run tests in watch mode
 - `pnpm test:coverage` - Generate test coverage reports
@@ -23,6 +25,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `pnpm test:rls` - Test Row Level Security policies
 
 ### Database & Setup
+
 - `pnpm dev-setup` - Initialize development environment with test data
 - `pnpm dev-reset` - Reset development environment
 - `pnpm dev-demo` - Set up demo data
@@ -30,12 +33,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `supabase gen types typescript --local > app/reference/supabase.types.ts` - Generate TypeScript types from database
 
 ### Schema Management
+
 - `pnpm schema:sync` - Synchronize database schema
 - `pnpm schema:validate` - Validate schema consistency
 - `pnpm schema:watch` - Watch for schema changes
 - `pnpm schema:test` - Test schema awareness
 
 ### Test User Management
+
 - `pnpm test-users:create` - Create test users
 - `pnpm test-users:scenario` - Set up test scenarios
 - `pnpm test-users:list` - List existing test users
@@ -47,6 +52,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Unveil is a modern wedding communication platform built with Next.js 15, Supabase, and TypeScript. The app serves both hosts (wedding couples) and guests with role-based interfaces for event management, messaging, and media sharing.
 
 ### Technology Stack
+
 - **Frontend**: Next.js 15 (App Router), React 19, TypeScript (strict mode)
 - **Styling**: Tailwind CSS v4 with custom design system
 - **Backend**: Supabase (PostgreSQL, Auth, Storage, Realtime)
@@ -56,6 +62,7 @@ Unveil is a modern wedding communication platform built with Next.js 15, Supabas
 - **Monitoring**: Sentry for error tracking
 
 ### Key Features
+
 - **Phone-first Authentication**: OTP-based auth optimized for mobile
 - **Multi-event Management**: Support for rehearsal, ceremony, reception events
 - **Advanced Messaging**: Scheduled messages with multi-channel delivery (SMS/Push/Email)
@@ -103,6 +110,7 @@ lib/                  # Utility libraries
 ### Database Schema
 
 Core tables with Row Level Security (RLS):
+
 - `users` - User profiles and authentication
 - `events` - Main wedding events
 - `sub_events` - Individual event types (rehearsal, ceremony, etc.)
@@ -119,16 +127,19 @@ Core tables with Row Level Security (RLS):
 The app uses phone-first OTP authentication with development shortcuts:
 
 **Development Environment**:
+
 - Whitelisted phones (`+15550000001`, `+15550000002`, `+15550000003`) bypass OTP
 - Uses password authentication for faster development cycles
 
 **Production Environment**:
+
 - Full OTP flow via Twilio SMS integration
 - Rate limiting: 3 attempts per hour with 15-minute blocks
 
 ### Real-time Features
 
 Managed through centralized subscription system:
+
 - Message broadcasting to event participants
 - Media upload notifications
 - RSVP status updates
@@ -140,12 +151,14 @@ Managed through centralized subscription system:
 **Guests**: Join events, receive updates, upload media, manage RSVP status
 
 All access controlled through Supabase RLS policies with helper functions:
+
 - `is_event_host(event_id)` - Check if user is event host
 - `is_event_guest(event_id)` - Check if user is event participant
 
 ## Development Guidelines
 
 ### Code Style
+
 - TypeScript strict mode with `noUncheckedIndexedAccess`
 - ESLint + Prettier configuration enforced
 - Feature-first component organization
@@ -153,6 +166,7 @@ All access controlled through Supabase RLS policies with helper functions:
 - Service layer pattern for database operations
 
 ### Component Patterns
+
 - Use custom hooks for data operations (e.g., `useMessages`, `useEvents`)
 - Implement loading states and error boundaries
 - Follow mobile-first responsive design
@@ -160,6 +174,7 @@ All access controlled through Supabase RLS policies with helper functions:
 - Real-time subscriptions through centralized `SubscriptionManager`
 
 ### Testing Strategy
+
 - Unit tests for utilities and validation logic
 - Integration tests with MSW for API mocking
 - E2E tests for critical user flows
@@ -167,6 +182,7 @@ All access controlled through Supabase RLS policies with helper functions:
 - Performance testing with Lighthouse
 
 ### Security Considerations
+
 - All user inputs validated with Zod schemas
 - File uploads restricted by type, size, and magic number validation
 - RLS policies enforce event-based access control
@@ -174,6 +190,7 @@ All access controlled through Supabase RLS policies with helper functions:
 - Rate limiting on authentication endpoints
 
 ### Performance Optimizations
+
 - React Query caching with strategic invalidation
 - Lazy loading for heavy components
 - Next.js Image optimization with Supabase CDN
@@ -183,6 +200,7 @@ All access controlled through Supabase RLS policies with helper functions:
 ## Common Tasks
 
 ### Adding New Features
+
 1. Create service functions in `/services` with proper error handling
 2. Create custom hooks in `/hooks` with React Query integration
 3. Build components in `/components/features` following existing patterns
@@ -190,6 +208,7 @@ All access controlled through Supabase RLS policies with helper functions:
 5. Update TypeScript types and run tests
 
 ### Database Changes
+
 1. Create migration in `supabase/migrations/`
 2. Apply RLS policies with appropriate helper functions
 3. Regenerate types: `supabase gen types typescript --local > app/reference/supabase.types.ts`
@@ -197,18 +216,21 @@ All access controlled through Supabase RLS policies with helper functions:
 5. Test RLS policies with `pnpm test:rls`
 
 ### Real-time Features
+
 - Use `SubscriptionManager` for centralized subscription handling
 - Always clean up subscriptions in component cleanup
 - Filter events server-side for performance
 - Handle reconnection scenarios gracefully
 
 ### Mobile Optimization
+
 - Test on actual devices using `pnpm test:mobile`
 - Use Tailwind responsive classes (xs, sm, md, lg)
 - Implement touch gestures and haptic feedback
 - Optimize images and lazy load heavy content
 
 ### Error Handling
+
 - Use centralized error handling in service layer
 - Implement user-friendly error messages
 - Log errors with context for debugging
@@ -217,6 +239,7 @@ All access controlled through Supabase RLS policies with helper functions:
 ## Environment Setup
 
 Required environment variables:
+
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
@@ -228,6 +251,7 @@ TWILIO_AUTH_TOKEN=your-twilio-token
 ```
 
 For local development with Supabase CLI:
+
 1. Run `supabase start` to start local stack
 2. Use `supabase db reset` to apply latest migrations
 3. Generate types with the command above

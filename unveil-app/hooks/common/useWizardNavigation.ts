@@ -38,22 +38,25 @@ export function useWizardNavigation<T extends string>({
   const isFirstStep = currentStepIndex === 0;
   const isLastStep = currentStepIndex === totalSteps - 1;
 
-  const goToStep = useCallback((step: T, skipValidation = false): boolean => {
-    // Validate current step before moving (unless skipped)
-    if (!skipValidation && onStepValidation) {
-      if (!onStepValidation(currentStep)) {
-        return false; // Validation failed
+  const goToStep = useCallback(
+    (step: T, skipValidation = false): boolean => {
+      // Validate current step before moving (unless skipped)
+      if (!skipValidation && onStepValidation) {
+        if (!onStepValidation(currentStep)) {
+          return false; // Validation failed
+        }
       }
-    }
 
-    setCurrentStep(step);
-    onStepChange?.(step);
-    return true;
-  }, [currentStep, onStepValidation, onStepChange]);
+      setCurrentStep(step);
+      onStepChange?.(step);
+      return true;
+    },
+    [currentStep, onStepValidation, onStepChange],
+  );
 
   const goToNextStep = useCallback((): boolean => {
     if (isLastStep) return false;
-    
+
     const nextStep = steps[currentStepIndex + 1];
     return goToStep(nextStep);
   }, [currentStepIndex, isLastStep, steps, goToStep]);
@@ -90,4 +93,4 @@ export function useWizardNavigation<T extends string>({
     goToLastStep,
     getStepProgress,
   };
-} 
+}

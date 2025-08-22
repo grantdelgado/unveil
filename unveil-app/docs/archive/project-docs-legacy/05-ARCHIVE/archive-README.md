@@ -21,4 +21,4 @@ This folder contains historical documentation from completed development phases 
 
 These documents represent completed work and are preserved for historical reference. They document the evolution of the Unveil project from initial concept through various refactoring phases to the current production-ready state.
 
-For current development documentation, see the main `docs/` folder. 
+For current development documentation, see the main `docs/` folder.

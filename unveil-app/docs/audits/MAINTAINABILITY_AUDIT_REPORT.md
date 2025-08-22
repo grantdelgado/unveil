@@ -9,9 +9,10 @@ This comprehensive audit identifies maintainability issues and proposes a struct
 ### 1. Dependency Analysis
 
 #### Unused Dependencies (Safe to Remove)
+
 - `react-window` - Virtual scrolling library not used
 - `react-window-infinite-loader` - Related to react-window
-- `recharts` - Chart library not used  
+- `recharts` - Chart library not used
 - `zustand` - State management not used
 - `@sentry/tracing` - Deprecated, use @sentry/nextjs
 - `@tailwindcss/postcss` - Not needed with Tailwind v4
@@ -23,6 +24,7 @@ This comprehensive audit identifies maintainability issues and proposes a struct
 - `eslint-plugin-prettier` - Use prettier separately
 
 #### Missing Dependencies
+
 - `puppeteer` - Used in mobile-test.js script
 - `glob` - Used in verify-ui-changes.ts script
 
@@ -31,7 +33,7 @@ This comprehensive audit identifies maintainability issues and proposes a struct
 ### 2. Circular Dependencies (3 Found)
 
 1. `components/features/events/CreateEventWizard.tsx` ↔ `EventBasicsStep.tsx`
-2. `components/features/events/CreateEventWizard.tsx` ↔ `EventReviewStep.tsx`  
+2. `components/features/events/CreateEventWizard.tsx` ↔ `EventReviewStep.tsx`
 3. `components/features/media/GuestPhotoGallery.tsx` ↔ `index.ts`
 
 **Impact**: Build warnings, potential runtime issues, harder maintenance
@@ -39,12 +41,14 @@ This comprehensive audit identifies maintainability issues and proposes a struct
 ### 3. Code Organization Issues
 
 #### Current Structure Problems
+
 - Mixed component organization (`app/components/` vs `components/`)
 - Inconsistent import paths (`@/app/components` vs `@/components`)
 - Large service files violating Single Responsibility Principle
 - Scattered hook organization
 
 #### Unused Exports (Sample from ts-prune)
+
 - Multiple layout and page default exports
 - Unused utility functions in lib/index.ts
 - Hook exports not used across modules
@@ -52,11 +56,13 @@ This comprehensive audit identifies maintainability issues and proposes a struct
 ### 4. Supabase Security Issues
 
 #### Database Security Warnings (23 Functions)
+
 - **Issue**: Functions with mutable search_path (security vulnerability)
 - **Affected Functions**: All RPC functions missing `SECURITY DEFINER` with `search_path` setting
 - **Risk**: SQL injection potential, function hijacking
 
 #### Auth Configuration Issues
+
 - **OTP Expiry**: Set to >1 hour (security risk)
 - **Leaked Password Protection**: Disabled (security risk)
 
@@ -65,6 +71,7 @@ This comprehensive audit identifies maintainability issues and proposes a struct
 ### 5. Architectural Recommendations
 
 #### Current Feature Organization
+
 ```
 components/
 ├── features/
@@ -77,6 +84,7 @@ components/
 ```
 
 #### Recommended Feature-Based Structure
+
 ```
 src/
 ├── features/
@@ -112,6 +120,7 @@ src/
 ### Phase 1: Immediate Wins (No Behavior Changes)
 
 #### PR #1: Dependency Cleanup
+
 **Risk**: Minimal - removing unused dependencies
 **Time**: 30 minutes
 
@@ -127,6 +136,7 @@ pnpm add -D puppeteer glob
 ```
 
 #### PR #2: Fix Circular Dependencies
+
 **Risk**: Low - structural fixes only
 **Time**: 1 hour
 
@@ -148,12 +158,13 @@ import { EventReviewStep } from './steps';
 ```
 
 #### PR #3: Supabase Security Fixes
+
 **Risk**: Low - security improvements
 **Time**: 45 minutes
 
 ```sql
 -- Fix all RPC functions with secure search_path
-ALTER FUNCTION public.is_valid_phone_for_messaging() 
+ALTER FUNCTION public.is_valid_phone_for_messaging()
   SECURITY DEFINER SET search_path = public;
 
 -- Apply to all 23 functions identified in audit
@@ -162,6 +173,7 @@ ALTER FUNCTION public.is_valid_phone_for_messaging()
 ### Phase 2: Structural Improvements (Medium Risk)
 
 #### PR #4: Import Path Standardization
+
 **Risk**: Medium - affects all components
 **Time**: 2 hours
 
@@ -170,10 +182,12 @@ ALTER FUNCTION public.is_valid_phone_for_messaging()
 3. **Run automated find/replace** for import paths
 
 #### PR #5: Remove Unused Exports
+
 **Risk**: Low - dead code removal
 **Time**: 1 hour
 
 Based on ts-prune output, remove unused exports from:
+
 - lib/index.ts utility functions
 - Hook re-exports in hooks/index.ts
 - Component index files
@@ -181,6 +195,7 @@ Based on ts-prune output, remove unused exports from:
 ### Phase 3: Feature Organization (Higher Risk)
 
 #### PR #6: Feature-Based Restructure (Optional)
+
 **Risk**: High - major structural change
 **Time**: 4-6 hours
 
@@ -194,6 +209,7 @@ This is optional and can be done incrementally:
 ## 🧪 Testing Strategy
 
 ### Smoke Tests Added
+
 - **Authentication flow** validation
 - **Messaging system** integration
 - **Guest management** CRUD operations
@@ -203,6 +219,7 @@ This is optional and can be done incrementally:
 Location: `__tests__/smoke/critical-flows.test.ts`
 
 ### Recommended Test Commands
+
 ```bash
 # Run smoke tests before each PR
 pnpm test smoke
@@ -216,32 +233,35 @@ pnpm lint:fix
 
 ## 📊 Impact Assessment
 
-| Category | Current State | After Cleanup | Improvement |
-|----------|---------------|---------------|-------------|
-| Bundle Size | ~15MB | ~12.9MB | -14% |
-| Build Warnings | 3 circular deps | 0 | -100% |
-| Security Issues | 25 warnings | 2 warnings | -92% |
-| Import Consistency | Mixed paths | Standardized | +100% |
-| Dead Code | ~50 unused exports | 0 | -100% |
+| Category           | Current State      | After Cleanup | Improvement |
+| ------------------ | ------------------ | ------------- | ----------- |
+| Bundle Size        | ~15MB              | ~12.9MB       | -14%        |
+| Build Warnings     | 3 circular deps    | 0             | -100%       |
+| Security Issues    | 25 warnings        | 2 warnings    | -92%        |
+| Import Consistency | Mixed paths        | Standardized  | +100%       |
+| Dead Code          | ~50 unused exports | 0             | -100%       |
 
 ## 🎯 Recommended Execution Order
 
 1. **Week 1**: PRs #1-3 (Immediate wins)
-2. **Week 2**: PRs #4-5 (Structural improvements)  
+2. **Week 2**: PRs #4-5 (Structural improvements)
 3. **Week 3+**: PR #6 (Feature restructure - optional)
 
 ## ⚠️ Risks and Mitigation
 
 ### Low Risk Items
+
 - Dependency removal: Verified unused
 - Security fixes: Standard Supabase practices
 - Dead code removal: No runtime impact
 
 ### Medium Risk Items
+
 - Import path changes: Comprehensive testing required
 - Circular dependency fixes: May affect build order
 
 ### High Risk Items
+
 - Feature restructure: Major architectural change
 - **Mitigation**: Do incrementally, one feature at a time
 

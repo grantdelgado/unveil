@@ -1,4 +1,4 @@
-import type { Config } from 'tailwindcss'
+import type { Config } from 'tailwindcss';
 
 const config: Config = {
   content: [
@@ -20,7 +20,7 @@ const config: Config = {
         background: 'var(--color-background)',
         foreground: 'var(--color-foreground)',
         'brand-pink': 'var(--color-brand-pink)',
-        
+
         // App-specific color palette
         primary: {
           DEFAULT: '#f7e8e0', // muted rose
@@ -60,7 +60,7 @@ const config: Config = {
       },
       animation: {
         'fade-in-up': 'fade-in-up 0.5s ease-out',
-        'shimmer': 'shimmer 2s ease-in-out infinite',
+        shimmer: 'shimmer 2s ease-in-out infinite',
         'success-bounce': 'success-bounce 0.6s ease-out',
         'slide-up': 'slide-up 0.3s ease-out',
         'slide-down': 'slide-down 0.3s ease-out',
@@ -68,16 +68,16 @@ const config: Config = {
       },
       keyframes: {
         'fade-in-up': {
-          'from': {
+          from: {
             opacity: '0',
             transform: 'translateY(16px)',
           },
-          'to': {
+          to: {
             opacity: '1',
             transform: 'translateY(0)',
           },
         },
-        'shimmer': {
+        shimmer: {
           '0%': {
             'background-position': '-200% 0',
           },
@@ -97,21 +97,21 @@ const config: Config = {
           },
         },
         'slide-up': {
-          'from': {
+          from: {
             opacity: '0',
             transform: 'translateY(20px)',
           },
-          'to': {
+          to: {
             opacity: '1',
             transform: 'translateY(0)',
           },
         },
         'slide-down': {
-          'from': {
+          from: {
             opacity: '0',
             transform: 'translateY(-20px)',
           },
-          'to': {
+          to: {
             opacity: '1',
             transform: 'translateY(0)',
           },
@@ -127,25 +127,25 @@ const config: Config = {
       },
       // Mobile-first responsive design
       screens: {
-        'xs': '360px',  // Extra small phones
-        'sm': '640px',
-        'md': '768px',
-        'lg': '1024px',
-        'xl': '1280px',
+        xs: '360px', // Extra small phones
+        sm: '640px',
+        md: '768px',
+        lg: '1024px',
+        xl: '1280px',
         '2xl': '1536px',
       },
       // Mobile utilities
       minHeight: {
-        'mobile': ['100svh', '100dvh'],
-        'screen': '100vh', // Fallback for older browsers
+        mobile: ['100svh', '100dvh'],
+        screen: '100vh', // Fallback for older browsers
       },
       height: {
-        'mobile': ['100svh', '100dvh'],
-        'screen': '100vh', // Fallback for older browsers
+        mobile: ['100svh', '100dvh'],
+        screen: '100vh', // Fallback for older browsers
       },
     },
   },
   plugins: [],
-}
+};
 
-export default config 
+export default config;

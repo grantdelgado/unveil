@@ -9,7 +9,9 @@ import type { z } from 'zod';
 import type { FormValidationError } from './errors';
 
 // Base form field types
-export interface BaseFormField<T = string | number | boolean | Date | File | null> {
+export interface BaseFormField<
+  T = string | number | boolean | Date | File | null,
+> {
   value: T;
   error?: string;
   touched: boolean;
@@ -43,7 +45,9 @@ export interface ArrayFormField<T = string> extends BaseFormField<T[]> {
 }
 
 // Form validation rules
-export interface ValidationRule<T = string | number | boolean | Date | File | null> {
+export interface ValidationRule<
+  T = string | number | boolean | Date | File | null,
+> {
   required?: boolean;
   minLength?: number;
   maxLength?: number;
@@ -78,7 +82,6 @@ export interface GuestFormData {
 }
 
 // Legacy alias
-
 
 export interface MessageFormData {
   content: StringFormField;
@@ -141,7 +144,6 @@ export type GuestFormSchema = z.ZodObject<{
 }>;
 
 // Legacy alias
-
 
 export type MessageFormSchema = z.ZodObject<{
   content: z.ZodString;
@@ -392,7 +394,6 @@ export const createGuestFormData = (): GuestFormData => ({
 });
 
 // Legacy factory
-
 
 export const createMessageFormData = (): MessageFormData => ({
   content: createStringField('', true),

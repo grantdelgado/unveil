@@ -3,20 +3,20 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { 
-  eventDetailsSchema, 
-  type EventDetailsFormData
+import {
+  eventDetailsSchema,
+  type EventDetailsFormData,
 } from '@/lib/validation/events';
 import { COMMON_TIMEZONES } from '@/lib/utils/timezone';
 import { formatEventDate } from '@/lib/utils/date';
-import { 
-  CardContainer, 
-  SectionTitle, 
-  FieldLabel, 
+import {
+  CardContainer,
+  SectionTitle,
+  FieldLabel,
   TextInput,
   PrimaryButton,
   SecondaryButton,
-  MicroCopy
+  MicroCopy,
 } from '@/components/ui';
 import { cn } from '@/lib/utils';
 import type { Database } from '@/app/reference/supabase.types';
@@ -25,7 +25,9 @@ type Event = Database['public']['Tables']['events']['Row'];
 
 interface EventDetailsEditorProps {
   event: Event;
-  onSave: (data: EventDetailsFormData) => Promise<{ success: boolean; error?: string }>;
+  onSave: (
+    data: EventDetailsFormData,
+  ) => Promise<{ success: boolean; error?: string }>;
   onCancel: () => void;
   onPreviewGuestView: () => void;
 }
@@ -36,7 +38,8 @@ function useUnsavedChanges(hasChanges: boolean) {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasChanges) {
         e.preventDefault();
-        e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+        e.returnValue =
+          'You have unsaved changes. Are you sure you want to leave?';
       }
     };
 
@@ -68,7 +71,8 @@ export function EventDetailsEditor({
     try {
       // Modern browsers support this
       if ('supportedValuesOf' in Intl) {
-        return (Intl as { supportedValuesOf: (type: string) => string[] }).supportedValuesOf('timeZone')
+        return (Intl as { supportedValuesOf: (type: string) => string[] })
+          .supportedValuesOf('timeZone')
           .map((tz: string) => ({ value: tz, label: tz.replace(/_/g, ' ') }))
           .sort((a, b) => a.label.localeCompare(b.label));
       }
@@ -93,17 +97,17 @@ export function EventDetailsEditor({
     },
   });
 
-  const { 
-    register, 
-    handleSubmit, 
-    watch, 
+  const {
+    register,
+    handleSubmit,
+    watch,
     formState: { errors, isDirty, isValid },
     setValue,
-    clearErrors
+    clearErrors,
   } = form;
 
   const watchedValues = watch();
-  
+
   // Enable unsaved changes warning
   useUnsavedChanges(isDirty);
 
@@ -124,23 +128,23 @@ export function EventDetailsEditor({
 
     try {
       const result = await onSave(data);
-      
+
       if (result.success) {
-        setSaveStatus({ 
-          type: 'success', 
+        setSaveStatus({
+          type: 'success',
           message: 'Event details saved successfully!',
-          timestamp: new Date()
+          timestamp: new Date(),
         });
       } else {
-        setSaveStatus({ 
-          type: 'error', 
-          message: result.error || 'Failed to save event details'
+        setSaveStatus({
+          type: 'error',
+          message: result.error || 'Failed to save event details',
         });
       }
     } catch {
-      setSaveStatus({ 
-        type: 'error', 
-        message: 'An unexpected error occurred'
+      setSaveStatus({
+        type: 'error',
+        message: 'An unexpected error occurred',
       });
     } finally {
       setIsSubmitting(false);
@@ -161,7 +165,10 @@ export function EventDetailsEditor({
 
   // Handle photo album URL input with normalization hint
   const handlePhotoAlbumUrlChange = (value: string) => {
-    setValue('photo_album_url', value, { shouldValidate: true, shouldDirty: true });
+    setValue('photo_album_url', value, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
     clearErrors('photo_album_url');
   };
 
@@ -169,7 +176,7 @@ export function EventDetailsEditor({
   const handleCancel = () => {
     if (isDirty) {
       const confirmed = window.confirm(
-        'You have unsaved changes. Are you sure you want to cancel?'
+        'You have unsaved changes. Are you sure you want to cancel?',
       );
       if (!confirmed) return;
     }
@@ -181,7 +188,9 @@ export function EventDetailsEditor({
       {/* Form Header */}
       <CardContainer className="p-6">
         <div className="text-center space-y-4">
-          <h1 className="text-2xl font-bold text-gray-900">Edit Event Details</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Edit Event Details
+          </h1>
           <MicroCopy>
             Update the information your guests will see about your event
           </MicroCopy>
@@ -244,10 +253,10 @@ export function EventDetailsEditor({
                   {...register('time_zone')}
                   onChange={(e) => handleTimezoneChange(e.target.value)}
                   className={cn(
-                    "w-full py-3 px-4 border rounded-lg text-base bg-white",
-                    "focus:outline-none focus:ring-2 focus:ring-rose-300 focus:border-rose-400",
-                    "transition-colors duration-200",
-                    errors.time_zone ? "border-red-300" : "border-gray-300"
+                    'w-full py-3 px-4 border rounded-lg text-base bg-white',
+                    'focus:outline-none focus:ring-2 focus:ring-rose-300 focus:border-rose-400',
+                    'transition-colors duration-200',
+                    errors.time_zone ? 'border-red-300' : 'border-gray-300',
                   )}
                   disabled={isSubmitting}
                 >
@@ -260,7 +269,9 @@ export function EventDetailsEditor({
                 </select>
               </div>
               {errors.time_zone && (
-                <p className="text-red-600 text-sm">{errors.time_zone.message}</p>
+                <p className="text-red-600 text-sm">
+                  {errors.time_zone.message}
+                </p>
               )}
               <MicroCopy>
                 All schedule times will be displayed in this timezone
@@ -287,15 +298,17 @@ export function EventDetailsEditor({
                 placeholder="e.g., The Grand Ballroom, 123 Main St, City, State"
                 rows={3}
                 className={cn(
-                  "w-full py-3 px-4 border rounded-lg text-base placeholder-gray-400",
-                  "focus:outline-none focus:ring-2 focus:ring-rose-300 focus:border-rose-400",
-                  "transition-colors duration-200 resize-none",
-                  errors.location ? "border-red-300" : "border-gray-300"
+                  'w-full py-3 px-4 border rounded-lg text-base placeholder-gray-400',
+                  'focus:outline-none focus:ring-2 focus:ring-rose-300 focus:border-rose-400',
+                  'transition-colors duration-200 resize-none',
+                  errors.location ? 'border-red-300' : 'border-gray-300',
                 )}
                 disabled={isSubmitting}
               />
               {errors.location && (
-                <p className="text-red-600 text-sm">{errors.location.message}</p>
+                <p className="text-red-600 text-sm">
+                  {errors.location.message}
+                </p>
               )}
               <MicroCopy>
                 Optional: Provide venue details for your guests
@@ -313,9 +326,7 @@ export function EventDetailsEditor({
             </SectionTitle>
 
             <div className="space-y-2">
-              <FieldLabel htmlFor="website_url">
-                Wedding Website
-              </FieldLabel>
+              <FieldLabel htmlFor="website_url">Wedding Website</FieldLabel>
               <TextInput
                 type="url"
                 id="website_url"
@@ -354,7 +365,8 @@ export function EventDetailsEditor({
                 onChange={(e) => handlePhotoAlbumUrlChange(e.target.value)}
               />
               <MicroCopy>
-                Paste a link to your shared album (iCloud, Google Photos, Dropbox, etc.). We&apos;ll add https:// if missing.
+                Paste a link to your shared album (iCloud, Google Photos,
+                Dropbox, etc.). We&apos;ll add https:// if missing.
               </MicroCopy>
             </div>
           </div>
@@ -381,22 +393,27 @@ export function EventDetailsEditor({
                   disabled={isSubmitting}
                 />
                 <div className="space-y-1 flex-1">
-                  <label htmlFor="is_public" className="text-base font-medium text-gray-700">
+                  <label
+                    htmlFor="is_public"
+                    className="text-base font-medium text-gray-700"
+                  >
                     Show event to invited guests
                   </label>
                   <MicroCopy>
-                    Invited guests who sign in with their phone number can find this event and will be added automatically.
+                    Invited guests who sign in with their phone number can find
+                    this event and will be added automatically.
                   </MicroCopy>
-                  <div className={cn(
-                    "text-xs px-2 py-1 rounded-md mt-2 inline-block",
-                    watchedValues.is_public 
-                      ? "bg-green-50 text-green-700" 
-                      : "bg-amber-50 text-amber-700"
-                  )}>
-                    {watchedValues.is_public 
-                      ? "Guests on your list will see and join this event after they sign in."
-                      : "This event won't appear automatically. Share an invite link or add guests manually."
-                    }
+                  <div
+                    className={cn(
+                      'text-xs px-2 py-1 rounded-md mt-2 inline-block',
+                      watchedValues.is_public
+                        ? 'bg-green-50 text-green-700'
+                        : 'bg-amber-50 text-amber-700',
+                    )}
+                  >
+                    {watchedValues.is_public
+                      ? 'Guests on your list will see and join this event after they sign in.'
+                      : "This event won't appear automatically. Share an invite link or add guests manually."}
                   </div>
                 </div>
               </div>
@@ -418,7 +435,9 @@ export function EventDetailsEditor({
                       type="button"
                       onClick={() => {
                         // Copy invite link functionality - placeholder for now
-                        navigator.clipboard?.writeText(`${window.location.origin}/guest/events/${event.id}/home`);
+                        navigator.clipboard?.writeText(
+                          `${window.location.origin}/guest/events/${event.id}/home`,
+                        );
                         // TODO: Replace with actual copy invite handler
                       }}
                       className="text-sm bg-white hover:bg-gray-50 border-blue-300 text-blue-700"
@@ -442,7 +461,8 @@ export function EventDetailsEditor({
             )}
 
             <MicroCopy>
-              Anyone can create an Unveil account. This setting only controls access to this event.
+              Anyone can create an Unveil account. This setting only controls
+              access to this event.
             </MicroCopy>
           </div>
         </CardContainer>
@@ -458,7 +478,7 @@ export function EventDetailsEditor({
               >
                 {isSubmitting ? 'Saving...' : 'Save Changes'}
               </PrimaryButton>
-              
+
               <SecondaryButton
                 type="button"
                 onClick={handleCancel}
@@ -486,7 +506,7 @@ export function EventDetailsEditor({
                   'p-4 rounded-lg text-center text-sm',
                   saveStatus.type === 'success'
                     ? 'bg-green-50 text-green-700 border border-green-100'
-                    : 'bg-red-50 text-red-700 border border-red-100'
+                    : 'bg-red-50 text-red-700 border border-red-100',
                 )}
               >
                 {saveStatus.message}

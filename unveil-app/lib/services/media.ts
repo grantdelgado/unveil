@@ -1,7 +1,11 @@
 import { supabase } from '@/lib/supabase/client';
 
 // Upload event media
-export async function uploadEventMedia(eventId: string, file: File, userId: string) {
+export async function uploadEventMedia(
+  eventId: string,
+  file: File,
+  userId: string,
+) {
   try {
     // Generate unique filename
     const fileExt = file.name.split('.').pop();
@@ -39,8 +43,8 @@ export async function uploadEventMedia(eventId: string, file: File, userId: stri
         mediaRecord: {
           ...mediaRecord,
           url: urlData.publicUrl,
-        }
-      }
+        },
+      },
     };
   } catch (error) {
     console.error('Error uploading media:', error);
@@ -49,4 +53,4 @@ export async function uploadEventMedia(eventId: string, file: File, userId: stri
 }
 
 // Note: Message sending functionality moved to lib/services/messaging.ts
-// Use sendMessageToEvent() from messaging service for all message operations 
+// Use sendMessageToEvent() from messaging service for all message operations

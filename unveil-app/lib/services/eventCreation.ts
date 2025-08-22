@@ -85,25 +85,24 @@ export interface CSVParseResult {
  * Follows project MCP conventions for Supabase interactions
  */
 export class EventCreationService {
-  
   /**
    * Create a new event with host guest entry in a single atomic operation
    */
   static async createEventWithHost(
-    input: EventCreationInput, 
-    userId: string
+    input: EventCreationInput,
+    userId: string,
   ): Promise<EventCreationResult> {
     const operationId = `event-creation-${Date.now()}`;
     // Generate idempotency key if not provided
     const creationKey = input.creation_key || crypto.randomUUID();
-    
+
     try {
-      logger.info('Starting event creation', { 
-        operationId, 
-        userId, 
+      logger.info('Starting event creation', {
+        operationId,
+        userId,
         title: input.title,
         creationKey,
-        isRetry: !!input.creation_key // Log if this is a retry with existing key
+        isRetry: !!input.creation_key, // Log if this is a retry with existing key
       });
 
       // Step 1: Validate user session
@@ -114,31 +113,39 @@ export class EventCreationService {
           error: {
             code: 'AUTH_ERROR',
             message: 'Authentication error. Please try logging in again.',
-            details: sessionValidation.error
-          }
+            details: sessionValidation.error,
+          },
         };
       }
 
       // Step 2: Upload image if provided
       let headerImageUrl: string | null = null;
       if (input.header_image) {
-        const imageResult = await this.uploadEventImage(input.header_image, userId);
+        const imageResult = await this.uploadEventImage(
+          input.header_image,
+          userId,
+        );
         if (!imageResult.success) {
           return {
             success: false,
             error: {
               code: 'IMAGE_UPLOAD_ERROR',
               message: imageResult.error || 'Failed to upload image',
-              details: imageResult.details
-            }
+              details: imageResult.details,
+            },
           };
         }
         headerImageUrl = imageResult.url || null;
       }
 
       // Step 3: Attempt atomic event creation with host guest using idempotency key
-      const creationResult = await this.createEventAtomic(input, userId, headerImageUrl, creationKey);
-      
+      const creationResult = await this.createEventAtomic(
+        input,
+        userId,
+        headerImageUrl,
+        creationKey,
+      );
+
       if (!creationResult.success) {
         // Cleanup uploaded image if event creation failed
         if (headerImageUrl) {
@@ -151,17 +158,16 @@ export class EventCreationService {
         operationId,
         eventId: creationResult.data?.event_id,
         operation: creationResult.data?.operation,
-        creationKey
+        creationKey,
       });
 
       return creationResult;
-
     } catch (error) {
       logger.error('Unexpected error during event creation', {
         operationId,
         error,
         userId,
-        title: input.title
+        title: input.title,
       });
 
       return {
@@ -169,8 +175,8 @@ export class EventCreationService {
         error: {
           code: 'UNEXPECTED_ERROR',
           message: 'An unexpected error occurred. Please try again.',
-          details: error
-        }
+          details: error,
+        },
       };
     }
   }
@@ -183,8 +189,11 @@ export class EventCreationService {
     error?: unknown;
   }> {
     try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
+
       if (sessionError || !session?.user?.id || session.user.id !== userId) {
         return { valid: false, error: sessionError };
       }
@@ -199,8 +208,8 @@ export class EventCreationService {
    * Upload event header image to Supabase storage
    */
   private static async uploadEventImage(
-    file: File, 
-    userId: string
+    file: File,
+    userId: string,
   ): Promise<{
     success: boolean;
     url?: string;
@@ -212,7 +221,7 @@ export class EventCreationService {
       if (file.size > 10 * 1024 * 1024) {
         return {
           success: false,
-          error: 'Image must be smaller than 10MB'
+          error: 'Image must be smaller than 10MB',
         };
       }
 
@@ -235,14 +244,13 @@ export class EventCreationService {
 
       return {
         success: true,
-        url: urlData.publicUrl
+        url: urlData.publicUrl,
       };
-
     } catch (error) {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown upload error',
-        details: error
+        details: error,
       };
     }
   }
@@ -255,23 +263,37 @@ export class EventCreationService {
     input: EventCreationInput,
     userId: string,
     headerImageUrl: string | null,
-    creationKey: string
+    creationKey: string,
   ): Promise<EventCreationResult> {
-    
     // Try using database function for true atomicity first
     try {
-      const atomicResult = await this.createEventWithRPC(input, userId, headerImageUrl, creationKey);
+      const atomicResult = await this.createEventWithRPC(
+        input,
+        userId,
+        headerImageUrl,
+        creationKey,
+      );
       if (atomicResult.success) {
         return atomicResult;
       }
       // Fall back to client-side simulation if RPC fails
-      logger.warn('RPC method failed, falling back to client-side transaction simulation');
+      logger.warn(
+        'RPC method failed, falling back to client-side transaction simulation',
+      );
     } catch (rpcError) {
-      logger.warn('RPC method not available, using client-side transaction simulation', { rpcError });
+      logger.warn(
+        'RPC method not available, using client-side transaction simulation',
+        { rpcError },
+      );
     }
 
     // Client-side transaction simulation with rollback
-    return await this.createEventClientSide(input, userId, headerImageUrl, creationKey);
+    return await this.createEventClientSide(
+      input,
+      userId,
+      headerImageUrl,
+      creationKey,
+    );
   }
 
   /**
@@ -281,9 +303,8 @@ export class EventCreationService {
     input: EventCreationInput,
     userId: string,
     headerImageUrl: string | null,
-    creationKey: string
+    creationKey: string,
   ): Promise<EventCreationResult> {
-    
     // Prepare event data
     const eventData = {
       title: input.title.trim(),
@@ -297,19 +318,22 @@ export class EventCreationService {
 
     // Try to call database function (if it exists)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabase as any).rpc('create_event_with_host_atomic', {
-      event_data: eventData
-    });
+    const { data, error } = await (supabase as any).rpc(
+      'create_event_with_host_atomic',
+      {
+        event_data: eventData,
+      },
+    );
 
     if (error) {
       throw error;
     }
 
     // Type the response from our custom function
-    const atomicResult = data as { 
-      success: boolean; 
-      event_id?: string; 
-      created_at?: string; 
+    const atomicResult = data as {
+      success: boolean;
+      event_id?: string;
+      created_at?: string;
       error_message?: string;
       operation?: 'created' | 'returned_existing';
     };
@@ -323,8 +347,8 @@ export class EventCreationService {
           host_user_id: userId,
           created_at: atomicResult.created_at!,
           header_image_url: headerImageUrl || undefined,
-          operation: atomicResult.operation || 'created'
-        }
+          operation: atomicResult.operation || 'created',
+        },
       };
     }
 
@@ -338,9 +362,8 @@ export class EventCreationService {
     input: EventCreationInput,
     userId: string,
     headerImageUrl: string | null,
-    creationKey: string
+    creationKey: string,
   ): Promise<EventCreationResult> {
-    
     let createdEventId: string | null = null;
 
     try {
@@ -362,8 +385,8 @@ export class EventCreationService {
             host_user_id: existingEvent.host_user_id,
             created_at: existingEvent.created_at || new Date().toISOString(),
             header_image_url: headerImageUrl || undefined,
-            operation: 'returned_existing'
-          }
+            operation: 'returned_existing',
+          },
         };
       }
 
@@ -389,8 +412,8 @@ export class EventCreationService {
           error: {
             code: insertError.code || 'INSERT_ERROR',
             message: this.mapEventInsertError(insertError),
-            details: insertError
-          }
+            details: insertError,
+          },
         };
       }
 
@@ -399,8 +422,8 @@ export class EventCreationService {
           success: false,
           error: {
             code: 'NO_DATA_RETURNED',
-            message: 'Event creation completed but no data returned.'
-          }
+            message: 'Event creation completed but no data returned.',
+          },
         };
       }
 
@@ -408,24 +431,29 @@ export class EventCreationService {
 
       // Step 3: Create host guest entry
       const hostProfile = await this.getHostProfile(userId);
-      const hostGuestResult = await this.createHostGuestEntry(newEvent.id, userId, hostProfile);
+      const hostGuestResult = await this.createHostGuestEntry(
+        newEvent.id,
+        userId,
+        hostProfile,
+      );
 
       if (!hostGuestResult.success) {
         // Rollback: Delete the created event
         logger.warn('Event rollback triggered due to guest insert failure', {
           eventId: newEvent.id,
           userId,
-          error: hostGuestResult.error
+          error: hostGuestResult.error,
         });
-        
+
         await this.rollbackEventCreation(newEvent.id);
         return {
           success: false,
           error: {
             code: 'HOST_GUEST_ERROR',
-            message: 'Failed to create host guest entry. Event creation rolled back.',
-            details: hostGuestResult.error
-          }
+            message:
+              'Failed to create host guest entry. Event creation rolled back.',
+            details: hostGuestResult.error,
+          },
         };
       }
 
@@ -438,16 +466,15 @@ export class EventCreationService {
           host_user_id: newEvent.host_user_id,
           created_at: newEvent.created_at || new Date().toISOString(),
           header_image_url: headerImageUrl || undefined,
-          operation: 'created'
-        }
+          operation: 'created',
+        },
       };
-
     } catch (error) {
       // Cleanup on any unexpected error
       if (createdEventId) {
         await this.rollbackEventCreation(createdEventId);
       }
-      
+
       throw error;
     }
   }
@@ -455,7 +482,9 @@ export class EventCreationService {
   /**
    * Get host profile information for guest entry
    */
-  private static async getHostProfile(userId: string): Promise<HostGuestProfile> {
+  private static async getHostProfile(
+    userId: string,
+  ): Promise<HostGuestProfile> {
     try {
       const { data: hostProfile } = await supabase
         .from('users')
@@ -469,11 +498,13 @@ export class EventCreationService {
 
       return {
         full_name: hostProfile.full_name || undefined,
-        phone: hostProfile.phone!
+        phone: hostProfile.phone!,
       };
     } catch (error) {
       logger.error('Failed to fetch host profile', { error, userId });
-      throw new Error('Host profile not found or missing required phone number');
+      throw new Error(
+        'Host profile not found or missing required phone number',
+      );
     }
   }
 
@@ -483,7 +514,7 @@ export class EventCreationService {
   private static async createHostGuestEntry(
     eventId: string,
     userId: string,
-    hostProfile: HostGuestProfile
+    hostProfile: HostGuestProfile,
   ): Promise<{ success: boolean; error?: unknown }> {
     try {
       const hostGuestData: EventGuestInsert = {
@@ -516,11 +547,8 @@ export class EventCreationService {
    */
   private static async rollbackEventCreation(eventId: string): Promise<void> {
     try {
-      await supabase
-        .from('events')
-        .delete()
-        .eq('id', eventId);
-      
+      await supabase.from('events').delete().eq('id', eventId);
+
       logger.info('Event creation rolled back successfully', { eventId });
     } catch (error) {
       logger.error('Failed to rollback event creation', { error, eventId });
@@ -538,10 +566,8 @@ export class EventCreationService {
       const userFolder = urlParts[urlParts.length - 2];
       const filePath = `${userFolder}/${fileName}`;
 
-      await supabase.storage
-        .from('event-images')
-        .remove([filePath]);
-      
+      await supabase.storage.from('event-images').remove([filePath]);
+
       logger.info('Cleaned up uploaded image', { filePath });
     } catch (error) {
       logger.warn('Failed to cleanup uploaded image', { error, imageUrl });
@@ -551,7 +577,10 @@ export class EventCreationService {
   /**
    * Map database insert errors to user-friendly messages
    */
-  private static mapEventInsertError(error: { code?: string; message?: string }): string {
+  private static mapEventInsertError(error: {
+    code?: string;
+    message?: string;
+  }): string {
     switch (error.code) {
       case '23505':
         return 'An event with this name already exists. Please choose a different name.';
@@ -571,28 +600,32 @@ export class EventCreationService {
   static async importGuests(
     eventId: string,
     guests: GuestImportInput[],
-    userId: string
+    userId: string,
   ): Promise<GuestImportResult> {
     const operationId = `guest-import-${Date.now()}`;
-    
+
     try {
       logger.info('Starting guest import', {
         operationId,
         eventId,
         userId,
-        guestCount: guests.length
+        guestCount: guests.length,
       });
 
       // Step 1: Validate user can import guests to this event
-      const permissionCheck = await this.validateGuestImportPermission(eventId, userId);
+      const permissionCheck = await this.validateGuestImportPermission(
+        eventId,
+        userId,
+      );
       if (!permissionCheck.valid) {
         return {
           success: false,
           error: {
             code: 'PERMISSION_DENIED',
-            message: 'You do not have permission to import guests to this event.',
-            details: permissionCheck.error
-          }
+            message:
+              'You do not have permission to import guests to this event.',
+            details: permissionCheck.error,
+          },
         };
       }
 
@@ -604,21 +637,26 @@ export class EventCreationService {
           error: {
             code: 'VALIDATION_ERROR',
             message: 'Guest data validation failed. Please check your data.',
-            details: validationResult.errors
-          }
+            details: validationResult.errors,
+          },
         };
       }
 
       // Step 2.5: Validate no guest phone conflicts with host
-      const hostPhoneValidation = await this.validateGuestPhonesNotHost(eventId, validationResult.validGuests!);
+      const hostPhoneValidation = await this.validateGuestPhonesNotHost(
+        eventId,
+        validationResult.validGuests!,
+      );
       if (!hostPhoneValidation.success) {
         return {
           success: false,
           error: {
             code: 'HOST_PHONE_CONFLICT',
-            message: hostPhoneValidation.message || 'One or more guest phone numbers belong to the event host.',
-            details: hostPhoneValidation.conflictingPhones
-          }
+            message:
+              hostPhoneValidation.message ||
+              'One or more guest phone numbers belong to the event host.',
+            details: hostPhoneValidation.conflictingPhones,
+          },
         };
       }
 
@@ -626,14 +664,14 @@ export class EventCreationService {
       const importResult = await this.performBatchGuestImport(
         eventId,
         validationResult.validGuests!,
-        operationId
+        operationId,
       );
 
       logger.info('Guest import completed', {
         operationId,
         eventId,
         importedCount: importResult.imported_count,
-        failedCount: importResult.failed_count
+        failedCount: importResult.failed_count,
       });
 
       // Step 4: SMS invitations removed - guests are now added without auto-invite
@@ -642,16 +680,19 @@ export class EventCreationService {
         operationId,
         eventId,
         importedCount: importResult.imported_count,
-        note: 'Guests added without invited_at timestamp - use Send Invitations to invite them'
+        note: 'Guests added without invited_at timestamp - use Send Invitations to invite them',
       });
 
       if (importResult.successfully_imported.length > 0) {
         // On client-side, we'll handle SMS via a separate API call after import
-        logger.info('Client-side import completed, SMS invitations will be handled separately', {
-          operationId,
-          eventId,
-          guestCount: importResult.successfully_imported.length
-        });
+        logger.info(
+          'Client-side import completed, SMS invitations will be handled separately',
+          {
+            operationId,
+            eventId,
+            guestCount: importResult.successfully_imported.length,
+          },
+        );
       }
 
       return {
@@ -660,26 +701,26 @@ export class EventCreationService {
           imported_count: importResult.imported_count,
           failed_count: importResult.failed_count,
           failed_rows: importResult.failed_rows,
-          event_id: eventId
-        }
+          event_id: eventId,
+        },
       };
-
     } catch (error) {
       logger.error('Unexpected error during guest import', {
         operationId,
         error,
         eventId,
         userId,
-        guestCount: guests.length
+        guestCount: guests.length,
       });
 
       return {
         success: false,
         error: {
           code: 'UNEXPECTED_ERROR',
-          message: 'An unexpected error occurred during import. Please try again.',
-          details: error
-        }
+          message:
+            'An unexpected error occurred during import. Please try again.',
+          details: error,
+        },
       };
     }
   }
@@ -690,27 +731,34 @@ export class EventCreationService {
   static parseCSV(csvContent: string): CSVParseResult {
     try {
       const lines = csvContent.trim().split('\n');
-      
+
       if (lines.length === 0) {
         return {
           success: false,
-          errors: [{ row: 0, message: 'CSV file is empty' }]
+          errors: [{ row: 0, message: 'CSV file is empty' }],
         };
       }
 
       // Expected header: name, phone, email (optional), role (optional), notes (optional)
-      const headers = lines[0].toLowerCase().split(',').map(h => h.trim());
+      const headers = lines[0]
+        .toLowerCase()
+        .split(',')
+        .map((h) => h.trim());
       const requiredHeaders = ['name', 'phone'];
-      
+
       // Validate headers
-      const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+      const missingHeaders = requiredHeaders.filter(
+        (h) => !headers.includes(h),
+      );
       if (missingHeaders.length > 0) {
         return {
           success: false,
-          errors: [{
-            row: 0,
-            message: `Missing required headers: ${missingHeaders.join(', ')}. Expected: name, phone`
-          }]
+          errors: [
+            {
+              row: 0,
+              message: `Missing required headers: ${missingHeaders.join(', ')}. Expected: name, phone`,
+            },
+          ],
         };
       }
 
@@ -719,9 +767,9 @@ export class EventCreationService {
 
       // Parse data rows
       for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split(',').map(v => v.trim());
-        
-        if (values.length === 0 || values.every(v => !v)) {
+        const values = lines[i].split(',').map((v) => v.trim());
+
+        if (values.length === 0 || values.every((v) => !v)) {
           continue; // Skip empty rows
         }
 
@@ -730,11 +778,14 @@ export class EventCreationService {
             guest_name: values[headers.indexOf('name')] || '',
             phone: values[headers.indexOf('phone')] || '',
             guest_email: values[headers.indexOf('email')] || undefined,
-            role: (values[headers.indexOf('role')] as 'guest' | 'host') || 'guest',
+            role:
+              (values[headers.indexOf('role')] as 'guest' | 'host') || 'guest',
             notes: values[headers.indexOf('notes')] || undefined,
-            guest_tags: values[headers.indexOf('tags')] 
-              ? values[headers.indexOf('tags')].split(';').filter(t => t.trim())
-              : undefined
+            guest_tags: values[headers.indexOf('tags')]
+              ? values[headers.indexOf('tags')]
+                  .split(';')
+                  .filter((t) => t.trim())
+              : undefined,
           };
 
           // Basic validation
@@ -742,7 +793,7 @@ export class EventCreationService {
             errors.push({
               row: i + 1,
               message: 'Guest name is required',
-              data: guest
+              data: guest,
             });
             continue;
           }
@@ -751,7 +802,7 @@ export class EventCreationService {
             errors.push({
               row: i + 1,
               message: 'Phone number is required',
-              data: guest
+              data: guest,
             });
             continue;
           }
@@ -761,7 +812,7 @@ export class EventCreationService {
           errors.push({
             row: i + 1,
             message: `Failed to parse row: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`,
-            data: values
+            data: values,
           });
         }
       }
@@ -769,16 +820,17 @@ export class EventCreationService {
       return {
         success: errors.length === 0,
         data: guests,
-        errors: errors.length > 0 ? errors : undefined
+        errors: errors.length > 0 ? errors : undefined,
       };
-
     } catch (error) {
       return {
         success: false,
-        errors: [{
-          row: 0,
-          message: `Failed to parse CSV: ${error instanceof Error ? error.message : 'Unknown error'}`
-        }]
+        errors: [
+          {
+            row: 0,
+            message: `Failed to parse CSV: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          },
+        ],
       };
     }
   }
@@ -788,7 +840,7 @@ export class EventCreationService {
    */
   private static async validateGuestImportPermission(
     eventId: string,
-    userId: string
+    userId: string,
   ): Promise<{ valid: boolean; error?: unknown }> {
     try {
       // Check if user is authenticated
@@ -818,8 +870,8 @@ export class EventCreationService {
    * Validate that guest phone numbers don't conflict with the host
    */
   private static async validateGuestPhonesNotHost(
-    eventId: string, 
-    guests: GuestImportInput[]
+    eventId: string,
+    guests: GuestImportInput[],
   ): Promise<{
     success: boolean;
     message?: string;
@@ -827,17 +879,23 @@ export class EventCreationService {
   }> {
     try {
       const conflictingPhones: string[] = [];
-      
+
       for (const guest of guests) {
         if (guest.phone) {
-          const { data: isValid, error } = await supabase
-            .rpc('validate_guest_phone_not_host', {
+          const { data: isValid, error } = await supabase.rpc(
+            'validate_guest_phone_not_host',
+            {
               p_event_id: eventId,
-              p_phone: guest.phone
-            });
+              p_phone: guest.phone,
+            },
+          );
 
           if (error) {
-            logger.error('Error validating guest phone against host', { eventId, phone: guest.phone, error });
+            logger.error('Error validating guest phone against host', {
+              eventId,
+              phone: guest.phone,
+              error,
+            });
             continue; // Skip validation on error, let it through
           }
 
@@ -851,7 +909,7 @@ export class EventCreationService {
         return {
           success: false,
           message: `Cannot add guest(s) with phone number(s) that belong to the event host: ${conflictingPhones.join(', ')}`,
-          conflictingPhones
+          conflictingPhones,
         };
       }
 
@@ -877,14 +935,14 @@ export class EventCreationService {
     if (guests.length === 0) {
       return {
         success: false,
-        errors: ['No guests provided for import']
+        errors: ['No guests provided for import'],
       };
     }
 
     if (guests.length > 500) {
       return {
         success: false,
-        errors: ['Too many guests. Maximum 500 guests per import.']
+        errors: ['Too many guests. Maximum 500 guests per import.'],
       };
     }
 
@@ -919,7 +977,9 @@ export class EventCreationService {
 
       // Validate role
       if (guest.role && !['guest', 'host', 'admin'].includes(guest.role)) {
-        errors.push(`Row ${index + 1}: Role must be 'guest', 'host', or 'admin'`);
+        errors.push(
+          `Row ${index + 1}: Role must be 'guest', 'host', or 'admin'`,
+        );
         return;
       }
 
@@ -935,14 +995,14 @@ export class EventCreationService {
         phone: cleanPhone,
         guest_email: guest.guest_email?.trim() || undefined,
         role: guest.role || 'guest',
-        notes: guest.notes?.trim() || undefined
+        notes: guest.notes?.trim() || undefined,
       });
     });
 
     return {
       success: errors.length === 0,
       validGuests: errors.length === 0 ? validGuests : undefined,
-      errors: errors.length > 0 ? errors : undefined
+      errors: errors.length > 0 ? errors : undefined,
     };
   }
 
@@ -952,7 +1012,7 @@ export class EventCreationService {
   private static async performBatchGuestImport(
     eventId: string,
     guests: GuestImportInput[],
-    operationId: string
+    operationId: string,
   ): Promise<{
     imported_count: number;
     failed_count: number;
@@ -962,23 +1022,26 @@ export class EventCreationService {
     let imported_count = 0;
     let failed_count = 0;
     const failed_rows: GuestImportError[] = [];
-    const successfully_imported: Array<{ phone: string; guest_name?: string }> = [];
+    const successfully_imported: Array<{ phone: string; guest_name?: string }> =
+      [];
 
     // Process guests individually using canonical add_or_restore_guest RPC
     // This handles duplicates, restores removed guests, and preserves history
     for (let i = 0; i < guests.length; i++) {
       const guest = guests[i];
-      
+
       try {
         // Use canonical add_or_restore_guest RPC
-        const { data: result, error } = await supabase
-          .rpc('add_or_restore_guest', {
+        const { data: result, error } = await supabase.rpc(
+          'add_or_restore_guest',
+          {
             p_event_id: eventId,
             p_phone: guest.phone || '',
             p_name: guest.guest_name || undefined,
             p_email: guest.guest_email || undefined,
-            p_role: guest.role || 'guest'
-          });
+            p_role: guest.role || 'guest',
+          },
+        );
 
         if (error) {
           failed_count++;
@@ -986,14 +1049,15 @@ export class EventCreationService {
             row_index: i,
             guest_data: guest,
             error_code: error.code || 'RPC_ERROR',
-            error_message: error.message || 'Unknown error during guest creation'
+            error_message:
+              error.message || 'Unknown error during guest creation',
           });
           continue;
         }
 
-        const resultData = result as { 
-          success: boolean; 
-          guest_id: string; 
+        const resultData = result as {
+          success: boolean;
+          guest_id: string;
           operation: 'restored' | 'updated' | 'inserted';
           event_id: string;
           phone: string;
@@ -1001,14 +1065,14 @@ export class EventCreationService {
           email: string;
           role: string;
         };
-        
+
         if (!result || !resultData.guest_id) {
           failed_count++;
           failed_rows.push({
             row_index: i,
             guest_data: guest,
             error_code: 'INVALID_RESULT',
-            error_message: 'Invalid result from add_or_restore_guest'
+            error_message: 'Invalid result from add_or_restore_guest',
           });
           continue;
         }
@@ -1017,7 +1081,7 @@ export class EventCreationService {
         imported_count++;
         successfully_imported.push({
           phone: guest.phone,
-          guest_name: guest.guest_name
+          guest_name: guest.guest_name,
         });
 
         logger.info('Guest added/restored successfully', {
@@ -1025,9 +1089,8 @@ export class EventCreationService {
           guestIndex: i + 1,
           phone: guest.phone,
           operation: resultData.operation, // 'created', 'restored', or 'updated'
-          guestId: resultData.guest_id
+          guestId: resultData.guest_id,
         });
-
       } catch (guestError) {
         // Handle unexpected error for individual guest
         failed_count++;
@@ -1035,13 +1098,13 @@ export class EventCreationService {
           row_index: i,
           guest_data: guest,
           error_code: 'UNEXPECTED_ERROR',
-          error_message: `Unexpected error: ${guestError instanceof Error ? guestError.message : 'Unknown error'}`
+          error_message: `Unexpected error: ${guestError instanceof Error ? guestError.message : 'Unknown error'}`,
         });
       }
 
       // Add small delay between individual calls to prevent overwhelming
       if (i < guests.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 50));
+        await new Promise((resolve) => setTimeout(resolve, 50));
       }
     }
 
@@ -1050,21 +1113,24 @@ export class EventCreationService {
       eventId,
       totalGuests: guests.length,
       imported_count,
-      failed_count
+      failed_count,
     });
 
     return {
       imported_count,
       failed_count,
       failed_rows,
-      successfully_imported
+      successfully_imported,
     };
   }
 
   /**
    * Map guest insert errors to user-friendly messages
    */
-  private static mapGuestInsertError(error: { code?: string; message?: string }): string {
+  private static mapGuestInsertError(error: {
+    code?: string;
+    message?: string;
+  }): string {
     switch (error.code) {
       case '23505':
         return 'A guest with this phone number already exists for this event';

@@ -7,11 +7,13 @@ Reduced the OTP resend cooldown from 60 seconds to 30 seconds to make the resend
 ## Changes Made
 
 ### Server-Side (`app/api/auth/otp/resend/route.ts`)
+
 - **Updated**: `PHONE_COOLDOWN_SECONDS: 60` → `PHONE_COOLDOWN_SECONDS: 30`
 - **Unchanged**: All other rate limits (3 attempts/10min phone, 10 attempts/10min IP)
 - **Behavior**: API now returns `retryAfter` values ≤ 30 seconds
 
 ### UI Components
+
 - **ResendOTPButton** (`components/features/auth/ResendOTPButton.tsx`):
   - Initial cooldown: `60` → `30` seconds
   - Success cooldown: `60` → `30` seconds
@@ -20,12 +22,14 @@ Reduced the OTP resend cooldown from 60 seconds to 30 seconds to make the resend
   - Updated microcopy: "Wait 60 seconds" → "Wait 30 seconds"
 
 ### Documentation
+
 - **Updated**: `docs/auth-otp-resend.md` to reflect 30-second cooldown throughout
 - **Updated**: All references to timing in troubleshooting and testing sections
 
 ## Verification
 
 ✅ **API Test Results**:
+
 ```bash
 # First request: Success
 {"success":true,"message":"If your number is registered, a verification code was sent.","remaining":2}
@@ -50,8 +54,11 @@ To adjust the cooldown in the future, modify:
 5. **Docs**: Update `docs/auth-otp-resend.md`
 
 **Recommendation**: Consider making this configurable via environment variable:
+
 ```typescript
-PHONE_COOLDOWN_SECONDS: parseInt(process.env.OTP_RESEND_COOLDOWN_SECONDS || '30')
+PHONE_COOLDOWN_SECONDS: parseInt(
+  process.env.OTP_RESEND_COOLDOWN_SECONDS || '30',
+);
 ```
 
 ## Impact

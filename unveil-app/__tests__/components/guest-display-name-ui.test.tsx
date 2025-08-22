@@ -13,7 +13,7 @@ vi.mock('@/lib/logger', () => ({
   logger: {
     info: vi.fn(),
     error: vi.fn(),
-  }
+  },
 }));
 
 // Mock RSVP utilities
@@ -22,12 +22,14 @@ vi.mock('@/lib/types/rsvp', () => ({
   getRSVPStatusConfig: vi.fn(() => ({
     label: 'Pending',
     color: 'gray',
-    icon: '⏳'
-  }))
+    icon: '⏳',
+  })),
 }));
 
 describe('Guest Display Name in UI Components', () => {
-  const createMockGuest = (overrides: Partial<OptimizedGuest> = {}): OptimizedGuest => ({
+  const createMockGuest = (
+    overrides: Partial<OptimizedGuest> = {},
+  ): OptimizedGuest => ({
     id: 'guest-1',
     event_id: 'event-1',
     user_id: null,
@@ -46,7 +48,7 @@ describe('Guest Display Name in UI Components', () => {
     updated_at: '2024-01-01T00:00:00Z',
     guest_display_name: 'Default Display Name',
     users: null,
-    ...overrides
+    ...overrides,
   });
 
   describe('GuestListItem Component', () => {
@@ -63,16 +65,11 @@ describe('Guest Display Name in UI Components', () => {
           created_at: '2024-01-01T00:00:00Z',
           updated_at: '2024-01-01T00:00:00Z',
           intended_redirect: null,
-          onboarding_completed: true
-        }
+          onboarding_completed: true,
+        },
       });
 
-      render(
-        <GuestListItem 
-          guest={guest}
-          onRemove={vi.fn()}
-        />
-      );
+      render(<GuestListItem guest={guest} onRemove={vi.fn()} />);
 
       // Should display the computed display name, not the original guest name
       expect(screen.getByText('Computed Display Name')).toBeInTheDocument();
@@ -92,16 +89,11 @@ describe('Guest Display Name in UI Components', () => {
           created_at: '2024-01-01T00:00:00Z',
           updated_at: '2024-01-01T00:00:00Z',
           intended_redirect: null,
-          onboarding_completed: true
-        }
+          onboarding_completed: true,
+        },
       });
 
-      render(
-        <GuestListItem 
-          guest={guest}
-          onRemove={vi.fn()}
-        />
-      );
+      render(<GuestListItem guest={guest} onRemove={vi.fn()} />);
 
       // Should fallback to user's full name
       expect(screen.getByText('User Full Name')).toBeInTheDocument();
@@ -111,15 +103,10 @@ describe('Guest Display Name in UI Components', () => {
       const guest = createMockGuest({
         guest_name: 'Fallback Guest Name',
         guest_display_name: '', // Empty display name
-        users: null // No user linked
+        users: null, // No user linked
       });
 
-      render(
-        <GuestListItem 
-          guest={guest}
-          onRemove={vi.fn()}
-        />
-      );
+      render(<GuestListItem guest={guest} onRemove={vi.fn()} />);
 
       // Should fallback to guest name
       expect(screen.getByText('Fallback Guest Name')).toBeInTheDocument();
@@ -129,15 +116,10 @@ describe('Guest Display Name in UI Components', () => {
       const guest = createMockGuest({
         guest_name: null,
         guest_display_name: '',
-        users: null
+        users: null,
       });
 
-      render(
-        <GuestListItem 
-          guest={guest}
-          onRemove={vi.fn()}
-        />
-      );
+      render(<GuestListItem guest={guest} onRemove={vi.fn()} />);
 
       // Should show fallback text
       expect(screen.getByText('Unnamed Guest')).toBeInTheDocument();
@@ -156,16 +138,11 @@ describe('Guest Display Name in UI Components', () => {
           created_at: '2024-01-01T00:00:00Z',
           updated_at: '2024-01-01T00:00:00Z',
           intended_redirect: null,
-          onboarding_completed: true
-        }
+          onboarding_completed: true,
+        },
       });
 
-      render(
-        <GuestListItem 
-          guest={guest}
-          onRemove={vi.fn()}
-        />
-      );
+      render(<GuestListItem guest={guest} onRemove={vi.fn()} />);
 
       // Should prefer computed display name over user's full name
       expect(screen.getByText('Computed Display Name')).toBeInTheDocument();
@@ -187,16 +164,11 @@ describe('Guest Display Name in UI Components', () => {
           created_at: '2024-01-01T00:00:00Z',
           updated_at: '2024-01-01T00:00:00Z',
           intended_redirect: null,
-          onboarding_completed: true
-        }
+          onboarding_completed: true,
+        },
       });
 
-      render(
-        <GuestListItem 
-          guest={guest}
-          onRemove={vi.fn()}
-        />
-      );
+      render(<GuestListItem guest={guest} onRemove={vi.fn()} />);
 
       // Should show the user's actual name, not the import name
       expect(screen.getByText('John Smith')).toBeInTheDocument();
@@ -208,15 +180,10 @@ describe('Guest Display Name in UI Components', () => {
         guest_name: 'Jane Doe',
         guest_display_name: 'Jane Doe', // Same as guest_name since no user linked
         user_id: null,
-        users: null
+        users: null,
       });
 
-      render(
-        <GuestListItem 
-          guest={guest}
-          onRemove={vi.fn()}
-        />
-      );
+      render(<GuestListItem guest={guest} onRemove={vi.fn()} />);
 
       // Should show the guest name since no user is linked
       expect(screen.getByText('Jane Doe')).toBeInTheDocument();
@@ -228,7 +195,7 @@ describe('Guest Display Name in UI Components', () => {
       // This would be tested in the parent component that handles search
       // Here we just verify the display name is accessible
       const guest = createMockGuest({
-        guest_display_name: 'Searchable Display Name'
+        guest_display_name: 'Searchable Display Name',
       });
 
       expect(guest.guest_display_name).toBe('Searchable Display Name');
@@ -238,7 +205,7 @@ describe('Guest Display Name in UI Components', () => {
     it('should maintain backward compatibility with guest_name', () => {
       const guest = createMockGuest({
         guest_name: 'Legacy Guest Name',
-        guest_display_name: 'New Display Name'
+        guest_display_name: 'New Display Name',
       });
 
       // Both fields should be available
@@ -252,15 +219,10 @@ describe('Guest Display Name in UI Components', () => {
       const originalGuestName = 'Original Name';
       const guest = createMockGuest({
         guest_name: originalGuestName,
-        guest_display_name: 'Different Display Name'
+        guest_display_name: 'Different Display Name',
       });
 
-      render(
-        <GuestListItem 
-          guest={guest}
-          onRemove={vi.fn()}
-        />
-      );
+      render(<GuestListItem guest={guest} onRemove={vi.fn()} />);
 
       // Original guest_name should remain unchanged
       expect(guest.guest_name).toBe(originalGuestName);
@@ -272,15 +234,10 @@ describe('Guest Display Name in UI Components', () => {
       const guest = createMockGuest({
         guest_name: 'Backup Name',
         // @ts-ignore - Simulating undefined display name for edge case testing
-        guest_display_name: undefined
+        guest_display_name: undefined,
       });
 
-      render(
-        <GuestListItem 
-          guest={guest}
-          onRemove={vi.fn()}
-        />
-      );
+      render(<GuestListItem guest={guest} onRemove={vi.fn()} />);
 
       // Should fallback gracefully
       expect(screen.getByText('Backup Name')).toBeInTheDocument();
@@ -290,15 +247,10 @@ describe('Guest Display Name in UI Components', () => {
   describe('Accessibility', () => {
     it('should maintain proper accessibility attributes with display names', () => {
       const guest = createMockGuest({
-        guest_display_name: 'Accessible Display Name'
+        guest_display_name: 'Accessible Display Name',
       });
 
-      render(
-        <GuestListItem 
-          guest={guest}
-          onRemove={vi.fn()}
-        />
-      );
+      render(<GuestListItem guest={guest} onRemove={vi.fn()} />);
 
       // The display name should be readable by screen readers
       const nameElement = screen.getByText('Accessible Display Name');

@@ -19,42 +19,50 @@ interface EventHeaderProps {
 
 export function EventHeader({
   event,
-  guestCount, 
+  guestCount,
   children,
   isCollapsed = false,
-  className
+  className,
 }: EventHeaderProps) {
   const [showFullDescription, setShowFullDescription] = useState(false);
-  
+
   // Truncate description for collapsed view
-  const shouldTruncateDescription = event.description && event.description.length > 120;
-  const displayDescription = shouldTruncateDescription && !showFullDescription 
-    ? event.description?.substring(0, 120) + '...' 
-    : event.description;
+  const shouldTruncateDescription =
+    event.description && event.description.length > 120;
+  const displayDescription =
+    shouldTruncateDescription && !showFullDescription
+      ? event.description?.substring(0, 120) + '...'
+      : event.description;
   return (
-    <CardContainer 
-      maxWidth="xl" 
+    <CardContainer
+      maxWidth="xl"
       className={cn(
-        "bg-gradient-to-r from-purple-600 to-[#FF6B6B] text-white border-0 transition-all duration-300 ease-in-out",
-        isCollapsed ? "py-4" : "py-6",
-        className
+        'bg-gradient-to-r from-purple-600 to-[#FF6B6B] text-white border-0 transition-all duration-300 ease-in-out',
+        isCollapsed ? 'py-4' : 'py-6',
+        className,
       )}
     >
-      <div className={cn(
-        "flex flex-col lg:flex-row lg:items-start lg:justify-between transition-all duration-300",
-        isCollapsed ? "gap-3" : "gap-6"
-      )}>
-        <div className={cn(
-          "flex-1 transition-all duration-300",
-          isCollapsed ? "space-y-2" : "space-y-4"
-        )}>
+      <div
+        className={cn(
+          'flex flex-col lg:flex-row lg:items-start lg:justify-between transition-all duration-300',
+          isCollapsed ? 'gap-3' : 'gap-6',
+        )}
+      >
+        <div
+          className={cn(
+            'flex-1 transition-all duration-300',
+            isCollapsed ? 'space-y-2' : 'space-y-4',
+          )}
+        >
           <div className="flex items-start gap-4">
             {/* Event Image - smaller when collapsed */}
             {event.header_image_url && (
-              <div className={cn(
-                "rounded-xl overflow-hidden flex-shrink-0 ring-2 ring-white/20 transition-all duration-300",
-                isCollapsed ? "w-12 h-12" : "w-16 h-16"
-              )}>
+              <div
+                className={cn(
+                  'rounded-xl overflow-hidden flex-shrink-0 ring-2 ring-white/20 transition-all duration-300',
+                  isCollapsed ? 'w-12 h-12' : 'w-16 h-16',
+                )}
+              >
                 <Image
                   src={event.header_image_url}
                   alt={event.title}
@@ -64,7 +72,7 @@ export function EventHeader({
                 />
               </div>
             )}
-            
+
             {/* Host Badge & Event Details */}
             <div className="min-w-0 flex-1">
               {/* Host Badge - smaller when collapsed */}
@@ -74,38 +82,63 @@ export function EventHeader({
                   <span className="text-sm font-medium">Host Dashboard</span>
                 </div>
               )}
-              
+
               {/* Event Title - smaller when collapsed */}
-              <h1 className={cn(
-                "font-bold text-white transition-all duration-300",
-                isCollapsed ? "text-xl mb-2" : "text-2xl mb-3"
-              )}>
+              <h1
+                className={cn(
+                  'font-bold text-white transition-all duration-300',
+                  isCollapsed ? 'text-xl mb-2' : 'text-2xl mb-3',
+                )}
+              >
                 {event.title}
               </h1>
-              
+
               {/* Event Meta Information - more compact when collapsed */}
-              <div className={cn(
-                "flex text-white/80 transition-all duration-300",
-                isCollapsed 
-                  ? "flex-row items-center gap-4 text-sm" 
-                  : "flex-col sm:flex-row sm:items-center gap-4"
-              )}>
+              <div
+                className={cn(
+                  'flex text-white/80 transition-all duration-300',
+                  isCollapsed
+                    ? 'flex-row items-center gap-4 text-sm'
+                    : 'flex-col sm:flex-row sm:items-center gap-4',
+                )}
+              >
                 <div className="flex items-center gap-2">
-                  <span className={cn("transition-all duration-300", isCollapsed ? "text-base" : "text-xl")}>📅</span>
+                  <span
+                    className={cn(
+                      'transition-all duration-300',
+                      isCollapsed ? 'text-base' : 'text-xl',
+                    )}
+                  >
+                    📅
+                  </span>
                   <span className="font-medium">
                     {formatEventDate(event.event_date)}
                   </span>
                 </div>
-                
+
                 {event.location && (
                   <div className="flex items-center gap-2">
-                    <span className={cn("transition-all duration-300", isCollapsed ? "text-base" : "text-xl")}>📍</span>
+                    <span
+                      className={cn(
+                        'transition-all duration-300',
+                        isCollapsed ? 'text-base' : 'text-xl',
+                      )}
+                    >
+                      📍
+                    </span>
                     <span className="font-medium">{event.location}</span>
                   </div>
                 )}
-                
+
                 <div className="flex items-center gap-2">
-                  <span className={cn("transition-all duration-300", isCollapsed ? "text-base" : "text-xl")}>👥</span>
+                  <span
+                    className={cn(
+                      'transition-all duration-300',
+                      isCollapsed ? 'text-base' : 'text-xl',
+                    )}
+                  >
+                    👥
+                  </span>
                   <span className="font-medium">
                     {guestCount} {guestCount === 1 ? 'guest' : 'guests'}
                   </span>
@@ -134,14 +167,16 @@ export function EventHeader({
 
         {/* Action Area - for QuickActions or other components */}
         {children && (
-          <div className={cn(
-            "flex-shrink-0 transition-all duration-300",
-            isCollapsed && "scale-90"
-          )}>
+          <div
+            className={cn(
+              'flex-shrink-0 transition-all duration-300',
+              isCollapsed && 'scale-90',
+            )}
+          >
             {children}
           </div>
         )}
       </div>
     </CardContainer>
   );
-} 
+}

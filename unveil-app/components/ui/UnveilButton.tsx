@@ -1,7 +1,8 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 
-interface BaseButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface BaseButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
   className?: string;
   loading?: boolean;
@@ -77,7 +78,8 @@ export const SecondaryButton: React.FC<BaseButtonProps> = ({
 };
 
 // Icon Button Component (for profile buttons, etc.)
-interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface IconButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
   className?: string;
   size?: 'sm' | 'md' | 'lg';
@@ -114,4 +116,4 @@ export const IconButton: React.FC<IconButtonProps> = ({
 // Display Names
 PrimaryButton.displayName = 'PrimaryButton';
 SecondaryButton.displayName = 'SecondaryButton';
-IconButton.displayName = 'IconButton'; 
+IconButton.displayName = 'IconButton';

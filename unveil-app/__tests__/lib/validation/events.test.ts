@@ -1,8 +1,8 @@
-import { 
-  eventDetailsSchema, 
-  validateField, 
+import {
+  eventDetailsSchema,
+  validateField,
   formatWebsiteUrl,
-  transformEventDetailsForDB 
+  transformEventDetailsForDB,
 } from '@/lib/validation/events';
 
 describe('Event Details Validation', () => {
@@ -34,7 +34,9 @@ describe('Event Details Validation', () => {
       const result = eventDetailsSchema.safeParse(invalidData);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.errors[0].message).toContain('at least 3 characters');
+        expect(result.error.errors[0].message).toContain(
+          'at least 3 characters',
+        );
       }
     });
 
@@ -126,7 +128,7 @@ describe('Event Details Validation', () => {
       };
 
       const transformed = transformEventDetailsForDB(formData);
-      
+
       expect(transformed).toEqual({
         title: 'Test Event',
         event_date: '2025-08-15',
@@ -150,7 +152,7 @@ describe('Event Details Validation', () => {
       };
 
       const transformed = transformEventDetailsForDB(formData);
-      
+
       expect(transformed.location).toBeNull();
       expect(transformed.website_url).toBeNull();
     });

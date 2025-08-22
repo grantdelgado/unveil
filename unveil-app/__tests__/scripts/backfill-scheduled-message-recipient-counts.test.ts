@@ -18,7 +18,7 @@ const mockSupabase = {
               target_guest_ids: ['guest-1', 'guest-2', 'guest-3'],
               recipient_count: 6, // Incorrect count
               created_at: '2025-08-21T15:00:00Z',
-              send_at: '2025-08-22T16:00:00Z'
+              send_at: '2025-08-22T16:00:00Z',
             },
             {
               id: 'msg-2',
@@ -27,26 +27,26 @@ const mockSupabase = {
               target_guest_ids: ['guest-4'],
               recipient_count: 1, // Correct count
               created_at: '2025-08-21T15:30:00Z',
-              send_at: '2025-08-22T17:00:00Z'
-            }
+              send_at: '2025-08-22T17:00:00Z',
+            },
           ],
-          error: null
-        }))
-      }))
+          error: null,
+        })),
+      })),
     })),
     update: jest.fn(() => ({
       eq: jest.fn(() => ({
         eq: jest.fn(() => ({
           data: null,
-          error: null
-        }))
-      }))
-    }))
-  }))
+          error: null,
+        })),
+      })),
+    })),
+  })),
 };
 
 jest.mock('@supabase/supabase-js', () => ({
-  createClient: jest.fn(() => mockSupabase)
+  createClient: jest.fn(() => mockSupabase),
 }));
 
 // Mock environment variables
@@ -78,18 +78,20 @@ describe('Backfill Scheduled Message Recipient Counts', () => {
 
     // Verify that the script identified the incorrect message
     expect(mockConsoleLog).toHaveBeenCalledWith(
-      expect.stringContaining('Found 1 messages with incorrect recipient counts')
+      expect.stringContaining(
+        'Found 1 messages with incorrect recipient counts',
+      ),
     );
 
     // Verify that the update was called with correct parameters
     expect(mockSupabase.from).toHaveBeenCalledWith('scheduled_messages');
-    
+
     const updateCall = mockSupabase.from().update;
     expect(updateCall).toHaveBeenCalledWith({ recipient_count: 3 });
 
     // Verify success message
     expect(mockConsoleLog).toHaveBeenCalledWith(
-      expect.stringContaining('Successfully updated: 1 messages')
+      expect.stringContaining('Successfully updated: 1 messages'),
     );
 
     process.argv = originalArgv;
@@ -109,19 +111,21 @@ describe('Backfill Scheduled Message Recipient Counts', () => {
                 target_guest_ids: ['guest-1', 'guest-2'],
                 recipient_count: 2, // Correct count
                 created_at: '2025-08-21T15:00:00Z',
-                send_at: '2025-08-22T16:00:00Z'
-              }
+                send_at: '2025-08-22T16:00:00Z',
+              },
             ],
-            error: null
-          }))
-        }))
-      }))
+            error: null,
+          })),
+        })),
+      })),
     });
 
     await backfillScheduledMessageRecipientCounts();
 
     expect(mockConsoleLog).toHaveBeenCalledWith(
-      expect.stringContaining('All scheduled messages have correct recipient counts')
+      expect.stringContaining(
+        'All scheduled messages have correct recipient counts',
+      ),
     );
   });
 
@@ -132,14 +136,14 @@ describe('Backfill Scheduled Message Recipient Counts', () => {
         in: jest.fn(() => ({
           not: jest.fn(() => ({
             data: null,
-            error: { message: 'Database connection failed' }
-          }))
-        }))
-      }))
+            error: { message: 'Database connection failed' },
+          })),
+        })),
+      })),
     });
 
     await expect(backfillScheduledMessageRecipientCounts()).rejects.toThrow(
-      'Failed to fetch scheduled messages: Database connection failed'
+      'Failed to fetch scheduled messages: Database connection failed',
     );
   });
 
@@ -148,22 +152,22 @@ describe('Backfill Scheduled Message Recipient Counts', () => {
       {
         id: 'msg-1',
         target_guest_ids: ['a', 'b', 'c'],
-        recipient_count: 6
+        recipient_count: 6,
       },
       {
-        id: 'msg-2', 
+        id: 'msg-2',
         target_guest_ids: ['a'],
-        recipient_count: 1
+        recipient_count: 1,
       },
       {
         id: 'msg-3',
         target_guest_ids: ['a', 'b'],
-        recipient_count: 5
-      }
+        recipient_count: 5,
+      },
     ];
 
     // Test the filtering logic that identifies incorrect counts
-    const incorrectMessages = testMessages.filter(msg => {
+    const incorrectMessages = testMessages.filter((msg) => {
       const actualCount = msg.target_guest_ids?.length || 0;
       const storedCount = msg.recipient_count || 0;
       return actualCount !== storedCount && actualCount > 0;
@@ -177,7 +181,7 @@ describe('Backfill Scheduled Message Recipient Counts', () => {
   it('should be idempotent - safe to run multiple times', async () => {
     // First run
     await backfillScheduledMessageRecipientCounts();
-    
+
     // Second run should find no incorrect counts
     mockSupabase.from.mockReturnValueOnce({
       select: jest.fn(() => ({
@@ -191,19 +195,21 @@ describe('Backfill Scheduled Message Recipient Counts', () => {
                 target_guest_ids: ['guest-1', 'guest-2', 'guest-3'],
                 recipient_count: 3, // Now correct
                 created_at: '2025-08-21T15:00:00Z',
-                send_at: '2025-08-22T16:00:00Z'
-              }
+                send_at: '2025-08-22T16:00:00Z',
+              },
             ],
-            error: null
-          }))
-        }))
-      }))
+            error: null,
+          })),
+        })),
+      })),
     });
 
     await backfillScheduledMessageRecipientCounts();
 
     expect(mockConsoleLog).toHaveBeenCalledWith(
-      expect.stringContaining('All scheduled messages have correct recipient counts')
+      expect.stringContaining(
+        'All scheduled messages have correct recipient counts',
+      ),
     );
   });
 });

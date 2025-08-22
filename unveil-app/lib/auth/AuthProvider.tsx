@@ -1,6 +1,13 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, useRef, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useRef,
+  ReactNode,
+} from 'react';
 import { supabase } from '@/lib/supabase';
 import { Session, User } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
@@ -25,14 +32,14 @@ interface AuthProviderProps {
 
 /**
  * 🚀 PERFORMANCE OPTIMIZATION: Centralized auth provider
- * 
+ *
  * Centralized auth provider that manages a single Supabase auth subscription:
  * - Eliminates multiple auth subscriptions across components
  * - Prevents auth state duplication and race conditions
  * - Reduces memory usage and subscription overhead
  * - Provides consistent auth state throughout the app
  * - Better error handling with centralized auth logic
- * 
+ *
  * Week 3: Replaced individual useAuth hooks with single provider context
  * Impact: Eliminated N auth subscriptions → 1 centralized subscription
  */
@@ -47,16 +54,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Get initial session with proper error handling
     const initializeAuth = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession();
+
         if (!isMounted) return;
 
         if (error) {
           logger.error('Error getting initial session:', error);
-          
+
           // If it's a refresh token error, clear the corrupted state
           if (isRefreshTokenError(error)) {
-            logger.auth('Detected refresh token error, clearing corrupted auth state');
+            logger.auth(
+              'Detected refresh token error, clearing corrupted auth state',
+            );
             await clearCorruptedAuthState();
             setSession(null);
             setUser(null);
@@ -68,7 +80,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       } catch (error: unknown) {
         if (!isMounted) return;
         logger.error('Failed to initialize auth:', error);
-        
+
         // Clear any corrupted auth state
         if (isRefreshTokenError(error)) {
           await clearCorruptedAuthState();
@@ -98,7 +110,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       // Only log auth state changes in debug mode to reduce console noise
       if (process.env.UNVEIL_DEBUG === 'true') {
-        logger.auth(`Auth state changed: ${event}`, { userId: session?.user?.id || null });
+        logger.auth(`Auth state changed: ${event}`, {
+          userId: session?.user?.id || null,
+        });
       }
 
       // Handle specific auth events
@@ -112,7 +126,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       setSession(session);
       setUser(session?.user ?? null);
-      
+
       // Ensure loading is false after any auth state change
       setLoading(false);
     });
@@ -141,14 +155,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Extract and normalize phone number from user data
   const extractedPhone = user?.phone || user?.user_metadata?.phone;
-  const normalizedUserPhone = extractedPhone ? normalizePhoneNumber(extractedPhone) : null;
+  const normalizedUserPhone = extractedPhone
+    ? normalizePhoneNumber(extractedPhone)
+    : null;
 
   const value: AuthContextType = {
     session,
     user,
     loading,
     isAuthenticated: !!session,
-    userPhone: normalizedUserPhone?.isValid ? normalizedUserPhone.normalized : extractedPhone,
+    userPhone: normalizedUserPhone?.isValid
+      ? normalizedUserPhone.normalized
+      : extractedPhone,
     signOut,
   };
 
@@ -178,28 +196,40 @@ function GuestLinkingManager() {
     if (context?.isAuthenticated && context?.user) {
       // Only process if we haven't processed this user yet
       const currentUserId = context.user.id;
-      const shouldProcess = !hasProcessedRef.current || lastUserIdRef.current !== currentUserId;
-      
+      const shouldProcess =
+        !hasProcessedRef.current || lastUserIdRef.current !== currentUserId;
+
       if (shouldProcess) {
         hasProcessedRef.current = true;
         lastUserIdRef.current = currentUserId;
-        
+
         // Log auto-join attempt for debugging (can be removed after verification)
         if (process.env.NODE_ENV === 'development') {
           console.log('GuestLinkingManager: Starting auto-join', {
             userId: currentUserId,
             userPhone: context.userPhone,
-            hasPhone: !!context.userPhone
+            hasPhone: !!context.userPhone,
           });
         }
-        
+
         // Run auto-join with error handling to prevent page break
-        processAutoJoin(currentUserId, context.userPhone || undefined).catch(error => {
-          console.warn('Auto-join failed but continuing with app load:', error);
-        });
+        processAutoJoin(currentUserId, context.userPhone || undefined).catch(
+          (error) => {
+            console.warn(
+              'Auto-join failed but continuing with app load:',
+              error,
+            );
+          },
+        );
       }
     }
-  }, [context?.isAuthenticated, context?.user?.id, context?.userPhone, context?.user, processAutoJoin]);
+  }, [
+    context?.isAuthenticated,
+    context?.user?.id,
+    context?.userPhone,
+    context?.user,
+    processAutoJoin,
+  ]);
 
   return null; // This component has no UI
 }

@@ -28,20 +28,20 @@ BEGIN
         FROM public.users
         WHERE phone = NEW.phone
         LIMIT 1;
-        
+
         -- If we found a matching user, update the user_id
         IF matching_user_id IS NOT NULL THEN
             UPDATE public.event_guests
             SET user_id = matching_user_id,
                 updated_at = NOW()
             WHERE id = NEW.id;
-            
+
             -- Update the NEW record for the trigger response
             NEW.user_id := matching_user_id;
             NEW.updated_at := NOW();
         END IF;
     END IF;
-    
+
     RETURN NEW;
 END;
 $$;
@@ -79,28 +79,34 @@ RETURNS TABLE (
 ### Utility Scripts
 
 #### Command Line Script
+
 **Location**: `scripts/backfill-user-ids.ts`  
 **Usage**: `npm run script:backfill-user-ids`
 
 Features:
+
 - ✅ Checks current state before running
 - ✅ Shows potential matches
 - ✅ Safe for multiple runs
 - ✅ Detailed reporting
 
 #### API Endpoint
+
 **Location**: `app/api/admin/backfill-user-ids/route.ts`  
 **Endpoints**:
+
 - `GET /api/admin/backfill-user-ids` - Check current state
 - `POST /api/admin/backfill-user-ids` - Execute backfill
 
 ## 🧪 Testing
 
 ### Automated Test
+
 **Location**: `scripts/test-user-id-trigger.ts`  
 **Usage**: `npm run test:user-id-trigger`
 
 Test Coverage:
+
 - ✅ Trigger populates user_id for new inserts
 - ✅ Trigger does NOT overwrite existing user_id values
 - ✅ Clean test data management
@@ -118,25 +124,29 @@ Test Coverage:
 ### Safety Mechanisms
 
 #### ✅ **Never Overwrites**
+
 - Only updates when `user_id IS NULL`
 - Existing user_id values are preserved
 
 #### ✅ **Handles Missing Data**
+
 - No error if phone is NULL
 - No error if no matching user found
 
 #### ✅ **Performance Optimized**
+
 - Uses efficient phone lookup with LIMIT 1
 - Updates only necessary fields
 
 ## 📊 Monitoring & Troubleshooting
 
 ### Check Current State
+
 ```sql
 -- Count guests without user_id but with phone
 SELECT COUNT(*) as unlinked_guests
-FROM event_guests 
-WHERE user_id IS NULL 
+FROM event_guests
+WHERE user_id IS NULL
 AND phone IS NOT NULL;
 
 -- Find potential matches
@@ -147,44 +157,52 @@ WHERE eg.user_id IS NULL;
 ```
 
 ### Manual Backfill
+
 ```sql
 -- Run the backfill function
 SELECT * FROM backfill_user_id_from_phone();
 ```
 
 ### Test Trigger Status
+
 ```sql
 -- Check if trigger exists
 SELECT trigger_name, event_manipulation, action_timing
-FROM information_schema.triggers 
+FROM information_schema.triggers
 WHERE trigger_name = 'trg_assign_user_id_from_phone';
 ```
 
 ## 🔄 Migration History
 
-| Migration | Description | Date |
-|-----------|-------------|------|
+| Migration                                | Description               | Date    |
+| ---------------------------------------- | ------------------------- | ------- |
 | `create_assign_user_id_trigger_function` | Creates the core function | Current |
-| `create_assign_user_id_trigger` | Attaches trigger to table | Current |
-| `create_backfill_user_id_function` | Adds backfill utility | Current |
+| `create_assign_user_id_trigger`          | Attaches trigger to table | Current |
+| `create_backfill_user_id_function`       | Adds backfill utility     | Current |
 
 ## 🎯 Use Cases
 
 ### Primary Use Case: Guest Import
+
 When hosts import guests via CSV or manual entry:
+
 1. Phone numbers are provided
 2. user_id is initially NULL
 3. Trigger automatically links if user exists
 4. Guest can immediately access their account
 
 ### Secondary Use Case: User Registration
+
 When a user registers with a phone number:
+
 1. User account is created
 2. Any existing guest records with that phone are automatically linked
 3. User gains access to all their event invitations
 
 ### Backfill Use Case: Data Migration
+
 For existing data or batch operations:
+
 1. Run backfill script or API
 2. All eligible records are updated
 3. Safe to run multiple times

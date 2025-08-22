@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useMessages } from '@/hooks/useMessages';
 import { useGuests } from '@/hooks/guests';
+import { useSubscriptionManager } from '@/lib/realtime/SubscriptionProvider';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { MessageComposer } from './MessageComposer';
 import { RecentMessages } from './RecentMessages';
@@ -15,15 +16,30 @@ interface MessageCenterProps {
   preselectedGuestIds?: string[];
 }
 
-export function MessageCenter({ eventId, className, preselectionPreset, preselectedGuestIds }: MessageCenterProps) {
-  const [activeView, setActiveView] = useState<'compose' | 'history'>('compose');
+export function MessageCenter({
+  eventId,
+  className,
+  preselectionPreset,
+  preselectedGuestIds,
+}: MessageCenterProps) {
+  const [activeView, setActiveView] = useState<'compose' | 'history'>(
+    'compose',
+  );
+
+  // Check subscription manager readiness for realtime features
+  const { isReady: subscriptionReady } = useSubscriptionManager();
 
   // Domain hooks - direct data access
-  const { messages, loading: messagesLoading, error: messagesError, refreshMessages } = useMessages(eventId);
+  const {
+    messages,
+    loading: messagesLoading,
+    error: messagesError,
+    refreshMessages,
+  } = useMessages(eventId);
   const { loading: guestsLoading, error: guestsError } = useGuests({ eventId });
 
-  // Combined loading state
-  const loading = messagesLoading || guestsLoading;
+  // Combined loading state including subscription readiness
+  const loading = messagesLoading || guestsLoading || !subscriptionReady;
   const error = messagesError || guestsError;
 
   const handleMessageSent = async () => {
@@ -44,6 +60,11 @@ export function MessageCenter({ eventId, className, preselectionPreset, preselec
     return (
       <div className="flex items-center justify-center py-8">
         <LoadingSpinner size="lg" />
+        <span className="ml-3 text-gray-600">
+          {!subscriptionReady
+            ? 'Connecting to realtime...'
+            : 'Loading messaging...'}
+        </span>
       </div>
     );
   }
@@ -52,7 +73,8 @@ export function MessageCenter({ eventId, className, preselectionPreset, preselec
     return (
       <div className="bg-red-50 border border-red-200 rounded-lg p-4">
         <div className="text-sm text-red-800">
-          Error loading messaging: {error instanceof Error ? error.message : String(error)}
+          Error loading messaging:{' '}
+          {error instanceof Error ? error.message : String(error)}
         </div>
       </div>
     );
@@ -68,7 +90,7 @@ export function MessageCenter({ eventId, className, preselectionPreset, preselec
             'flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors',
             activeView === 'compose'
               ? 'bg-white text-gray-900 shadow-sm'
-              : 'text-gray-600 hover:text-gray-900'
+              : 'text-gray-600 hover:text-gray-900',
           )}
         >
           Compose Message
@@ -79,7 +101,7 @@ export function MessageCenter({ eventId, className, preselectionPreset, preselec
             'flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors',
             activeView === 'history'
               ? 'bg-white text-gray-900 shadow-sm'
-              : 'text-gray-600 hover:text-gray-900'
+              : 'text-gray-600 hover:text-gray-900',
           )}
         >
           Message History
@@ -98,11 +120,8 @@ export function MessageCenter({ eventId, className, preselectionPreset, preselec
         />
       </div>
       <div style={{ display: activeView === 'history' ? 'block' : 'none' }}>
-        <RecentMessages
-          messages={messages || []}
-          eventId={eventId}
-        />
+        <RecentMessages messages={messages || []} eventId={eventId} />
       </div>
     </div>
   );
-} 
+}

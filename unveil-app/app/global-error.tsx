@@ -12,7 +12,7 @@ export default function GlobalError({
   reset: () => void;
 }) {
   const router = useRouter();
-  
+
   useEffect(() => {
     // Log the error to Sentry
     Sentry.captureException(error);
@@ -36,22 +36,23 @@ export default function GlobalError({
             />
           </svg>
         </div>
-        
+
         <h2 className="text-xl font-semibold text-stone-900 mb-2">
           Something went wrong
         </h2>
-        
+
         <p className="text-stone-600 mb-6">
-          We&apos;re sorry, but something unexpected happened. Our team has been notified.
+          We&apos;re sorry, but something unexpected happened. Our team has been
+          notified.
         </p>
-        
+
         <button
           onClick={reset}
           className="w-full bg-rose-600 text-white py-2 px-4 rounded-md hover:bg-rose-700 transition-colors"
         >
           Try again
         </button>
-        
+
         <button
           onClick={() => router.push('/')}
           className="w-full mt-2 bg-stone-200 text-stone-700 py-2 px-4 rounded-md hover:bg-stone-300 transition-colors"
@@ -61,4 +62,4 @@ export default function GlobalError({
       </div>
     </div>
   );
-} 
+}

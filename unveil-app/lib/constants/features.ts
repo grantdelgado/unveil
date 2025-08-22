@@ -1,7 +1,7 @@
 /**
  * Feature flags for Unveil
  * Centralized feature flag management for safe rollouts
- * 
+ *
  * Note: RSVP flags removed as part of RSVP-Lite hard cutover.
  * All RSVP functionality now uses declined_at semantics.
  */
@@ -27,16 +27,19 @@ export function isFeatureEnabled(flag: FeatureFlag): boolean {
 export function getFeatureFlag(flag: FeatureFlag): boolean {
   // Check environment variable override (client-side safe)
   const envKey = `NEXT_PUBLIC_FEATURE_${flag}`;
-  
+
   // Use globalThis to handle both server and client environments
-  const envValue = typeof window !== 'undefined' 
-    ? (window as { ENV?: Record<string, string> }).ENV?.[envKey] || (globalThis as { process?: { env?: Record<string, string> } }).process?.env?.[envKey]
-    : process.env[envKey];
-  
+  const envValue =
+    typeof window !== 'undefined'
+      ? (window as { ENV?: Record<string, string> }).ENV?.[envKey] ||
+        (globalThis as { process?: { env?: Record<string, string> } }).process
+          ?.env?.[envKey]
+      : process.env[envKey];
+
   if (envValue !== undefined) {
     return envValue === 'true';
   }
-  
+
   // Fall back to default (no flags currently)
   return false;
 }

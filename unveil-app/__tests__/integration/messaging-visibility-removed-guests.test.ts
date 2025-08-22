@@ -13,9 +13,9 @@ const supabase = createClient<Database>(
   {
     auth: {
       autoRefreshToken: false,
-      persistSession: false
-    }
-  }
+      persistSession: false,
+    },
+  },
 );
 
 describe('Messaging Visibility - Removed Guests', () => {
@@ -27,29 +27,31 @@ describe('Messaging Visibility - Removed Guests', () => {
 
   beforeAll(async () => {
     // Create host user
-    const { data: hostUser, error: hostError } = await supabase.auth.admin.createUser({
-      email: 'msg-host@example.com',
-      phone: '+1555000001',
-      email_confirm: true,
-      phone_confirm: true
-    });
+    const { data: hostUser, error: hostError } =
+      await supabase.auth.admin.createUser({
+        email: 'msg-host@example.com',
+        phone: '+1555000001',
+        email_confirm: true,
+        phone_confirm: true,
+      });
     expect(hostError).toBeNull();
     hostUserId = hostUser.user.id;
 
     // Create guest user
-    const { data: guestUser, error: guestError } = await supabase.auth.admin.createUser({
-      email: 'msg-guest@example.com',
-      phone: '+1555000002',
-      email_confirm: true,
-      phone_confirm: true
-    });
+    const { data: guestUser, error: guestError } =
+      await supabase.auth.admin.createUser({
+        email: 'msg-guest@example.com',
+        phone: '+1555000002',
+        email_confirm: true,
+        phone_confirm: true,
+      });
     expect(guestError).toBeNull();
     guestUserId = guestUser.user.id;
 
     // Insert users into users table
     await supabase.from('users').upsert([
       { id: hostUserId, phone: '+1555000001', full_name: 'Message Host' },
-      { id: guestUserId, phone: '+1555000002', full_name: 'Message Guest' }
+      { id: guestUserId, phone: '+1555000002', full_name: 'Message Guest' },
     ]);
 
     // Create test event
@@ -58,7 +60,7 @@ describe('Messaging Visibility - Removed Guests', () => {
       .insert({
         title: 'Test Event - Message Visibility',
         event_date: '2025-12-31',
-        host_user_id: hostUserId
+        host_user_id: hostUserId,
       })
       .select('id')
       .single();
@@ -72,7 +74,7 @@ describe('Messaging Visibility - Removed Guests', () => {
         event_id: testEventId,
         user_id: guestUserId,
         phone: '+1555000002',
-        guest_name: 'Message Guest'
+        guest_name: 'Message Guest',
       })
       .select('id')
       .single();
@@ -86,7 +88,7 @@ describe('Messaging Visibility - Removed Guests', () => {
         event_id: testEventId,
         sender_user_id: hostUserId,
         content: 'Test message for visibility testing',
-        message_type: 'announcement'
+        message_type: 'announcement',
       })
       .select('id')
       .single();
@@ -125,18 +127,20 @@ describe('Messaging Visibility - Removed Guests', () => {
       // Create a client session for the guest user
       const guestClient = createClient<Database>(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       );
 
       // Set the session for the guest user (simulating authenticated guest)
-      const { data: { session } } = await supabase.auth.admin.generateLink({
+      const {
+        data: { session },
+      } = await supabase.auth.admin.generateLink({
         type: 'magiclink',
-        email: 'msg-guest@example.com'
+        email: 'msg-guest@example.com',
       });
 
       await guestClient.auth.setSession({
         access_token: session?.properties?.access_token || '',
-        refresh_token: session?.properties?.refresh_token || ''
+        refresh_token: session?.properties?.refresh_token || '',
       });
 
       // Guest should be able to see messages
@@ -148,16 +152,15 @@ describe('Messaging Visibility - Removed Guests', () => {
       expect(error).toBeNull();
       expect(messages).toBeDefined();
       expect(messages!.length).toBeGreaterThan(0);
-      expect(messages!.some(msg => msg.id === testMessageId)).toBe(true);
+      expect(messages!.some((msg) => msg.id === testMessageId)).toBe(true);
     });
 
     it('should allow active guest to access messages via RPC if available', async () => {
       // Test get_guest_event_messages RPC if it exists
-      const { data, error } = await supabase
-        .rpc('get_guest_event_messages', { 
-          p_event_id: testEventId,
-          p_limit: 10
-        });
+      const { data, error } = await supabase.rpc('get_guest_event_messages', {
+        p_event_id: testEventId,
+        p_limit: 10,
+      });
 
       // This might fail if RPC doesn't exist or requires specific auth context
       // The important thing is it doesn't fail due to removed_at filtering
@@ -180,17 +183,19 @@ describe('Messaging Visibility - Removed Guests', () => {
       // Create a client session for the removed guest user
       const guestClient = createClient<Database>(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       );
 
-      const { data: { session } } = await supabase.auth.admin.generateLink({
+      const {
+        data: { session },
+      } = await supabase.auth.admin.generateLink({
         type: 'magiclink',
-        email: 'msg-guest@example.com'
+        email: 'msg-guest@example.com',
       });
 
       await guestClient.auth.setSession({
         access_token: session?.properties?.access_token || '',
-        refresh_token: session?.properties?.refresh_token || ''
+        refresh_token: session?.properties?.refresh_token || '',
       });
 
       // Removed guest should NOT see messages due to RLS
@@ -212,7 +217,7 @@ describe('Messaging Visibility - Removed Guests', () => {
           message_id: testMessageId,
           user_id: guestUserId,
           guest_id: testGuestId,
-          phone_number: '+1555000002'
+          phone_number: '+1555000002',
         })
         .select('id')
         .single();
@@ -225,17 +230,19 @@ describe('Messaging Visibility - Removed Guests', () => {
       // Create a client session for the removed guest
       const guestClient = createClient<Database>(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       );
 
-      const { data: { session } } = await supabase.auth.admin.generateLink({
+      const {
+        data: { session },
+      } = await supabase.auth.admin.generateLink({
         type: 'magiclink',
-        email: 'msg-guest@example.com'
+        email: 'msg-guest@example.com',
       });
 
       await guestClient.auth.setSession({
         access_token: session?.properties?.access_token || '',
-        refresh_token: session?.properties?.refresh_token || ''
+        refresh_token: session?.properties?.refresh_token || '',
       });
 
       // Removed guest should not see delivery records due to RLS
@@ -251,7 +258,10 @@ describe('Messaging Visibility - Removed Guests', () => {
 
       // Clean up
       if (delivery) {
-        await supabase.from('message_deliveries').delete().eq('id', delivery.id);
+        await supabase
+          .from('message_deliveries')
+          .delete()
+          .eq('id', delivery.id);
       }
     });
   });
@@ -267,17 +277,19 @@ describe('Messaging Visibility - Removed Guests', () => {
       // Create guest client
       const guestClient = createClient<Database>(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       );
 
-      const { data: { session } } = await supabase.auth.admin.generateLink({
+      const {
+        data: { session },
+      } = await supabase.auth.admin.generateLink({
         type: 'magiclink',
-        email: 'msg-guest@example.com'
+        email: 'msg-guest@example.com',
       });
 
       await guestClient.auth.setSession({
         access_token: session?.properties?.access_token || '',
-        refresh_token: session?.properties?.refresh_token || ''
+        refresh_token: session?.properties?.refresh_token || '',
       });
 
       // Verify no messages visible when removed
@@ -299,7 +311,9 @@ describe('Messaging Visibility - Removed Guests', () => {
         .select('*')
         .eq('event_id', testEventId);
       expect(messagesRestored!.length).toBeGreaterThan(0);
-      expect(messagesRestored!.some(msg => msg.id === testMessageId)).toBe(true);
+      expect(messagesRestored!.some((msg) => msg.id === testMessageId)).toBe(
+        true,
+      );
     });
   });
 
@@ -314,17 +328,19 @@ describe('Messaging Visibility - Removed Guests', () => {
       // Create host client
       const hostClient = createClient<Database>(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       );
 
-      const { data: { session } } = await supabase.auth.admin.generateLink({
+      const {
+        data: { session },
+      } = await supabase.auth.admin.generateLink({
         type: 'magiclink',
-        email: 'msg-host@example.com'
+        email: 'msg-host@example.com',
       });
 
       await hostClient.auth.setSession({
         access_token: session?.properties?.access_token || '',
-        refresh_token: session?.properties?.refresh_token || ''
+        refresh_token: session?.properties?.refresh_token || '',
       });
 
       // Host should always see messages
@@ -336,7 +352,7 @@ describe('Messaging Visibility - Removed Guests', () => {
       expect(error).toBeNull();
       expect(messages).toBeDefined();
       expect(messages!.length).toBeGreaterThan(0);
-      expect(messages!.some(msg => msg.id === testMessageId)).toBe(true);
+      expect(messages!.some((msg) => msg.id === testMessageId)).toBe(true);
     });
   });
 
@@ -351,17 +367,19 @@ describe('Messaging Visibility - Removed Guests', () => {
       // Create guest client
       const guestClient = createClient<Database>(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       );
 
-      const { data: { session } } = await supabase.auth.admin.generateLink({
+      const {
+        data: { session },
+      } = await supabase.auth.admin.generateLink({
         type: 'magiclink',
-        email: 'msg-guest@example.com'
+        email: 'msg-guest@example.com',
       });
 
       await guestClient.auth.setSession({
         access_token: session?.properties?.access_token || '',
-        refresh_token: session?.properties?.refresh_token || ''
+        refresh_token: session?.properties?.refresh_token || '',
       });
 
       // Removed guest should not be able to create messages
@@ -370,7 +388,7 @@ describe('Messaging Visibility - Removed Guests', () => {
         .insert({
           event_id: testEventId,
           sender_user_id: guestUserId,
-          content: 'This should be blocked'
+          content: 'This should be blocked',
         })
         .select('id')
         .single();

@@ -11,14 +11,14 @@ export async function POST(request: NextRequest) {
     if (!messages || !Array.isArray(messages)) {
       return NextResponse.json(
         { error: 'Invalid request: messages array is required' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (messages.length === 0) {
       return NextResponse.json(
         { error: 'No messages to send' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -29,22 +29,23 @@ export async function POST(request: NextRequest) {
     logger.api(`Bulk SMS API completed:`, {
       sent: result.sent,
       failed: result.failed,
-      total: messages.length
+      total: messages.length,
     });
 
     return NextResponse.json({
       success: true,
-      data: result
+      data: result,
     });
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to send SMS messages';
+    const errorMessage =
+      error instanceof Error ? error.message : 'Failed to send SMS messages';
     logger.apiError('Bulk SMS API error', error);
     return NextResponse.json(
-      { 
-        success: false, 
-        error: errorMessage
+      {
+        success: false,
+        error: errorMessage,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -5,19 +5,24 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import { normalizePhoneNumber } from '@/lib/utils/phone';
 import { autoJoinEventByPhone } from '@/lib/services/guestAutoJoin';
-import { 
-  PageWrapper, 
-  CardContainer, 
-  PageTitle, 
-  SubTitle, 
-  PrimaryButton, 
+import {
+  PageWrapper,
+  CardContainer,
+  PageTitle,
+  SubTitle,
+  PrimaryButton,
   SecondaryButton,
   LoadingSpinner,
-  MicroCopy
+  MicroCopy,
 } from '@/components/ui';
 import { UnveilHeader } from '@/components/shared';
 
-type JoinState = 'loading' | 'join_gate' | 'authenticating' | 'joining' | 'error';
+type JoinState =
+  | 'loading'
+  | 'join_gate'
+  | 'authenticating'
+  | 'joining'
+  | 'error';
 
 interface EventInfo {
   id: string;
@@ -31,147 +36,170 @@ export default function GuestEventJoinPage() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   const eventId = params.eventId as string;
   const phoneParam = searchParams.get('phone');
-  
+
   const [joinState, setJoinState] = useState<JoinState>('loading');
   const [eventInfo, setEventInfo] = useState<EventInfo | null>(null);
   const [error, setError] = useState<string>('');
-  const [, setCurrentUser] = useState<{ id: string; phone?: string } | null>(null);
+  const [, setCurrentUser] = useState<{ id: string; phone?: string } | null>(
+    null,
+  );
 
-  const checkExistingAccess = useCallback(async (userId: string) => {
-    try {
-      // Check if user already has access to this event
-      const { data: existingGuest, error } = await supabase
-        .from('event_guests')
-        .select('id, user_id')
-        .eq('event_id', eventId)
-        .eq('user_id', userId)
-        .single();
+  const checkExistingAccess = useCallback(
+    async (userId: string) => {
+      try {
+        // Check if user already has access to this event
+        const { data: existingGuest, error } = await supabase
+          .from('event_guests')
+          .select('id, user_id')
+          .eq('event_id', eventId)
+          .eq('user_id', userId)
+          .single();
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error checking existing access:', error);
-        return;
-      }
+        if (error && error.code !== 'PGRST116') {
+          console.error('Error checking existing access:', error);
+          return;
+        }
 
-      if (existingGuest) {
-        // User already has access, redirect to event
-        router.replace(`/guest/events/${eventId}/home`);
-      } else {
-        // No access found, show error
-        setError('We couldn&apos;t find your invitation to this event. Please check with the host.');
+        if (existingGuest) {
+          // User already has access, redirect to event
+          router.replace(`/guest/events/${eventId}/home`);
+        } else {
+          // No access found, show error
+          setError(
+            'We couldn&apos;t find your invitation to this event. Please check with the host.',
+          );
+          setJoinState('error');
+        }
+      } catch (err) {
+        console.error('Error checking existing access:', err);
+        setError('Something went wrong. Please try again.');
         setJoinState('error');
       }
-    } catch (err) {
-      console.error('Error checking existing access:', err);
-      setError('Something went wrong. Please try again.');
-      setJoinState('error');
-    }
-  }, [eventId, router]);
+    },
+    [eventId, router],
+  );
 
-  const handleAutoJoin = useCallback(async (userId: string, userPhone?: string | null) => {
-    try {
-      const phoneToUse = userPhone || phoneParam;
-      
-      if (!phoneToUse) {
-        // User is authenticated but no phone available, check if already joined
-        await checkExistingAccess(userId);
-        return;
-      }
+  const handleAutoJoin = useCallback(
+    async (userId: string, userPhone?: string | null) => {
+      try {
+        const phoneToUse = userPhone || phoneParam;
 
-      // Normalize the phone number
-      const validation = normalizePhoneNumber(phoneToUse);
-      if (!validation.isValid) {
-        setError(validation.error || 'Invalid phone number format');
-        setJoinState('error');
-        return;
-      }
+        if (!phoneToUse) {
+          // User is authenticated but no phone available, check if already joined
+          await checkExistingAccess(userId);
+          return;
+        }
 
-      const normalizedPhone = validation.normalized!;
-      
-      // Attempt to auto-join using the enhanced service
-      const result = await autoJoinEventByPhone(eventId, userId, normalizedPhone);
-      
-      if (result.success) {
-              // Log success telemetry (no PII)
-      console.log('Auto-join success:', {
-        eventId,
-        userId,
-        hasPhone: !!(userPhone || phoneParam)
-      });
-        // Successfully joined, redirect to event home
-        router.replace(`/guest/events/${eventId}/home`);
-      } else if (result.error === 'not_invited') {
-        setError('We couldn&apos;t find your invitation to this event. Please check with the host or try a different phone number.');
-        setJoinState('error');
-      } else if (result.error === 'already_joined') {
-        // Already joined, just redirect
-        router.replace(`/guest/events/${eventId}/home`);
-      } else if (result.error === 'already_claimed') {
-        setError('This invitation has already been claimed by another account. Please contact the host if you believe this is an error.');
-        setJoinState('error');
-      } else {
-        setError(result.error || 'Unable to join event. Please try again.');
+        // Normalize the phone number
+        const validation = normalizePhoneNumber(phoneToUse);
+        if (!validation.isValid) {
+          setError(validation.error || 'Invalid phone number format');
+          setJoinState('error');
+          return;
+        }
+
+        const normalizedPhone = validation.normalized!;
+
+        // Attempt to auto-join using the enhanced service
+        const result = await autoJoinEventByPhone(
+          eventId,
+          userId,
+          normalizedPhone,
+        );
+
+        if (result.success) {
+          // Log success telemetry (no PII)
+          console.log('Auto-join success:', {
+            eventId,
+            userId,
+            hasPhone: !!(userPhone || phoneParam),
+          });
+          // Successfully joined, redirect to event home
+          router.replace(`/guest/events/${eventId}/home`);
+        } else if (result.error === 'not_invited') {
+          setError(
+            'We couldn&apos;t find your invitation to this event. Please check with the host or try a different phone number.',
+          );
+          setJoinState('error');
+        } else if (result.error === 'already_joined') {
+          // Already joined, just redirect
+          router.replace(`/guest/events/${eventId}/home`);
+        } else if (result.error === 'already_claimed') {
+          setError(
+            'This invitation has already been claimed by another account. Please contact the host if you believe this is an error.',
+          );
+          setJoinState('error');
+        } else {
+          setError(result.error || 'Unable to join event. Please try again.');
+          setJoinState('error');
+        }
+      } catch (err) {
+        console.error('Auto-join error:', err);
+        // Log telemetry for debugging (no PII)
+        console.log('Auto-join telemetry:', {
+          eventId,
+          userId,
+          hasPhone: !!(userPhone || phoneParam),
+          error: err instanceof Error ? err.message : 'Unknown error',
+        });
+        setError(
+          'Something went wrong while joining the event. Please try again.',
+        );
         setJoinState('error');
       }
-    } catch (err) {
-      console.error('Auto-join error:', err);
-      // Log telemetry for debugging (no PII)
-      console.log('Auto-join telemetry:', {
-        eventId,
-        userId,
-        hasPhone: !!(userPhone || phoneParam),
-        error: err instanceof Error ? err.message : 'Unknown error'
-      });
-      setError('Something went wrong while joining the event. Please try again.');
-      setJoinState('error');
-    }
-  }, [eventId, phoneParam, router, checkExistingAccess]);
+    },
+    [eventId, phoneParam, router, checkExistingAccess],
+  );
 
   // checkExistingAccess now defined above handleAutoJoin
 
   // Check authentication and event access on mount
   const checkAuthAndEvent = useCallback(async () => {
-      try {
-        // Get current session
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) {
-          console.error('Session error:', sessionError);
-        }
+    try {
+      // Get current session
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
 
-        setCurrentUser(session?.user || null);
-
-        // Fetch event info (basic details for join gate)
-        const { data: event, error: eventError } = await supabase
-          .from('events')
-          .select('id, title, event_date, location, time_zone')
-          .eq('id', eventId)
-          .single();
-
-        if (eventError || !event) {
-          setError('Event not found');
-          setJoinState('error');
-          return;
-        }
-
-        setEventInfo(event);
-
-        // If user is authenticated, attempt auto-join
-        if (session?.user) {
-          setJoinState('joining');
-          await handleAutoJoin(session.user.id, session.user.phone || phoneParam);
-        } else {
-          // Show join gate for unauthenticated users
-          setJoinState('join_gate');
-        }
-      } catch (err) {
-        console.error('Error during auth/event check:', err);
-        setError('Something went wrong. Please try again.');
-        setJoinState('error');
+      if (sessionError) {
+        console.error('Session error:', sessionError);
       }
-    }, [eventId, phoneParam, handleAutoJoin]);
+
+      setCurrentUser(session?.user || null);
+
+      // Fetch event info (basic details for join gate)
+      const { data: event, error: eventError } = await supabase
+        .from('events')
+        .select('id, title, event_date, location, time_zone')
+        .eq('id', eventId)
+        .single();
+
+      if (eventError || !event) {
+        setError('Event not found');
+        setJoinState('error');
+        return;
+      }
+
+      setEventInfo(event);
+
+      // If user is authenticated, attempt auto-join
+      if (session?.user) {
+        setJoinState('joining');
+        await handleAutoJoin(session.user.id, session.user.phone || phoneParam);
+      } else {
+        // Show join gate for unauthenticated users
+        setJoinState('join_gate');
+      }
+    } catch (err) {
+      console.error('Error during auth/event check:', err);
+      setError('Something went wrong. Please try again.');
+      setJoinState('error');
+    }
+  }, [eventId, phoneParam, handleAutoJoin]);
 
   useEffect(() => {
     if (eventId) {
@@ -181,10 +209,10 @@ export default function GuestEventJoinPage() {
 
   const handleJoinClick = () => {
     setJoinState('authenticating');
-    
+
     // Preserve the current URL including phone parameter for post-auth redirect
     const returnUrl = `/guest/events/${eventId}${phoneParam ? `?phone=${encodeURIComponent(phoneParam)}` : ''}`;
-    
+
     // Navigate to login with return URL
     router.push(`/login?next=${encodeURIComponent(returnUrl)}`);
   };
@@ -201,7 +229,7 @@ export default function GuestEventJoinPage() {
         weekday: 'long',
         month: 'long',
         day: 'numeric',
-        year: 'numeric'
+        year: 'numeric',
       });
     } catch {
       return dateStr;
@@ -227,23 +255,20 @@ export default function GuestEventJoinPage() {
           <CardContainer className="text-center">
             <div className="text-4xl mb-4">😔</div>
             <PageTitle className="mb-4">
-              {error.includes('Event not found') ? 'Event Not Found' : 'Unable to Join Event'}
+              {error.includes('Event not found')
+                ? 'Event Not Found'
+                : 'Unable to Join Event'}
             </PageTitle>
-            <SubTitle className="mb-6">
-              {error}
-            </SubTitle>
-            
+            <SubTitle className="mb-6">{error}</SubTitle>
+
             <div className="space-y-3">
               {!error.includes('Event not found') && (
-                <SecondaryButton 
-                  onClick={handleContactHost}
-                  className="w-full"
-                >
+                <SecondaryButton onClick={handleContactHost} className="w-full">
                   Contact Host
                 </SecondaryButton>
               )}
-              
-              <SecondaryButton 
+
+              <SecondaryButton
                 onClick={() => router.push('/select-event')}
                 className="w-full"
               >
@@ -276,28 +301,32 @@ export default function GuestEventJoinPage() {
             <div className="mb-6">
               <UnveilHeader size="sm" className="mb-4" />
               <div className="text-4xl mb-4">🎉</div>
-              <PageTitle className="mb-2">
-                You&apos;re Invited!
-              </PageTitle>
-              <SubTitle className="mb-6">
-                Join {eventInfo.title}
-              </SubTitle>
+              <PageTitle className="mb-2">You&apos;re Invited!</PageTitle>
+              <SubTitle className="mb-6">Join {eventInfo.title}</SubTitle>
             </div>
 
             {/* Event details */}
             <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left">
               <div className="space-y-2">
                 <div>
-                  <span className="text-sm font-medium text-gray-600">Event:</span>
+                  <span className="text-sm font-medium text-gray-600">
+                    Event:
+                  </span>
                   <p className="text-gray-900">{eventInfo.title}</p>
                 </div>
                 <div>
-                  <span className="text-sm font-medium text-gray-600">Date:</span>
-                  <p className="text-gray-900">{formatEventDate(eventInfo.event_date)}</p>
+                  <span className="text-sm font-medium text-gray-600">
+                    Date:
+                  </span>
+                  <p className="text-gray-900">
+                    {formatEventDate(eventInfo.event_date)}
+                  </p>
                 </div>
                 {eventInfo.location && (
                   <div>
-                    <span className="text-sm font-medium text-gray-600">Location:</span>
+                    <span className="text-sm font-medium text-gray-600">
+                      Location:
+                    </span>
                     <p className="text-gray-900">{eventInfo.location}</p>
                   </div>
                 )}
@@ -305,13 +334,10 @@ export default function GuestEventJoinPage() {
             </div>
 
             <div className="space-y-4">
-              <PrimaryButton 
-                onClick={handleJoinClick}
-                className="w-full"
-              >
+              <PrimaryButton onClick={handleJoinClick} className="w-full">
                 Continue to Join Event
               </PrimaryButton>
-              
+
               <MicroCopy className="text-center">
                 We&apos;ll verify your phone number to confirm your invitation.
               </MicroCopy>

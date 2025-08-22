@@ -16,8 +16,7 @@ export type EventGuest = Tables<'event_guests'>;
 export type Message = Tables<'messages'>;
 export type Media = Tables<'media'>;
 export type User = Tables<'users'>;
-export type PublicUserProfile =
-  Database['public']['Tables']['users']['Row'];
+export type PublicUserProfile = Database['public']['Tables']['users']['Row'];
 
 // Insert types
 export type EventInsert = TablesInsert<'events'>;
@@ -49,14 +48,14 @@ export interface EventGuestWithUser extends EventGuest {
 
 // Enhanced guest type with computed display name
 export interface EventGuestWithDisplayName extends EventGuestWithUser {
-  /** 
+  /**
    * Stored display name in event_guests table (automatically synced)
    * This field is stored in the database and kept in sync with users.full_name
    */
   display_name: string;
-  /** 
+  /**
    * Computed display name that prefers stored display_name, then users.full_name, then guest_name
-   * This field is derived from COALESCE(display_name, users.full_name, guest_name) 
+   * This field is derived from COALESCE(display_name, users.full_name, guest_name)
    * Use this for UI display
    * @readonly
    */
@@ -74,7 +73,10 @@ export interface MessageWithSender extends Message {
 // Message with delivery info - consolidated from messaging services
 export interface MessageWithDelivery extends Message {
   delivery?: Tables<'message_deliveries'>;
-  scheduled_message?: Pick<Tables<'scheduled_messages'>, 'id' | 'send_at' | 'status'>;
+  scheduled_message?: Pick<
+    Tables<'scheduled_messages'>,
+    'id' | 'send_at' | 'status'
+  >;
 }
 
 export interface MediaWithUploader extends Media {
@@ -93,7 +95,7 @@ export type ServiceResponseArray<T> = {
 };
 
 // Unified service result type following the union pattern from refactor plan
-export type ServiceResult<T> = 
+export type ServiceResult<T> =
   | { data: T; error: null }
   | { data: null; error: Error };
 
@@ -130,11 +132,15 @@ export type MessageWithSenderProfile = MessageWithSender & {
 
 // Common error types for service responses
 export class ServiceError extends Error {
-  constructor(message: string, public code?: string, public details?: unknown) {
+  constructor(
+    message: string,
+    public code?: string,
+    public details?: unknown,
+  ) {
     super(message);
     this.name = 'ServiceError';
   }
 }
 
-// Event guest types have replaced participant types. 
+// Event guest types have replaced participant types.
 // All references should now use EventGuest* types from the unified guest system.

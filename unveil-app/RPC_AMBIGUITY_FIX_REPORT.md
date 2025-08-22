@@ -7,9 +7,11 @@
 ## Functions Found/Removed
 
 ### Before Fix
+
 **Found 2 conflicting overloads:**
 
 1. **TIMESTAMPTZ Overload (Keep)**:
+
    - **Signature**: `p_limit integer DEFAULT 100, p_current_time timestamptz DEFAULT now()`
    - **Return Type**: `SETOF scheduled_messages`
    - **Implementation**: Simple SQL query with proper locking
@@ -20,7 +22,9 @@
    - **Implementation**: Complex PL/pgSQL with text parsing
 
 ### After Fix
+
 **Single canonical function:**
+
 ```sql
 CREATE OR REPLACE FUNCTION public.get_scheduled_messages_for_processing(
   p_limit integer DEFAULT 100,
@@ -32,7 +36,7 @@ RETURNS SETOF scheduled_messages
 ## Final Signature Details
 
 - **Function Name**: `get_scheduled_messages_for_processing`
-- **Parameters**: 
+- **Parameters**:
   - `p_limit integer DEFAULT 100`
   - `p_current_time timestamptz DEFAULT now()`
 - **Return Type**: `SETOF scheduled_messages`
@@ -41,6 +45,7 @@ RETURNS SETOF scheduled_messages
 - **Permissions**: Granted to `authenticated` and `service_role`
 
 ## Function Body (Preserved)
+
 ```sql
 SELECT * FROM scheduled_messages
 WHERE status = 'scheduled'
@@ -57,21 +62,27 @@ FOR UPDATE SKIP LOCKED;
 **RPC Calls Found**: 2 locations
 
 1. **Main Processing** (Line 53):
+
 ```typescript
-const { data: readyMessages, error: fetchError } = await supabase
-  .rpc('get_scheduled_messages_for_processing', {
+const { data: readyMessages, error: fetchError } = await supabase.rpc(
+  'get_scheduled_messages_for_processing',
+  {
     p_limit: 100,
-    p_current_time: new Date().toISOString()
-  });
+    p_current_time: new Date().toISOString(),
+  },
+);
 ```
 
 2. **Development Diagnostics** (Line 501):
+
 ```typescript
-const { data: pendingMessages, error: pendingError } = await supabase
-  .rpc('get_scheduled_messages_for_processing', {
+const { data: pendingMessages, error: pendingError } = await supabase.rpc(
+  'get_scheduled_messages_for_processing',
+  {
     p_limit: 10,
-    p_current_time: new Date().toISOString()
-  });
+    p_current_time: new Date().toISOString(),
+  },
+);
 ```
 
 **✅ Verification Result**: Both calls use correct named parameters that match the canonical signature.
@@ -81,6 +92,7 @@ const { data: pendingMessages, error: pendingError } = await supabase
 **Direct SQL Test**: `SELECT * FROM get_scheduled_messages_for_processing(100, now());`
 
 **Result**: ✅ SUCCESS
+
 - **Messages Found**: 1 overdue message
 - **Message ID**: `1f61fb73-663b-4584-a963-a8f0aaea075e`
 - **Send Time**: `2025-08-21 16:38:00+00` (UTC)
@@ -93,6 +105,7 @@ const { data: pendingMessages, error: pendingError } = await supabase
 **Note**: Unable to test deployed endpoint directly without deployment URL.
 
 **Manual Test Instructions**:
+
 ```bash
 # Replace YOUR_DEPLOYMENT_URL with actual Vercel deployment URL
 # Replace YOUR_CRON_SECRET with actual CRON_SECRET value
@@ -103,6 +116,7 @@ curl -X POST "https://YOUR_DEPLOYMENT_URL/api/messages/process-scheduled?dryRun=
 ```
 
 **Expected Response** (based on RPC test):
+
 ```json
 {
   "success": true,
@@ -144,6 +158,7 @@ curl -X POST "https://YOUR_DEPLOYMENT_URL/api/messages/process-scheduled?dryRun=
 ## Files Modified
 
 1. **Migration Applied**: `fix_scheduled_messages_rpc_ambiguity`
+
    - Dropped conflicting TEXT overload
    - Ensured canonical TIMESTAMPTZ function
    - Granted proper permissions

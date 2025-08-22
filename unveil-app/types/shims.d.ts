@@ -8,7 +8,7 @@ declare module '@solana/wallet-standard-features' {
   export interface SolanaSignInInput {
     [key: string]: unknown;
   }
-  
+
   export interface SolanaSignInOutput {
     [key: string]: unknown;
   }

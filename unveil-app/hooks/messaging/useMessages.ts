@@ -1,6 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase/client';
-import { type MessageWithSender, type PublicUserProfile } from '@/lib/supabase/types';
+import {
+  type MessageWithSender,
+  type PublicUserProfile,
+} from '@/lib/supabase/types';
 // Note: sendMessage functionality moved to domain hook
 import { useEventSubscription } from '@/hooks/realtime';
 import { logError, type AppError } from '@/lib/error-handling';
@@ -133,10 +136,10 @@ export function useMessages(eventId: string | null): UseMessagesReturn {
           sendVia: {
             sms: true,
             email: false,
-            push: false
-          }
+            push: false,
+          },
         };
-        
+
         await sendMessageToEvent(requestData);
         return { success: true, error: null };
       }, 'useMessages.sendMessage');

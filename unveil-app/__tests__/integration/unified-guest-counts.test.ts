@@ -48,8 +48,12 @@ describe('Unified Guest Counts', () => {
 
     // Verify the counts make sense
     const result = data[0];
-    expect(result.attending + result.declined).toBeLessThanOrEqual(result.total_invited);
-    expect(result.total_invited + result.not_invited).toEqual(result.total_guests);
+    expect(result.attending + result.declined).toBeLessThanOrEqual(
+      result.total_invited,
+    );
+    expect(result.total_invited + result.not_invited).toEqual(
+      result.total_guests,
+    );
   });
 
   it('should exclude soft-deleted guests from all counts', async () => {
@@ -72,22 +76,26 @@ describe('Unified Guest Counts', () => {
     });
 
     const result = data[0];
-    
+
     // Verify soft-deleted guests are excluded from all counts
     expect(result.total_guests).toBe(3); // Should be less than actual DB count if soft-deleted exist
-    expect(result.attending + result.declined + result.not_invited).toEqual(result.total_guests);
+    expect(result.attending + result.declined + result.not_invited).toEqual(
+      result.total_guests,
+    );
   });
 
   it('should handle edge cases correctly', async () => {
     // Test with no guests
     vi.spyOn(supabase, 'rpc').mockResolvedValue({
-      data: [{
-        total_guests: 0,
-        total_invited: 0,
-        attending: 0,
-        declined: 0,
-        not_invited: 0,
-      }],
+      data: [
+        {
+          total_guests: 0,
+          total_invited: 0,
+          attending: 0,
+          declined: 0,
+          not_invited: 0,
+        },
+      ],
       error: null,
     });
 

@@ -7,6 +7,7 @@ The Unveil messaging system enables wedding hosts to communicate with their gues
 ## Architecture
 
 ### Core Components
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                     Messaging System                        │
@@ -20,12 +21,14 @@ The Unveil messaging system enables wedding hosts to communicate with their gues
 ```
 
 ### Database Schema
+
 - **`scheduled_messages`**: Message content, scheduling, and metadata
 - **`message_deliveries`**: Per-guest delivery tracking and status
 - **`message_tags`**: Guest segmentation and targeting
 - **`messages`**: Real-time chat-style messages (guest responses)
 
 ### Message Flow
+
 1. **Composition**: Host creates message via `/host/events/[eventId]/messages/compose`
 2. **Scheduling**: Messages queued in `scheduled_messages` table
 3. **Processing**: CRON job (`/api/cron/process-messages`) runs daily at 9 AM
@@ -36,22 +39,26 @@ The Unveil messaging system enables wedding hosts to communicate with their gues
 ## Features
 
 ### 🎯 Message Types
+
 - **Announcements**: Broadcast to all guests
 - **Direct Messages**: Targeted to specific guests
 - **Channel Messages**: Group communications
 
 ### 📅 Scheduling
+
 - **Send Now**: Immediate delivery
 - **Send Later**: Schedule for specific date/time
 - **Recurring**: Future feature for regular updates
 
 ### 📊 Analytics & Insights
+
 - **Delivery Metrics**: Success rates, failure tracking
 - **Engagement Analytics**: Read rates, response rates
 - **Performance Charts**: Delivery trends over time
 - **Export Capabilities**: CSV/Excel export for external analysis
 
 ### 🎨 Guest Targeting
+
 - **Tag-based Segmentation**: Target guests by custom tags
 - **RSVP Status Filtering**: Send to attending/not attending guests
 - **Communication Preferences**: Respect guest channel preferences
@@ -61,11 +68,13 @@ The Unveil messaging system enables wedding hosts to communicate with their gues
 ### Composing Messages
 
 1. **Navigate to Messaging**
+
    ```
    /host/events/[eventId]/messages/compose
    ```
 
 2. **Message Configuration**
+
    - **Content**: Rich text message content
    - **Type**: Announcement, direct, or channel
    - **Delivery Method**: SMS, email, push, or multi-channel
@@ -79,6 +88,7 @@ The Unveil messaging system enables wedding hosts to communicate with their gues
 ### Managing Scheduled Messages
 
 1. **View Scheduled Messages**
+
    ```
    /host/events/[eventId]/messages/scheduled
    ```
@@ -91,6 +101,7 @@ The Unveil messaging system enables wedding hosts to communicate with their gues
 ### Analytics Dashboard
 
 1. **Message Analytics**
+
    ```
    /host/events/[eventId]/messages/analytics
    ```
@@ -104,16 +115,19 @@ The Unveil messaging system enables wedding hosts to communicate with their gues
 ## Guest Experience
 
 ### Receiving Messages
+
 - **SMS**: Direct delivery to guest's phone number
 - **Email**: Formatted email with Unveil branding
 - **Push Notifications**: In-app notifications for mobile users
 
 ### Responding to Messages
+
 1. **View Messages**: `/guest/events/[eventId]/home`
 2. **Read Messages**: Automatic read tracking
 3. **Respond**: Real-time chat interface for quick replies
 
 ### Privacy & Preferences
+
 - Guests can update communication preferences
 - Unsubscribe options available
 - Data privacy controls
@@ -123,28 +137,30 @@ The Unveil messaging system enables wedding hosts to communicate with their gues
 ### API Endpoints
 
 #### Host Routes
+
 ```typescript
 // Message composition and management
-POST /api/messages/compose
-GET /api/messages/scheduled
-PUT /api/messages/scheduled/[id]
-DELETE /api/messages/scheduled/[id]
+POST / api / messages / compose;
+GET / api / messages / scheduled;
+PUT / api / messages / scheduled / [id];
+DELETE / api / messages / scheduled / [id];
 
 // Analytics and insights
-GET /api/messages/analytics/[eventId]
-GET /api/messages/metrics/[eventId]
+GET / api / messages / analytics / [eventId];
+GET / api / messages / metrics / [eventId];
 ```
 
 #### Processing Routes
+
 ```typescript
 // CRON job endpoint (secured)
-POST /api/cron/process-messages
-POST /api/messages/process-scheduled
+POST / api / cron / process - messages;
+POST / api / messages / process - scheduled;
 
 // Delivery tracking
-POST /api/messages/delivery/status
-POST /api/messages/delivery/read
-POST /api/messages/delivery/response
+POST / api / messages / delivery / status;
+POST / api / messages / delivery / read;
+POST / api / messages / delivery / response;
 ```
 
 ### Real-time Features
@@ -155,12 +171,16 @@ The messaging system uses Supabase Realtime for instant updates:
 // Subscribe to new messages
 const subscription = supabase
   .channel(`event-${eventId}-messages`)
-  .on('postgres_changes', {
-    event: 'INSERT',
-    schema: 'public',
-    table: 'messages',
-    filter: `event_id=eq.${eventId}`
-  }, handleNewMessage)
+  .on(
+    'postgres_changes',
+    {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'messages',
+      filter: `event_id=eq.${eventId}`,
+    },
+    handleNewMessage,
+  )
   .subscribe();
 ```
 
@@ -177,16 +197,19 @@ Daily CRON job processes scheduled messages:
 ## Security & Privacy
 
 ### Data Protection
+
 - **Row-Level Security (RLS)**: Enforced on all messaging tables
 - **Event Scoping**: Users can only access their event's messages
 - **Role-based Access**: Hosts can manage, guests can only view their messages
 
 ### Authentication
+
 - **Host Verification**: `is_event_host()` function validates host permissions
 - **Guest Verification**: `is_event_guest()` function validates guest access
 - **CRON Security**: Endpoints protected with secret authentication
 
 ### Rate Limiting
+
 - **API Protection**: Middleware enforces rate limits on messaging endpoints
 - **SMS Limits**: Twilio integration respects provider limits
 - **Abuse Prevention**: Built-in protections against message spam
@@ -196,18 +219,21 @@ Daily CRON job processes scheduled messages:
 ### Common Issues
 
 **Messages Not Sending**
+
 1. Check CRON job status in Vercel dashboard
 2. Verify Twilio credentials are correct
 3. Ensure guests have valid phone numbers/emails
 4. Check scheduled_messages status field
 
 **Poor Delivery Rates**
+
 1. Validate phone number formats
 2. Check email addresses for typos
 3. Review Twilio account status and balance
 4. Monitor delivery failure reasons
 
 **Analytics Not Updating**
+
 1. Verify message_deliveries records are created
 2. Check read tracking implementation
 3. Ensure proper event scoping in queries
@@ -215,11 +241,13 @@ Daily CRON job processes scheduled messages:
 ### Debug Tools
 
 **Development Mode**
+
 - Detailed logging in console
 - React Query DevTools for API inspection
 - Supabase logs for database operations
 
 **Production Monitoring**
+
 - Sentry error tracking
 - Vercel function logs
 - Twilio delivery webhooks
@@ -227,16 +255,19 @@ Daily CRON job processes scheduled messages:
 ## Performance Optimization
 
 ### Database Optimization
+
 - **Indexes**: Optimized queries on `event_id`, `send_at`, `status`
 - **Pagination**: Large message lists paginated for performance
 - **Selective Loading**: Only load necessary fields for large datasets
 
 ### Caching Strategy
+
 - **React Query**: Intelligent caching of message data
 - **Real-time Updates**: Efficient subscription management
 - **Static Assets**: CDN delivery for optimal performance
 
 ### Delivery Optimization
+
 - **Batch Processing**: Messages processed in efficient batches
 - **Channel Prioritization**: SMS > Push > Email for reliability
 - **Retry Logic**: Exponential backoff for failed deliveries
@@ -244,6 +275,7 @@ Daily CRON job processes scheduled messages:
 ## Future Enhancements
 
 ### Planned Features
+
 - **Message Templates**: Pre-built message templates for common scenarios
 - **Rich Media**: Image and video attachments in messages
 - **Message Automation**: Trigger-based messaging (RSVP changes, etc.)
@@ -251,6 +283,7 @@ Daily CRON job processes scheduled messages:
 - **Multi-language Support**: Internationalization for global weddings
 
 ### Technical Improvements
+
 - **Redis Caching**: Enhanced performance for high-volume events
 - **Webhook Integrations**: Third-party service integration
 - **Advanced Scheduling**: Recurring messages, time zone support
@@ -259,6 +292,7 @@ Daily CRON job processes scheduled messages:
 ## API Reference
 
 ### Message Object
+
 ```typescript
 interface ScheduledMessage {
   id: string;
@@ -276,6 +310,7 @@ interface ScheduledMessage {
 ```
 
 ### Delivery Tracking
+
 ```typescript
 interface MessageDelivery {
   id: string;
@@ -292,6 +327,7 @@ interface MessageDelivery {
 ```
 
 ### Analytics Response
+
 ```typescript
 interface MessageAnalytics {
   deliveryStats: {
@@ -310,14 +346,17 @@ interface MessageAnalytics {
 ## Support & Resources
 
 ### Documentation
+
 - [SMS Setup Guide](./docs-SMS_SETUP_GUIDE.md)
 - [Production Environment Setup](./docs-production-environment-setup.md)
 - [Database Schema Reference](../app/reference/schema.sql)
 
 ### Development
+
 - [Developer Guide](./docs-developer-guide.md)
 - [Testing Infrastructure](./docs-testing-infrastructure.md)
 - [Component Library](./docs-component-library-implementation.md)
 
 ### Contact
-For technical support or feature requests, please refer to the project documentation or contact the development team. 
+
+For technical support or feature requests, please refer to the project documentation or contact the development team.

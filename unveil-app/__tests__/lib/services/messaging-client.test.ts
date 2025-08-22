@@ -9,24 +9,20 @@ vi.mock('@/lib/supabase/client', () => ({
       select: vi.fn(() => ({
         eq: vi.fn(() => ({
           not: vi.fn(() => ({
-            data: [
-              { id: 'guest-1' },
-              { id: 'guest-2' },
-              { id: 'guest-3' }
-            ],
-            error: null
-          }))
-        }))
-      }))
+            data: [{ id: 'guest-1' }, { id: 'guest-2' }, { id: 'guest-3' }],
+            error: null,
+          })),
+        })),
+      })),
     })),
     rpc: vi.fn(() => ({
       data: [
         { guest_id: 'guest-1', phone: '+1234567890', guest_name: 'Guest 1' },
-        { guest_id: 'guest-2', phone: '+1234567891', guest_name: 'Guest 2' }
+        { guest_id: 'guest-2', phone: '+1234567891', guest_name: 'Guest 2' },
       ],
-      error: null
-    }))
-  }
+      error: null,
+    })),
+  },
 }));
 
 describe('resolveMessageRecipients', () => {
@@ -40,7 +36,7 @@ describe('resolveMessageRecipients', () => {
     it('should return correct count for explicit guest selection', async () => {
       const filter: RecipientFilter = {
         type: 'explicit_selection',
-        selectedGuestIds: ['guest-1', 'guest-2', 'guest-3']
+        selectedGuestIds: ['guest-1', 'guest-2', 'guest-3'],
       };
 
       const result = await resolveMessageRecipients(eventId, filter);
@@ -52,7 +48,7 @@ describe('resolveMessageRecipients', () => {
     it('should handle single guest selection', async () => {
       const filter: RecipientFilter = {
         type: 'explicit_selection',
-        selectedGuestIds: ['guest-1']
+        selectedGuestIds: ['guest-1'],
       };
 
       const result = await resolveMessageRecipients(eventId, filter);
@@ -64,23 +60,23 @@ describe('resolveMessageRecipients', () => {
     it('should throw error when no guests selected', async () => {
       const filter: RecipientFilter = {
         type: 'explicit_selection',
-        selectedGuestIds: []
+        selectedGuestIds: [],
       };
 
-      await expect(resolveMessageRecipients(eventId, filter))
-        .rejects
-        .toThrow('No recipients selected. Please select at least one guest to send the message to.');
+      await expect(resolveMessageRecipients(eventId, filter)).rejects.toThrow(
+        'No recipients selected. Please select at least one guest to send the message to.',
+      );
     });
 
     it('should throw error when selectedGuestIds is undefined', async () => {
       const filter: RecipientFilter = {
         type: 'explicit_selection',
-        selectedGuestIds: undefined
+        selectedGuestIds: undefined,
       };
 
       // Should fall through to RPC call since selectedGuestIds is undefined
       const result = await resolveMessageRecipients(eventId, filter);
-      
+
       // Should return RPC result
       expect(result.guestIds).toEqual(['guest-1', 'guest-2']);
       expect(result.recipientCount).toBe(2);
@@ -91,7 +87,7 @@ describe('resolveMessageRecipients', () => {
     it('should return correct count for individual guest selection', async () => {
       const filter: RecipientFilter = {
         type: 'individual',
-        guestIds: ['guest-1', 'guest-2']
+        guestIds: ['guest-1', 'guest-2'],
       };
 
       const result = await resolveMessageRecipients(eventId, filter);
@@ -104,7 +100,7 @@ describe('resolveMessageRecipients', () => {
   describe('all filter type', () => {
     it('should return all guests with phone numbers', async () => {
       const filter: RecipientFilter = {
-        type: 'all'
+        type: 'all',
       };
 
       const result = await resolveMessageRecipients(eventId, filter);
@@ -118,7 +114,7 @@ describe('resolveMessageRecipients', () => {
     it('should use RPC for tag-based filtering', async () => {
       const filter: RecipientFilter = {
         type: 'tags',
-        tags: ['vip', 'family']
+        tags: ['vip', 'family'],
       };
 
       const result = await resolveMessageRecipients(eventId, filter);

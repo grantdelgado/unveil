@@ -19,10 +19,10 @@ export function normalizePhoneNumber(phone: string): PhoneValidationResult {
 
   // Remove all non-digit characters
   const digitsOnly = phone.replace(/\D/g, '');
-  
+
   // Handle different input formats
   let normalized: string;
-  
+
   if (digitsOnly.length === 10) {
     // US number without country code (e.g., "5712364686")
     normalized = `+1${digitsOnly}`;
@@ -39,11 +39,12 @@ export function normalizePhoneNumber(phone: string): PhoneValidationResult {
 
   // Basic E.164 validation: + followed by 1-15 digits, starting with non-zero
   const e164Pattern = /^\+[1-9]\d{1,14}$/;
-  
+
   if (!e164Pattern.test(normalized)) {
-    return { 
-      isValid: false, 
-      error: 'Invalid phone number format. Please use international format (+1234567890)' 
+    return {
+      isValid: false,
+      error:
+        'Invalid phone number format. Please use international format (+1234567890)',
     };
   }
 
@@ -69,7 +70,10 @@ export function formatPhoneForDisplay(phone: string): string {
   }
 
   // Format US numbers as (XXX) XXX-XXXX
-  if (normalized.normalized.startsWith('+1') && normalized.normalized.length === 12) {
+  if (
+    normalized.normalized.startsWith('+1') &&
+    normalized.normalized.length === 12
+  ) {
     const digits = normalized.normalized.slice(2); // Remove +1
     return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
   }

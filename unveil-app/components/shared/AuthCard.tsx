@@ -13,12 +13,13 @@ export const AuthCard: React.FC<AuthCardProps> = ({
   children,
   className,
   variant = 'default',
-  maxWidth = 'md'
+  maxWidth = 'md',
 }) => {
   const variantClasses = {
     default: 'bg-white border-gray-100',
-    landing: 'bg-gradient-to-br from-white via-rose-50/30 to-purple-50/30 border-rose-200/30',
-    auth: 'bg-white border-gray-100'
+    landing:
+      'bg-gradient-to-br from-white via-rose-50/30 to-purple-50/30 border-rose-200/30',
+    auth: 'bg-white border-gray-100',
   };
 
   return (
@@ -33,7 +34,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
         'mx-2 xs:mx-3 sm:mx-4 md:mx-auto',
         // Ensure readability across all breakpoints
         'w-full max-w-[calc(100vw-1rem)] xs:max-w-[calc(100vw-1.5rem)] sm:max-w-sm md:max-w-md lg:max-w-lg',
-        className
+        className,
       )}
     >
       {children}

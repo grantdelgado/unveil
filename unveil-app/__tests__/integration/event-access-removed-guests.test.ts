@@ -13,9 +13,9 @@ const supabase = createClient<Database>(
   {
     auth: {
       autoRefreshToken: false,
-      persistSession: false
-    }
-  }
+      persistSession: false,
+    },
+  },
 );
 
 describe('Event Access Control - Removed Guests', () => {
@@ -26,29 +26,31 @@ describe('Event Access Control - Removed Guests', () => {
 
   beforeAll(async () => {
     // Create test host user
-    const { data: hostUser, error: hostError } = await supabase.auth.admin.createUser({
-      email: 'test-host@example.com',
-      phone: '+1234567890',
-      email_confirm: true,
-      phone_confirm: true
-    });
+    const { data: hostUser, error: hostError } =
+      await supabase.auth.admin.createUser({
+        email: 'test-host@example.com',
+        phone: '+1234567890',
+        email_confirm: true,
+        phone_confirm: true,
+      });
     expect(hostError).toBeNull();
     hostUserId = hostUser.user.id;
 
     // Create test guest user
-    const { data: guestUser, error: guestError } = await supabase.auth.admin.createUser({
-      email: 'test-guest@example.com', 
-      phone: '+1234567891',
-      email_confirm: true,
-      phone_confirm: true
-    });
+    const { data: guestUser, error: guestError } =
+      await supabase.auth.admin.createUser({
+        email: 'test-guest@example.com',
+        phone: '+1234567891',
+        email_confirm: true,
+        phone_confirm: true,
+      });
     expect(guestError).toBeNull();
     testUserId = guestUser.user.id;
 
     // Insert users into users table
     await supabase.from('users').upsert([
       { id: hostUserId, phone: '+1234567890', full_name: 'Test Host' },
-      { id: testUserId, phone: '+1234567891', full_name: 'Test Guest' }
+      { id: testUserId, phone: '+1234567891', full_name: 'Test Guest' },
     ]);
 
     // Create test event
@@ -57,7 +59,7 @@ describe('Event Access Control - Removed Guests', () => {
       .insert({
         title: 'Test Event - Removed Guest Access',
         event_date: '2025-12-31',
-        host_user_id: hostUserId
+        host_user_id: hostUserId,
       })
       .select('id')
       .single();
@@ -71,7 +73,7 @@ describe('Event Access Control - Removed Guests', () => {
         event_id: testEventId,
         user_id: testUserId,
         phone: '+1234567891',
-        guest_name: 'Test Guest'
+        guest_name: 'Test Guest',
       })
       .select('id')
       .single();
@@ -104,32 +106,35 @@ describe('Event Access Control - Removed Guests', () => {
 
   describe('Active Guest Access', () => {
     it('should allow active guest to see event in get_user_events', async () => {
-      const { data, error } = await supabase
-        .rpc('get_user_events', { user_id_param: testUserId });
+      const { data, error } = await supabase.rpc('get_user_events', {
+        user_id_param: testUserId,
+      });
 
       expect(error).toBeNull();
       expect(data).toBeDefined();
       expect(data!.length).toBeGreaterThan(0);
-      expect(data!.some(event => event.id === testEventId)).toBe(true);
+      expect(data!.some((event) => event.id === testEventId)).toBe(true);
     });
 
     it('should allow active guest access via is_event_guest function', async () => {
       // Set RLS context to guest user
       await supabase.auth.admin.generateLink({
         type: 'magiclink',
-        email: 'test-guest@example.com'
+        email: 'test-guest@example.com',
       });
 
-      const { data, error } = await supabase
-        .rpc('is_event_guest', { p_event_id: testEventId });
+      const { data, error } = await supabase.rpc('is_event_guest', {
+        p_event_id: testEventId,
+      });
 
       expect(error).toBeNull();
       expect(data).toBe(true);
     });
 
     it('should allow active guest access via can_access_event function', async () => {
-      const { data, error } = await supabase
-        .rpc('can_access_event', { p_event_id: testEventId });
+      const { data, error } = await supabase.rpc('can_access_event', {
+        p_event_id: testEventId,
+      });
 
       expect(error).toBeNull();
       expect(data).toBe(true);
@@ -146,28 +151,31 @@ describe('Event Access Control - Removed Guests', () => {
     });
 
     it('should NOT show event to removed guest in get_user_events', async () => {
-      const { data, error } = await supabase
-        .rpc('get_user_events', { user_id_param: testUserId });
+      const { data, error } = await supabase.rpc('get_user_events', {
+        user_id_param: testUserId,
+      });
 
       expect(error).toBeNull();
       expect(data).toBeDefined();
-      
+
       // Event should not appear for removed guest
-      const hasEvent = data!.some(event => event.id === testEventId);
+      const hasEvent = data!.some((event) => event.id === testEventId);
       expect(hasEvent).toBe(false);
     });
 
     it('should return false for removed guest via is_event_guest function', async () => {
-      const { data, error } = await supabase
-        .rpc('is_event_guest', { p_event_id: testEventId });
+      const { data, error } = await supabase.rpc('is_event_guest', {
+        p_event_id: testEventId,
+      });
 
       expect(error).toBeNull();
       expect(data).toBe(false);
     });
 
     it('should return false for removed guest via can_access_event function', async () => {
-      const { data, error } = await supabase
-        .rpc('can_access_event', { p_event_id: testEventId });
+      const { data, error } = await supabase.rpc('can_access_event', {
+        p_event_id: testEventId,
+      });
 
       expect(error).toBeNull();
       expect(data).toBe(false);
@@ -180,7 +188,7 @@ describe('Event Access Control - Removed Guests', () => {
         .insert({
           event_id: testEventId,
           sender_user_id: hostUserId,
-          content: 'Test message'
+          content: 'Test message',
         })
         .select('id')
         .single();
@@ -211,9 +219,12 @@ describe('Event Access Control - Removed Guests', () => {
         .eq('id', testGuestId);
 
       // Verify no access
-      const { data: eventsRemoved } = await supabase
-        .rpc('get_user_events', { user_id_param: testUserId });
-      expect(eventsRemoved!.some(event => event.id === testEventId)).toBe(false);
+      const { data: eventsRemoved } = await supabase.rpc('get_user_events', {
+        user_id_param: testUserId,
+      });
+      expect(eventsRemoved!.some((event) => event.id === testEventId)).toBe(
+        false,
+      );
 
       // Restore guest (clear removed_at)
       await supabase
@@ -222,25 +233,30 @@ describe('Event Access Control - Removed Guests', () => {
         .eq('id', testGuestId);
 
       // Verify access restored
-      const { data: eventsRestored } = await supabase
-        .rpc('get_user_events', { user_id_param: testUserId });
-      expect(eventsRestored!.some(event => event.id === testEventId)).toBe(true);
+      const { data: eventsRestored } = await supabase.rpc('get_user_events', {
+        user_id_param: testUserId,
+      });
+      expect(eventsRestored!.some((event) => event.id === testEventId)).toBe(
+        true,
+      );
     });
   });
 
   describe('Host Access (Should Always Work)', () => {
     it('should always allow host access regardless of guest status', async () => {
-      const { data, error } = await supabase
-        .rpc('get_user_events', { user_id_param: hostUserId });
+      const { data, error } = await supabase.rpc('get_user_events', {
+        user_id_param: hostUserId,
+      });
 
       expect(error).toBeNull();
       expect(data).toBeDefined();
-      expect(data!.some(event => event.id === testEventId)).toBe(true);
+      expect(data!.some((event) => event.id === testEventId)).toBe(true);
     });
 
     it('should return true for host via is_event_host function', async () => {
-      const { data, error } = await supabase
-        .rpc('is_event_host', { p_event_id: testEventId });
+      const { data, error } = await supabase.rpc('is_event_host', {
+        p_event_id: testEventId,
+      });
 
       expect(error).toBeNull();
       expect(data).toBe(true);

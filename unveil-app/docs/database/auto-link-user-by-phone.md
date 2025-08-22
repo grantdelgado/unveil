@@ -7,10 +7,12 @@ The auto-link system automatically populates `user_id` fields across tables when
 ## Discovery Summary
 
 ### Target Tables
+
 - **`message_deliveries`**: Has `phone_number`, `user_id`, and can get `event_id` via `guest_id → event_guests.event_id`
 - Future tables can be easily added to the trigger system
 
 ### Phone Normalization
+
 - Uses E.164 format (`+1XXXXXXXXXX`) with existing CHECK constraints
 - The `normalize_phone()` function handles various input formats:
   - `8725292147` → `+18725292147`
@@ -19,6 +21,7 @@ The auto-link system automatically populates `user_id` fields across tables when
   - `invalid` → `NULL`
 
 ### Uniqueness Constraints
+
 - `event_guests` has `UNIQUE(event_id, phone) WHERE removed_at IS NULL`
 - This ensures exactly one active guest per phone per event
 
@@ -31,6 +34,7 @@ SELECT * FROM link_user_by_phone(event_id, normalized_phone);
 ```
 
 **Logic:**
+
 1. Check feature flag `LINK_USER_BY_PHONE` (currently enabled)
 2. Find active event guests with matching phone
 3. If exactly one match:
@@ -39,6 +43,7 @@ SELECT * FROM link_user_by_phone(event_id, normalized_phone);
 4. Return `user_id`, `guest_id`, and `outcome`
 
 **Outcomes:**
+
 - `linked`: Successfully found and returned a user_id
 - `no_match`: No matching guest or user found
 - `ambiguous`: Multiple candidates found (safety fallback)
@@ -47,6 +52,7 @@ SELECT * FROM link_user_by_phone(event_id, normalized_phone);
 ### 2. Trigger System
 
 **Trigger:** `trigger_message_deliveries_auto_link_user`
+
 - Fires on `BEFORE INSERT OR UPDATE` of `message_deliveries`
 - Only acts when `NEW.user_id IS NULL`
 - Never overwrites existing `user_id` values
@@ -59,6 +65,7 @@ SELECT * FROM user_link_audit ORDER BY created_at DESC;
 ```
 
 **Columns:**
+
 - `table_name`: Which table was affected
 - `record_id`: Primary key of the affected record
 - `event_id`: Event scope
@@ -79,6 +86,7 @@ SELECT * FROM backfill_user_links('message_deliveries', 100, false);
 ```
 
 **Returns:**
+
 - `processed_count`: Total records examined
 - `linked_count`: Records successfully linked
 - `no_match_count`: Records with no matching user
@@ -105,9 +113,9 @@ SELECT * FROM rollback_user_links('2025-01-29 14:00:00+00', 'message_deliveries'
 SELECT * FROM backfill_user_links('message_deliveries', 50, true);
 
 -- 2. Review audit results
-SELECT outcome, COUNT(*) 
-FROM user_link_audit 
-WHERE table_name = 'message_deliveries' 
+SELECT outcome, COUNT(*)
+FROM user_link_audit
+WHERE table_name = 'message_deliveries'
   AND created_at > NOW() - INTERVAL '1 hour'
 GROUP BY outcome;
 
@@ -129,19 +137,19 @@ SELECT * FROM rollback_user_links('2025-01-29 14:00:00+00', 'message_deliveries'
 
 ```sql
 -- Check recent linking activity
-SELECT 
+SELECT
     outcome,
     COUNT(*) as count,
     COUNT(DISTINCT event_id) as events,
     MIN(created_at) as first_seen,
     MAX(created_at) as last_seen
-FROM user_link_audit 
+FROM user_link_audit
 WHERE created_at > NOW() - INTERVAL '24 hours'
 GROUP BY outcome
 ORDER BY count DESC;
 
 -- Check for ambiguous cases that might need manual review
-SELECT 
+SELECT
     event_id,
     normalized_phone,
     COUNT(*) as audit_count
@@ -155,21 +163,25 @@ ORDER BY audit_count DESC;
 ## Safety Features
 
 ### Event Scoping
+
 - All operations are scoped to specific events
 - No cross-event contamination possible
 - Uses existing RLS policies for security
 
 ### Non-Destructive
+
 - Never overwrites existing `user_id` values
 - All operations logged to audit table
 - Dry-run capability for all functions
 
 ### Idempotent
+
 - Re-running backfill on same data produces no changes
 - Triggers only act when `user_id` IS NULL
 - Safe to run multiple times
 
 ### Feature Flag
+
 - Controlled by `get_feature_flag('LINK_USER_BY_PHONE')`
 - Currently enabled, but can be disabled instantly
 - When disabled, all operations return 'skipped' outcome
@@ -177,11 +189,13 @@ ORDER BY audit_count DESC;
 ## Performance
 
 ### Indexes
+
 - `idx_message_deliveries_phone_user_null`: Fast lookup for backfill candidates
 - `event_guests_event_id_phone_active_key`: Unique constraint doubles as performance index
 - `idx_user_link_audit_*`: Various audit table indexes for monitoring queries
 
 ### Trigger Performance
+
 - Sub-millisecond latency for typical operations
 - Uses existing indexes for lookups
 - Minimal overhead when `user_id` already populated
@@ -194,7 +208,7 @@ ORDER BY audit_count DESC;
 ✅ **Invalid Input**: Bad phone numbers safely ignored  
 ✅ **Audit Logging**: All operations tracked with full context  
 ✅ **Feature Flag**: System respects enable/disable flag  
-✅ **Edge Cases**: No matches, ambiguous matches handled safely  
+✅ **Edge Cases**: No matches, ambiguous matches handled safely
 
 ## Example Audit Records
 
@@ -213,6 +227,7 @@ ORDER BY audit_count DESC;
 ## Future Extensions
 
 ### Adding New Tables
+
 To add auto-linking to a new table:
 
 1. Add case to `auto_link_user_by_phone_trigger()` function
@@ -221,6 +236,7 @@ To add auto-linking to a new table:
 4. Add appropriate indexes
 
 ### Additional Features
+
 - **Batch processing**: Current backfill processes 100 records at a time
 - **Metrics collection**: Audit table provides full traceability
 - **Custom matching rules**: Central function can be extended for complex scenarios

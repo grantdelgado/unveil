@@ -1,6 +1,9 @@
 import React, { useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
-import { getFieldValidationClass, ValidationResult } from '@/lib/utils/validation';
+import {
+  getFieldValidationClass,
+  ValidationResult,
+} from '@/lib/utils/validation';
 import { ValidationIcon, ValidationMessage } from './InputValidation';
 import { PhoneInputProps } from './types';
 
@@ -21,9 +24,11 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
   onBlur,
   ...props
 }) => {
-  const [internalValidation, setInternalValidation] = useState<ValidationResult | undefined>();
+  const [internalValidation, setInternalValidation] = useState<
+    ValidationResult | undefined
+  >();
   const [hasBlurred, setHasBlurred] = useState(false);
-  
+
   const validationResult = validation || internalValidation;
   const validationClass = getFieldValidationClass(validationResult);
 
@@ -53,40 +58,54 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
     return cleaned;
   };
 
-  const handleValidation = useCallback((value: string) => {
-    if (!validationFn) return;
+  const handleValidation = useCallback(
+    (value: string) => {
+      if (!validationFn) return;
 
-    const result = validationFn(value);
-    setInternalValidation(result);
-    onValidationChange?.(result);
-  }, [validationFn, onValidationChange]);
+      const result = validationFn(value);
+      setInternalValidation(result);
+      onValidationChange?.(result);
+    },
+    [validationFn, onValidationChange],
+  );
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatPhoneNumber(e.target.value);
     onChange(formatted);
-    
+
     if (realTimeValidation && (hasBlurred || formatted.length > 0)) {
       handleValidation(formatted);
     }
   };
 
-  const handleBlur = useCallback((e: React.FocusEvent<HTMLInputElement>) => {
-    setHasBlurred(true);
-    onBlur?.(e);
-    
-    if (validationFn) {
-      handleValidation(value);
-    }
-  }, [onBlur, validationFn, value, handleValidation]);
+  const handleBlur = useCallback(
+    (e: React.FocusEvent<HTMLInputElement>) => {
+      setHasBlurred(true);
+      onBlur?.(e);
 
-  const inputId = props.id || `phone-input-${Math.random().toString(36).substr(2, 9)}`;
+      if (validationFn) {
+        handleValidation(value);
+      }
+    },
+    [onBlur, validationFn, value, handleValidation],
+  );
+
+  const inputId =
+    props.id || `phone-input-${Math.random().toString(36).substr(2, 9)}`;
 
   return (
     <div className="space-y-2">
       {label && (
-        <label htmlFor={inputId} className="block text-sm font-medium text-gray-700">
+        <label
+          htmlFor={inputId}
+          className="block text-sm font-medium text-gray-700"
+        >
           {label}
-          {props.required && <span className="text-red-500 ml-1" aria-label="required">*</span>}
+          {props.required && (
+            <span className="text-red-500 ml-1" aria-label="required">
+              *
+            </span>
+          )}
         </label>
       )}
 
@@ -109,7 +128,8 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
             // Prevent iOS zoom and ensure touch-friendly size
             'text-[16px] md:text-base min-h-[44px]',
             // Validation-based styling
-            validationClass || 'border-gray-300 focus:ring-pink-200 focus:border-pink-400',
+            validationClass ||
+              'border-gray-300 focus:ring-pink-200 focus:border-pink-400',
             // Icon spacing
             validationResult && 'pr-12',
             className,
@@ -143,4 +163,4 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
   );
 };
 
-PhoneInput.displayName = 'PhoneInput'; 
+PhoneInput.displayName = 'PhoneInput';

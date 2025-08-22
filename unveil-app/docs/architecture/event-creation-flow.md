@@ -5,8 +5,8 @@
 
 ## Overview
 
-The event creation system has been refactored to follow project conventions with a 
-centralized service layer, atomic transactions, and improved error handling. This 
+The event creation system has been refactored to follow project conventions with a
+centralized service layer, atomic transactions, and improved error handling. This
 document outlines the updated architecture, data flow, and implementation details.
 
 ## Architecture Diagram
@@ -55,12 +55,12 @@ document outlines the updated architecture, data flow, and implementation detail
 ```typescript
 // Multi-step wizard collects:
 interface EventCreationInput {
-  title: string;           // Required: Event name
-  event_date: string;      // Required: ISO date string
-  location?: string;       // Optional: Event location
-  description?: string;    // Optional: Event description
-  is_public: boolean;      // Required: Visibility setting
-  header_image?: File;     // Optional: Header image file
+  title: string; // Required: Event name
+  event_date: string; // Required: ISO date string
+  location?: string; // Optional: Event location
+  description?: string; // Optional: Event description
+  is_public: boolean; // Required: Visibility setting
+  header_image?: File; // Optional: Header image file
 }
 ```
 
@@ -69,8 +69,8 @@ interface EventCreationInput {
 ```typescript
 // EventCreationService.createEventWithHost()
 const result = await EventCreationService.createEventWithHost(
-  eventInput, 
-  session.user.id
+  eventInput,
+  session.user.id,
 );
 
 // Returns structured result
@@ -166,7 +166,7 @@ class EventCreationService {
 const { data: newEvent, error } = await supabase
   .from('events')
   .insert(eventData);
-  
+
 const { error: guestError } = await supabase
   .from('event_guests')
   .insert(hostGuestData);
@@ -177,8 +177,8 @@ const { error: guestError } = await supabase
 ```typescript
 // In CreateEventWizard.tsx - CLEAN PATTERN
 const result = await EventCreationService.createEventWithHost(
-  eventInput, 
-  session.user.id
+  eventInput,
+  session.user.id,
 );
 
 if (!result.success) {
@@ -211,10 +211,14 @@ if (eventInput.title.length > 200) {
 ```typescript
 // PostgreSQL error code mapping
 switch (error.code) {
-  case '23505': return 'Event with this name already exists';
-  case '23503': return 'User validation failed';
-  case '23514': return 'Invalid event data';
-  default: return `Database error: ${error.message}`;
+  case '23505':
+    return 'Event with this name already exists';
+  case '23503':
+    return 'User validation failed';
+  case '23514':
+    return 'Invalid event data';
+  default:
+    return `Database error: ${error.message}`;
 }
 ```
 
@@ -248,12 +252,12 @@ if (eventCreated && !hostGuestCreated) {
 
 ```sql
 -- Events table policies
-CREATE POLICY "events_insert_own" ON events 
-  FOR INSERT TO authenticated 
+CREATE POLICY "events_insert_own" ON events
+  FOR INSERT TO authenticated
   WITH CHECK (host_user_id = auth.uid());
 
--- Event guests table policies  
-CREATE POLICY "event_guests_host_management" ON event_guests 
+-- Event guests table policies
+CREATE POLICY "event_guests_host_management" ON event_guests
   FOR ALL USING (is_event_host(event_id));
 ```
 
@@ -282,12 +286,16 @@ CREATE POLICY "event_guests_host_management" ON event_guests
 
 ```typescript
 // Operation tracking
-logger.info('Event creation started', { 
-  operationId, userId, title 
+logger.info('Event creation started', {
+  operationId,
+  userId,
+  title,
 });
 
-logger.info('Event creation completed', { 
-  operationId, eventId, duration 
+logger.info('Event creation completed', {
+  operationId,
+  eventId,
+  duration,
 });
 ```
 
@@ -315,26 +323,26 @@ logger.info('Event creation completed', {
 
 ### Primary Files
 
-| Component | File Path | Responsibility |
-|-----------|-----------|----------------|
-| **Route** | `app/host/events/create/page.tsx` | Entry point |
-| **UI Controller** | `components/features/events/CreateEventWizard.tsx` | Wizard orchestration |
-| **Service Layer** | `lib/services/eventCreation.ts` | Business logic |
-| **Database Function** | `supabase/migrations/20250129000010_add_atomic_event_creation.sql` | Operations |
-| **Form Steps** | `components/features/events/EventBasicsStep.tsx` | Data collection |
-| | `components/features/events/EventImageStep.tsx` | Image handling |
-| | `components/features/events/GuestImportStep.tsx` | Guest options |
-| | `components/features/events/EventReviewStep.tsx` | Final review |
+| Component             | File Path                                                          | Responsibility       |
+| --------------------- | ------------------------------------------------------------------ | -------------------- |
+| **Route**             | `app/host/events/create/page.tsx`                                  | Entry point          |
+| **UI Controller**     | `components/features/events/CreateEventWizard.tsx`                 | Wizard orchestration |
+| **Service Layer**     | `lib/services/eventCreation.ts`                                    | Business logic       |
+| **Database Function** | `supabase/migrations/20250129000010_add_atomic_event_creation.sql` | Operations           |
+| **Form Steps**        | `components/features/events/EventBasicsStep.tsx`                   | Data collection      |
+|                       | `components/features/events/EventImageStep.tsx`                    | Image handling       |
+|                       | `components/features/events/GuestImportStep.tsx`                   | Guest options        |
+|                       | `components/features/events/EventReviewStep.tsx`                   | Final review         |
 
 ### Key Functions
 
-| Function | Location | Purpose |
-|----------|----------|---------|
-| `createEventWithHost()` | `EventCreationService` | Main service method |
-| `create_event_with_host_atomic()` | Database | Atomic transaction |
-| `handleCreateEvent()` | `CreateEventWizard` | UI event handler |
-| `validateUserSession()` | `EventCreationService` | Auth validation |
-| `rollbackEventCreation()` | `EventCreationService` | Error recovery |
+| Function                          | Location               | Purpose             |
+| --------------------------------- | ---------------------- | ------------------- |
+| `createEventWithHost()`           | `EventCreationService` | Main service method |
+| `create_event_with_host_atomic()` | Database               | Atomic transaction  |
+| `handleCreateEvent()`             | `CreateEventWizard`    | UI event handler    |
+| `validateUserSession()`           | `EventCreationService` | Auth validation     |
+| `rollbackEventCreation()`         | `EventCreationService` | Error recovery      |
 
 ## Migration Guide
 

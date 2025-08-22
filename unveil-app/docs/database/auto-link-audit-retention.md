@@ -1,12 +1,14 @@
 # Auto-Link Audit Retention Strategy
 
 ## Current State (MVP)
+
 - **Table size**: 2 records
 - **Growth rate**: ~2 records/day (test environment)
 - **Projected size**: ~730 records/year at current rate
 - **Storage impact**: Negligible (<1MB/year)
 
 ## Retention Decision for MVP
+
 **NO RETENTION NEEDED** for initial deployment because:
 
 1. **Low volume**: Even with 10x growth (20 records/day), annual storage would be ~7K records
@@ -17,7 +19,9 @@
 ## Future Retention Strategy (When Needed)
 
 ### Triggers for Implementation
+
 Implement retention when ANY of these conditions are met:
+
 - Audit table exceeds 100K records
 - Table size exceeds 100MB
 - Query performance on audit table degrades
@@ -36,11 +40,11 @@ AS $$
 DECLARE
     deleted_count integer;
 BEGIN
-    DELETE FROM public.user_link_audit 
+    DELETE FROM public.user_link_audit
     WHERE created_at < NOW() - INTERVAL '90 days';
-    
+
     GET DIAGNOSTICS deleted_count = ROW_COUNT;
-    
+
     RETURN deleted_count;
 END;
 $$;
@@ -70,9 +74,10 @@ DROP TABLE user_link_audit_202401;
 ## Monitoring
 
 ### Audit Table Health Check
+
 ```sql
 -- Monthly audit table analysis
-SELECT 
+SELECT
     COUNT(*) as total_records,
     COUNT(*) FILTER (WHERE created_at > NOW() - INTERVAL '30 days') as recent_records,
     pg_size_pretty(pg_total_relation_size('user_link_audit')) as table_size,
@@ -82,9 +87,10 @@ FROM user_link_audit;
 ```
 
 ### Growth Rate Monitoring
+
 ```sql
 -- Weekly growth analysis
-SELECT 
+SELECT
     DATE_TRUNC('week', created_at) as week,
     COUNT(*) as records,
     COUNT(DISTINCT table_name) as affected_tables,
@@ -98,6 +104,7 @@ ORDER BY week;
 ## Rollback Impact
 
 When implementing retention, consider rollback needs:
+
 - Keep audit records for active rollback scenarios
 - Document maximum rollback window (e.g., 30 days)
 - Update `rollback_user_links()` to handle missing audit data gracefully

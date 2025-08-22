@@ -6,7 +6,12 @@
  */
 
 // Re-export all types for easy importing
-export type { Database, Tables, TablesInsert, TablesUpdate } from '@/app/reference/supabase.types';
+export type {
+  Database,
+  Tables,
+  TablesInsert,
+  TablesUpdate,
+} from '@/app/reference/supabase.types';
 
 // Base types
 export * from './forms';
@@ -18,28 +23,26 @@ export * from './analytics';
 export * from './messaging';
 
 // Service functions - add these exports to resolve import errors
-export { 
+export {
   sendMessageToEvent,
   getScheduledMessages,
-  createScheduledMessage
+  createScheduledMessage,
 } from '@/lib/services/messaging';
 
 export {
   getEventById,
   getHostEvents,
-  getEventGuests  
+  getEventGuests,
 } from '@/lib/services/events';
 
-export {
-  uploadEventMedia
-} from '@/lib/services/media';
+export { uploadEventMedia } from '@/lib/services/media';
 
 // Hook exports
 // useGuestMessages removed - replaced by useGuestMessagesRPC with managed subscriptions
 export { useGuestTags } from '@/hooks/messaging/useGuestTags';
 
 // Realtime subscriptions
-export { 
+export {
   subscribeToEventMessages,
-  subscribeToEventMedia
+  subscribeToEventMedia,
 } from '@/lib/realtime/subscriptions';

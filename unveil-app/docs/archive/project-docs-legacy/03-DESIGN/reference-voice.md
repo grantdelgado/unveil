@@ -69,14 +69,14 @@ Let the UX lead naturally—users should feel nudged, not bossed around.
 
 ## 🏷 Naming System
 
-| Product Concept | Name | Rationale |
-|-------------------------|------------------|-----------------------------------------------------|
-| 1-to-many messages | Broadcasts | Clear, respectful, non-spammy |
-| Guest media uploads | Moments | Emotional, short, simple |
-| Memory archive | Capsule | Evokes time, preservation, and intimacy |
-| Reactions or guest notes| Guestbook | Nostalgic but repurposed for digital |
-| Message groupings | Threads | Familiar and mobile-native |
-| Host-wide announcements | Update | Neutral default for generic messages |
+| Product Concept          | Name       | Rationale                               |
+| ------------------------ | ---------- | --------------------------------------- |
+| 1-to-many messages       | Broadcasts | Clear, respectful, non-spammy           |
+| Guest media uploads      | Moments    | Emotional, short, simple                |
+| Memory archive           | Capsule    | Evokes time, preservation, and intimacy |
+| Reactions or guest notes | Guestbook  | Nostalgic but repurposed for digital    |
+| Message groupings        | Threads    | Familiar and mobile-native              |
+| Host-wide announcements  | Update     | Neutral default for generic messages    |
 
 ---
 
@@ -96,12 +96,12 @@ Let the UX lead naturally—users should feel nudged, not bossed around.
 
 ## ✨ Voice Quick Reference
 
-| Context | Style | Example Copy |
-|-----------------|------------------|------------------------------------------|
-| Welcome screen | Warm & simple | "Welcome to Unveil. Let's get started." |
-| Empty gallery | Poetic & soft | "No memories yet—but they're coming." |
-| Broadcast sent | Friendly confirm | "Message sent. Guests will feel the love."|
-| RSVP confirmed | Light celebratory | "You're in! We can't wait to see you." |
+| Context        | Style             | Example Copy                               |
+| -------------- | ----------------- | ------------------------------------------ |
+| Welcome screen | Warm & simple     | "Welcome to Unveil. Let's get started."    |
+| Empty gallery  | Poetic & soft     | "No memories yet—but they're coming."      |
+| Broadcast sent | Friendly confirm  | "Message sent. Guests will feel the love." |
+| RSVP confirmed | Light celebratory | "You're in! We can't wait to see you."     |
 
 ---
 

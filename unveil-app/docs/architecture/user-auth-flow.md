@@ -30,15 +30,15 @@ The Unveil app follows a **phone-first authentication model** with streamlined o
 
 ### Key Decision Points
 
-| Stage | Condition | Next Action |
-|-------|-----------|-------------|
-| **OTP Verification** | ✅ Valid OTP | → Check user existence |
-| **User Check** | 👤 User exists + onboarding complete | → `/select-event` |
-| **User Check** | 👤 User exists + onboarding incomplete | → `/setup` |
-| **User Check** | ❌ User doesn't exist | → Create user + `/setup` |
-| **Onboarding** | ✅ Setup completed/skipped | → `/select-event` |
-| **App Access** | 🎯 Has events | → Event selection |
-| **App Access** | 📝 No events | → Event creation |
+| Stage                | Condition                              | Next Action              |
+| -------------------- | -------------------------------------- | ------------------------ |
+| **OTP Verification** | ✅ Valid OTP                           | → Check user existence   |
+| **User Check**       | 👤 User exists + onboarding complete   | → `/select-event`        |
+| **User Check**       | 👤 User exists + onboarding incomplete | → `/setup`               |
+| **User Check**       | ❌ User doesn't exist                  | → Create user + `/setup` |
+| **Onboarding**       | ✅ Setup completed/skipped             | → `/select-event`        |
+| **App Access**       | 🎯 Has events                          | → Event selection        |
+| **App Access**       | 📝 No events                           | → Event creation         |
 
 ---
 
@@ -57,7 +57,7 @@ const normalizedPhone = validatePhoneNumber(phone).normalized;
 // Sends OTP via Supabase
 await supabase.auth.signInWithOtp({
   phone: normalizedPhone,
-  options: { data: { phone: normalizedPhone } }
+  options: { data: { phone: normalizedPhone } },
 });
 ```
 
@@ -68,18 +68,18 @@ await supabase.auth.signInWithOtp({
 await supabase.auth.verifyOtp({
   phone: normalizedPhone,
   token: otp,
-  type: 'sms'
+  type: 'sms',
 });
 ```
 
 ### 📊 OTP Flow Outcomes
 
-| Scenario | Supabase Response | App Behavior |
-|----------|-------------------|--------------|
-| **✅ Successful OTP** | `data.user` populated | → `handlePostAuthRedirect()` |
-| **❌ Invalid OTP** | `error.message` set | → Show "Invalid verification code" |
-| **⏱️ Expired OTP** | `error.message` set | → Show "Code expired, try again" |
-| **🚫 Rate Limited** | HTTP 429 response | → Show "Too many attempts" |
+| Scenario              | Supabase Response     | App Behavior                       |
+| --------------------- | --------------------- | ---------------------------------- |
+| **✅ Successful OTP** | `data.user` populated | → `handlePostAuthRedirect()`       |
+| **❌ Invalid OTP**    | `error.message` set   | → Show "Invalid verification code" |
+| **⏱️ Expired OTP**    | `error.message` set   | → Show "Code expired, try again"   |
+| **🚫 Rate Limited**   | HTTP 429 response     | → Show "Too many attempts"         |
 
 ### 🔄 OTP Auto-Submit
 
@@ -111,13 +111,13 @@ CREATE TABLE users (
 
 #### **Key Column Requirements**
 
-| Column | Required for App Access | Purpose |
-|--------|------------------------|---------|
-| `id` | ✅ **Required** | Links to Supabase Auth user |
-| `phone` | ✅ **Required** | Primary identifier |
-| `onboarding_completed` | ✅ **Required** | Gates app access |
-| `full_name` | ⚠️ **Optional** | Can be auto-generated or skipped |
-| `email` | ❌ **Optional** | Used for notifications |
+| Column                 | Required for App Access | Purpose                          |
+| ---------------------- | ----------------------- | -------------------------------- |
+| `id`                   | ✅ **Required**         | Links to Supabase Auth user      |
+| `phone`                | ✅ **Required**         | Primary identifier               |
+| `onboarding_completed` | ✅ **Required**         | Gates app access                 |
+| `full_name`            | ⚠️ **Optional**         | Can be auto-generated or skipped |
+| `email`                | ❌ **Optional**         | Used for notifications           |
 
 ### 🔐 Row Level Security (RLS)
 
@@ -125,13 +125,13 @@ CREATE TABLE users (
 
 ```sql
 -- Users can only access their own records
-CREATE POLICY users_select_own ON users FOR SELECT 
+CREATE POLICY users_select_own ON users FOR SELECT
   USING (id = (select auth.uid()));
 
-CREATE POLICY users_update_own ON users FOR UPDATE 
+CREATE POLICY users_update_own ON users FOR UPDATE
   USING (id = (select auth.uid()));
 
-CREATE POLICY users_insert_own ON users FOR INSERT 
+CREATE POLICY users_insert_own ON users FOR INSERT
   WITH CHECK (id = (select auth.uid()));
 ```
 
@@ -141,7 +141,7 @@ CREATE POLICY users_insert_own ON users FOR INSERT
 -- Check if user is event host
 CREATE FUNCTION is_event_host(p_event_id uuid) RETURNS boolean;
 
--- Check if user is event guest  
+-- Check if user is event guest
 CREATE FUNCTION is_event_guest(p_event_id uuid) RETURNS boolean;
 
 -- Check if user can access event (host OR guest)
@@ -165,13 +165,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     // Single auth state listener for entire app
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-      }
-    );
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
 
     return () => subscription.unsubscribe();
   }, []);
@@ -196,16 +196,16 @@ export function usePostAuthRedirect() {
     if (existingUser) {
       // 2. Route based on onboarding status
       if (existingUser.onboarding_completed) {
-        router.replace('/select-event');  // → Ready to use app
+        router.replace('/select-event'); // → Ready to use app
       } else {
-        router.replace('/setup');         // → Complete onboarding
+        router.replace('/setup'); // → Complete onboarding
       }
     } else {
       // 3. Create new user and route to setup
       await supabase.from('users').insert({
         id: userId,
         phone: phone,
-        onboarding_completed: false
+        onboarding_completed: false,
       });
       router.replace('/setup');
     }
@@ -219,8 +219,10 @@ export function usePostAuthRedirect() {
 
 ```typescript
 useEffect(() => {
-  const { data: { session } } = await supabase.auth.getSession();
-  
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
   if (session?.user) {
     const { data: userProfile } = await supabase
       .from('users')
@@ -275,18 +277,18 @@ useEffect(() => {
 
 ### ⚠️ Error Scenarios & Recovery
 
-| Error Type | Trigger | User Experience | Recovery Action |
-|------------|---------|-----------------|-----------------|
-| **Invalid OTP** | Wrong 6-digit code | "Invalid verification code" | Re-enter code or request new one |
-| **Expired OTP** | Code older than 10 mins | "Code expired" | Automatically request new code |
-| **Network Error** | Connection failure | "Connection error, try again" | Retry button available |
-| **Rate Limiting** | Too many attempts | "Too many attempts, wait N seconds" | Automatic retry after cooldown |
-| **Setup Failed** | Database error during onboarding | "Setup failed, try again" | Retry setup or skip to proceed |
+| Error Type        | Trigger                          | User Experience                     | Recovery Action                  |
+| ----------------- | -------------------------------- | ----------------------------------- | -------------------------------- |
+| **Invalid OTP**   | Wrong 6-digit code               | "Invalid verification code"         | Re-enter code or request new one |
+| **Expired OTP**   | Code older than 10 mins          | "Code expired"                      | Automatically request new code   |
+| **Network Error** | Connection failure               | "Connection error, try again"       | Retry button available           |
+| **Rate Limiting** | Too many attempts                | "Too many attempts, wait N seconds" | Automatic retry after cooldown   |
+| **Setup Failed**  | Database error during onboarding | "Setup failed, try again"           | Retry setup or skip to proceed   |
 
 ### 🔄 Fallback Mechanisms
 
 1. **Auth Failure → Setup Page:** If post-auth redirect fails, fallback to `/setup`
-2. **Missing User → Auto-Creation:** If user missing from database, create automatically  
+2. **Missing User → Auto-Creation:** If user missing from database, create automatically
 3. **Setup Errors → Skip Option:** If setup fails, user can skip and complete later
 4. **Session Loss → Graceful Logout:** If session invalid, clean logout without errors
 
@@ -334,42 +336,42 @@ useEffect(() => {
 ```mermaid
 graph TD
     A[📱 User Opens App] --> B{Authenticated?}
-    
+
     B -->|No| C[🔐 Login Page<br/>Phone Entry]
     B -->|Yes| D{User in Database?}
-    
+
     C --> E[📤 Send OTP via Supabase]
     E --> F[🔢 OTP Verification]
-    
+
     F -->|❌ Invalid| G[❌ Show Error<br/>Retry OTP]
     F -->|✅ Valid| H[🎯 handlePostAuthRedirect]
-    
+
     G --> F
-    
+
     H --> I{User Exists?}
     I -->|No| J[👤 Create User Record<br/>onboarding_completed = false]
     I -->|Yes| K{Onboarding Complete?}
-    
+
     J --> L[⚙️ Setup Page<br/>Profile Creation]
     K -->|No| L
     K -->|Yes| M[🎉 Select Event Page]
-    
+
     L --> N{Setup Action?}
     N -->|Complete| O[💾 Save Profile<br/>onboarding_completed = true]
     N -->|Skip| P[⏭️ Mark Complete<br/>Skip profile details]
-    
+
     O --> M
     P --> M
-    
+
     D -->|No| Q[🚨 Create Missing User<br/>Redirect to Setup]
     D -->|Yes| R{Onboarding Complete?}
-    
+
     Q --> L
-    R -->|No| L  
+    R -->|No| L
     R -->|Yes| M
-    
+
     M --> S[🎯 Event Management<br/>Host/Guest Features]
-    
+
     style A fill:#e1f5fe
     style C fill:#fff3e0
     style F fill:#f3e5f5
@@ -380,15 +382,15 @@ graph TD
 
 ### 🔄 State Transitions
 
-| Current State | Trigger | Next State | Notes |
-|---------------|---------|------------|--------|
-| **Unauthenticated** | App open | → Login page | Clean slate |
-| **Phone entered** | Valid phone | → OTP verification | SMS sent via Supabase |
-| **OTP verified** | Valid code | → User check | Post-auth redirect logic |
-| **New user** | First login | → Setup page | Auto-create user record |
-| **Returning user** | Re-login | → Setup or Events | Based on onboarding status |
-| **Setup complete** | Profile saved | → Event selection | Ready to use app |
-| **Setup skipped** | Skip button | → Event selection | Minimal profile created |
+| Current State       | Trigger       | Next State         | Notes                      |
+| ------------------- | ------------- | ------------------ | -------------------------- |
+| **Unauthenticated** | App open      | → Login page       | Clean slate                |
+| **Phone entered**   | Valid phone   | → OTP verification | SMS sent via Supabase      |
+| **OTP verified**    | Valid code    | → User check       | Post-auth redirect logic   |
+| **New user**        | First login   | → Setup page       | Auto-create user record    |
+| **Returning user**  | Re-login      | → Setup or Events  | Based on onboarding status |
+| **Setup complete**  | Profile saved | → Event selection  | Ready to use app           |
+| **Setup skipped**   | Skip button   | → Event selection  | Minimal profile created    |
 
 ---
 
@@ -435,4 +437,4 @@ graph TD
 
 ---
 
-*This document serves as the definitive reference for Unveil's authentication system. For questions or updates, please refer to the commit history or contact the development team.*
+_This document serves as the definitive reference for Unveil's authentication system. For questions or updates, please refer to the commit history or contact the development team._

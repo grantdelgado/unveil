@@ -1,9 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase/client';
-import {
-  type Event,
-  type EventGuestWithEvent,
-} from '@/lib/supabase/types';
+import { type Event, type EventGuestWithEvent } from '@/lib/supabase/types';
 // Note: Guest events functionality now handled via useEvents domain hook
 import { logError, type AppError } from '@/lib/error-handling';
 import { withErrorHandling } from '@/lib/error-handling';
@@ -17,10 +14,7 @@ interface UseGuestEventsReturn {
 
 // Backward compatibility
 
-
-export function useGuestEvents(
-  userId: string | null,
-): UseGuestEventsReturn {
+export function useGuestEvents(userId: string | null): UseGuestEventsReturn {
   const [guestEvents, setGuestEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<AppError | null>(null);
@@ -53,9 +47,7 @@ export function useGuestEvents(
       }
 
       // Format guest events data
-      const formattedGuestEvents = (
-        (guestData as EventGuestWithEvent[]) || []
-      )
+      const formattedGuestEvents = ((guestData as EventGuestWithEvent[]) || [])
         .map((g) => g.events)
         .filter((e): e is Event => e !== null)
         .sort(

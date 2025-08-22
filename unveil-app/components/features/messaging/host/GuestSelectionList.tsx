@@ -34,7 +34,7 @@ export function GuestSelectionList({
   totalSelected,
   willReceiveMessage,
   loading = false,
-  className
+  className,
 }: GuestSelectionListProps) {
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -42,8 +42,6 @@ export function GuestSelectionList({
     setSearchQuery(query);
     onSearchChange(query);
   };
-
-
 
   return (
     <div className={cn('space-y-4', className)}>
@@ -82,22 +80,19 @@ export function GuestSelectionList({
               <div className="text-lg font-bold text-purple-700">
                 {totalSelected}
               </div>
-              <div className="text-xs text-purple-600">
-                Total Selected
-              </div>
+              <div className="text-xs text-purple-600">Total Selected</div>
             </div>
             <div>
               <div className="text-lg font-bold text-green-700">
                 {willReceiveMessage}
               </div>
-              <div className="text-xs text-green-600">
-                Will Receive Message
-              </div>
+              <div className="text-xs text-green-600">Will Receive Message</div>
             </div>
           </div>
           {totalSelected !== willReceiveMessage && (
             <div className="text-xs text-amber-600 text-center mt-2">
-              {totalSelected - willReceiveMessage} guest(s) will be excluded (opted out of SMS)
+              {totalSelected - willReceiveMessage} guest(s) will be excluded
+              (opted out of SMS)
             </div>
           )}
         </div>
@@ -121,7 +116,9 @@ export function GuestSelectionList({
         <div className="text-center py-8">
           <div className="text-2xl mb-2">🔍</div>
           <p className="text-sm text-gray-500">
-            {searchQuery ? 'No guests match your search' : 'No eligible guests found'}
+            {searchQuery
+              ? 'No guests match your search'
+              : 'No eligible guests found'}
           </p>
           {searchQuery && (
             <Button
@@ -136,8 +133,6 @@ export function GuestSelectionList({
         </div>
       ) : (
         <div className="space-y-2">
-
-
           {/* Individual guest checkboxes */}
           <div className="border border-gray-200 rounded-lg divide-y divide-gray-100 max-h-96 overflow-y-auto">
             {guests.map((guest) => {
@@ -149,11 +144,13 @@ export function GuestSelectionList({
                 <label
                   key={guest.id}
                   className={cn(
-                    "flex items-center space-x-3 p-4 transition-all",
-                    isDisabled 
-                      ? "cursor-not-allowed opacity-60" 
-                      : "cursor-pointer hover:bg-purple-50 focus-within:bg-purple-50",
-                    isSelected && !isDisabled && "bg-purple-50 border-l-4 border-purple-300"
+                    'flex items-center space-x-3 p-4 transition-all',
+                    isDisabled
+                      ? 'cursor-not-allowed opacity-60'
+                      : 'cursor-pointer hover:bg-purple-50 focus-within:bg-purple-50',
+                    isSelected &&
+                      !isDisabled &&
+                      'bg-purple-50 border-l-4 border-purple-300',
                   )}
                   style={{ minHeight: '60px' }} // Ensure ≥44px touch target with padding
                 >
@@ -164,18 +161,19 @@ export function GuestSelectionList({
                     disabled={isDisabled}
                     aria-disabled={isDisabled}
                     className={cn(
-                      "h-5 w-5 text-purple-600 focus:ring-purple-500 border-gray-300 rounded flex-shrink-0",
-                      isDisabled && "opacity-50 cursor-not-allowed pointer-events-none"
+                      'h-5 w-5 text-purple-600 focus:ring-purple-500 border-gray-300 rounded flex-shrink-0',
+                      isDisabled &&
+                        'opacity-50 cursor-not-allowed pointer-events-none',
                     )}
                     style={{ minWidth: '20px', minHeight: '20px' }}
                   />
-                  
+
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-gray-900 truncate">
                         {guest.displayName}
                       </span>
-                      
+
                       <div className="flex items-center space-x-2 flex-shrink-0">
                         {/* SMS opt-out indicator */}
                         {isOptedOut && (
@@ -185,7 +183,7 @@ export function GuestSelectionList({
                         )}
                       </div>
                     </div>
-                    
+
                     {/* Guest tags */}
                     {guest.guest_tags && guest.guest_tags.length > 0 && (
                       <div className="flex items-center space-x-1 mt-1">

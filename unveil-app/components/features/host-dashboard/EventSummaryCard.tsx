@@ -22,19 +22,17 @@ export function EventSummaryCard({ event, className }: EventSummaryCardProps) {
     console.error('Error fetching guest stats:', error);
   }
 
-
-
-
-
   return (
-    <CardContainer className={cn("bg-white border border-gray-200 shadow-sm", className)}>
+    <CardContainer
+      className={cn('bg-white border border-gray-200 shadow-sm', className)}
+    >
       <div className="space-y-4">
         {/* Event Title and Basic Info */}
         <div>
           <h2 className="text-xl font-bold text-gray-900 mb-2">
             {event.title}
           </h2>
-          
+
           <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
             <div className="flex items-center gap-1.5">
               <span className="text-base">📅</span>
@@ -42,18 +40,19 @@ export function EventSummaryCard({ event, className }: EventSummaryCardProps) {
                 {formatEventDate(event.event_date)}
               </span>
             </div>
-            
+
             {event.location && (
               <div className="flex items-center gap-1.5">
                 <span className="text-base">📍</span>
                 <span className="font-medium">{event.location}</span>
               </div>
             )}
-            
+
             <div className="flex items-center gap-1.5">
               <span className="text-base">👥</span>
               <span className="font-medium">
-                {counts.total_invited} {counts.total_invited === 1 ? 'invited' : 'invited'}
+                {counts.total_invited}{' '}
+                {counts.total_invited === 1 ? 'invited' : 'invited'}
               </span>
             </div>
           </div>
@@ -93,15 +92,19 @@ export function EventSummaryCard({ event, className }: EventSummaryCardProps) {
               <div className="w-full bg-gray-200 rounded-full h-2 mb-3 overflow-hidden">
                 <div className="h-full flex">
                   {counts.attending > 0 && (
-                    <div 
-                      className="bg-green-500" 
-                      style={{ width: `${(counts.attending / counts.total_invited) * 100}%` }}
+                    <div
+                      className="bg-green-500"
+                      style={{
+                        width: `${(counts.attending / counts.total_invited) * 100}%`,
+                      }}
                     />
                   )}
                   {counts.declined > 0 && (
-                    <div 
-                      className="bg-red-500" 
-                      style={{ width: `${(counts.declined / counts.total_invited) * 100}%` }}
+                    <div
+                      className="bg-red-500"
+                      style={{
+                        width: `${(counts.declined / counts.total_invited) * 100}%`,
+                      }}
                     />
                   )}
                   {/* RSVP-Lite: Remove maybe/pending sections */}
@@ -118,7 +121,7 @@ export function EventSummaryCard({ event, className }: EventSummaryCardProps) {
                     Attending
                   </div>
                 </div>
-                
+
                 <div className="text-center p-2 bg-red-50 border border-red-200 rounded-lg">
                   <div className="text-base font-bold text-red-700 mb-0.5">
                     {counts.declined}

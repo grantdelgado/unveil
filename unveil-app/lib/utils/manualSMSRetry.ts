@@ -25,20 +25,20 @@ export interface SMSRetryResult {
 export async function getGuestsNeedingSMS(eventId: string): Promise<string[]> {
   try {
     const { supabase } = await import('@/lib/supabase/client');
-    
+
     // Get guests who haven't been invited recently (or ever)
     const { data: guests, error } = await supabase
       .from('event_guests')
       .select('phone')
       .eq('event_id', eventId)
       .is('last_sms_sent', null); // Guests who haven't received SMS
-    
+
     if (error) {
       logger.error('Error fetching guests needing SMS', error);
       return [];
     }
-    
-    return guests?.map(g => g.phone).filter(Boolean) as string[] || [];
+
+    return (guests?.map((g) => g.phone).filter(Boolean) as string[]) || [];
   } catch (error) {
     logger.error('Error in getGuestsNeedingSMS', error);
     return [];
@@ -48,14 +48,16 @@ export async function getGuestsNeedingSMS(eventId: string): Promise<string[]> {
 /**
  * Manually retry SMS invitations for specific guests
  */
-export async function retrySMSInvitations(options: SMSRetryOptions): Promise<SMSRetryResult> {
+export async function retrySMSInvitations(
+  options: SMSRetryOptions,
+): Promise<SMSRetryResult> {
   const { eventId, guestPhones, skipRecentlySent = true } = options;
-  
+
   try {
     logger.info('Manual SMS retry initiated', {
       eventId,
       guestCount: guestPhones.length,
-      skipRecentlySent
+      skipRecentlySent,
     });
 
     // Filter out recently sent if requested
@@ -63,19 +65,26 @@ export async function retrySMSInvitations(options: SMSRetryOptions): Promise<SMS
     if (skipRecentlySent) {
       const recentKey = `sms-sent-${eventId}`;
       const recentlySent = JSON.parse(localStorage.getItem(recentKey) || '[]');
-      const oneHourAgo = Date.now() - (60 * 60 * 1000);
-      
+      const oneHourAgo = Date.now() - 60 * 60 * 1000;
+
       // Clean old entries and get current ones
-      const currentRecentSent = recentlySent.filter((item: { timestamp: number; phone: string }) => item.timestamp > oneHourAgo);
-      const recentPhones = new Set(currentRecentSent.map((item: { timestamp: number; phone: string }) => item.phone));
-      
-      phonesToSend = guestPhones.filter(phone => !recentPhones.has(phone));
-      
+      const currentRecentSent = recentlySent.filter(
+        (item: { timestamp: number; phone: string }) =>
+          item.timestamp > oneHourAgo,
+      );
+      const recentPhones = new Set(
+        currentRecentSent.map(
+          (item: { timestamp: number; phone: string }) => item.phone,
+        ),
+      );
+
+      phonesToSend = guestPhones.filter((phone) => !recentPhones.has(phone));
+
       if (phonesToSend.length < guestPhones.length) {
         logger.info('Skipping recently sent SMS', {
           total: guestPhones.length,
           skipped: guestPhones.length - phonesToSend.length,
-          sending: phonesToSend.length
+          sending: phonesToSend.length,
         });
       }
     }
@@ -86,21 +95,23 @@ export async function retrySMSInvitations(options: SMSRetryOptions): Promise<SMS
         sent: 0,
         failed: 0,
         skipped: guestPhones.length,
-        message: 'All guests have been sent invitations recently'
+        message: 'All guests have been sent invitations recently',
       };
     }
 
     // Import SMS API and send invitations
-    const { sendGuestInvitationsAPI } = await import('@/lib/api/sms-invitations');
-    
-    const guestsForSMS = phonesToSend.map(phone => ({
+    const { sendGuestInvitationsAPI } = await import(
+      '@/lib/api/sms-invitations'
+    );
+
+    const guestsForSMS = phonesToSend.map((phone) => ({
       phone,
-      guestName: undefined // Will use database name if available
+      guestName: undefined, // Will use database name if available
     }));
 
     const result = await sendGuestInvitationsAPI(eventId, guestsForSMS, {
       maxConcurrency: 1,
-      skipRateLimit: false
+      skipRateLimit: false,
     });
 
     // Track sent SMS to prevent immediate duplicates
@@ -108,20 +119,23 @@ export async function retrySMSInvitations(options: SMSRetryOptions): Promise<SMS
       const recentKey = `sms-sent-${eventId}`;
       const recentlySent = JSON.parse(localStorage.getItem(recentKey) || '[]');
       const now = Date.now();
-      
+
       // Add newly sent ones
-      const newEntries = phonesToSend.slice(0, result.sent).map(phone => ({
+      const newEntries = phonesToSend.slice(0, result.sent).map((phone) => ({
         phone,
-        timestamp: now
+        timestamp: now,
       }));
-      
+
       // Keep only last hour + new entries
-      const oneHourAgo = now - (60 * 60 * 1000);
+      const oneHourAgo = now - 60 * 60 * 1000;
       const updatedRecent = [
-        ...recentlySent.filter((item: { timestamp: number; phone: string }) => item.timestamp > oneHourAgo),
-        ...newEntries
+        ...recentlySent.filter(
+          (item: { timestamp: number; phone: string }) =>
+            item.timestamp > oneHourAgo,
+        ),
+        ...newEntries,
       ];
-      
+
       localStorage.setItem(recentKey, JSON.stringify(updatedRecent));
     }
 
@@ -130,9 +144,8 @@ export async function retrySMSInvitations(options: SMSRetryOptions): Promise<SMS
       sent: result.sent,
       failed: result.failed,
       skipped: guestPhones.length - phonesToSend.length,
-      message: result.message
+      message: result.message,
     };
-
   } catch (error) {
     logger.error('Manual SMS retry failed', error);
     return {
@@ -140,7 +153,7 @@ export async function retrySMSInvitations(options: SMSRetryOptions): Promise<SMS
       sent: 0,
       failed: guestPhones.length,
       skipped: 0,
-      message: error instanceof Error ? error.message : 'Unknown error'
+      message: error instanceof Error ? error.message : 'Unknown error',
     };
   }
 }
@@ -148,24 +161,26 @@ export async function retrySMSInvitations(options: SMSRetryOptions): Promise<SMS
 /**
  * Quick SMS retry for all guests in an event
  */
-export async function retryAllGuestSMS(eventId: string): Promise<SMSRetryResult> {
+export async function retryAllGuestSMS(
+  eventId: string,
+): Promise<SMSRetryResult> {
   try {
     const phonesNeedingSMS = await getGuestsNeedingSMS(eventId);
-    
+
     if (phonesNeedingSMS.length === 0) {
       return {
         success: true,
         sent: 0,
         failed: 0,
         skipped: 0,
-        message: 'No guests need SMS invitations'
+        message: 'No guests need SMS invitations',
       };
     }
 
     return await retrySMSInvitations({
       eventId,
       guestPhones: phonesNeedingSMS,
-      skipRecentlySent: true
+      skipRecentlySent: true,
     });
   } catch (error) {
     logger.error('Error in retryAllGuestSMS', error);
@@ -174,7 +189,7 @@ export async function retryAllGuestSMS(eventId: string): Promise<SMSRetryResult>
       sent: 0,
       failed: 0,
       skipped: 0,
-      message: error instanceof Error ? error.message : 'Failed to retry SMS'
+      message: error instanceof Error ? error.message : 'Failed to retry SMS',
     };
   }
 }

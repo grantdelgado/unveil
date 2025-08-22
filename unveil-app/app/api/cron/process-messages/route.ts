@@ -19,16 +19,16 @@ export async function GET(request: NextRequest) {
       '/api/messages/process-scheduled',
       request.url,
     );
-    
+
     const processorHeaders: Record<string, string> = {
       'Content-Type': 'application/json',
     };
-    
+
     // Pass through authorization for internal calls
     if (cronSecret) {
       processorHeaders['authorization'] = `Bearer ${cronSecret}`;
     }
-    
+
     const response = await fetch(processorUrl.toString(), {
       method: 'POST',
       headers: processorHeaders,
@@ -52,31 +52,51 @@ export async function GET(request: NextRequest) {
         failed: result.failed,
         details: result.details,
       },
-      metrics: result.metrics ? {
-        sessionId: result.metrics.sessionId,
-        processingDuration: result.metrics.endTime && result.metrics.startTime 
-          ? Math.round((result.metrics.endTime.getTime() - result.metrics.startTime.getTime()) / 1000) 
-          : null,
-        throughputPerMinute: Math.round(result.metrics.throughputPerMinute * 100) / 100,
-        averageProcessingTimeMs: Math.round(result.metrics.averageProcessingTimeMs),
-        channelPerformance: {
-          sms: {
-            attempted: result.metrics.deliveryChannelStats.sms.attempted,
-            successful: result.metrics.deliveryChannelStats.sms.successful,
-            successRate: Math.round(result.metrics.deliveryChannelStats.sms.successRate * 100) / 100,
-          },
-          push: {
-            attempted: result.metrics.deliveryChannelStats.push.attempted,
-            successful: result.metrics.deliveryChannelStats.push.successful,
-            successRate: Math.round(result.metrics.deliveryChannelStats.push.successRate * 100) / 100,
-          },
-          email: {
-            attempted: result.metrics.deliveryChannelStats.email.attempted,
-            successful: result.metrics.deliveryChannelStats.email.successful,
-            successRate: Math.round(result.metrics.deliveryChannelStats.email.successRate * 100) / 100,
-          },
-        },
-      } : null,
+      metrics: result.metrics
+        ? {
+            sessionId: result.metrics.sessionId,
+            processingDuration:
+              result.metrics.endTime && result.metrics.startTime
+                ? Math.round(
+                    (result.metrics.endTime.getTime() -
+                      result.metrics.startTime.getTime()) /
+                      1000,
+                  )
+                : null,
+            throughputPerMinute:
+              Math.round(result.metrics.throughputPerMinute * 100) / 100,
+            averageProcessingTimeMs: Math.round(
+              result.metrics.averageProcessingTimeMs,
+            ),
+            channelPerformance: {
+              sms: {
+                attempted: result.metrics.deliveryChannelStats.sms.attempted,
+                successful: result.metrics.deliveryChannelStats.sms.successful,
+                successRate:
+                  Math.round(
+                    result.metrics.deliveryChannelStats.sms.successRate * 100,
+                  ) / 100,
+              },
+              push: {
+                attempted: result.metrics.deliveryChannelStats.push.attempted,
+                successful: result.metrics.deliveryChannelStats.push.successful,
+                successRate:
+                  Math.round(
+                    result.metrics.deliveryChannelStats.push.successRate * 100,
+                  ) / 100,
+              },
+              email: {
+                attempted: result.metrics.deliveryChannelStats.email.attempted,
+                successful:
+                  result.metrics.deliveryChannelStats.email.successful,
+                successRate:
+                  Math.round(
+                    result.metrics.deliveryChannelStats.email.successRate * 100,
+                  ) / 100,
+              },
+            },
+          }
+        : null,
     };
 
     return NextResponse.json(responseData);

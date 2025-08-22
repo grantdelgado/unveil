@@ -9,14 +9,17 @@ const RATE_LIMIT_CONFIG = {
   PHONE_MAX_ATTEMPTS: 3,
   PHONE_WINDOW_MINUTES: 10,
   PHONE_COOLDOWN_SECONDS: 30, // Reduced from 60 to 30 seconds
-  
+
   // Per IP limits (burst protection)
   IP_MAX_ATTEMPTS: 10,
   IP_WINDOW_MINUTES: 10,
 };
 
 // In-memory store for rate limiting (in production, use Redis/Upstash)
-const rateLimitStore = new Map<string, { count: number; resetTime: number; lastAttempt: number }>();
+const rateLimitStore = new Map<
+  string,
+  { count: number; resetTime: number; lastAttempt: number }
+>();
 
 interface RateLimitResult {
   allowed: boolean;
@@ -39,28 +42,34 @@ function checkPhoneRateLimit(phone: string): RateLimitResult {
     // First request or window expired
     const resetTime = now + windowMs;
     rateLimitStore.set(key, { count: 1, resetTime, lastAttempt: now });
-    return { allowed: true, remaining: RATE_LIMIT_CONFIG.PHONE_MAX_ATTEMPTS - 1, resetTime };
+    return {
+      allowed: true,
+      remaining: RATE_LIMIT_CONFIG.PHONE_MAX_ATTEMPTS - 1,
+      resetTime,
+    };
   }
 
   // Check cooldown period
   if (now - current.lastAttempt < cooldownMs) {
-    const retryAfter = Math.ceil((current.lastAttempt + cooldownMs - now) / 1000);
-    return { 
-      allowed: false, 
-      remaining: 0, 
+    const retryAfter = Math.ceil(
+      (current.lastAttempt + cooldownMs - now) / 1000,
+    );
+    return {
+      allowed: false,
+      remaining: 0,
       resetTime: current.resetTime,
-      retryAfter 
+      retryAfter,
     };
   }
 
   // Check max attempts
   if (current.count >= RATE_LIMIT_CONFIG.PHONE_MAX_ATTEMPTS) {
     const retryAfter = Math.ceil((current.resetTime - now) / 1000);
-    return { 
-      allowed: false, 
-      remaining: 0, 
+    return {
+      allowed: false,
+      remaining: 0,
       resetTime: current.resetTime,
-      retryAfter 
+      retryAfter,
     };
   }
 
@@ -89,16 +98,20 @@ function checkIPRateLimit(ip: string): RateLimitResult {
     // First request or window expired
     const resetTime = now + windowMs;
     rateLimitStore.set(key, { count: 1, resetTime, lastAttempt: now });
-    return { allowed: true, remaining: RATE_LIMIT_CONFIG.IP_MAX_ATTEMPTS - 1, resetTime };
+    return {
+      allowed: true,
+      remaining: RATE_LIMIT_CONFIG.IP_MAX_ATTEMPTS - 1,
+      resetTime,
+    };
   }
 
   if (current.count >= RATE_LIMIT_CONFIG.IP_MAX_ATTEMPTS) {
     const retryAfter = Math.ceil((current.resetTime - now) / 1000);
-    return { 
-      allowed: false, 
-      remaining: 0, 
+    return {
+      allowed: false,
+      remaining: 0,
       resetTime: current.resetTime,
-      retryAfter 
+      retryAfter,
     };
   }
 
@@ -125,7 +138,12 @@ function getClientIP(request: NextRequest): string {
 /**
  * Log OTP resend attempt for audit purposes
  */
-async function logOTPResendAttempt(phone: string, ip: string, success: boolean, error?: string) {
+async function logOTPResendAttempt(
+  phone: string,
+  ip: string,
+  success: boolean,
+  error?: string,
+) {
   try {
     // We'll use the existing message_deliveries table pattern for audit logging
     // For now, just log to application logs
@@ -143,7 +161,7 @@ async function logOTPResendAttempt(phone: string, ip: string, success: boolean, 
 
 export async function POST(request: NextRequest) {
   const clientIP = getClientIP(request);
-  
+
   try {
     // Parse request body
     const body = await request.json();
@@ -152,17 +170,20 @@ export async function POST(request: NextRequest) {
     if (!phone || typeof phone !== 'string') {
       return NextResponse.json(
         { error: 'Phone number is required' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // Validate phone number format
     const validation = validatePhoneNumber(phone);
     if (!validation.isValid) {
-      logAuthError('Invalid phone number format for OTP resend', validation.error);
+      logAuthError(
+        'Invalid phone number format for OTP resend',
+        validation.error,
+      );
       return NextResponse.json(
         { error: 'Invalid phone number format' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -172,47 +193,57 @@ export async function POST(request: NextRequest) {
     const ipRateLimit = checkIPRateLimit(clientIP);
     if (!ipRateLimit.allowed) {
       logAuthError('IP rate limit exceeded for OTP resend', { ip: clientIP });
-      await logOTPResendAttempt(normalizedPhone, clientIP, false, 'IP rate limit exceeded');
-      
+      await logOTPResendAttempt(
+        normalizedPhone,
+        clientIP,
+        false,
+        'IP rate limit exceeded',
+      );
+
       return NextResponse.json(
-        { 
+        {
           error: 'Too many requests from this location',
-          retryAfter: ipRateLimit.retryAfter 
+          retryAfter: ipRateLimit.retryAfter,
         },
-        { 
+        {
           status: 429,
           headers: {
-            'Retry-After': ipRateLimit.retryAfter?.toString() || '60'
-          }
-        }
+            'Retry-After': ipRateLimit.retryAfter?.toString() || '60',
+          },
+        },
       );
     }
 
     // Check phone-based rate limiting
     const phoneRateLimit = checkPhoneRateLimit(normalizedPhone);
     if (!phoneRateLimit.allowed) {
-      logAuthError('Phone rate limit exceeded for OTP resend', { 
-        phone: normalizedPhone.slice(0, 6) + '...' 
+      logAuthError('Phone rate limit exceeded for OTP resend', {
+        phone: normalizedPhone.slice(0, 6) + '...',
       });
-      await logOTPResendAttempt(normalizedPhone, clientIP, false, 'Phone rate limit exceeded');
-      
+      await logOTPResendAttempt(
+        normalizedPhone,
+        clientIP,
+        false,
+        'Phone rate limit exceeded',
+      );
+
       return NextResponse.json(
-        { 
+        {
           error: 'Please wait before requesting another code',
-          retryAfter: phoneRateLimit.retryAfter 
+          retryAfter: phoneRateLimit.retryAfter,
         },
-        { 
+        {
           status: 429,
           headers: {
-            'Retry-After': phoneRateLimit.retryAfter?.toString() || '60'
-          }
-        }
+            'Retry-After': phoneRateLimit.retryAfter?.toString() || '60',
+          },
+        },
       );
     }
 
     // Send OTP using the same Supabase method as initial send
     logAuth('Resending OTP to phone', { phone: normalizedPhone, context });
-    
+
     const { error } = await supabase.auth.signInWithOtp({
       phone: normalizedPhone,
       options: {
@@ -222,11 +253,16 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       logAuthError('Failed to resend OTP', error.message);
-      await logOTPResendAttempt(normalizedPhone, clientIP, false, error.message);
-      
+      await logOTPResendAttempt(
+        normalizedPhone,
+        clientIP,
+        false,
+        error.message,
+      );
+
       return NextResponse.json(
         { error: 'Failed to send verification code. Please try again.' },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -236,21 +272,25 @@ export async function POST(request: NextRequest) {
 
     // Return generic success message to avoid phone enumeration
     return NextResponse.json(
-      { 
-        success: true, 
+      {
+        success: true,
         message: 'If your number is registered, a verification code was sent.',
-        remaining: phoneRateLimit.remaining 
+        remaining: phoneRateLimit.remaining,
       },
-      { status: 200 }
+      { status: 200 },
     );
-
   } catch (err) {
     logAuthError('Unexpected error in OTP resend', err);
-    await logOTPResendAttempt('unknown', clientIP, false, 'Unexpected server error');
-    
+    await logOTPResendAttempt(
+      'unknown',
+      clientIP,
+      false,
+      'Unexpected server error',
+    );
+
     return NextResponse.json(
       { error: 'An unexpected error occurred. Please try again.' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

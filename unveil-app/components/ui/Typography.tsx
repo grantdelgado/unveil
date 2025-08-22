@@ -7,7 +7,10 @@ interface PageTitleProps {
   className?: string;
 }
 
-export const PageTitle: React.FC<PageTitleProps> = ({ children, className }) => {
+export const PageTitle: React.FC<PageTitleProps> = ({
+  children,
+  className,
+}) => {
   return (
     <h1 className={cn('text-3xl font-bold text-gray-900 mb-2', className)}>
       {children}
@@ -22,11 +25,7 @@ interface SubTitleProps {
 }
 
 export const SubTitle: React.FC<SubTitleProps> = ({ children, className }) => {
-  return (
-    <p className={cn('text-base text-gray-500', className)}>
-      {children}
-    </p>
-  );
+  return <p className={cn('text-base text-gray-500', className)}>{children}</p>;
 };
 
 // Section Title Component
@@ -35,7 +34,10 @@ interface SectionTitleProps {
   className?: string;
 }
 
-export const SectionTitle: React.FC<SectionTitleProps> = ({ children, className }) => {
+export const SectionTitle: React.FC<SectionTitleProps> = ({
+  children,
+  className,
+}) => {
   return (
     <h2 className={cn('text-xl font-bold text-gray-900 mb-4', className)}>
       {children}
@@ -51,16 +53,19 @@ interface FieldLabelProps {
   required?: boolean;
 }
 
-export const FieldLabel: React.FC<FieldLabelProps> = ({ 
-  children, 
-  htmlFor, 
+export const FieldLabel: React.FC<FieldLabelProps> = ({
+  children,
+  htmlFor,
   className,
-  required = false 
+  required = false,
 }) => {
   return (
-    <label 
+    <label
       htmlFor={htmlFor}
-      className={cn('block text-base font-medium text-gray-700 mb-2', className)}
+      className={cn(
+        'block text-base font-medium text-gray-700 mb-2',
+        className,
+      )}
     >
       {children}
       {required && <span className="text-red-500 ml-1">*</span>}
@@ -75,17 +80,19 @@ interface MicroCopyProps {
   centered?: boolean;
 }
 
-export const MicroCopy: React.FC<MicroCopyProps> = ({ 
-  children, 
+export const MicroCopy: React.FC<MicroCopyProps> = ({
+  children,
   className,
-  centered = true 
+  centered = true,
 }) => {
   return (
-    <p className={cn(
-      'text-sm text-gray-500',
-      centered && 'text-center',
-      className
-    )}>
+    <p
+      className={cn(
+        'text-sm text-gray-500',
+        centered && 'text-center',
+        className,
+      )}
+    >
       {children}
     </p>
   );
@@ -96,4 +103,4 @@ PageTitle.displayName = 'PageTitle';
 SubTitle.displayName = 'SubTitle';
 SectionTitle.displayName = 'SectionTitle';
 FieldLabel.displayName = 'FieldLabel';
-MicroCopy.displayName = 'MicroCopy'; 
+MicroCopy.displayName = 'MicroCopy';

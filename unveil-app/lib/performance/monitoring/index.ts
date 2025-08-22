@@ -1,6 +1,6 @@
 /**
  * 🚨 PERFORMANCE MONITORING CENTER
- * 
+ *
  * Real-time performance monitoring and alerting system.
  * Provides development warnings and performance tracking.
  */

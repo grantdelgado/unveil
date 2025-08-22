@@ -7,21 +7,21 @@ import { logger } from '@/lib/logger';
 export async function POST(request: NextRequest) {
   try {
     logger.info('SMS API: Request received');
-    
+
     const { eventId, guests, options = {} } = await request.json();
 
     logger.info('SMS API: Request parsed', {
       eventId,
       guestCount: guests?.length || 0,
-      hasOptions: !!options
+      hasOptions: !!options,
     });
 
     // Validate required fields
     if (!eventId || !guests || !Array.isArray(guests)) {
-      logger.error('SMS API: Missing required fields', { 
-        eventId: !!eventId, 
-        guests: !!guests, 
-        isArray: Array.isArray(guests) 
+      logger.error('SMS API: Missing required fields', {
+        eventId: !!eventId,
+        guests: !!guests,
+        isArray: Array.isArray(guests),
       });
       return NextResponse.json(
         { error: 'Event ID and guests array are required' },
@@ -30,12 +30,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate guests array structure
-    const invalidGuests = guests.filter(guest => 
-      !guest.phone || typeof guest.phone !== 'string'
+    const invalidGuests = guests.filter(
+      (guest) => !guest.phone || typeof guest.phone !== 'string',
     );
 
     if (invalidGuests.length > 0) {
-      logger.error('SMS API: Invalid guests found', { count: invalidGuests.length });
+      logger.error('SMS API: Invalid guests found', {
+        count: invalidGuests.length,
+      });
       return NextResponse.json(
         { error: 'All guests must have a valid phone number' },
         { status: 400 },
@@ -44,9 +46,12 @@ export async function POST(request: NextRequest) {
 
     // Get authenticated user with robust auth handling
     const supabaseAuth = createApiSupabaseClient(request);
-    
+
     // Try session from cookies first
-    const { data: { session }, error: sessionError } = await supabaseAuth.auth.getSession();
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabaseAuth.auth.getSession();
     let currentUser = session?.user;
 
     if (sessionError || !currentUser) {
@@ -60,7 +65,10 @@ export async function POST(request: NextRequest) {
       }
 
       const token = authHeader.substring(7);
-      const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
+      const {
+        data: { user },
+        error: userError,
+      } = await supabaseAdmin.auth.getUser(token);
 
       if (userError || !user) {
         return NextResponse.json(
@@ -68,15 +76,15 @@ export async function POST(request: NextRequest) {
           { status: 401 },
         );
       }
-      
+
       currentUser = user;
     }
 
     // Add debug logging for user context
-    logger.info('SMS API: Checking event access', { 
-      eventId, 
+    logger.info('SMS API: Checking event access', {
+      eventId,
       currentUserId: currentUser.id,
-      currentUserPhone: currentUser.phone 
+      currentUserPhone: currentUser.phone,
     });
 
     // First check if event exists (use admin client to bypass RLS for existence check)
@@ -87,22 +95,22 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (eventError || !event) {
-      logger.error('SMS API: Event lookup failed', { 
-        eventId, 
+      logger.error('SMS API: Event lookup failed', {
+        eventId,
         currentUserId: currentUser.id,
         error: eventError?.message,
         errorCode: eventError?.code,
         errorDetails: eventError?.details,
-        hint: eventError?.hint
+        hint: eventError?.hint,
       });
-      
+
       // Event truly does not exist
       logger.error('SMS API: Event does not exist in database', {
         eventId,
         currentUserId: currentUser.id,
-        error: eventError?.message
+        error: eventError?.message,
       });
-      
+
       return NextResponse.json(
         { error: 'Event not found or access denied' },
         { status: 404 },
@@ -114,43 +122,45 @@ export async function POST(request: NextRequest) {
       eventTitle: event.title,
       eventHostId: event.host_user_id,
       currentUserId: currentUser.id,
-      isUserTheHost: event.host_user_id === currentUser.id
+      isUserTheHost: event.host_user_id === currentUser.id,
     });
 
     // Check if current user is authorized as host
     const isPrimaryHost = event.host_user_id === currentUser.id;
     let isDelegatedHost = false;
-    
+
     if (!isPrimaryHost) {
       // Check if user is a delegated host using the RPC function
-      const { data: hostCheck, error: hostError } = await supabaseAuth
-        .rpc('is_event_host', { p_event_id: eventId });
+      const { data: hostCheck, error: hostError } = await supabaseAuth.rpc(
+        'is_event_host',
+        { p_event_id: eventId },
+      );
 
       if (hostError) {
-        logger.error('Delegated host authorization check failed', { 
-          eventId, 
-          userId: currentUser.id, 
-          error: hostError 
+        logger.error('Delegated host authorization check failed', {
+          eventId,
+          userId: currentUser.id,
+          error: hostError,
         });
         return NextResponse.json(
           { error: 'Authorization check failed' },
           { status: 500 },
         );
       }
-      
+
       isDelegatedHost = !!hostCheck;
     }
 
     const isAuthorizedHost = isPrimaryHost || isDelegatedHost;
-    
+
     if (!isAuthorizedHost) {
-      logger.warn('User not authorized as host', { 
-        eventId, 
+      logger.warn('User not authorized as host', {
+        eventId,
         userId: currentUser.id,
         eventTitle: event.title,
         eventHostUserId: event.host_user_id,
         isPrimaryHost,
-        isDelegatedHost
+        isDelegatedHost,
       });
       return NextResponse.json(
         { error: 'User is not authorized as host for this event' },
@@ -163,29 +173,25 @@ export async function POST(request: NextRequest) {
       userId: currentUser.id,
       isPrimaryHost,
       isDelegatedHost,
-      authorizationType: isPrimaryHost ? 'primary' : 'delegated'
+      authorizationType: isPrimaryHost ? 'primary' : 'delegated',
     });
 
     logger.info('SMS API: Calling sendBatchGuestInvitations', {
       eventId,
       guestCount: guests.length,
-      maxConcurrency: options.maxConcurrency || 3
+      maxConcurrency: options.maxConcurrency || 3,
     });
 
     // Send the batch invitations
-    const result = await sendBatchGuestInvitations(
-      guests,
-      eventId,
-      {
-        maxConcurrency: options.maxConcurrency || 3,
-        skipRateLimit: options.skipRateLimit || false
-      }
-    );
+    const result = await sendBatchGuestInvitations(guests, eventId, {
+      maxConcurrency: options.maxConcurrency || 3,
+      skipRateLimit: options.skipRateLimit || false,
+    });
 
     logger.info('SMS API: Batch SMS completed', {
       sent: result.sent,
       failed: result.failed,
-      rateLimited: result.rateLimited
+      rateLimited: result.rateLimited,
     });
 
     return NextResponse.json({
@@ -198,15 +204,14 @@ export async function POST(request: NextRequest) {
       }${
         result.rateLimited > 0 ? ` (${result.rateLimited} rate limited)` : ''
       }`,
-      results: result.results
+      results: result.results,
     });
-
   } catch (error) {
     logger.error('SMS API: Unexpected error', error);
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to send SMS invitations',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 },
     );

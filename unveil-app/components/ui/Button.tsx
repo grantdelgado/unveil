@@ -12,9 +12,12 @@ export interface ButtonProps
 
 const buttonVariants = {
   primary: 'bg-stone-800 text-white hover:bg-stone-900 focus:ring-stone-500',
-  secondary: 'bg-stone-100 text-stone-900 hover:bg-stone-200 focus:ring-stone-300',
-  outline: 'border border-stone-300 bg-transparent text-stone-700 hover:bg-stone-50 focus:ring-stone-300',
-  ghost: 'bg-transparent text-stone-700 hover:bg-stone-100 focus:ring-stone-300',
+  secondary:
+    'bg-stone-100 text-stone-900 hover:bg-stone-200 focus:ring-stone-300',
+  outline:
+    'border border-stone-300 bg-transparent text-stone-700 hover:bg-stone-50 focus:ring-stone-300',
+  ghost:
+    'bg-transparent text-stone-700 hover:bg-stone-100 focus:ring-stone-300',
   destructive: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
 };
 
@@ -42,12 +45,16 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
       if (disabled || isLoading) return;
-      
+
       // Trigger haptic feedback based on variant
-      const hapticPattern = variant === 'destructive' ? 'warning' : 
-                           variant === 'primary' ? 'medium' : 'light';
+      const hapticPattern =
+        variant === 'destructive'
+          ? 'warning'
+          : variant === 'primary'
+            ? 'medium'
+            : 'light';
       triggerHaptic(hapticPattern);
-      
+
       onClick?.(e);
     };
 

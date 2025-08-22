@@ -8,11 +8,15 @@ import {
   PageWrapper,
   CardContainer,
   BackButton,
-  LoadingSpinner
+  LoadingSpinner,
 } from '@/components/ui';
 
 // Lazy load enhanced messaging center with selection and scheduling
-const LazyMessageCenter = lazy(() => import('@/components/features/messaging/host/MessageCenter').then(m => ({ default: m.MessageCenter })));
+const LazyMessageCenter = lazy(() =>
+  import('@/components/features/messaging/host/MessageCenter').then((m) => ({
+    default: m.MessageCenter,
+  })),
+);
 
 type Event = Database['public']['Tables']['events']['Row'];
 
@@ -24,7 +28,7 @@ function MessagesPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const eventId = params.eventId as string;
-  
+
   // Get preselection parameters from URL
   const preset = searchParams.get('preset'); // 'not_invited', 'custom', etc.
   const guestsParam = searchParams.get('guests'); // comma-separated guest IDs
@@ -96,16 +100,16 @@ function MessagesPageContent() {
   //   if (sent === '1' && !hasShownToast && event) {
   //     const sentCountNum = parseInt(sentCount || '0', 10);
   //     const failedCountNum = parseInt(failedCount || '0', 10);
-  //     
+  //
   //     if (scheduledAt) {
   //       // Scheduled message
   //       const scheduledDate = new Date(scheduledAt);
   //       const formattedDate = scheduledDate.toLocaleDateString();
-  //       const formattedTime = scheduledDate.toLocaleTimeString([], { 
-  //         hour: '2-digit', 
-  //         minute: '2-digit' 
+  //       const formattedTime = scheduledDate.toLocaleTimeString([], {
+  //         hour: '2-digit',
+  //         minute: '2-digit'
   //       });
-  //       
+  //
   //       showSuccess(
   //         'Message scheduled',
   //         `Message scheduled for ${formattedDate} at ${formattedTime}.`
@@ -137,9 +141,9 @@ function MessagesPageContent() {
   //         } : undefined
   //       );
   //     }
-  //     
+  //
   //     setHasShownToast(true);
-  //     
+  //
   //     // Clear query params to prevent duplicate toasts
   //     const newUrl = new URL(window.location.href);
   //     newUrl.searchParams.delete('sent');
@@ -147,7 +151,7 @@ function MessagesPageContent() {
   //     newUrl.searchParams.delete('sentCount');
   //     newUrl.searchParams.delete('failedCount');
   //     newUrl.searchParams.delete('scheduledAt');
-  //     
+  //
   //     // Use router.replace to update URL without triggering navigation
   //     router.replace(newUrl.pathname + (newUrl.search ? `?${newUrl.searchParams.toString()}` : ''));
   //   }
@@ -157,7 +161,7 @@ function MessagesPageContent() {
   if (loading) {
     return (
       <PageWrapper centered={false}>
-        <div className="max-w-4xl mx-auto space-y-6">
+        <div className="mx-auto max-w-[840px] sm:max-w-[960px] px-4 sm:px-6 space-y-6">
           {/* Header skeleton */}
           <CardContainer>
             <div className="animate-pulse space-y-4">
@@ -175,8 +179,8 @@ function MessagesPageContent() {
   if (error || !event) {
     return (
       <PageWrapper centered={false}>
-        <div className="max-w-4xl mx-auto space-y-6">
-          <BackButton 
+        <div className="mx-auto max-w-[840px] sm:max-w-[960px] px-4 sm:px-6 space-y-6">
+          <BackButton
             href={`/host/events/${eventId}/dashboard`}
             fallback="/select-event"
           >
@@ -201,7 +205,7 @@ function MessagesPageContent() {
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Navigation */}
         <div className="mb-6">
-          <BackButton 
+          <BackButton
             href={`/host/events/${eventId}/dashboard`}
             fallback="/select-event"
           >
@@ -210,18 +214,22 @@ function MessagesPageContent() {
         </div>
 
         {/* Message Center Interface */}
-        <Suspense 
+        <Suspense
           fallback={
             <div className="flex items-center justify-center py-8">
               <LoadingSpinner size="lg" />
-              <span className="ml-3 text-gray-600">Loading message center...</span>
+              <span className="ml-3 text-gray-600">
+                Loading message center...
+              </span>
             </div>
           }
         >
-          <LazyMessageCenter 
-            eventId={eventId} 
+          <LazyMessageCenter
+            eventId={eventId}
             preselectionPreset={preset}
-            preselectedGuestIds={guestsParam ? guestsParam.split(',') : undefined}
+            preselectedGuestIds={
+              guestsParam ? guestsParam.split(',') : undefined
+            }
           />
         </Suspense>
       </div>

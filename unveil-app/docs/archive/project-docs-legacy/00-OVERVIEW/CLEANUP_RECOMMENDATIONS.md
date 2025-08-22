@@ -2,20 +2,22 @@
 
 **Goal**: Reduce cognitive load and focus on high-impact documentation  
 **Principle**: "Show, don't overwhelm" - Quality over quantity  
-**Target**: Reduce from 55 files to ~25 high-impact files  
+**Target**: Reduce from 55 files to ~25 high-impact files
 
 ---
 
 ## 📊 **File Audit Results**
 
 ### **Current State: 55 Files**
+
 - 📁 **Archive Files**: 13 files (historical value only)
-- 📁 **Active Documentation**: 20 files (keep & enhance)  
+- 📁 **Active Documentation**: 20 files (keep & enhance)
 - 📁 **Project Plans**: 10 files (6 completed, 4 active)
 - 📁 **Reference Materials**: 9 files (consolidation opportunity)
 - 📁 **Scripts/Other**: 3 files (utility documentation)
 
 ### **Target State: ~25 Files**
+
 - 📁 **Strategic**: 3 files (overview, roadmap, business case)
 - 📁 **Core Technical**: 8 files (architecture, dev guide, key features)
 - 📁 **Active Plans**: 2 files (current sprint work only)
@@ -28,7 +30,8 @@
 
 ### **1. Archive/Remove (Low Current Value)**
 
-#### **Completed Project Plans** *[MOVE TO ARCHIVE]*
+#### **Completed Project Plans** _[MOVE TO ARCHIVE]_
+
 ```bash
 # These plans are completed - move to archive for historical reference
 mv project-docs/plans-messaging-project-plan.md project-docs/archive/
@@ -37,7 +40,8 @@ mv project-docs/plans-unveil-ui-standardization.md project-docs/archive/
 mv project-docs/plans-participant-consolidation-plan.md project-docs/archive/
 ```
 
-#### **Redundant/Outdated Documentation** *[REMOVE]*
+#### **Redundant/Outdated Documentation** _[REMOVE]_
+
 ```bash
 # These files have limited current value or are superseded
 rm project-docs/docs-documentation-changelog.md  # Superseded by git history
@@ -45,17 +49,19 @@ rm project-docs/CLAUDE.md                        # AI context file - not needed 
 rm project-docs/scripts-README.md               # Development utility - move to /scripts
 ```
 
-#### **Website Project Plans** *[REMOVE - OUT OF SCOPE]*
+#### **Website Project Plans** _[REMOVE - OUT OF SCOPE]_
+
 ```bash
 # These are for separate website project, not core app
 rm project-docs/plans-unveil-website-project-plan.md
-rm project-docs/plans-unveil-website-recovery-plan.md  
+rm project-docs/plans-unveil-website-recovery-plan.md
 rm project-docs/plans-unveil-website-simplified-plan.md
 ```
 
 ### **2. Consolidate (Reduce Redundancy)**
 
 #### **Security Documentation Merge**
+
 ```bash
 # Consolidate security info into single comprehensive guide
 # Keep: docs-security-notes.md (enhance with below content)
@@ -64,6 +70,7 @@ rm project-docs/plans-unveil-website-simplified-plan.md
 ```
 
 #### **Reference Materials Cleanup**
+
 ```bash
 # Keep essential reference files only
 # Keep: reference-brand.md, reference-style-guide.md, reference-quick-reference.md
@@ -76,6 +83,7 @@ rm project-docs/reference-risk-matrix.md      # Merge into MVP-ProjectPlan.md
 ```
 
 #### **Development Documentation Consolidation**
+
 ```bash
 # Merge overlapping development setup info
 # Primary: docs-developer-guide.md (comprehensive setup)
@@ -88,13 +96,15 @@ rm project-docs/reference-risk-matrix.md      # Merge into MVP-ProjectPlan.md
 ## 📁 **Optimized File Structure**
 
 ### **Strategic Documents (3 files)**
+
 ```
 ├── README.md                         # Master navigation
-├── STRATEGIC_OVERVIEW.md             # Executive summary & roadmap  
+├── STRATEGIC_OVERVIEW.md             # Executive summary & roadmap
 └── reference-MVP-ProjectPlan.md      # Business case & market analysis
 ```
 
 ### **Core Technical Documentation (8 files)**
+
 ```
 ├── docs-architecture-guide.md        # System architecture & tech stack
 ├── docs-developer-guide.md           # Setup & development workflows (enhanced)
@@ -107,12 +117,14 @@ rm project-docs/reference-risk-matrix.md      # Merge into MVP-ProjectPlan.md
 ```
 
 ### **Active Project Plans (2 files)**
+
 ```
 ├── plans-Phase-7-Final-Integration-Plan.md    # Current sprint
 └── plans-supabase-schema-remediation-plan.md  # Active technical work
 ```
 
 ### **Reference Materials (4 files)**
+
 ```
 ├── reference-brand.md                # Brand guidelines & voice
 ├── reference-style-guide.md          # Technical style standards
@@ -121,6 +133,7 @@ rm project-docs/reference-risk-matrix.md      # Merge into MVP-ProjectPlan.md
 ```
 
 ### **Essential Archive (8 files)**
+
 ```
 archive/
 ├── archive-COMPLETION_SUMMARY.md     # Major milestone summary
@@ -135,6 +148,7 @@ archive/
 ## 🎯 **Implementation Commands**
 
 ### **Phase 1: Remove Low-Value Files**
+
 ```bash
 # Navigate to project directory
 cd project-docs
@@ -148,6 +162,7 @@ echo "Removed 7 low-value files"
 ```
 
 ### **Phase 2: Archive Completed Projects**
+
 ```bash
 # Create archive subdirectory
 mkdir -p archive
@@ -165,12 +180,13 @@ echo "Archived 17 completed files"
 ```
 
 ### **Phase 3: Enhance Remaining Files**
+
 ```bash
 # Merge schema binding into developer guide
 cat docs-mcp-schema-binding.md >> docs-developer-guide.md
 rm docs-mcp-schema-binding.md
 
-# Merge risk matrix into MVP plan  
+# Merge risk matrix into MVP plan
 cat reference-risk-matrix.md >> reference-MVP-ProjectPlan.md
 rm reference-risk-matrix.md
 
@@ -182,18 +198,21 @@ echo "Consolidated overlapping documentation"
 ## 📊 **Impact Analysis**
 
 ### **Before Cleanup: 55 Files**
+
 - ❌ **Cognitive Overload**: Too many options, unclear priorities
 - ❌ **Outdated Content**: 13 archive files + 6 completed plans in root
 - ❌ **Redundant Information**: Multiple files covering same topics
 - ❌ **Poor Signal-to-Noise**: Important docs buried in file list
 
 ### **After Cleanup: ~25 Files**
+
 - ✅ **Clear Priorities**: Strategic docs prominently featured
 - ✅ **Current Content**: Only active and relevant documentation
-- ✅ **Consolidated Information**: Single source of truth for each topic  
+- ✅ **Consolidated Information**: Single source of truth for each topic
 - ✅ **High Signal-to-Noise**: Every file has clear purpose and value
 
 ### **User Experience Improvements**
+
 - **New Developers**: 8 core files vs 55 options
 - **Stakeholders**: 3 strategic docs vs scattered information
 - **Partners**: 4 reference docs vs 20+ mixed files
@@ -204,12 +223,14 @@ echo "Consolidated overlapping documentation"
 ## 🏆 **World-Class Standards Result**
 
 ### **Professional Presentation**
+
 - **Clean Organization**: Logical structure, no clutter
 - **Strategic Focus**: Business context prominently featured
 - **Technical Excellence**: Comprehensive but focused documentation
 - **Maintenance Efficiency**: Smaller surface area for updates
 
 ### **Stakeholder Value**
+
 - **Executives**: Clear strategic overview and business case
 - **Engineers**: Focused technical documentation without noise
 - **Partners**: Streamlined integration and reference materials
@@ -219,4 +240,4 @@ echo "Consolidated overlapping documentation"
 
 **🎯 Recommendation**: Implement Phase 1 & 2 immediately (10 minutes) for major impact improvement. Phase 3 can be done over time as content is naturally updated.
 
-**📈 Expected Result**: Documentation that clearly demonstrates world-class product management and engineering practices, suitable for any professional context. 
+**📈 Expected Result**: Documentation that clearly demonstrates world-class product management and engineering practices, suitable for any professional context.

@@ -42,8 +42,10 @@ export default function HostSchedulePage() {
         }
 
         // Check if user is authorized as host
-        const { data: hostCheck, error: hostError } = await supabase
-          .rpc('is_event_host', { p_event_id: eventId });
+        const { data: hostCheck, error: hostError } = await supabase.rpc(
+          'is_event_host',
+          { p_event_id: eventId },
+        );
 
         if (hostError) {
           console.error('Host authorization check failed:', hostError);
@@ -92,7 +94,9 @@ export default function HostSchedulePage() {
         <div className="max-w-4xl mx-auto space-y-6">
           <div className="flex items-center justify-center py-12">
             <LoadingSpinner size="lg" />
-            <span className="ml-3 text-gray-600">Loading event schedule...</span>
+            <span className="ml-3 text-gray-600">
+              Loading event schedule...
+            </span>
           </div>
         </div>
       </PageWrapper>
@@ -103,7 +107,7 @@ export default function HostSchedulePage() {
     return (
       <PageWrapper>
         <div className="max-w-4xl mx-auto space-y-6">
-          <BackButton 
+          <BackButton
             href={`/host/events/${eventId}/dashboard`}
             fallback="/select-event"
           >
@@ -111,9 +115,12 @@ export default function HostSchedulePage() {
           </BackButton>
           <div className="text-center py-12">
             <div className="text-4xl mb-4">😔</div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Unable to Load Schedule</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              Unable to Load Schedule
+            </h1>
             <p className="text-gray-600">
-              {error || 'This event may have been moved or is no longer available.'}
+              {error ||
+                'This event may have been moved or is no longer available.'}
             </p>
           </div>
         </div>
@@ -126,7 +133,7 @@ export default function HostSchedulePage() {
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Navigation */}
         <div className="mb-6">
-          <BackButton 
+          <BackButton
             href={`/host/events/${eventId}/dashboard`}
             fallback="/select-event"
           >
@@ -136,17 +143,17 @@ export default function HostSchedulePage() {
 
         {/* Page Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Event Schedule</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Event Schedule
+          </h1>
           <p className="text-gray-600">
-            Manage the timeline and schedule items for <span className="font-medium text-gray-800">{event.title}</span>
+            Manage the timeline and schedule items for{' '}
+            <span className="font-medium text-gray-800">{event.title}</span>
           </p>
         </div>
 
         {/* Schedule Management */}
-        <ScheduleManagement 
-          eventId={eventId}
-          event={event}
-        />
+        <ScheduleManagement eventId={eventId} event={event} />
       </div>
     </PageWrapper>
   );

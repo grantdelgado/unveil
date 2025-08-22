@@ -42,7 +42,11 @@ export default function HomePage() {
   }, [router, session, loading]);
 
   return (
-    <div className="min-h-[100dvh] bg-white flex flex-col items-center justify-center px-6 text-gray-900" aria-busy="true" aria-live="polite">
+    <div
+      className="min-h-[100dvh] bg-white flex flex-col items-center justify-center px-6 text-gray-900"
+      aria-busy="true"
+      aria-live="polite"
+    >
       <UnveilHeader size="lg" showTagline />
       <div className="mt-8">
         <LoadingSpinner size="lg" text="Loading..." />

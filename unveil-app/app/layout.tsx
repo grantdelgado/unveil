@@ -8,6 +8,7 @@ import { APP_CONFIG } from '@/lib/constants';
 import { Suspense } from 'react';
 import { PerformanceMonitor } from '@/components/monitoring/PerformanceMonitor';
 import { AuthProvider } from '@/lib/auth/AuthProvider';
+import { SubscriptionProvider } from '@/lib/realtime/SubscriptionProvider';
 import { DevToolsGate } from '@/lib/dev/DevToolsGate';
 
 // Load auth debug utilities in development
@@ -33,7 +34,11 @@ const inter = localFont({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NODE_ENV === 'production' ? (process.env.NEXT_PUBLIC_APP_URL || 'https://app.sendunveil.com') : 'http://localhost:3000'),
+  metadataBase: new URL(
+    process.env.NODE_ENV === 'production'
+      ? process.env.NEXT_PUBLIC_APP_URL || 'https://app.sendunveil.com'
+      : 'http://localhost:3000',
+  ),
   title: APP_CONFIG.name,
   description: APP_CONFIG.description,
   applicationName: 'Unveil Wedding App',
@@ -86,10 +91,14 @@ export const metadata: Metadata = {
     images: ['/icons/twitter-image.png'],
   },
   icons: {
-    icon: '/icon.png',        // served from app/icon.png
+    icon: '/icon.png', // served from app/icon.png
     apple: '/apple-icon.png', // served from app/apple-icon.png
     other: [
-      { rel: 'mask-icon', url: '/icons/safari-pinned-tab.svg', color: '#E15B50' },
+      {
+        rel: 'mask-icon',
+        url: '/icons/safari-pinned-tab.svg',
+        color: '#E15B50',
+      },
     ],
   },
 };
@@ -119,29 +128,41 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="Unveil" />
-        
+
         {/* Explicit Apple touch icons for better iOS compatibility */}
         <link rel="apple-touch-icon" href="/apple-icon.png?v=1755746392" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/apple-icon.png?v=1755746392" />
+        <link
+          rel="apple-touch-icon"
+          sizes="180x180"
+          href="/apple-icon.png?v=1755746392"
+        />
         <meta name="msapplication-TileColor" content="#E15B50" />
         <meta name="msapplication-config" content="/icons/browserconfig.xml" />
         <meta name="theme-color" content="#E15B50" />
-        
+
         {/* Preload critical resources */}
         <link rel="dns-prefetch" href="//wvhtbqvnamerdkkjknuv.supabase.co" />
       </head>
-      <body className={`${inter.variable} antialiased font-sans touch-manipulation`}>
+      <body
+        className={`${inter.variable} antialiased font-sans touch-manipulation`}
+      >
         <ReactQueryProvider>
           <AuthProvider>
-            <ErrorBoundary>
-              <PerformanceMonitor>
-                <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
-                  <DevToolsGate>
-                    {children}
-                  </DevToolsGate>
-                </Suspense>
-              </PerformanceMonitor>
-            </ErrorBoundary>
+            <SubscriptionProvider>
+              <ErrorBoundary>
+                <PerformanceMonitor>
+                  <Suspense
+                    fallback={
+                      <div className="flex items-center justify-center min-h-screen">
+                        Loading...
+                      </div>
+                    }
+                  >
+                    <DevToolsGate>{children}</DevToolsGate>
+                  </Suspense>
+                </PerformanceMonitor>
+              </ErrorBoundary>
+            </SubscriptionProvider>
           </AuthProvider>
         </ReactQueryProvider>
       </body>

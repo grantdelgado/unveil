@@ -4,14 +4,18 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { CardContainer } from '@/components/ui/CardContainer';
-import { SectionTitle, FieldLabel, MicroCopy } from '@/components/ui/Typography';
+import {
+  SectionTitle,
+  FieldLabel,
+  MicroCopy,
+} from '@/components/ui/Typography';
 import type { GuestImportData } from '@/lib/guest-import';
 import { useGuests } from '@/hooks/useGuests';
-import { 
-  checkGuestExists, 
-  clearGuestExistsCache, 
-  validateGuestField, 
-  type FieldValidation 
+import {
+  checkGuestExists,
+  clearGuestExistsCache,
+  validateGuestField,
+  type FieldValidation,
 } from '@/lib/utils/guestHelpers';
 import { normalizePhoneNumberSimple as normalizePhoneNumber } from '@/lib/utils/phone';
 import { cn } from '@/lib/utils';
@@ -73,12 +77,12 @@ export function GuestImportWizard({
     startInManualMode ? 'manual' : 'method',
   );
   const [guests, setGuests] = useState<EnhancedGuestEntry[]>(
-    startInManualMode ? [createEmptyGuest()] : []
+    startInManualMode ? [createEmptyGuest()] : [],
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeGuestIndex, setActiveGuestIndex] = useState<number | null>(
-    startInManualMode ? 0 : null
+    startInManualMode ? 0 : null,
   );
   const { importGuests } = useGuests();
   const nameInputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -87,7 +91,7 @@ export function GuestImportWizard({
     const newGuest = createEmptyGuest();
     setGuests([...guests, newGuest]);
     setActiveGuestIndex(guests.length);
-    
+
     // Focus the name input for the new guest
     setTimeout(() => {
       nameInputRefs.current[guests.length]?.focus();
@@ -101,7 +105,7 @@ export function GuestImportWizard({
   ) => {
     const updated = [...guests];
     updated[index] = { ...updated[index], [field]: value };
-    
+
     // Mark field as touched
     if (field === 'guest_name') {
       updated[index].touchedFields.guest_name = true;
@@ -110,13 +114,20 @@ export function GuestImportWizard({
     } else if (field === 'guest_email') {
       updated[index].touchedFields.guest_email = true;
     }
-    
+
     // Update validation state for the field (only for validated fields)
-    const validatedFields: readonly string[] = ['guest_name', 'phone', 'guest_email'];
-    const validation = validatedFields.includes(field) 
-      ? validateGuestField(field as 'guest_name' | 'phone' | 'guest_email', value)
+    const validatedFields: readonly string[] = [
+      'guest_name',
+      'phone',
+      'guest_email',
+    ];
+    const validation = validatedFields.includes(field)
+      ? validateGuestField(
+          field as 'guest_name' | 'phone' | 'guest_email',
+          value,
+        )
       : { isValid: true };
-    
+
     // Update validation state based on field type
     if (field === 'guest_name') {
       updated[index].validationStates.guest_name = validation;
@@ -125,20 +136,21 @@ export function GuestImportWizard({
     } else if (field === 'guest_email') {
       updated[index].validationStates.guest_email = validation;
     }
-    
+
     // Handle phone number validation and duplicate check
     if (field === 'phone') {
       // Store the raw input without auto-formatting to avoid feedback loops
       updated[index].phone = value;
-      
+
       // Check for duplicates when phone is valid
       if (validation.isValid) {
         try {
-          // Normalize for duplicate checking 
+          // Normalize for duplicate checking
           const normalizedForCheck = normalizePhoneNumber(value);
           const exists = await checkGuestExists(eventId, normalizedForCheck);
           if (exists) {
-            updated[index].duplicateWarning = '⚠ Guest already added to this event';
+            updated[index].duplicateWarning =
+              '⚠ Guest already added to this event';
           } else {
             updated[index].duplicateWarning = undefined;
           }
@@ -150,16 +162,16 @@ export function GuestImportWizard({
         updated[index].duplicateWarning = undefined;
       }
     }
-    
+
     // Note: Removed auto-collapse behavior - users should manually control when to proceed
-    
+
     setGuests(updated);
   };
 
   const handleRemoveGuest = (index: number) => {
     const updated = guests.filter((_, i) => i !== index);
     setGuests(updated);
-    
+
     // Adjust active guest index
     if (activeGuestIndex === index) {
       setActiveGuestIndex(null);
@@ -172,7 +184,7 @@ export function GuestImportWizard({
     const updated = [...guests];
     updated[index].isCollapsed = !updated[index].isCollapsed;
     setGuests(updated);
-    
+
     if (!updated[index].isCollapsed) {
       setActiveGuestIndex(index);
     }
@@ -187,7 +199,7 @@ export function GuestImportWizard({
 
     try {
       // Transform guest data to EventGuestInsert format
-      const guestsToImport = validGuestsToImport.map(guest => ({
+      const guestsToImport = validGuestsToImport.map((guest) => ({
         event_id: eventId,
         phone: normalizePhoneNumber(guest.phone),
         guest_name: guest.guest_name || null,
@@ -200,7 +212,7 @@ export function GuestImportWizard({
 
       // Import guests using the hook
       const result = await importGuests(eventId, guestsToImport);
-      
+
       console.log(`Successfully imported ${result.length} guests`);
 
       // Clear duplicate check cache after successful import
@@ -208,9 +220,16 @@ export function GuestImportWizard({
 
       // Invalidate user events cache to update "Choose an event" list
       // This ensures newly added guests can see the event immediately
-      const queryClient = (window as unknown as Record<string, unknown>).__queryClient;
-      if (queryClient && typeof queryClient === 'object' && 'invalidateQueries' in queryClient) {
-        const qc = queryClient as { invalidateQueries: (options: { queryKey: string[] }) => void };
+      const queryClient = (window as unknown as Record<string, unknown>)
+        .__queryClient;
+      if (
+        queryClient &&
+        typeof queryClient === 'object' &&
+        'invalidateQueries' in queryClient
+      ) {
+        const qc = queryClient as {
+          invalidateQueries: (options: { queryKey: string[] }) => void;
+        };
         qc.invalidateQueries({ queryKey: ['events'] });
         qc.invalidateQueries({ queryKey: ['user-events'] });
         // CRITICAL: Also invalidate unified guest counts for immediate "Send Invitations" button refresh
@@ -221,71 +240,95 @@ export function GuestImportWizard({
       onImportComplete();
 
       // SMS invitations removed for "add now, invite later" flow
-      if (false && result.length > 0) { // Disabled auto-SMS
+      if (false && result.length > 0) {
+        // Disabled auto-SMS
         // Fire and forget - don't block the UI for SMS sending
         setTimeout(async () => {
           try {
             console.log(`📱 SMS Debug: Starting SMS invitation process...`);
             console.log(`📱 SMS Debug: Event ID: ${eventId}`);
-            console.log(`📱 SMS Debug: Imported ${result.length} guests successfully`);
-            
-            const { sendGuestInvitationsAPI } = await import('@/lib/api/sms-invitations');
-            
-            const guestsForSMS = validGuestsToImport.map(guest => ({
+            console.log(
+              `📱 SMS Debug: Imported ${result.length} guests successfully`,
+            );
+
+            const { sendGuestInvitationsAPI } = await import(
+              '@/lib/api/sms-invitations'
+            );
+
+            const guestsForSMS = validGuestsToImport.map((guest) => ({
               phone: normalizePhoneNumber(guest.phone),
-              guestName: guest.guest_name || undefined
+              guestName: guest.guest_name || undefined,
             }));
 
-            console.log(`📱 SMS Debug: Prepared ${guestsForSMS.length} guests for SMS:`, {
-              guests: guestsForSMS.map(g => ({
-                phone: g.phone.slice(0, 6) + '...', // Redact for privacy
-                hasName: !!g.guestName
-              })),
-              maxConcurrency: 1,
-              skipRateLimit: false
-            });
+            console.log(
+              `📱 SMS Debug: Prepared ${guestsForSMS.length} guests for SMS:`,
+              {
+                guests: guestsForSMS.map((g) => ({
+                  phone: g.phone.slice(0, 6) + '...', // Redact for privacy
+                  hasName: !!g.guestName,
+                })),
+                maxConcurrency: 1,
+                skipRateLimit: false,
+              },
+            );
 
-            const smsResult = await sendGuestInvitationsAPI(eventId, guestsForSMS, {
-              maxConcurrency: 1, // Further reduce to avoid overwhelming
-              skipRateLimit: false
-            });
+            const smsResult = await sendGuestInvitationsAPI(
+              eventId,
+              guestsForSMS,
+              {
+                maxConcurrency: 1, // Further reduce to avoid overwhelming
+                skipRateLimit: false,
+              },
+            );
 
             console.log(`📱 SMS Debug: SMS API call completed:`, {
               success: smsResult.success,
               sent: smsResult.sent,
               failed: smsResult.failed,
               rateLimited: smsResult.rateLimited,
-              hasError: !!smsResult.error
+              hasError: !!smsResult.error,
             });
 
             if (smsResult.success && smsResult.sent > 0) {
-              console.log(`✅ Background SMS: Successfully sent invitations to ${smsResult.sent} guests`);
+              console.log(
+                `✅ Background SMS: Successfully sent invitations to ${smsResult.sent} guests`,
+              );
               if (smsResult.results) {
-                console.log(`📱 SMS Debug: Individual results:`, smsResult.results.map(r => ({
-                  phone: r.phone?.slice(0, 6) + '...',
-                  success: r.success,
-                  error: r.error,
-                  rateLimited: r.rateLimited
-                })));
+                console.log(
+                  `📱 SMS Debug: Individual results:`,
+                  smsResult.results.map((r) => ({
+                    phone: r.phone?.slice(0, 6) + '...',
+                    success: r.success,
+                    error: r.error,
+                    rateLimited: r.rateLimited,
+                  })),
+                );
               }
             } else {
               console.warn('⚠️ Background SMS: Some invitations failed', {
                 sent: smsResult.sent,
                 failed: smsResult.failed,
-                error: smsResult.error
+                error: smsResult.error,
               });
             }
           } catch (smsError) {
             // Log but don't disrupt user experience
-            console.warn('⚠️ Background SMS failed:', smsError instanceof Error ? smsError.message : 'Unknown error');
-            console.log('ℹ️ Guests were imported successfully. SMS invitations can be sent manually from the dashboard.');
+            console.warn(
+              '⚠️ Background SMS failed:',
+              smsError instanceof Error ? smsError.message : 'Unknown error',
+            );
+            console.log(
+              'ℹ️ Guests were imported successfully. SMS invitations can be sent manually from the dashboard.',
+            );
           }
         }, 100); // Small delay to ensure UI updates first
       }
-
     } catch (err) {
       console.error('Error processing guests:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Failed to import guests. Please try again.';
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : 'Failed to import guests. Please try again.';
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -301,7 +344,7 @@ export function GuestImportWizard({
   };
 
   const validGuests = guests.filter(isGuestValid);
-  const incompleteGuests = guests.filter(guest => !isGuestValid(guest));
+  const incompleteGuests = guests.filter((guest) => !isGuestValid(guest));
 
   // Initialize first guest when entering manual step
   useEffect(() => {
@@ -335,9 +378,7 @@ export function GuestImportWizard({
 
       {step === 'method' && (
         <div className="space-y-4">
-          <MicroCopy>
-            How would you like to add guests to your event?
-          </MicroCopy>
+          <MicroCopy>How would you like to add guests to your event?</MicroCopy>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <button
@@ -426,29 +467,39 @@ export function GuestImportWizard({
                           type="text"
                           value={guest.guest_name || ''}
                           onChange={(e) =>
-                            handleUpdateGuest(index, 'guest_name', e.target.value)
+                            handleUpdateGuest(
+                              index,
+                              'guest_name',
+                              e.target.value,
+                            )
                           }
                           placeholder="John Doe"
                           className={cn(
                             'w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-pink-300 focus:border-pink-300 transition-colors text-gray-900',
-                            guest.touchedFields.guest_name && guest.validationStates.guest_name.isValid === false && guest.guest_name
+                            guest.touchedFields.guest_name &&
+                              guest.validationStates.guest_name.isValid ===
+                                false &&
+                              guest.guest_name
                               ? 'border-red-300 bg-red-50'
-                              : guest.touchedFields.guest_name && guest.validationStates.guest_name.isValid
+                              : guest.touchedFields.guest_name &&
+                                  guest.validationStates.guest_name.isValid
                                 ? 'border-green-300 bg-green-50'
-                                : 'border-gray-300'
+                                : 'border-gray-300',
                           )}
                         />
                         {/* Field Error/Success Message */}
-                        {guest.touchedFields.guest_name && guest.validationStates.guest_name.error && (
-                          <p className="mt-1 text-sm text-red-600">
-                            {guest.validationStates.guest_name.error}
-                          </p>
-                        )}
-                        {guest.touchedFields.guest_name && guest.validationStates.guest_name.success && (
-                          <p className="mt-1 text-sm text-green-600">
-                            {guest.validationStates.guest_name.success}
-                          </p>
-                        )}
+                        {guest.touchedFields.guest_name &&
+                          guest.validationStates.guest_name.error && (
+                            <p className="mt-1 text-sm text-red-600">
+                              {guest.validationStates.guest_name.error}
+                            </p>
+                          )}
+                        {guest.touchedFields.guest_name &&
+                          guest.validationStates.guest_name.success && (
+                            <p className="mt-1 text-sm text-green-600">
+                              {guest.validationStates.guest_name.success}
+                            </p>
+                          )}
                       </div>
 
                       {/* Phone Field */}
@@ -466,27 +517,33 @@ export function GuestImportWizard({
                           placeholder="5551234567 or +1 (555) 123-4567"
                           className={cn(
                             'w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-pink-300 focus:border-pink-300 transition-colors text-gray-900',
-                            guest.touchedFields.phone && guest.validationStates.phone.isValid === false && guest.phone
+                            guest.touchedFields.phone &&
+                              guest.validationStates.phone.isValid === false &&
+                              guest.phone
                               ? 'border-red-300 bg-red-50'
-                              : guest.touchedFields.phone && guest.validationStates.phone.isValid
+                              : guest.touchedFields.phone &&
+                                  guest.validationStates.phone.isValid
                                 ? 'border-green-300 bg-green-50'
-                                : 'border-gray-300'
+                                : 'border-gray-300',
                           )}
                         />
                         <p className="mt-1 text-xs text-gray-500">
-                          Enter 10 digits (5551234567) or full format (+1 555 123 4567)
+                          Enter 10 digits (5551234567) or full format (+1 555
+                          123 4567)
                         </p>
                         {/* Field Error/Success Message */}
-                        {guest.touchedFields.phone && guest.validationStates.phone.error && (
-                          <p className="mt-1 text-sm text-red-600">
-                            {guest.validationStates.phone.error}
-                          </p>
-                        )}
-                        {guest.touchedFields.phone && guest.validationStates.phone.success && (
-                          <p className="mt-1 text-sm text-green-600">
-                            {guest.validationStates.phone.success}
-                          </p>
-                        )}
+                        {guest.touchedFields.phone &&
+                          guest.validationStates.phone.error && (
+                            <p className="mt-1 text-sm text-red-600">
+                              {guest.validationStates.phone.error}
+                            </p>
+                          )}
+                        {guest.touchedFields.phone &&
+                          guest.validationStates.phone.success && (
+                            <p className="mt-1 text-sm text-green-600">
+                              {guest.validationStates.phone.success}
+                            </p>
+                          )}
                         {/* Duplicate Warning */}
                         {guest.duplicateWarning && (
                           <p className="mt-1 text-sm text-orange-600">
@@ -505,29 +562,40 @@ export function GuestImportWizard({
                           type="email"
                           value={guest.guest_email || ''}
                           onChange={(e) =>
-                            handleUpdateGuest(index, 'guest_email', e.target.value)
+                            handleUpdateGuest(
+                              index,
+                              'guest_email',
+                              e.target.value,
+                            )
                           }
                           placeholder="john@example.com"
                           className={cn(
                             'w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-pink-300 focus:border-pink-300 transition-colors text-gray-900',
-                            guest.touchedFields.guest_email && guest.validationStates.guest_email.isValid === false && guest.guest_email
+                            guest.touchedFields.guest_email &&
+                              guest.validationStates.guest_email.isValid ===
+                                false &&
+                              guest.guest_email
                               ? 'border-red-300 bg-red-50'
-                              : guest.touchedFields.guest_email && guest.validationStates.guest_email.isValid && guest.guest_email
+                              : guest.touchedFields.guest_email &&
+                                  guest.validationStates.guest_email.isValid &&
+                                  guest.guest_email
                                 ? 'border-green-300 bg-green-50'
-                                : 'border-gray-300'
+                                : 'border-gray-300',
                           )}
                         />
                         {/* Field Error/Success Message */}
-                        {guest.touchedFields.guest_email && guest.validationStates.guest_email.error && (
-                          <p className="mt-1 text-sm text-red-600">
-                            {guest.validationStates.guest_email.error}
-                          </p>
-                        )}
-                        {guest.touchedFields.guest_email && guest.validationStates.guest_email.success && (
-                          <p className="mt-1 text-sm text-green-600">
-                            {guest.validationStates.guest_email.success}
-                          </p>
-                        )}
+                        {guest.touchedFields.guest_email &&
+                          guest.validationStates.guest_email.error && (
+                            <p className="mt-1 text-sm text-red-600">
+                              {guest.validationStates.guest_email.error}
+                            </p>
+                          )}
+                        {guest.touchedFields.guest_email &&
+                          guest.validationStates.guest_email.success && (
+                            <p className="mt-1 text-sm text-green-600">
+                              {guest.validationStates.guest_email.success}
+                            </p>
+                          )}
                       </div>
 
                       {/* Notes Field */}
@@ -566,8 +634,8 @@ export function GuestImportWizard({
 
           {/* Add Another Guest Button */}
           <div className="flex justify-center pt-4">
-            <Button 
-              onClick={handleAddManualGuest} 
+            <Button
+              onClick={handleAddManualGuest}
               variant="outline"
               className="flex items-center gap-2"
             >
@@ -581,7 +649,9 @@ export function GuestImportWizard({
             <div className="text-sm text-gray-600">
               {validGuests.length === 0 && incompleteGuests.length > 0 && (
                 <span className="text-orange-600">
-                  {incompleteGuests.length} guest{incompleteGuests.length > 1 ? 's' : ''} incomplete – fill required fields
+                  {incompleteGuests.length} guest
+                  {incompleteGuests.length > 1 ? 's' : ''} incomplete – fill
+                  required fields
                 </span>
               )}
               {validGuests.length > 0 && incompleteGuests.length === 0 && (
@@ -591,9 +661,13 @@ export function GuestImportWizard({
               )}
               {validGuests.length > 0 && incompleteGuests.length > 0 && (
                 <span>
-                  <span className="text-green-600">{validGuests.length} ready</span>
+                  <span className="text-green-600">
+                    {validGuests.length} ready
+                  </span>
                   <span className="text-gray-400"> • </span>
-                  <span className="text-orange-600">{incompleteGuests.length} incomplete</span>
+                  <span className="text-orange-600">
+                    {incompleteGuests.length} incomplete
+                  </span>
                 </span>
               )}
             </div>
@@ -605,10 +679,12 @@ export function GuestImportWizard({
                 onClick={handleProcessGuests}
                 disabled={validGuests.length === 0}
                 className={cn(
-                  validGuests.length === 0 && 'opacity-50 cursor-not-allowed'
+                  validGuests.length === 0 && 'opacity-50 cursor-not-allowed',
                 )}
               >
-                {validGuests.length === 1 ? 'Add Guest' : `Add ${validGuests.length} Guests`}
+                {validGuests.length === 1
+                  ? 'Add Guest'
+                  : `Add ${validGuests.length} Guests`}
               </Button>
             </div>
           </div>

@@ -23,7 +23,12 @@ export interface RecoveryAction {
  * Analyze SMS error and provide recovery recommendations
  */
 export function analyzeSMSError(error: string): {
-  category: 'authentication' | 'network' | 'rate_limit' | 'authorization' | 'unknown';
+  category:
+    | 'authentication'
+    | 'network'
+    | 'rate_limit'
+    | 'authorization'
+    | 'unknown';
   severity: 'low' | 'medium' | 'high';
   userFriendlyMessage: string;
   technicalDetails: string;
@@ -31,42 +36,62 @@ export function analyzeSMSError(error: string): {
   const errorLower = error.toLowerCase();
 
   // Authentication issues
-  if (errorLower.includes('authentication') || errorLower.includes('session') || errorLower.includes('login')) {
+  if (
+    errorLower.includes('authentication') ||
+    errorLower.includes('session') ||
+    errorLower.includes('login')
+  ) {
     return {
       category: 'authentication',
       severity: 'medium',
-      userFriendlyMessage: 'Session expired. Please refresh the page and try again.',
-      technicalDetails: error
+      userFriendlyMessage:
+        'Session expired. Please refresh the page and try again.',
+      technicalDetails: error,
     };
   }
 
   // Network/connectivity issues
-  if (errorLower.includes('404') || errorLower.includes('network') || errorLower.includes('fetch')) {
+  if (
+    errorLower.includes('404') ||
+    errorLower.includes('network') ||
+    errorLower.includes('fetch')
+  ) {
     return {
       category: 'network',
       severity: 'medium',
-      userFriendlyMessage: 'Connection issue. SMS invitations can be sent later from the dashboard.',
-      technicalDetails: error
+      userFriendlyMessage:
+        'Connection issue. SMS invitations can be sent later from the dashboard.',
+      technicalDetails: error,
     };
   }
 
   // Authorization issues
-  if (errorLower.includes('unauthorized') || errorLower.includes('permission') || errorLower.includes('host')) {
+  if (
+    errorLower.includes('unauthorized') ||
+    errorLower.includes('permission') ||
+    errorLower.includes('host')
+  ) {
     return {
       category: 'authorization',
       severity: 'high',
-      userFriendlyMessage: 'Permission denied. Only event hosts can send invitations.',
-      technicalDetails: error
+      userFriendlyMessage:
+        'Permission denied. Only event hosts can send invitations.',
+      technicalDetails: error,
     };
   }
 
   // Rate limiting
-  if (errorLower.includes('rate') || errorLower.includes('limit') || errorLower.includes('too many')) {
+  if (
+    errorLower.includes('rate') ||
+    errorLower.includes('limit') ||
+    errorLower.includes('too many')
+  ) {
     return {
       category: 'rate_limit',
       severity: 'low',
-      userFriendlyMessage: 'SMS service is temporarily limited. Invitations will be sent shortly.',
-      technicalDetails: error
+      userFriendlyMessage:
+        'SMS service is temporarily limited. Invitations will be sent shortly.',
+      technicalDetails: error,
     };
   }
 
@@ -74,8 +99,9 @@ export function analyzeSMSError(error: string): {
   return {
     category: 'unknown',
     severity: 'medium',
-    userFriendlyMessage: 'SMS invitations encountered an issue. You can send them manually from the dashboard.',
-    technicalDetails: error
+    userFriendlyMessage:
+      'SMS invitations encountered an issue. You can send them manually from the dashboard.',
+    technicalDetails: error,
   };
 }
 
@@ -83,11 +109,11 @@ export function analyzeSMSError(error: string): {
  * Get recovery actions based on error analysis
  */
 export function getRecoveryActions(
-  options: SMSErrorRecoveryOptions
+  options: SMSErrorRecoveryOptions,
 ): RecoveryAction[] {
   const { eventId, guestCount, error } = options;
   const analysis = analyzeSMSError(error);
-  
+
   const actions: RecoveryAction[] = [];
 
   switch (analysis.category) {
@@ -96,7 +122,7 @@ export function getRecoveryActions(
         type: 'retry_later',
         message: 'Refresh the page and try sending invitations again',
         actionText: 'Refresh Page',
-        actionUrl: window.location.href
+        actionUrl: window.location.href,
       });
       break;
 
@@ -105,7 +131,7 @@ export function getRecoveryActions(
         type: 'manual_send',
         message: `Send invitations to ${guestCount} guests from the event dashboard`,
         actionText: 'Go to Dashboard',
-        actionUrl: `/host/events/${eventId}/dashboard`
+        actionUrl: `/host/events/${eventId}/dashboard`,
       });
       break;
 
@@ -113,7 +139,7 @@ export function getRecoveryActions(
       actions.push({
         type: 'skip_sms',
         message: 'Contact the event host to send invitations',
-        actionText: 'Continue Without SMS'
+        actionText: 'Continue Without SMS',
       });
       break;
 
@@ -121,7 +147,7 @@ export function getRecoveryActions(
       actions.push({
         type: 'retry_later',
         message: 'Try sending invitations again in a few minutes',
-        actionText: 'Retry Later'
+        actionText: 'Retry Later',
       });
       break;
 
@@ -130,7 +156,7 @@ export function getRecoveryActions(
         type: 'manual_send',
         message: `Send invitations manually from the dashboard if needed`,
         actionText: 'Go to Dashboard',
-        actionUrl: `/host/events/${eventId}/dashboard`
+        actionUrl: `/host/events/${eventId}/dashboard`,
       });
       break;
   }
@@ -143,14 +169,14 @@ export function getRecoveryActions(
  */
 export function logSMSError(options: SMSErrorRecoveryOptions): void {
   const analysis = analyzeSMSError(options.error);
-  
+
   logger.error('SMS invitation error', {
     eventId: options.eventId,
     guestCount: options.guestCount,
     error: options.error,
     category: analysis.category,
     severity: analysis.severity,
-    userMessage: analysis.userFriendlyMessage
+    userMessage: analysis.userFriendlyMessage,
   });
 }
 
@@ -159,7 +185,7 @@ export function logSMSError(options: SMSErrorRecoveryOptions): void {
  */
 export function shouldBlockImport(error: string): boolean {
   const analysis = analyzeSMSError(error);
-  
+
   // Only block for critical authorization issues
   return analysis.category === 'authorization' && analysis.severity === 'high';
 }
@@ -167,9 +193,7 @@ export function shouldBlockImport(error: string): boolean {
 /**
  * Create user-friendly error message for display
  */
-export function createUserErrorMessage(
-  options: SMSErrorRecoveryOptions
-): {
+export function createUserErrorMessage(options: SMSErrorRecoveryOptions): {
   title: string;
   message: string;
   actions: RecoveryAction[];
@@ -180,6 +204,6 @@ export function createUserErrorMessage(
   return {
     title: 'Guest Import Successful',
     message: `✅ Successfully added ${options.guestCount} guest(s) to your event. ${analysis.userFriendlyMessage}`,
-    actions
+    actions,
   };
 }

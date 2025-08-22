@@ -11,14 +11,14 @@ import { requireAdmin } from '@/lib/auth/adminAuth';
 
 /**
  * Admin endpoint to trigger user_id backfill in event_guests table
- * 
+ *
  * POST /api/admin/backfill-user-ids
- * 
+ *
  * Safely updates event_guests.user_id where:
  * - user_id is currently NULL
  * - phone number matches an existing user
  * - Will NOT overwrite existing user_id values
- * 
+ *
  * Returns:
  * - updated_count: number of rows updated
  * - total_eligible_count: number of rows that were eligible for update
@@ -36,12 +36,15 @@ export async function POST(request: Request) {
     const supabase = createApiSupabaseClient(request);
 
     // Verify authentication
-    const { data: { session }, error: authError } = await supabase.auth.getSession();
-    
+    const {
+      data: { session },
+      error: authError,
+    } = await supabase.auth.getSession();
+
     if (authError || !session) {
       return NextResponse.json(
         { error: 'Authentication required' },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -50,43 +53,46 @@ export async function POST(request: Request) {
 
     console.log('🔄 Admin triggering user_id backfill...', {
       userId: session.user.id,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
 
     // Execute the backfill function
-    const { data, error } = await supabase
-      .rpc('backfill_user_id_from_phone');
+    const { data, error } = await supabase.rpc('backfill_user_id_from_phone');
 
     if (error) {
       console.error('❌ Backfill function error:', error);
       return NextResponse.json(
-        { 
+        {
           error: 'Failed to execute backfill',
-          details: error.message 
+          details: error.message,
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
     if (!data || data.length === 0) {
       return NextResponse.json(
-        { 
+        {
           error: 'No results returned from backfill function',
           updated_count: 0,
           total_eligible_count: 0,
-          details: 'Function executed but returned no data'
+          details: 'Function executed but returned no data',
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
-    const result = data[0] as { updated_count: number; total_eligible_count: number; details: string };
+    const result = data[0] as {
+      updated_count: number;
+      total_eligible_count: number;
+      details: string;
+    };
 
     console.log('✅ Backfill completed:', {
       updated_count: result.updated_count,
       total_eligible_count: result.total_eligible_count,
       details: result.details,
-      userId: session.user.id
+      userId: session.user.id,
     });
 
     return NextResponse.json({
@@ -95,18 +101,17 @@ export async function POST(request: Request) {
       total_eligible_count: result.total_eligible_count,
       details: result.details,
       timestamp: new Date().toISOString(),
-      executed_by: session.user.id
+      executed_by: session.user.id,
     });
-
   } catch (err) {
     console.error('❌ Unexpected error in backfill endpoint:', err);
-    
+
     return NextResponse.json(
-      { 
+      {
         error: 'Internal server error',
-        details: err instanceof Error ? err.message : 'Unknown error'
+        details: err instanceof Error ? err.message : 'Unknown error',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -134,7 +139,7 @@ export async function GET(request: Request) {
     if (error) {
       return NextResponse.json(
         { error: 'Failed to check current state', details: error.message },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -148,7 +153,7 @@ export async function GET(request: Request) {
     if (countError) {
       return NextResponse.json(
         { error: 'Failed to get total count', details: countError.message },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -157,18 +162,17 @@ export async function GET(request: Request) {
       total_event_guests: totalCount || 0,
       eligible_for_backfill: eligibleCount,
       ready_to_run: eligibleCount > 0,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-
   } catch (err) {
     console.error('❌ Unexpected error in backfill status endpoint:', err);
-    
+
     return NextResponse.json(
-      { 
+      {
         error: 'Internal server error',
-        details: err instanceof Error ? err.message : 'Unknown error'
+        details: err instanceof Error ? err.message : 'Unknown error',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

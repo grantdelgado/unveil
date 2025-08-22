@@ -16,14 +16,16 @@ A comprehensive audit revealed that scheduled messages are failing to send due t
 ### 🔴 CONFIRMED DEFECTS
 
 #### 1. Overdue Message Found
+
 - **Message ID**: `1f61fb73-663b-4584-a963-a8f0aaea075e`
 - **Scheduled Time**: `2025-08-21 16:38:00 UTC`
-- **Current Time**: `2025-08-21 16:48:22 UTC` 
+- **Current Time**: `2025-08-21 16:48:22 UTC`
 - **Status**: Still `scheduled` (10+ minutes overdue)
 - **Recipients**: 3 guests
 - **Content**: "Testing scheduled message."
 
 #### 2. Missing Database Column
+
 - **Table**: `messages`
 - **Missing Column**: `scheduled_message_id UUID REFERENCES scheduled_messages(id)`
 - **Impact**: Worker cannot properly link processed scheduled messages to their source records
@@ -31,17 +33,20 @@ A comprehensive audit revealed that scheduled messages are failing to send due t
 ### ✅ WORKING COMPONENTS
 
 #### 1. RPC Function
+
 - **Function**: `get_scheduled_messages_for_processing` exists and works correctly
 - **Test Result**: Successfully returns the overdue message when called with current UTC time
 - **SQL Logic**: Correctly filters by `send_at <= p_current_time` and `status = 'scheduled'`
 
 #### 2. Worker Route Logic
+
 - **Path**: `/app/api/messages/process-scheduled/route.ts`
 - **Authentication**: Properly handles multiple auth methods (Bearer, x-cron-key, x-vercel-cron-signature)
 - **Processing Logic**: Comprehensive message processing with proper state transitions
 - **Error Handling**: Robust error handling and logging
 
 #### 3. Cron Configuration
+
 - **File**: `vercel.json`
 - **Schedule**: `*/1 * * * *` (every minute)
 - **Path**: `/api/messages/process-scheduled`
@@ -50,6 +55,7 @@ A comprehensive audit revealed that scheduled messages are failing to send due t
 ### 🔍 ROOT CAUSE ANALYSIS
 
 **Primary Issue**: The Vercel cron job is not executing in production. Evidence:
+
 - Message scheduled for 16:38 UTC still pending at 16:48 UTC (10+ minutes overdue)
 - RPC function works correctly when tested manually
 - Worker route logic is sound
@@ -60,42 +66,50 @@ A comprehensive audit revealed that scheduled messages are failing to send due t
 ## Implemented Fixes
 
 ### 1. Database Schema Fix ✅
+
 ```sql
 -- Added to messages table
 ALTER TABLE messages
 ADD COLUMN IF NOT EXISTS scheduled_message_id UUID REFERENCES scheduled_messages(id);
 
-CREATE INDEX IF NOT EXISTS idx_messages_scheduled_message_id 
+CREATE INDEX IF NOT EXISTS idx_messages_scheduled_message_id
 ON messages(scheduled_message_id);
 ```
 
 ### 2. Worker Route Enhancement ✅
+
 - Updated message creation to set `scheduled_message_id: message.id`
 - Added development-only diagnostic endpoint for troubleshooting
 - Enhanced GET handler with detailed diagnostic information (dev only)
 
 ### 3. TypeScript Types Update ✅
+
 - Regenerated and updated `supabase.types.ts`
 - Added `scheduled_message_id` field to `messages` table types
 
 ## Remaining Issues
 
 ### 1. Cron Execution Problem
+
 The primary issue remains: **Vercel cron jobs are not executing in production**.
 
 **Possible Causes:**
+
 - Missing or incorrect `CRON_SECRET` environment variable in Vercel
 - Vercel cron not properly configured for the project
 - Regional/deployment issues with Vercel cron execution
 
 **Next Steps:**
+
 1. Verify `CRON_SECRET` is set in Vercel production environment variables
 2. Check Vercel dashboard for cron execution logs
 3. Test manual API endpoint call with proper authentication
 4. Consider alternative scheduling mechanisms if Vercel cron is unreliable
 
 ### 2. Validation Needed
+
 Once cron execution is fixed, validate that:
+
 - Scheduled messages transition from `scheduled` → `sending` → `sent`
 - `messages` table records are created with proper `scheduled_message_id`
 - `message_deliveries` table is populated correctly
@@ -104,6 +118,7 @@ Once cron execution is fixed, validate that:
 ## Test Commands
 
 ### Manual Testing (Development)
+
 ```bash
 # Get diagnostic info (development only)
 GET /api/messages/process-scheduled
@@ -118,6 +133,7 @@ Headers: x-cron-key: <CRON_SECRET>
 ```
 
 ### Database Validation
+
 ```sql
 -- Check for overdue messages
 SELECT now() AT TIME ZONE 'utc' AS utc_now;
@@ -144,7 +160,7 @@ WHERE sm.status = 'sent';
 ✅ TypeScript types updated  
 ⏳ Cron execution restored in production  
 ⏳ End-to-end message processing validated  
-⏳ Overdue message `1f61fb73-663b-4584-a963-a8f0aaea075e` successfully processed  
+⏳ Overdue message `1f61fb73-663b-4584-a963-a8f0aaea075e` successfully processed
 
 ## Files Modified
 

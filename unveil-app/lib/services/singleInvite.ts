@@ -26,11 +26,13 @@ export interface SingleInviteResult {
  * Send invitation to a single guest
  * Uses the dedicated single invite API endpoint
  */
-export async function sendSingleGuestInvite(request: SingleInviteRequest): Promise<SingleInviteResult> {
+export async function sendSingleGuestInvite(
+  request: SingleInviteRequest,
+): Promise<SingleInviteResult> {
   try {
     console.log('Sending single guest invitation:', {
       eventId: request.eventId,
-      guestId: request.guestId
+      guestId: request.guestId,
     });
 
     const response = await fetch('/api/guests/invite-single', {
@@ -44,7 +46,8 @@ export async function sendSingleGuestInvite(request: SingleInviteRequest): Promi
     const result = await response.json();
 
     if (!response.ok) {
-      const errorMsg = result.error || `HTTP ${response.status}: Failed to send invitation`;
+      const errorMsg =
+        result.error || `HTTP ${response.status}: Failed to send invitation`;
       throw new Error(errorMsg);
     }
 
@@ -59,21 +62,21 @@ export async function sendSingleGuestInvite(request: SingleInviteRequest): Promi
       isFirstInvite: result.data.isFirstInvite,
       smsStatus: result.data.smsStatus,
       configMode: result.data.configMode,
-      simulationMode: result.data.simulationMode
+      simulationMode: result.data.simulationMode,
     });
 
     return result;
-
   } catch (error: unknown) {
     console.error('Error sending single guest invitation:', {
       error: error instanceof Error ? error.message : String(error),
       eventId: request.eventId,
-      guestId: request.guestId
+      guestId: request.guestId,
     });
-    
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Failed to send invitation' 
+
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : 'Failed to send invitation',
     };
   }
 }

@@ -64,16 +64,22 @@ export default function EventSchedule({
   }, [eventId]);
 
   // Group items by date (in event timezone)
-  const groupedItems = scheduleItems.reduce((groups, item) => {
-    const eventTimeData = fromUTCToEventZone(item.start_at, effectiveTimeZone);
-    const dateKey = eventTimeData?.date || item.start_at.split('T')[0];
-    
-    if (!groups[dateKey]) {
-      groups[dateKey] = [];
-    }
-    groups[dateKey].push(item);
-    return groups;
-  }, {} as Record<string, ScheduleItem[]>);
+  const groupedItems = scheduleItems.reduce(
+    (groups, item) => {
+      const eventTimeData = fromUTCToEventZone(
+        item.start_at,
+        effectiveTimeZone,
+      );
+      const dateKey = eventTimeData?.date || item.start_at.split('T')[0];
+
+      if (!groups[dateKey]) {
+        groups[dateKey] = [];
+      }
+      groups[dateKey].push(item);
+      return groups;
+    },
+    {} as Record<string, ScheduleItem[]>,
+  );
 
   const sortedDates = Object.keys(groupedItems).sort();
 
@@ -93,7 +99,9 @@ export default function EventSchedule({
       <div className="bg-white rounded-2xl shadow-lg p-6">
         <div className="text-center py-8">
           <div className="text-4xl mb-4">⚠️</div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Unable to Load Schedule</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            Unable to Load Schedule
+          </h3>
           <p className="text-gray-600">{error}</p>
         </div>
       </div>
@@ -135,7 +143,9 @@ export default function EventSchedule({
         <div className="bg-white rounded-2xl shadow-lg p-8">
           <div className="text-center">
             <div className="text-4xl mb-4">📅</div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Schedule Coming Soon</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Schedule Coming Soon
+            </h3>
             <p className="text-gray-600">
               Schedule details will appear here once your hosts add them.
             </p>
@@ -160,11 +170,11 @@ export default function EventSchedule({
       month: 'long',
       day: 'numeric',
     };
-    
+
     if (shouldShowYear(dateStr)) {
       options.year = 'numeric';
     }
-    
+
     return date.toLocaleDateString('en-US', options);
   };
 
@@ -206,12 +216,15 @@ export default function EventSchedule({
             <span>📅</span>
             <span>{formatDateHeader(date)}</span>
           </h3>
-          
+
           {/* Items for this date */}
           <div className="space-y-3">
             {groupedItems[date].map((item) => {
-              const startTime = fromUTCToEventZone(item.start_at, effectiveTimeZone);
-              const endTime = item.end_at 
+              const startTime = fromUTCToEventZone(
+                item.start_at,
+                effectiveTimeZone,
+              );
+              const endTime = item.end_at
                 ? fromUTCToEventZone(item.end_at, effectiveTimeZone)
                 : null;
 
@@ -227,7 +240,7 @@ export default function EventSchedule({
                         <h4 className="font-medium text-gray-900 truncate">
                           {item.title}
                         </h4>
-                        
+
                         <div className="flex items-center space-x-4 mt-1 text-sm text-gray-600">
                           <span className="font-mono font-medium">
                             {startTime?.formatted}
@@ -242,7 +255,7 @@ export default function EventSchedule({
                               <span>{item.location}</span>
                             </div>
                           )}
-                          
+
                           {item.attire && (
                             <div className="flex items-center space-x-1">
                               <span>👔</span>

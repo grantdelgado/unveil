@@ -35,15 +35,15 @@ const eventInput: EventCreationInput = {
   title: formData.title,
   event_date: formData.event_date,
   location: formData.location || undefined,
-  description: formData.description || undefined, 
+  description: formData.description || undefined,
   is_public: formData.is_public,
   header_image: headerImage || undefined,
 };
 
 // 2. Calls the centralized service
 const result = await EventCreationService.createEventWithHost(
-  eventInput, 
-  session.user.id
+  eventInput,
+  session.user.id,
 );
 ```
 
@@ -74,7 +74,11 @@ if (input.header_image) {
 
 ```typescript
 // This is where the database magic happens!
-const creationResult = await this.createEventAtomic(input, userId, headerImageUrl);
+const creationResult = await this.createEventAtomic(
+  input,
+  userId,
+  headerImageUrl,
+);
 ```
 
 ### Database Operations: The Two-Path Strategy
@@ -114,9 +118,13 @@ const { data: newEvent } = await supabase
   .select('id, title, host_user_id, created_at')
   .single();
 
-// Step 2: Insert host into event_guests table  
+// Step 2: Insert host into event_guests table
 const hostProfile = await this.getHostProfile(userId);
-const hostGuestResult = await this.createHostGuestEntry(newEvent.id, userId, hostProfile);
+const hostGuestResult = await this.createHostGuestEntry(
+  newEvent.id,
+  userId,
+  hostProfile,
+);
 
 // Step 3: If anything fails, rollback everything
 if (!hostGuestResult.success) {
@@ -133,7 +141,7 @@ if (!hostGuestResult.success) {
 **📍 Evidence:** `components/features/events/GuestImportStep.tsx` (line 30)
 
 ```typescript
-eventId={undefined} // No import during wizard - guests added after creation
+eventId = { undefined }; // No import during wizard - guests added after creation
 ```
 
 **Here's what happens:**
@@ -171,11 +179,7 @@ eventId={undefined} // No import during wizard - guests added after creation
 
 ```typescript
 // 1. Uses the same EventCreationService for consistency
-const result = await EventCreationService.importGuests(
-  eventId,
-  guests,
-  userId
-);
+const result = await EventCreationService.importGuests(eventId, guests, userId);
 
 // 2. Validates permissions (only event host can add guests)
 await this.validateGuestImportPermission(eventId, userId);
@@ -218,7 +222,7 @@ const { data, error } = await supabase
 #### For `event_guests` Table
 
 ```sql
--- event_guests_host_management policy  
+-- event_guests_host_management policy
 is_event_host(event_id)
 
 -- event_guests_self_access policy
@@ -273,18 +277,18 @@ is_event_host(event_id)
 if (!hostGuestResult.success) {
   // 1. Delete the event record
   await this.rollbackEventCreation(newEvent.id);
-  
-  // 2. Clean up uploaded image  
+
+  // 2. Clean up uploaded image
   if (headerImageUrl) {
     await this.cleanupImage(headerImageUrl);
   }
-  
+
   // 3. Return user-friendly error
   return {
     success: false,
     error: {
-      message: 'Failed to create host guest entry. Event creation rolled back.'
-    }
+      message: 'Failed to create host guest entry. Event creation rolled back.',
+    },
   };
 }
 ```
@@ -313,10 +317,10 @@ logger.info('🔧 Cleaned up uploaded image', { filePath });
 
 ```sql
 -- events table: 1 new record
-INSERT INTO events (title, event_date, host_user_id, ...) 
+INSERT INTO events (title, event_date, host_user_id, ...)
 VALUES ('Your Wedding', '2024-12-25', 'your-user-id', ...);
 
--- event_guests table: 1 new record (you as host)  
+-- event_guests table: 1 new record (you as host)
 INSERT INTO event_guests (event_id, user_id, phone, role, rsvp_status)
 VALUES ('new-event-id', 'your-user-id', '+13109474467', 'host', 'attending');
 ```
@@ -331,14 +335,14 @@ VALUES ('new-event-id', 'your-user-id', '+13109474467', 'host', 'attending');
 
 ## 🧭 Key Files Reference
 
-| Component | Purpose | File Path |
-|-----------|---------|-----------|
-| **UI Flow** | Event creation wizard | `components/features/events/CreateEventWizard.tsx` |
-| **Business Logic** | Event + guest operations | `lib/services/eventCreation.ts` |
-| **Database Function** | Atomic transactions | `create_event_with_host_atomic()` |
-| **Guest Management** | Post-creation operations | `hooks/useGuests.ts` |
-| **Import UI** | CSV/manual guest entry | `components/features/guests/GuestImportWizard.tsx` |
-| **Security** | RLS policies | `event_guests_host_management`, `events_unified_access` |
+| Component             | Purpose                  | File Path                                               |
+| --------------------- | ------------------------ | ------------------------------------------------------- |
+| **UI Flow**           | Event creation wizard    | `components/features/events/CreateEventWizard.tsx`      |
+| **Business Logic**    | Event + guest operations | `lib/services/eventCreation.ts`                         |
+| **Database Function** | Atomic transactions      | `create_event_with_host_atomic()`                       |
+| **Guest Management**  | Post-creation operations | `hooks/useGuests.ts`                                    |
+| **Import UI**         | CSV/manual guest entry   | `components/features/guests/GuestImportWizard.tsx`      |
+| **Security**          | RLS policies             | `event_guests_host_management`, `events_unified_access` |
 
 ---
 
@@ -354,10 +358,10 @@ VALUES ('new-event-id', 'your-user-id', '+13109474467', 'host', 'attending');
 ### Key Log Messages
 
 ```typescript
-'🔧 Starting event creation' // Operation begins
-'🔧 RPC method not available' // Fallback triggered  
-'🔧 Event creation rolled back successfully' // Cleanup completed
-'🔧 Event creation completed successfully' // Full success
+'🔧 Starting event creation'; // Operation begins
+'🔧 RPC method not available'; // Fallback triggered
+'🔧 Event creation rolled back successfully'; // Cleanup completed
+'🔧 Event creation completed successfully'; // Full success
 ```
 
 ### Database Inspection
@@ -366,7 +370,7 @@ VALUES ('new-event-id', 'your-user-id', '+13109474467', 'host', 'attending');
 -- Check event creation
 SELECT * FROM events WHERE host_user_id = 'your-user-id';
 
--- Check host guest entry  
+-- Check host guest entry
 SELECT * FROM event_guests WHERE user_id = 'your-user-id' AND role = 'host';
 
 -- Verify RLS policies
@@ -375,4 +379,4 @@ SELECT * FROM pg_policies WHERE tablename IN ('events', 'event_guests');
 
 ---
 
-*This guide provides a complete mental model for understanding, debugging, and extending the event creation system in Unveil.*
+_This guide provides a complete mental model for understanding, debugging, and extending the event creation system in Unveil._

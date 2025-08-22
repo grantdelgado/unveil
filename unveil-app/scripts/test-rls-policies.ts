@@ -66,10 +66,7 @@ class RLSTestSuite {
     this.testEvents = [testEvent];
 
     // Create guest relationship
-    const testGuest = await this.createTestGuest(
-      testEvent.id,
-      guestUser.id,
-    );
+    const testGuest = await this.createTestGuest(testEvent.id, guestUser.id);
     this.testGuests = [testGuest];
 
     console.log('✅ Test data created successfully\n');
@@ -379,8 +376,6 @@ class RLSTestSuite {
 
     console.log('✅ User profile access policies working correctly\n');
   }
-
-
 
   async cleanup() {
     console.log('🧹 Cleaning up test data...');

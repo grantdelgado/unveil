@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 /**
  * Production Build Verification Tests
- * 
+ *
  * These tests ensure that development-only utilities are properly excluded
  * from production builds and don't leak sensitive debugging information.
  */
@@ -14,7 +14,7 @@ test.describe('Production Build Verification', () => {
       // Mock production environment
       Object.defineProperty(process, 'env', {
         value: { ...process.env, NODE_ENV: 'production' },
-        writable: true
+        writable: true,
       });
     });
 
@@ -32,11 +32,15 @@ test.describe('Production Build Verification', () => {
     expect(realtimeTests).toBe('undefined');
 
     // Check that RealtimeDebugPanel is not rendered
-    const debugPanelElement = await page.locator('.realtime-debug-panel').count();
+    const debugPanelElement = await page
+      .locator('.realtime-debug-panel')
+      .count();
     expect(debugPanelElement).toBe(0);
   });
 
-  test('should not expose sensitive debugging information', async ({ page }) => {
+  test('should not expose sensitive debugging information', async ({
+    page,
+  }) => {
     await page.goto('/guest/events/test-event-id/home');
     await page.waitForLoadState('networkidle');
 
@@ -49,12 +53,13 @@ test.describe('Production Build Verification', () => {
     await page.waitForTimeout(2000);
 
     // Should not have debug utility logs in production
-    const debugUtilityLogs = consoleLogs.filter(log => 
-      log.includes('realtimeTests') || 
-      log.includes('Debug panel') ||
-      log.includes('🧪 Realtime test utilities')
+    const debugUtilityLogs = consoleLogs.filter(
+      (log) =>
+        log.includes('realtimeTests') ||
+        log.includes('Debug panel') ||
+        log.includes('🧪 Realtime test utilities'),
     );
-    
+
     expect(debugUtilityLogs).toHaveLength(0);
   });
 
@@ -64,7 +69,7 @@ test.describe('Production Build Verification', () => {
 
     const consoleErrors: string[] = [];
     const consoleWarnings: string[] = [];
-    
+
     page.on('console', (msg) => {
       if (msg.type() === 'error') {
         consoleErrors.push(msg.text());
@@ -76,16 +81,18 @@ test.describe('Production Build Verification', () => {
     await page.waitForTimeout(5000);
 
     // Should not have development-related errors or warnings
-    const devRelatedErrors = consoleErrors.filter(error => 
-      error.includes('development') || 
-      error.includes('debug') ||
-      error.includes('test')
+    const devRelatedErrors = consoleErrors.filter(
+      (error) =>
+        error.includes('development') ||
+        error.includes('debug') ||
+        error.includes('test'),
     );
-    
-    const devRelatedWarnings = consoleWarnings.filter(warning => 
-      warning.includes('development') || 
-      warning.includes('debug') ||
-      warning.includes('test')
+
+    const devRelatedWarnings = consoleWarnings.filter(
+      (warning) =>
+        warning.includes('development') ||
+        warning.includes('debug') ||
+        warning.includes('test'),
     );
 
     expect(devRelatedErrors).toHaveLength(0);

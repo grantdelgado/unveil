@@ -1,7 +1,7 @@
 /**
  * Unified Guest Counts Hook
- * 
- * Single source of truth for guest counts used by both Host Dashboard 
+ *
+ * Single source of truth for guest counts used by both Host Dashboard
  * and Guest Management to ensure consistency.
  */
 
@@ -29,10 +29,17 @@ interface UseUnifiedGuestCountsReturn {
  * Uses React Query with the get_event_guest_counts RPC to ensure consistency
  * and automatic invalidation when guests are added/removed
  */
-export function useUnifiedGuestCounts(eventId: string): UseUnifiedGuestCountsReturn {
+export function useUnifiedGuestCounts(
+  eventId: string,
+): UseUnifiedGuestCountsReturn {
   const queryClient = useQueryClient();
 
-  const { data: counts, isLoading: loading, error, refetch } = useQuery({
+  const {
+    data: counts,
+    isLoading: loading,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ['unified-guest-counts', eventId],
     queryFn: async (): Promise<UnifiedGuestCounts> => {
       if (!eventId) {
@@ -48,8 +55,10 @@ export function useUnifiedGuestCounts(eventId: string): UseUnifiedGuestCountsRet
 
       logger.info('Fetching unified guest counts', { eventId });
 
-      const { data, error: rpcError } = await supabase
-        .rpc('get_event_guest_counts', { p_event_id: eventId });
+      const { data, error: rpcError } = await supabase.rpc(
+        'get_event_guest_counts',
+        { p_event_id: eventId },
+      );
 
       if (rpcError) {
         throw new Error(`Failed to fetch guest counts: ${rpcError.message}`);
@@ -65,15 +74,17 @@ export function useUnifiedGuestCounts(eventId: string): UseUnifiedGuestCountsRet
           not_invited: result.not_invited || 0,
         };
 
-        logger.info('Successfully fetched unified guest counts', { 
-          eventId, 
-          counts
+        logger.info('Successfully fetched unified guest counts', {
+          eventId,
+          counts,
         });
 
         return counts;
       } else {
         // No data returned, set all to 0
-        logger.info('No guest count data returned, defaulting to zeros', { eventId });
+        logger.info('No guest count data returned, defaulting to zeros', {
+          eventId,
+        });
         return {
           total_guests: 0,
           total_invited: 0,

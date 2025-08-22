@@ -1,7 +1,7 @@
-'use client'
+'use client';
 
-import React from 'react'
-import type { PullToRefreshIndicatorProps } from '@/hooks/common/usePullToRefresh'
+import React from 'react';
+import type { PullToRefreshIndicatorProps } from '@/hooks/common/usePullToRefresh';
 
 export const PullToRefreshIndicator: React.FC<PullToRefreshIndicatorProps> = ({
   isPulling,
@@ -10,7 +10,7 @@ export const PullToRefreshIndicator: React.FC<PullToRefreshIndicatorProps> = ({
   canRefresh,
   refreshProgress,
 }) => {
-  if (!isPulling && !isRefreshing) return null
+  if (!isPulling && !isRefreshing) return null;
 
   return (
     <div
@@ -23,7 +23,9 @@ export const PullToRefreshIndicator: React.FC<PullToRefreshIndicatorProps> = ({
         {isRefreshing ? (
           <>
             <div className="w-5 h-5 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
-            <span className="text-sm font-medium text-purple-600">Refreshing...</span>
+            <span className="text-sm font-medium text-purple-600">
+              Refreshing...
+            </span>
           </>
         ) : (
           <>
@@ -39,14 +41,16 @@ export const PullToRefreshIndicator: React.FC<PullToRefreshIndicatorProps> = ({
             >
               <div className="w-1 h-1 bg-current rounded-full" />
             </div>
-            <span className={`text-sm font-medium transition-colors duration-200 ${
-              canRefresh ? 'text-green-600' : 'text-stone-600'
-            }`}>
+            <span
+              className={`text-sm font-medium transition-colors duration-200 ${
+                canRefresh ? 'text-green-600' : 'text-stone-600'
+              }`}
+            >
               {canRefresh ? 'Release to refresh' : 'Pull to refresh'}
             </span>
           </>
         )}
       </div>
     </div>
-  )
-} 
+  );
+};

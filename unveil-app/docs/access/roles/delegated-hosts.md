@@ -37,7 +37,7 @@ CREATE TABLE event_guests (
     notes text,
     guest_tags text[] DEFAULT '{}',
     -- ... additional fields
-    
+
     CONSTRAINT event_guests_role_check CHECK (role IN ('host', 'guest', 'admin'))
 );
 ```
@@ -50,18 +50,19 @@ The delegated host system was introduced in **migration 20250109000000**:
 -- Add role column for per-event role assignment
 ALTER TABLE public.event_guests ADD COLUMN role TEXT NOT NULL DEFAULT 'guest';
 
--- Add check constraint for valid roles  
-ALTER TABLE public.event_guests ADD CONSTRAINT event_guests_role_check 
+-- Add check constraint for valid roles
+ALTER TABLE public.event_guests ADD CONSTRAINT event_guests_role_check
 CHECK (role IN ('host', 'guest', 'admin'));
 
 -- Update existing records: set role to 'host' for event creators
-UPDATE public.event_guests SET role = 'host' 
+UPDATE public.event_guests SET role = 'host'
 WHERE user_id IN (SELECT host_user_id FROM events WHERE events.id = event_guests.event_id);
 ```
 
 ### Current Database State
 
 As of January 30, 2025:
+
 - **Total delegated hosts**: 1 user across 1 event
 - **Roles supported**: `'host'`, `'guest'`, `'admin'`
 - **Default role**: `'guest'` for all new guest imports
@@ -81,24 +82,24 @@ DECLARE
     current_user_id uuid;
 BEGIN
     current_user_id := (SELECT auth.uid());
-    
+
     IF current_user_id IS NULL THEN
         RETURN false;
     END IF;
-    
+
     -- PRIMARY HOST CHECK: Check events.host_user_id
     IF EXISTS (
         SELECT 1 FROM public.events e
-        WHERE e.id = p_event_id 
+        WHERE e.id = p_event_id
         AND e.host_user_id = current_user_id
     ) THEN
         RETURN true;
     END IF;
-    
+
     -- DELEGATED HOST CHECK: Check event_guests.role = 'host'
     RETURN EXISTS (
         SELECT 1 FROM public.event_guests eg
-        WHERE eg.event_id = p_event_id 
+        WHERE eg.event_id = p_event_id
         AND eg.user_id = current_user_id
         AND eg.role = 'host'
     );
@@ -111,40 +112,44 @@ $$;
 **All major RLS policies** properly support delegated hosts via `is_event_host()`:
 
 #### 1. Event Management
+
 ```sql
 -- Events policies
-CREATE POLICY "events_manage_own" ON events FOR ALL 
+CREATE POLICY "events_manage_own" ON events FOR ALL
 USING (is_event_host(id));
 
-CREATE POLICY "events_select_accessible" ON events FOR SELECT 
+CREATE POLICY "events_select_accessible" ON events FOR SELECT
 USING (is_public = true OR can_access_event(id));
 ```
 
-#### 2. Guest Management  
+#### 2. Guest Management
+
 ```sql
 -- Event guests policies
-CREATE POLICY "event_guests_host_access" ON event_guests FOR ALL 
-USING (is_event_host(event_id)) 
+CREATE POLICY "event_guests_host_access" ON event_guests FOR ALL
+USING (is_event_host(event_id))
 WITH CHECK (is_event_host(event_id));
 ```
 
 #### 3. Media Management
+
 ```sql
 -- Media policies
-CREATE POLICY "media_select_event_accessible" ON media FOR SELECT 
+CREATE POLICY "media_select_event_accessible" ON media FOR SELECT
 USING (can_access_event(event_id));
 
-CREATE POLICY "media_insert_event_participant" ON media FOR INSERT 
+CREATE POLICY "media_insert_event_participant" ON media FOR INSERT
 WITH CHECK (can_access_event(event_id));
 ```
 
 #### 4. Messaging & SMS
+
 ```sql
 -- Messages policies
-CREATE POLICY "messages_select_event_accessible" ON messages FOR SELECT 
+CREATE POLICY "messages_select_event_accessible" ON messages FOR SELECT
 USING (is_event_host(event_id) OR is_event_guest(event_id));
 
-CREATE POLICY "messages_insert_event_participant" ON messages FOR INSERT 
+CREATE POLICY "messages_insert_event_participant" ON messages FOR INSERT
 WITH CHECK (sender_user_id = auth.uid() AND (is_event_host(event_id) OR is_event_guest(event_id)));
 ```
 
@@ -155,25 +160,30 @@ WITH CHECK (sender_user_id = auth.uid() AND (is_event_host(event_id) OR is_event
 ### ✅ Areas with Proper Delegated Host Support
 
 #### 1. **SMS Invitations** (`app/api/sms/send-invitations/route.ts`)
+
 ```typescript
 // ✅ CORRECTLY uses is_event_host() RPC function
-const { data: hostCheck, error: hostError } = await supabaseAuth
-  .rpc('is_event_host', { p_event_id: eventId });
+const { data: hostCheck, error: hostError } = await supabaseAuth.rpc(
+  'is_event_host',
+  { p_event_id: eventId },
+);
 
 if (!hostCheck) {
   return NextResponse.json(
     { error: 'User is not authorized as host for this event' },
-    { status: 403 }
+    { status: 403 },
   );
 }
 ```
 
 #### 2. **Guest Import & Management**
+
 - **RLS enforcement**: All database operations use `is_event_host()` checks
 - **Permission validation**: Service-layer validation supports delegated hosts
 - **Bulk operations**: Guest imports work for both primary and delegated hosts
 
 #### 3. **Messaging System**
+
 - **Message sending**: Both primary and delegated hosts can send announcements
 - **Message reading**: Host-level message access enforced via RLS
 - **SMS announcements**: Delegated hosts can send SMS via proper API authorization
@@ -190,7 +200,7 @@ const { data: eventData, error: eventError } = await supabase
   .from('events')
   .select('*')
   .eq('id', eventId)
-  .eq('host_user_id', user.id)  // ← ONLY checks primary host!
+  .eq('host_user_id', user.id) // ← ONLY checks primary host!
   .single();
 ```
 
@@ -200,8 +210,9 @@ const { data: eventData, error: eventError } = await supabase
 
 ```typescript
 // ✅ SOLUTION: Use proper authorization check
-const { data: hostCheck } = await supabase
-  .rpc('is_event_host', { p_event_id: eventId });
+const { data: hostCheck } = await supabase.rpc('is_event_host', {
+  p_event_id: eventId,
+});
 
 if (!hostCheck) {
   setError('Event not found or you do not have permission to access it.');
@@ -225,13 +236,15 @@ const { data: eventData, error: eventError } = await supabase
 **Scenario**: A user is assigned `role = 'host'` but has `user_id = NULL` (phone-only guest record)
 
 **Current Behavior**:
+
 - ✅ **Database RLS**: Supports phone-based access via JWT claims
 - ✅ **Guest linking**: Auto-links when user signs up with matching phone
 - ❌ **Host permissions**: `is_event_host()` requires authenticated `user_id`
 
 **Risk**: Delegated hosts with unlinked accounts cannot perform host actions until they create an account.
 
-**Mitigation**: 
+**Mitigation**:
+
 ```sql
 -- Enhanced is_event_host() to support phone-based host access
 -- (Currently only implemented for is_event_guest())
@@ -242,6 +255,7 @@ const { data: eventData, error: eventError } = await supabase
 **Scenario**: Multiple operations simultaneously promote a guest to host
 
 **Potential Issues**:
+
 - Database constraint violations
 - Inconsistent permission states
 - Authorization check timing
@@ -253,6 +267,7 @@ const { data: eventData, error: eventError } = await supabase
 **Scenario**: Primary host deletes their account
 
 **Current Behavior**:
+
 - ✅ Event maintains delegated hosts
 - ❌ **Potential orphaning**: Event may become inaccessible if no delegated hosts exist
 - ⚠️ **Migration path**: No automatic promotion of delegated host to primary
@@ -264,6 +279,7 @@ const { data: eventData, error: eventError } = await supabase
 **Issue**: Multiple migrations modify `is_event_host()` function with conflicting implementations
 
 **Problem Files**:
+
 - `20250135000000_safe_jwt_claim_extraction.sql` - Reverts to primary-only check
 - `20250616043442_remote_schema.sql` - Missing delegated host support
 
@@ -286,12 +302,14 @@ const { data: eventData, error: eventError } = await supabase
 ### Missing UI Features
 
 **Event Management Interface**:
+
 - ❌ Role assignment dropdown in guest management
 - ❌ Host promotion/demotion buttons
 - ❌ Visual distinction between primary and delegated hosts
 - ❌ Host permission management UI
 
 **Recommended Implementation**:
+
 ```typescript
 // Guest role management component
 const GuestRoleSelector = ({ guest, onRoleChange }) => (

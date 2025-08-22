@@ -16,12 +16,15 @@ interface CachedResult {
 /**
  * Check if a guest with the given phone number already exists for the event
  */
-export async function checkGuestExists(eventId: string, phone: string): Promise<boolean> {
+export async function checkGuestExists(
+  eventId: string,
+  phone: string,
+): Promise<boolean> {
   if (!phone.trim()) return false;
 
   const normalizedPhone = normalizePhoneNumber(phone);
   const cacheKey = `${eventId}:${normalizedPhone}`;
-  
+
   // Check cache first
   const cached = duplicateCheckCache.get(cacheKey) as CachedResult | undefined;
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
@@ -43,11 +46,11 @@ export async function checkGuestExists(eventId: string, phone: string): Promise<
     }
 
     const exists = (data?.length || 0) > 0;
-    
+
     // Cache the result
     duplicateCheckCache.set(cacheKey, {
       exists,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
 
     return exists;
@@ -61,11 +64,11 @@ export async function checkGuestExists(eventId: string, phone: string): Promise<
  * Clear the duplicate check cache for an event (call after successful import)
  */
 export function clearGuestExistsCache(eventId: string): void {
-  const keysToDelete = Array.from(duplicateCheckCache.keys()).filter(key => 
-    key.startsWith(`${eventId}:`)
+  const keysToDelete = Array.from(duplicateCheckCache.keys()).filter((key) =>
+    key.startsWith(`${eventId}:`),
   );
-  
-  keysToDelete.forEach(key => duplicateCheckCache.delete(key));
+
+  keysToDelete.forEach((key) => duplicateCheckCache.delete(key));
 }
 
 /**
@@ -80,7 +83,7 @@ export interface FieldValidation {
 
 export function validateGuestField(
   field: 'guest_name' | 'phone' | 'guest_email',
-  value: string
+  value: string,
 ): FieldValidation {
   const trimmed = value.trim();
 
@@ -93,7 +96,10 @@ export function validateGuestField(
         return { isValid: false, error: 'Name must be at least 2 characters' };
       }
       if (trimmed.length > 100) {
-        return { isValid: false, error: 'Name must be less than 100 characters' };
+        return {
+          isValid: false,
+          error: 'Name must be less than 100 characters',
+        };
       }
       return { isValid: true, success: '✓ Valid name' };
 
@@ -101,23 +107,24 @@ export function validateGuestField(
       if (!trimmed) {
         return { isValid: false, error: 'Phone number is required' };
       }
-      
+
       const digitsOnly = trimmed.replace(/\D/g, '');
-      
+
       if (digitsOnly.length < 10) {
-        return { 
-          isValid: false, 
-          error: `Phone must be 10 digits (${digitsOnly.length}/10)` 
+        return {
+          isValid: false,
+          error: `Phone must be 10 digits (${digitsOnly.length}/10)`,
         };
       }
-      
+
       if (digitsOnly.length > 11) {
         return { isValid: false, error: 'Phone number is too long' };
       }
-      
-      const isValid = digitsOnly.length === 10 || 
+
+      const isValid =
+        digitsOnly.length === 10 ||
         (digitsOnly.length === 11 && digitsOnly.startsWith('1'));
-      
+
       if (!isValid) {
         return { isValid: false, error: 'Please enter a valid phone number' };
       }
@@ -128,12 +135,12 @@ export function validateGuestField(
       if (!trimmed) {
         return { isValid: true }; // Email is optional
       }
-      
+
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(trimmed)) {
         return { isValid: false, error: 'Please enter a valid email address' };
       }
-      
+
       return { isValid: true, success: '✓ Valid email' };
 
     default:

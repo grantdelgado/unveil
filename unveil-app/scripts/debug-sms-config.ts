@@ -2,9 +2,9 @@
 
 /**
  * SMS Configuration Debug Script
- * 
+ *
  * Checks Twilio configuration and tests SMS functionality
- * 
+ *
  * Usage: npx tsx scripts/debug-sms-config.ts
  */
 
@@ -27,7 +27,10 @@ interface ConfigValidation {
   suggestions: string[];
 }
 
-function checkTwilioConfig(): { config: TwilioConfig; validation: ConfigValidation } {
+function checkTwilioConfig(): {
+  config: TwilioConfig;
+  validation: ConfigValidation;
+} {
   const config: TwilioConfig = {
     accountSid: process.env.TWILIO_ACCOUNT_SID,
     authToken: process.env.TWILIO_AUTH_TOKEN,
@@ -48,7 +51,9 @@ function checkTwilioConfig(): { config: TwilioConfig; validation: ConfigValidati
     validation.suggestions.push('Add your Twilio Account SID to .env.local');
   } else if (!config.accountSid.startsWith('AC')) {
     validation.isValid = false;
-    validation.issues.push('❌ TWILIO_ACCOUNT_SID format invalid (should start with "AC")');
+    validation.issues.push(
+      '❌ TWILIO_ACCOUNT_SID format invalid (should start with "AC")',
+    );
   } else {
     console.log(`✅ TWILIO_ACCOUNT_SID: ${config.accountSid.slice(0, 8)}...`);
   }
@@ -63,27 +68,38 @@ function checkTwilioConfig(): { config: TwilioConfig; validation: ConfigValidati
 
   // Check sender configuration (need either phone number OR messaging service)
   const hasPhoneNumber = config.phoneNumber && config.phoneNumber.length > 0;
-  const hasMessagingService = config.messagingServiceSid && config.messagingServiceSid.length > 0;
+  const hasMessagingService =
+    config.messagingServiceSid && config.messagingServiceSid.length > 0;
 
   if (!hasPhoneNumber && !hasMessagingService) {
     validation.isValid = false;
     validation.issues.push('❌ No SMS sender configured');
-    validation.suggestions.push('Add either TWILIO_PHONE_NUMBER or TWILIO_MESSAGING_SERVICE_SID');
+    validation.suggestions.push(
+      'Add either TWILIO_PHONE_NUMBER or TWILIO_MESSAGING_SERVICE_SID',
+    );
   } else {
     if (hasPhoneNumber) {
       console.log(`✅ TWILIO_PHONE_NUMBER: ${config.phoneNumber}`);
       if (!config.phoneNumber!.startsWith('+')) {
-        validation.issues.push('⚠️ TWILIO_PHONE_NUMBER should start with "+" (E.164 format)');
+        validation.issues.push(
+          '⚠️ TWILIO_PHONE_NUMBER should start with "+" (E.164 format)',
+        );
       }
     }
     if (hasMessagingService) {
-      console.log(`✅ TWILIO_MESSAGING_SERVICE_SID: ${config.messagingServiceSid}`);
+      console.log(
+        `✅ TWILIO_MESSAGING_SERVICE_SID: ${config.messagingServiceSid}`,
+      );
       if (!config.messagingServiceSid!.startsWith('MG')) {
-        validation.issues.push('⚠️ TWILIO_MESSAGING_SERVICE_SID format invalid (should start with "MG")');
+        validation.issues.push(
+          '⚠️ TWILIO_MESSAGING_SERVICE_SID format invalid (should start with "MG")',
+        );
       }
     }
     if (hasPhoneNumber && hasMessagingService) {
-      validation.suggestions.push('💡 Both phone number and messaging service configured - messaging service will be used');
+      validation.suggestions.push(
+        '💡 Both phone number and messaging service configured - messaging service will be used',
+      );
     }
   }
 
@@ -98,7 +114,7 @@ async function testTwilioConnection(config: TwilioConfig): Promise<boolean> {
     }
 
     console.log('\n🔍 Testing Twilio connection...');
-    
+
     // Dynamic import to avoid server-side issues
     const twilio = (await import('twilio')).default;
     const client = twilio(config.accountSid, config.authToken);
@@ -111,7 +127,10 @@ async function testTwilioConnection(config: TwilioConfig): Promise<boolean> {
 
     return true;
   } catch (error) {
-    console.log('❌ Connection failed:', error instanceof Error ? error.message : 'Unknown error');
+    console.log(
+      '❌ Connection failed:',
+      error instanceof Error ? error.message : 'Unknown error',
+    );
     return false;
   }
 }
@@ -119,12 +138,16 @@ async function testTwilioConnection(config: TwilioConfig): Promise<boolean> {
 async function checkEnvironmentSpecific() {
   console.log('\n🌍 Environment Check:');
   console.log(`   NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`   NEXT_PUBLIC_BASE_URL: ${process.env.NEXT_PUBLIC_BASE_URL || 'not set'}`);
-  
+  console.log(
+    `   NEXT_PUBLIC_BASE_URL: ${process.env.NEXT_PUBLIC_BASE_URL || 'not set'}`,
+  );
+
   // Check if we're in development mode
   const isDev = process.env.NODE_ENV !== 'production';
   if (isDev) {
-    console.log('💡 Running in development mode - SMS should work with valid Twilio credentials');
+    console.log(
+      '💡 Running in development mode - SMS should work with valid Twilio credentials',
+    );
   } else {
     console.log('🚀 Running in production mode');
   }
@@ -136,19 +159,21 @@ async function main() {
 
   // Check basic configuration
   const { config, validation } = checkTwilioConfig();
-  
+
   console.log('\n📋 Configuration Issues:');
   if (validation.issues.length === 0) {
     console.log('✅ No configuration issues found');
   } else {
-    validation.issues.forEach(issue => console.log(`   ${issue}`));
+    validation.issues.forEach((issue) => console.log(`   ${issue}`));
   }
 
   console.log('\n💡 Suggestions:');
   if (validation.suggestions.length === 0) {
     console.log('✅ Configuration looks good');
   } else {
-    validation.suggestions.forEach(suggestion => console.log(`   ${suggestion}`));
+    validation.suggestions.forEach((suggestion) =>
+      console.log(`   ${suggestion}`),
+    );
   }
 
   // Test connection if config is valid
@@ -174,7 +199,9 @@ async function main() {
 
   console.log('\n🔗 Resources:');
   console.log('   Twilio Console: https://console.twilio.com/');
-  console.log('   SMS Setup Guide: docs/archive/project-docs-legacy/04-OPERATIONS/docs-SMS_SETUP_GUIDE.md');
+  console.log(
+    '   SMS Setup Guide: docs/archive/project-docs-legacy/04-OPERATIONS/docs-SMS_SETUP_GUIDE.md',
+  );
 }
 
 if (require.main === module) {

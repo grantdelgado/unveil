@@ -5,7 +5,7 @@ import {
   toUTCFromEventZone,
   fromUTCToEventZone,
   getTimezoneLabel,
-  formatTimeWithTimezone
+  formatTimeWithTimezone,
 } from './timezone';
 
 describe('Timezone Utilities', () => {
@@ -54,24 +54,40 @@ describe('Timezone Utilities', () => {
 
   describe('toUTCFromEventZone', () => {
     it('should convert event timezone to UTC correctly', () => {
-      const result = toUTCFromEventZone('2025-08-31', '15:00', 'America/Los_Angeles');
+      const result = toUTCFromEventZone(
+        '2025-08-31',
+        '15:00',
+        'America/Los_Angeles',
+      );
       expect(result).toBeTruthy();
       expect(result).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/);
     });
 
     it('should handle invalid inputs gracefully', () => {
       expect(toUTCFromEventZone('', '15:00', 'America/Los_Angeles')).toBeNull();
-      expect(toUTCFromEventZone('2025-08-31', '', 'America/Los_Angeles')).toBeNull();
-      expect(toUTCFromEventZone('2025-08-31', '15:00', 'Invalid/Timezone')).toBeNull();
+      expect(
+        toUTCFromEventZone('2025-08-31', '', 'America/Los_Angeles'),
+      ).toBeNull();
+      expect(
+        toUTCFromEventZone('2025-08-31', '15:00', 'Invalid/Timezone'),
+      ).toBeNull();
     });
 
     it('should maintain timezone consistency across DST boundaries', () => {
       // Test summer time (PDT)
-      const summerResult = toUTCFromEventZone('2025-07-01', '15:00', 'America/Los_Angeles');
+      const summerResult = toUTCFromEventZone(
+        '2025-07-01',
+        '15:00',
+        'America/Los_Angeles',
+      );
       expect(summerResult).toBeTruthy();
 
       // Test winter time (PST)
-      const winterResult = toUTCFromEventZone('2025-01-01', '15:00', 'America/Los_Angeles');
+      const winterResult = toUTCFromEventZone(
+        '2025-01-01',
+        '15:00',
+        'America/Los_Angeles',
+      );
       expect(winterResult).toBeTruthy();
 
       // Should be different due to DST
@@ -83,7 +99,7 @@ describe('Timezone Utilities', () => {
     it('should convert UTC to event timezone correctly', () => {
       const utcTime = '2025-08-31T22:00:00.000Z'; // 10 PM UTC
       const result = fromUTCToEventZone(utcTime, 'America/Los_Angeles');
-      
+
       expect(result).toBeTruthy();
       expect(result?.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
       expect(result?.time).toMatch(/^\d{2}:\d{2}$/);
@@ -92,8 +108,12 @@ describe('Timezone Utilities', () => {
 
     it('should handle invalid inputs gracefully', () => {
       expect(fromUTCToEventZone('', 'America/Los_Angeles')).toBeNull();
-      expect(fromUTCToEventZone('2025-08-31T22:00:00.000Z', 'Invalid/Timezone')).toBeNull();
-      expect(fromUTCToEventZone('invalid-date', 'America/Los_Angeles')).toBeNull();
+      expect(
+        fromUTCToEventZone('2025-08-31T22:00:00.000Z', 'Invalid/Timezone'),
+      ).toBeNull();
+      expect(
+        fromUTCToEventZone('invalid-date', 'America/Los_Angeles'),
+      ).toBeNull();
     });
   });
 
@@ -117,9 +137,9 @@ describe('Timezone Utilities', () => {
       const timeZoneInfo = {
         timeZone: 'America/Los_Angeles',
         abbreviation: 'PST',
-        displayName: 'Pacific Standard Time'
+        displayName: 'Pacific Standard Time',
       };
-      
+
       const result = formatTimeWithTimezone('3:00 PM', timeZoneInfo);
       expect(result).toBe('3:00 PM PST');
     });
@@ -135,11 +155,11 @@ describe('Timezone Utilities', () => {
       const originalDate = '2025-08-31';
       const originalTime = '15:00';
       const timeZone = 'America/Los_Angeles';
-      
+
       // Convert to UTC
       const utcTime = toUTCFromEventZone(originalDate, originalTime, timeZone);
       expect(utcTime).toBeTruthy();
-      
+
       // Convert back to event timezone
       const converted = fromUTCToEventZone(utcTime!, timeZone);
       expect(converted).toBeTruthy();
@@ -152,13 +172,13 @@ describe('Timezone Utilities', () => {
         { tz: 'America/New_York', date: '2025-08-31', time: '15:00' },
         { tz: 'Europe/London', date: '2025-08-31', time: '15:00' },
         { tz: 'Asia/Tokyo', date: '2025-08-31', time: '15:00' },
-        { tz: 'UTC', date: '2025-08-31', time: '15:00' }
+        { tz: 'UTC', date: '2025-08-31', time: '15:00' },
       ];
 
       testCases.forEach(({ tz, date, time }) => {
         const utcTime = toUTCFromEventZone(date, time, tz);
         expect(utcTime).toBeTruthy();
-        
+
         const converted = fromUTCToEventZone(utcTime!, tz);
         expect(converted?.date).toBe(date);
         expect(converted?.time).toBe(time);

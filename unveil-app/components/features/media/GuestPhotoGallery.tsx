@@ -23,7 +23,13 @@ interface MediaModalProps {
 }
 
 // Modal component for full-screen media viewing
-function MediaModal({ media, currentIndex, isOpen, onClose, onNavigate }: MediaModalProps) {
+function MediaModal({
+  media,
+  currentIndex,
+  isOpen,
+  onClose,
+  onNavigate,
+}: MediaModalProps) {
   const currentMedia = media[currentIndex];
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -72,13 +78,16 @@ function MediaModal({ media, currentIndex, isOpen, onClose, onNavigate }: MediaM
   if (!isOpen || !currentMedia) return null;
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div ref={modalRef} className="relative w-full h-full flex items-center justify-center p-4">
+      <div
+        ref={modalRef}
+        className="relative w-full h-full flex items-center justify-center p-4"
+      >
         {/* Close button */}
         <button
           onClick={onClose}
@@ -134,20 +143,24 @@ function MediaModal({ media, currentIndex, isOpen, onClose, onNavigate }: MediaM
               {currentMedia.caption && (
                 <p className="text-lg mb-2">{currentMedia.caption}</p>
               )}
-                             <div className="flex items-center justify-between text-sm text-gray-300">
-                 <span>
-                   {currentMedia.created_at
-                     ? new Date(currentMedia.created_at).toLocaleDateString('en-US', {
-                         weekday: 'long',
-                         year: 'numeric',
-                         month: 'long',
-                         day: 'numeric'
-                       })
-                     : 'Date unknown'
-                   }
-                 </span>
-                 <span>{currentIndex + 1} of {media.length}</span>
-               </div>
+              <div className="flex items-center justify-between text-sm text-gray-300">
+                <span>
+                  {currentMedia.created_at
+                    ? new Date(currentMedia.created_at).toLocaleDateString(
+                        'en-US',
+                        {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                        },
+                      )
+                    : 'Date unknown'}
+                </span>
+                <span>
+                  {currentIndex + 1} of {media.length}
+                </span>
+              </div>
             </div>
           )}
         </div>
@@ -166,7 +179,11 @@ function MediaSkeleton() {
 }
 
 // Enhanced empty state component
-function EmptyGalleryState({ hasUploadPermission }: { hasUploadPermission: boolean }) {
+function EmptyGalleryState({
+  hasUploadPermission,
+}: {
+  hasUploadPermission: boolean;
+}) {
   return (
     <div className="bg-gradient-to-br from-rose-50 to-purple-50 rounded-lg p-8 text-center">
       <div className="max-w-sm mx-auto space-y-4">
@@ -175,21 +192,28 @@ function EmptyGalleryState({ hasUploadPermission }: { hasUploadPermission: boole
           <div className="absolute inset-0 bg-gradient-to-br from-rose-200 to-purple-200 rounded-full opacity-20"></div>
           <div className="absolute inset-2 bg-gradient-to-br from-rose-300 to-purple-300 rounded-full opacity-40"></div>
           <div className="absolute inset-4 bg-gradient-to-br from-rose-400 to-purple-400 rounded-full flex items-center justify-center">
-            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            <svg
+              className="w-8 h-8 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
             </svg>
           </div>
         </div>
 
         <div className="space-y-2">
-          <h3 className="text-lg font-medium text-gray-900">
-            No memories yet
-          </h3>
+          <h3 className="text-lg font-medium text-gray-900">No memories yet</h3>
           <p className="text-gray-600">
-            {hasUploadPermission 
-              ? "Be the first to share a beautiful moment from this special day."
-              : "Guests will start sharing their favorite moments here soon."
-            }
+            {hasUploadPermission
+              ? 'Be the first to share a beautiful moment from this special day.'
+              : 'Guests will start sharing their favorite moments here soon.'}
           </p>
         </div>
 
@@ -215,39 +239,42 @@ function GuestPhotoGallery({ eventId, currentUserId }: GuestPhotoGalleryProps) {
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const ITEMS_PER_PAGE = 12;
 
-  const fetchMedia = useCallback(async (offset = 0, append = false) => {
-    try {
-      if (offset === 0) setLoading(true);
-      else setLoadingMore(true);
+  const fetchMedia = useCallback(
+    async (offset = 0, append = false) => {
+      try {
+        if (offset === 0) setLoading(true);
+        else setLoadingMore(true);
 
-      const { data, error } = await supabase
-        .from('media')
-        .select('*')
-        .eq('event_id', eventId)
-        .order('created_at', { ascending: false })
-        .range(offset, offset + ITEMS_PER_PAGE - 1);
+        const { data, error } = await supabase
+          .from('media')
+          .select('*')
+          .eq('event_id', eventId)
+          .order('created_at', { ascending: false })
+          .range(offset, offset + ITEMS_PER_PAGE - 1);
 
-      if (error) {
-        console.error('❌ Error fetching media:', error);
-        return;
+        if (error) {
+          console.error('❌ Error fetching media:', error);
+          return;
+        }
+
+        const newMedia = data || [];
+
+        if (append) {
+          setMedia((prev) => [...prev, ...newMedia]);
+        } else {
+          setMedia(newMedia);
+        }
+
+        setHasMore(newMedia.length === ITEMS_PER_PAGE);
+      } catch (err) {
+        console.error('❌ Unexpected error fetching media:', err);
+      } finally {
+        setLoading(false);
+        setLoadingMore(false);
       }
-
-      const newMedia = data || [];
-      
-      if (append) {
-        setMedia(prev => [...prev, ...newMedia]);
-      } else {
-        setMedia(newMedia);
-      }
-
-      setHasMore(newMedia.length === ITEMS_PER_PAGE);
-    } catch (err) {
-      console.error('❌ Unexpected error fetching media:', err);
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-    }
-  }, [eventId]);
+    },
+    [eventId],
+  );
 
   const loadMore = useCallback(() => {
     if (!loadingMore && hasMore) {
@@ -267,7 +294,7 @@ function GuestPhotoGallery({ eventId, currentUserId }: GuestPhotoGalleryProps) {
           loadMore();
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
 
     if (loadMoreRef.current) {
@@ -318,7 +345,7 @@ function GuestPhotoGallery({ eventId, currentUserId }: GuestPhotoGalleryProps) {
           <h2 className="text-xl font-semibold text-gray-900">Moments</h2>
           <div className="h-5 w-16 bg-gray-200 rounded animate-pulse"></div>
         </div>
-        
+
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
           {Array.from({ length: 8 }, (_, i) => (
             <MediaSkeleton key={i} />
@@ -356,8 +383,8 @@ function GuestPhotoGallery({ eventId, currentUserId }: GuestPhotoGalleryProps) {
           <>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
               {media.map((item, index) => (
-                <div 
-                  key={item.id} 
+                <div
+                  key={item.id}
                   className="relative group cursor-pointer"
                   onClick={() => openModal(index)}
                 >
@@ -386,33 +413,34 @@ function GuestPhotoGallery({ eventId, currentUserId }: GuestPhotoGalleryProps) {
                         </div>
                         <div className="absolute inset-0 flex items-center justify-center">
                           <div className="w-12 h-12 bg-black/50 rounded-full flex items-center justify-center group-hover:bg-black/70 transition-colors">
-                            <svg className="w-6 h-6 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M8 6.82v10.36c0 .79.87 1.27 1.54.84l8.14-5.18c.62-.39.62-1.29 0-1.68L9.54 5.98C8.87 5.55 8 6.03 8 6.82z"/>
+                            <svg
+                              className="w-6 h-6 text-white ml-1"
+                              fill="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path d="M8 6.82v10.36c0 .79.87 1.27 1.54.84l8.14-5.18c.62-.39.62-1.29 0-1.68L9.54 5.98C8.87 5.55 8 6.03 8 6.82z" />
                             </svg>
                           </div>
                         </div>
                       </div>
                     )}
-                    
+
                     {/* Hover overlay */}
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300"></div>
                   </div>
-                  
-                                     {item.caption && (
-                     <p className="text-sm text-gray-600 mt-2 leading-tight truncate">
-                       {item.caption}
-                     </p>
-                   )}
+
+                  {item.caption && (
+                    <p className="text-sm text-gray-600 mt-2 leading-tight truncate">
+                      {item.caption}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>
-            
+
             {/* Load More Section */}
             {hasMore && (
-              <div 
-                ref={loadMoreRef} 
-                className="flex justify-center py-8"
-              >
+              <div ref={loadMoreRef} className="flex justify-center py-8">
                 {loadingMore ? (
                   <div className="flex items-center text-gray-600">
                     <div className="w-5 h-5 border-2 border-gray-300 border-t-rose-500 rounded-full animate-spin mr-3" />

@@ -2,12 +2,12 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useMessagingRecipients } from './useMessagingRecipients';
 import { supabase } from '@/lib/supabase/client';
 import { resolveMessageRecipients } from '@/lib/services/messaging';
-import type { 
-  RecipientFilter, 
-  FilteredGuest, 
-  RecipientPreviewData, 
+import type {
+  RecipientFilter,
+  FilteredGuest,
+  RecipientPreviewData,
   GuestWithDisplayName,
-  RSVP_STATUSES 
+  RSVP_STATUSES,
 } from '@/lib/types/messaging';
 
 interface UseRecipientPreviewOptions {
@@ -27,20 +27,23 @@ interface UseRecipientPreviewReturn {
  * Hook for real-time recipient preview based on filter criteria
  * Provides debounced updates and performance optimization for large guest lists
  */
-export function useRecipientPreview({ 
-  eventId, 
-  filter, 
-  debounceMs = 300 
+export function useRecipientPreview({
+  eventId,
+  filter,
+  debounceMs = 300,
 }: UseRecipientPreviewOptions): UseRecipientPreviewReturn {
-  const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(
+    null,
+  );
 
   // Use unified messaging recipients hook for canonical scope consistency
   // Hosts are always included now
-  const { recipients, loading, error, refresh } = useMessagingRecipients(eventId);
+  const { recipients, loading, error, refresh } =
+    useMessagingRecipients(eventId);
 
   // Transform recipients to GuestWithDisplayName format for compatibility
   const allGuests: GuestWithDisplayName[] = useMemo(() => {
-    return recipients.map(recipient => ({
+    return recipients.map((recipient) => ({
       // Base Guest fields
       id: recipient.event_guest_id,
       event_id: eventId,
@@ -67,21 +70,23 @@ export function useRecipientPreview({
       sms_opt_out: recipient.sms_opt_out,
       preferred_communication: null,
       display_name: recipient.guest_display_name,
-      users: recipient.user_full_name ? {
-        id: '', // Not needed for preview
-        full_name: recipient.user_full_name,
-        phone: recipient.user_phone || '',
-        email: recipient.user_email,
-        avatar_url: null,
-        created_at: null,
-        updated_at: null,
-        intended_redirect: null,
-        onboarding_completed: false
-      } : null,
+      users: recipient.user_full_name
+        ? {
+            id: '', // Not needed for preview
+            full_name: recipient.user_full_name,
+            phone: recipient.user_phone || '',
+            email: recipient.user_email,
+            avatar_url: null,
+            created_at: null,
+            updated_at: null,
+            intended_redirect: null,
+            onboarding_completed: false,
+          }
+        : null,
       // Computed fields
       displayName: recipient.guest_display_name,
       hasValidPhone: recipient.has_valid_phone,
-      isOptedOut: recipient.sms_opt_out
+      isOptedOut: recipient.sms_opt_out,
     }));
   }, [recipients, eventId]);
 
@@ -98,7 +103,7 @@ export function useRecipientPreview({
         totalCount: 0,
         validRecipientsCount: 0,
         tagCounts: {},
-        rsvpStatusCounts: {}
+        rsvpStatusCounts: {},
       };
     }
 
@@ -106,25 +111,26 @@ export function useRecipientPreview({
 
     // RSVP-Lite: Exclude declined guests by default unless explicitly included
     // Check if filter specifically includes declined guests
-    const includeDeclined = filter.rsvpStatuses?.includes('declined') || 
-                           filter.type === 'individual' ||
-                           (filter as any).includeDeclined === true;
-    
+    const includeDeclined =
+      filter.rsvpStatuses?.includes('declined') ||
+      filter.type === 'individual' ||
+      (filter as any).includeDeclined === true;
+
     if (!includeDeclined) {
-      filteredGuests = filteredGuests.filter(guest => !guest.declined_at);
+      filteredGuests = filteredGuests.filter((guest) => !guest.declined_at);
     }
 
     // Apply filtering logic
     if (filter.type === 'all') {
       // No additional filtering needed (declined already handled above)
     } else if (filter.type === 'individual' && filter.guestIds) {
-      filteredGuests = allGuests.filter(guest => 
-        filter.guestIds!.includes(guest.id)
+      filteredGuests = allGuests.filter((guest) =>
+        filter.guestIds!.includes(guest.id),
       );
     } else {
       // Apply RSVP status filter
       if (filter.rsvpStatuses && filter.rsvpStatuses.length > 0) {
-        filteredGuests = filteredGuests.filter(guest => {
+        filteredGuests = filteredGuests.filter((guest) => {
           // RSVP-Lite: Map attendance status to filter
           const attendanceStatus = guest.declined_at ? 'declined' : 'attending';
           return filter.rsvpStatuses!.includes(attendanceStatus);
@@ -133,38 +139,40 @@ export function useRecipientPreview({
 
       // Apply tag filter
       if (filter.tags && filter.tags.length > 0) {
-        filteredGuests = filteredGuests.filter(guest => {
+        filteredGuests = filteredGuests.filter((guest) => {
           const guestTags = guest.guest_tags || [];
-          
+
           if (filter.requireAllTags) {
             // Guest must have ALL specified tags (AND logic)
-            return filter.tags!.every(tag => guestTags.includes(tag));
+            return filter.tags!.every((tag) => guestTags.includes(tag));
           } else {
             // Guest must have ANY of the specified tags (OR logic)
-            return filter.tags!.some(tag => guestTags.includes(tag));
+            return filter.tags!.some((tag) => guestTags.includes(tag));
           }
         });
       }
     }
 
     // Convert to FilteredGuest format
-    const guests: FilteredGuest[] = filteredGuests.map(guest => ({
+    const guests: FilteredGuest[] = filteredGuests.map((guest) => ({
       id: guest.id,
       displayName: guest.displayName,
       tags: guest.guest_tags || [],
       rsvpStatus: guest.declined_at ? 'declined' : 'attending',
-      hasPhone: guest.hasValidPhone
+      hasPhone: guest.hasValidPhone,
     }));
 
     // Calculate statistics - exclude opted-out guests from valid recipients
-    const validRecipientsCount = filteredGuests.filter(g => g.hasValidPhone && !g.isOptedOut).length;
-    
+    const validRecipientsCount = filteredGuests.filter(
+      (g) => g.hasValidPhone && !g.isOptedOut,
+    ).length;
+
     const tagCounts: Record<string, number> = {};
     const rsvpStatusCounts: Record<string, number> = {};
 
-    guests.forEach(guest => {
+    guests.forEach((guest) => {
       // Count tags
-      guest.tags.forEach(tag => {
+      guest.tags.forEach((tag) => {
         tagCounts[tag] = (tagCounts[tag] || 0) + 1;
       });
 
@@ -178,7 +186,7 @@ export function useRecipientPreview({
       totalCount: guests.length,
       validRecipientsCount,
       tagCounts,
-      rsvpStatusCounts
+      rsvpStatusCounts,
     };
   }, [allGuests, filter]);
 
@@ -190,7 +198,7 @@ export function useRecipientPreview({
     previewData,
     loading,
     error,
-    refresh
+    refresh,
   };
 }
 
@@ -226,8 +234,8 @@ export function useAvailableTags(eventId: string) {
           if (fallbackError) throw fallbackError;
 
           const tagMap = new Map<string, number>();
-          guests?.forEach(guest => {
-            guest.guest_tags?.forEach(tag => {
+          guests?.forEach((guest) => {
+            guest.guest_tags?.forEach((tag) => {
               tagMap.set(tag, (tagMap.get(tag) || 0) + 1);
             });
           });
@@ -250,6 +258,6 @@ export function useAvailableTags(eventId: string) {
     tags,
     tagCounts,
     loading,
-    error
+    error,
   };
 }

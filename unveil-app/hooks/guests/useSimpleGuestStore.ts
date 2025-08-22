@@ -1,6 +1,6 @@
 /**
  * Simplified Guest Store for MVP
- * 
+ *
  * This is a simplified, more stable version of the guest store
  * that prioritizes reliability over advanced features.
  */
@@ -73,7 +73,10 @@ interface SimpleGuestStoreReturn {
   error: string | null;
   connectionStatus: 'connecting' | 'connected' | 'disconnected' | 'error';
   refreshGuests: () => Promise<void>;
-  updateGuestOptimistically: (guestId: string, updates: Partial<SimpleGuest>) => void;
+  updateGuestOptimistically: (
+    guestId: string,
+    updates: Partial<SimpleGuest>,
+  ) => void;
   rollbackOptimisticUpdate: (guestId: string) => void;
 }
 
@@ -85,21 +88,28 @@ export function useSimpleGuestStore(eventId: string): SimpleGuestStoreReturn {
   const [guests, setGuests] = useState<SimpleGuest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'error'>('connecting');
-  const [guestSnapshots, setGuestSnapshots] = useState<Map<string, SimpleGuest>>(new Map());
+  const [connectionStatus, setConnectionStatus] = useState<
+    'connecting' | 'connected' | 'disconnected' | 'error'
+  >('connecting');
+  const [guestSnapshots, setGuestSnapshots] = useState<
+    Map<string, SimpleGuest>
+  >(new Map());
 
   // Calculate status counts from guests array
-  const statusCounts = useCallback((guestsList: SimpleGuest[]): SimpleGuestStatusCounts => {
-    if (!Array.isArray(guestsList)) {
-      return {
-        total: 0,
-        attending: 0,
-        declined: 0,
-      };
-    }
+  const statusCounts = useCallback(
+    (guestsList: SimpleGuest[]): SimpleGuestStatusCounts => {
+      if (!Array.isArray(guestsList)) {
+        return {
+          total: 0,
+          attending: 0,
+          declined: 0,
+        };
+      }
 
-    return calculateAttendanceCounts(guestsList);
-  }, []);
+      return calculateAttendanceCounts(guestsList);
+    },
+    [],
+  );
 
   // Fetch guests from database (core function without throttling)
   const fetchGuestsCore = useCallback(async () => {
@@ -119,19 +129,21 @@ export function useSimpleGuestStore(eventId: string): SimpleGuestStoreReturn {
       logger.info('Fetching guests for event', { eventId });
 
       // Use RPC function to get guests with computed display names
-      const { data: guestData, error: guestError } = await supabase
-        .rpc('get_event_guests_with_display_names', {
+      const { data: guestData, error: guestError } = await supabase.rpc(
+        'get_event_guests_with_display_names',
+        {
           p_event_id: eventId,
           p_limit: undefined,
-          p_offset: 0
-        });
+          p_offset: 0,
+        },
+      );
 
       if (guestError) {
         throw new Error(`Failed to fetch guests: ${guestError.message}`);
       }
 
       // Process and normalize the data - now matches the RPC function exactly
-      const processedGuests = (guestData || []).map(guest => ({
+      const processedGuests = (guestData || []).map((guest) => ({
         // Map all fields from the RPC function
         id: guest.id,
         event_id: guest.event_id,
@@ -171,28 +183,30 @@ export function useSimpleGuestStore(eventId: string): SimpleGuestStoreReturn {
         user_intended_redirect: guest.user_intended_redirect,
         user_onboarding_completed: guest.user_onboarding_completed,
         // Legacy users object for backward compatibility
-        users: guest.user_id ? {
-          id: guest.user_id,
-          full_name: guest.user_full_name,
-          email: guest.user_email || guest.guest_email,
-          phone: guest.user_phone || guest.phone,
-          avatar_url: guest.user_avatar_url,
-        } : null,
+        users: guest.user_id
+          ? {
+              id: guest.user_id,
+              full_name: guest.user_full_name,
+              email: guest.user_email || guest.guest_email,
+              phone: guest.user_phone || guest.phone,
+              avatar_url: guest.user_avatar_url,
+            }
+          : null,
       })) as SimpleGuest[];
 
       setGuests(processedGuests);
       setConnectionStatus('connected');
       setError(null);
 
-      logger.info('Successfully fetched guests', { 
-        eventId, 
-        count: processedGuests.length 
+      logger.info('Successfully fetched guests', {
+        eventId,
+        count: processedGuests.length,
       });
-
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Unknown error occurred';
       logger.error('Error fetching guests', { eventId, error: errorMessage });
-      
+
       setError(errorMessage);
       setConnectionStatus('error');
       setGuests([]); // Set to empty array to prevent undefined issues
@@ -202,26 +216,29 @@ export function useSimpleGuestStore(eventId: string): SimpleGuestStoreReturn {
   }, [eventId]);
 
   // Create request manager for this event
-  const requestManager = useMemo(() => createEventRequestManager(eventId), [eventId]);
+  const requestManager = useMemo(
+    () => createEventRequestManager(eventId),
+    [eventId],
+  );
 
   // Throttled version of fetchGuests
   const fetchGuests = useMemo(
     () => requestManager.throttledFetch(fetchGuestsCore),
-    [requestManager, fetchGuestsCore]
+    [requestManager, fetchGuestsCore],
   );
 
   // Initial fetch on mount and when eventId changes
   useEffect(() => {
     let isMounted = true;
-    
+
     const loadGuests = async () => {
       if (isMounted) {
         await fetchGuestsCore();
       }
     };
-    
+
     loadGuests();
-    
+
     return () => {
       isMounted = false;
     };
@@ -236,8 +253,8 @@ export function useSimpleGuestStore(eventId: string): SimpleGuestStoreReturn {
       if (document.visibilityState === 'visible') {
         const lastUpdate = localStorage.getItem(`guest-last-update-${eventId}`);
         const now = Date.now();
-        const shouldPoll = !lastUpdate || (now - parseInt(lastUpdate)) > 300000; // 5 minutes
-        
+        const shouldPoll = !lastUpdate || now - parseInt(lastUpdate) > 300000; // 5 minutes
+
         if (shouldPoll) {
           logger.debug('🛠️ Polling for guest updates', { eventId });
           fetchGuests();
@@ -252,31 +269,32 @@ export function useSimpleGuestStore(eventId: string): SimpleGuestStoreReturn {
   }, [connectionStatus, fetchGuests]); // Use throttled version
 
   // Optimistic update function for immediate UI feedback
-  const updateGuestOptimistically = useCallback((guestId: string, updates: Partial<SimpleGuest>) => {
-    setGuests(prevGuests => {
-      // Find and store snapshot of original guest before updating
-      const originalGuest = prevGuests.find(g => g.id === guestId);
-      if (originalGuest) {
-        setGuestSnapshots(prev => new Map(prev).set(guestId, originalGuest));
-      }
-      
-      return prevGuests.map(guest => 
-        guest.id === guestId 
-          ? { ...guest, ...updates }
-          : guest
-      );
-    });
-  }, []);
+  const updateGuestOptimistically = useCallback(
+    (guestId: string, updates: Partial<SimpleGuest>) => {
+      setGuests((prevGuests) => {
+        // Find and store snapshot of original guest before updating
+        const originalGuest = prevGuests.find((g) => g.id === guestId);
+        if (originalGuest) {
+          setGuestSnapshots((prev) =>
+            new Map(prev).set(guestId, originalGuest),
+          );
+        }
+
+        return prevGuests.map((guest) =>
+          guest.id === guestId ? { ...guest, ...updates } : guest,
+        );
+      });
+    },
+    [],
+  );
 
   // Rollback function to revert optimistic updates
   const rollbackOptimisticUpdate = useCallback((guestId: string) => {
-    setGuestSnapshots(prevSnapshots => {
+    setGuestSnapshots((prevSnapshots) => {
       const snapshot = prevSnapshots.get(guestId);
       if (snapshot) {
-        setGuests(prevGuests => 
-          prevGuests.map(guest => 
-            guest.id === guestId ? snapshot : guest
-          )
+        setGuests((prevGuests) =>
+          prevGuests.map((guest) => (guest.id === guestId ? snapshot : guest)),
         );
         // Remove snapshot after rollback
         const newSnapshots = new Map(prevSnapshots);
@@ -303,8 +321,9 @@ export function useSimpleGuestStore(eventId: string): SimpleGuestStoreReturn {
  * Hook for components that only need guest list data
  */
 export function useSimpleGuestList(eventId: string) {
-  const { guests, loading, error, refreshGuests } = useSimpleGuestStore(eventId);
-  
+  const { guests, loading, error, refreshGuests } =
+    useSimpleGuestStore(eventId);
+
   return {
     guests: guests || [],
     loading,
@@ -318,7 +337,7 @@ export function useSimpleGuestList(eventId: string) {
  */
 export function useSimpleGuestStatusCounts(eventId: string) {
   const { statusCounts, loading, error } = useSimpleGuestStore(eventId);
-  
+
   return {
     statusCounts,
     loading,

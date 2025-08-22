@@ -11,17 +11,17 @@ const twilioMessagingServiceSid = process.env.TWILIO_MESSAGING_SERVICE_SID;
 // Validate Twilio configuration on module load
 function validateTwilioConfig() {
   const missingVars = [];
-  
+
   if (!accountSid) missingVars.push('TWILIO_ACCOUNT_SID');
   if (!authToken) missingVars.push('TWILIO_AUTH_TOKEN');
   if (!twilioPhoneNumber && !twilioMessagingServiceSid) {
     missingVars.push('TWILIO_PHONE_NUMBER or TWILIO_MESSAGING_SERVICE_SID');
   }
-  
+
   if (missingVars.length > 0) {
     logger.warn('Twilio Configuration Warning', {
       missing: missingVars,
-      note: 'SMS invitations will not work until these are configured'
+      note: 'SMS invitations will not work until these are configured',
     });
   } else {
     logger.info('Twilio Configuration: All required variables present');
@@ -74,12 +74,14 @@ export interface ScheduledSMSDelivery {
 /**
  * Enhanced SMS sending for scheduled messages with retry logic
  */
-export async function sendScheduledSMS(delivery: ScheduledSMSDelivery): Promise<SMSResult> {
+export async function sendScheduledSMS(
+  delivery: ScheduledSMSDelivery,
+): Promise<SMSResult> {
   const maxRetries = 3;
   const retryDelays = [1000, 2000, 5000]; // 1s, 2s, 5s
-  
+
   let lastError: string = '';
-  
+
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       const result = await sendSMS({
@@ -89,15 +91,17 @@ export async function sendScheduledSMS(delivery: ScheduledSMSDelivery): Promise<
         guestId: delivery.guestId,
         messageType: 'custom',
       });
-      
+
       // If successful, return immediately
       if (result.success) {
         if (attempt > 0) {
-          logger.sms(`SMS sent successfully on retry ${attempt + 1} for guest ${delivery.guestId.slice(-4)}`);
+          logger.sms(
+            `SMS sent successfully on retry ${attempt + 1} for guest ${delivery.guestId.slice(-4)}`,
+          );
         }
         return result;
       }
-      
+
       // If this was the last attempt, return the failure
       if (attempt === maxRetries - 1) {
         return {
@@ -105,27 +109,34 @@ export async function sendScheduledSMS(delivery: ScheduledSMSDelivery): Promise<
           shouldRetry: false,
         };
       }
-      
+
       // Check if error is retryable (5xx errors, rate limits, temporary failures)
       const shouldRetry = SMSRetry.isRetryable(result.error);
       if (!shouldRetry) {
-        logger.smsError(`Non-retryable error for guest ${delivery.guestId.slice(-4)}`, result.error);
+        logger.smsError(
+          `Non-retryable error for guest ${delivery.guestId.slice(-4)}`,
+          result.error,
+        );
         return {
           ...result,
           shouldRetry: false,
         };
       }
-      
+
       lastError = result.error || 'Unknown error';
-      logger.sms(`Retryable error for guest ${delivery.guestId.slice(-4)}, attempt ${attempt + 1}/${maxRetries}: ${lastError}`);
-      
+      logger.sms(
+        `Retryable error for guest ${delivery.guestId.slice(-4)}, attempt ${attempt + 1}/${maxRetries}: ${lastError}`,
+      );
+
       // Wait before retry
-      await new Promise(resolve => setTimeout(resolve, retryDelays[attempt]));
-      
+      await new Promise((resolve) => setTimeout(resolve, retryDelays[attempt]));
     } catch (error) {
       lastError = getErrorMessage(error);
-      logger.smsError(`Exception during SMS send attempt ${attempt + 1} for guest ${delivery.guestId.slice(-4)}`, lastError);
-      
+      logger.smsError(
+        `Exception during SMS send attempt ${attempt + 1} for guest ${delivery.guestId.slice(-4)}`,
+        lastError,
+      );
+
       // If this was the last attempt, return failure
       if (attempt === maxRetries - 1) {
         return {
@@ -134,12 +145,12 @@ export async function sendScheduledSMS(delivery: ScheduledSMSDelivery): Promise<
           shouldRetry: false,
         };
       }
-      
+
       // Wait before retry
-      await new Promise(resolve => setTimeout(resolve, retryDelays[attempt]));
+      await new Promise((resolve) => setTimeout(resolve, retryDelays[attempt]));
     }
   }
-  
+
   return {
     success: false,
     error: lastError,
@@ -163,18 +174,21 @@ export async function sendSMS({
       eventId,
       messageType,
       hasGuestId: !!guestId,
-      simulationMode: process.env.DEV_SIMULATE_INVITES === 'true'
+      simulationMode: process.env.DEV_SIMULATE_INVITES === 'true',
     });
 
     // Development simulation mode
-    if (process.env.NODE_ENV === 'development' && process.env.DEV_SIMULATE_INVITES === 'true') {
+    if (
+      process.env.NODE_ENV === 'development' &&
+      process.env.DEV_SIMULATE_INVITES === 'true'
+    ) {
       logger.info('🔧 SMS SIMULATION MODE - No actual SMS sent', {
         phone: to.slice(0, 6) + '...',
         messagePreview: message.substring(0, 100) + '...',
         messageLength: message.length,
         eventId,
         guestId,
-        messageType
+        messageType,
       });
 
       // Log to database for tracking (same as real SMS)
@@ -197,12 +211,12 @@ export async function sendSMS({
 
     // Get Twilio client
     const client = await getTwilioClient();
-    
+
     logger.info('Twilio client status', {
       hasClient: !!client,
       hasPhoneNumber: !!twilioPhoneNumber,
       hasMessagingService: !!twilioMessagingServiceSid,
-      accountSid: accountSid ? accountSid.slice(0, 8) + '...' : 'missing'
+      accountSid: accountSid ? accountSid.slice(0, 8) + '...' : 'missing',
     });
 
     if (!client || (!twilioPhoneNumber && !twilioMessagingServiceSid)) {
@@ -219,14 +233,15 @@ export async function sendSMS({
 
     logger.info('Phone formatting completed', {
       original: to.slice(0, 6) + '...',
-      formatted: formattedPhone.slice(0, 6) + '...'
+      formatted: formattedPhone.slice(0, 6) + '...',
     });
 
     // Redact phone number for logging (show first 3 and last 4 characters)
-    const redactedPhone = formattedPhone.length > 7 
-      ? `${formattedPhone.slice(0, 3)}...${formattedPhone.slice(-4)}`
-      : '***redacted***';
-      
+    const redactedPhone =
+      formattedPhone.length > 7
+        ? `${formattedPhone.slice(0, 3)}...${formattedPhone.slice(-4)}`
+        : '***redacted***';
+
     logger.sms(`Sending SMS to ${redactedPhone}`, {
       messagePreview: message.substring(0, 50) + '...',
     });
@@ -244,7 +259,9 @@ export async function sendSMS({
 
     if (twilioMessagingServiceSid) {
       messageParams.messagingServiceSid = twilioMessagingServiceSid;
-      logger.sms(`Using Messaging Service: ${twilioMessagingServiceSid.slice(0, 8)}...`);
+      logger.sms(
+        `Using Messaging Service: ${twilioMessagingServiceSid.slice(0, 8)}...`,
+      );
     } else if (twilioPhoneNumber) {
       messageParams.from = twilioPhoneNumber;
       logger.sms(`Using Phone Number: ${twilioPhoneNumber.slice(0, 8)}...`);
@@ -253,14 +270,14 @@ export async function sendSMS({
     }
 
     logger.info('Calling Twilio API...');
-    
+
     // Send SMS via Twilio
     const twilioMessage = await client.messages.create(messageParams);
 
     logger.info('Twilio API success', {
       sid: twilioMessage.sid,
       status: twilioMessage.status,
-      phone: redactedPhone
+      phone: redactedPhone,
     });
 
     logger.sms(`SMS sent successfully. SID: ${twilioMessage.sid}`);
@@ -283,11 +300,11 @@ export async function sendSMS({
     };
   } catch (error) {
     const errorMessage = getErrorMessage(error);
-    
+
     logger.smsError('Failed to send SMS', {
       error: errorMessage,
       phone: to.slice(0, 6) + '...',
-      eventId
+      eventId,
     });
 
     // Log failed message to database
@@ -409,7 +426,9 @@ export async function sendRSVPReminder(
     const messages: SMSMessage[] = [];
 
     logger.sms(`SMS Reminder would be sent to ${guests.length} guests`);
-    logger.sms('SMS functionality requires phone access - not available in simplified schema');
+    logger.sms(
+      'SMS functionality requires phone access - not available in simplified schema',
+    );
 
     const result = await sendBulkSMS(messages);
     return { sent: result.sent, failed: result.failed };
@@ -434,9 +453,7 @@ export async function sendEventAnnouncement(
     // Fetch event details using admin client
     const { data: event, error: eventError } = await supabaseAdmin
       .from('events')
-      .select(
-        'title, host:users!events_host_user_id_fkey(full_name)',
-      )
+      .select('title, host:users!events_host_user_id_fkey(full_name)')
       .eq('id', eventId)
       .single();
 
@@ -476,7 +493,9 @@ export async function sendEventAnnouncement(
     const messages: SMSMessage[] = [];
 
     logger.sms(`SMS Announcement would be sent to ${guests.length} guests`);
-    logger.sms('SMS functionality requires phone access - not available in simplified schema');
+    logger.sms(
+      'SMS functionality requires phone access - not available in simplified schema',
+    );
 
     const result = await sendBulkSMS(messages);
     return { sent: result.sent, failed: result.failed };
@@ -497,34 +516,43 @@ function formatPhoneNumber(phone: string): string | null {
 
   // Remove all non-digits
   const digits = phone.replace(/\D/g, '');
-  
+
   logger.debug('Processing phone number', {
     original: phone.slice(0, 6) + '...',
     digits: digits.slice(0, 6) + '...',
-    length: digits.length
+    length: digits.length,
   });
 
   // Handle US numbers
   if (digits.length === 10) {
     const formatted = `+1${digits}`;
-    logger.debug('Formatted 10-digit US number', { formatted: formatted.slice(0, 6) + '...' });
+    logger.debug('Formatted 10-digit US number', {
+      formatted: formatted.slice(0, 6) + '...',
+    });
     return formatted;
   }
 
   if (digits.length === 11 && digits.startsWith('1')) {
     const formatted = `+${digits}`;
-    logger.debug('Formatted 11-digit US number', { formatted: formatted.slice(0, 6) + '...' });
+    logger.debug('Formatted 11-digit US number', {
+      formatted: formatted.slice(0, 6) + '...',
+    });
     return formatted;
   }
 
   // If it already has country code
   if (digits.length > 10 && !digits.startsWith('1')) {
     const formatted = `+${digits}`;
-    logger.debug('Formatted international number', { formatted: formatted.slice(0, 6) + '...' });
+    logger.debug('Formatted international number', {
+      formatted: formatted.slice(0, 6) + '...',
+    });
     return formatted;
   }
 
-  logger.warn('Unable to format phone number', { digits, length: digits.length });
+  logger.warn('Unable to format phone number', {
+    digits,
+    length: digits.length,
+  });
   return null;
 }
 
@@ -568,40 +596,42 @@ Reply STOP to opt out.`;
  * Send bulk SMS for scheduled message deliveries with Promise.allSettled
  */
 export async function sendBulkScheduledSMS(
-  deliveries: ScheduledSMSDelivery[]
+  deliveries: ScheduledSMSDelivery[],
 ): Promise<{
   successful: number;
   failed: number;
   results: Array<{ guestId: string; result: SMSResult }>;
 }> {
   logger.sms(`Sending scheduled SMS to ${deliveries.length} recipients`);
-  
+
   // Use Promise.allSettled for efficient bulk processing
   const promises = deliveries.map(async (delivery) => ({
     guestId: delivery.guestId,
     result: await sendScheduledSMS(delivery),
   }));
-  
+
   const results = await Promise.allSettled(promises);
-  
-  const processedResults = results.map(result => 
-    result.status === 'fulfilled' 
-      ? result.value 
-      : { 
-          guestId: 'unknown', 
-          result: { 
-            success: false, 
-            error: 'Promise rejection', 
-            shouldRetry: false 
-          } 
-        }
+
+  const processedResults = results.map((result) =>
+    result.status === 'fulfilled'
+      ? result.value
+      : {
+          guestId: 'unknown',
+          result: {
+            success: false,
+            error: 'Promise rejection',
+            shouldRetry: false,
+          },
+        },
   );
-  
-  const successful = processedResults.filter(r => r.result.success).length;
-  const failed = processedResults.filter(r => !r.result.success).length;
-  
-  logger.sms(`Bulk scheduled SMS complete: ${successful} sent, ${failed} failed`);
-  
+
+  const successful = processedResults.filter((r) => r.result.success).length;
+  const failed = processedResults.filter((r) => !r.result.success).length;
+
+  logger.sms(
+    `Bulk scheduled SMS complete: ${successful} sent, ${failed} failed`,
+  );
+
   return {
     successful,
     failed,
@@ -614,20 +644,25 @@ export async function sendBulkScheduledSMS(
 /**
  * Validate and normalize phone number for SMS delivery
  */
-export function validateAndNormalizePhone(phone: string): { isValid: boolean; normalized?: string; error?: string } {
+export function validateAndNormalizePhone(phone: string): {
+  isValid: boolean;
+  normalized?: string;
+  error?: string;
+} {
   if (!phone || typeof phone !== 'string') {
     return { isValid: false, error: 'Phone number is required' };
   }
-  
+
   const normalized = formatPhoneNumber(phone.trim());
-  
+
   if (!normalized) {
-    return { 
-      isValid: false, 
-      error: 'Invalid phone number format. Please use a valid US/international number.' 
+    return {
+      isValid: false,
+      error:
+        'Invalid phone number format. Please use a valid US/international number.',
     };
   }
-  
+
   return { isValid: true, normalized };
 }
 

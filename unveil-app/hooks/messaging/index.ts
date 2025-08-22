@@ -6,9 +6,9 @@ export { useMessagingRecipients } from './useMessagingRecipients';
 
 // Note: Cached versions removed - use useMessages domain hook instead
 
-export { 
-  useScheduledMessages, 
-  useUpcomingScheduledMessagesCount
+export {
+  useScheduledMessages,
+  useUpcomingScheduledMessagesCount,
 } from './useScheduledMessages';
 
 // Analytics hooks temporarily removed

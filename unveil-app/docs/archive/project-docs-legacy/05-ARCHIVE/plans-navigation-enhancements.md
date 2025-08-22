@@ -9,8 +9,9 @@
 **Timeline**: 2-3 weeks
 
 ### Success Criteria
+
 - ✅ Users feel oriented and confident navigating the app
-- ✅ Smart back navigation provides logical flow between pages  
+- ✅ Smart back navigation provides logical flow between pages
 - ✅ Role switching is intuitive with clear visual context
 - ✅ Quick access to common destinations reduces navigation friction
 - ✅ All enhancements follow our established design system
@@ -22,30 +23,34 @@
 ## 🧱 Design Principles
 
 ### 1. **Contextual Over Global**
+
 Enhancements appear only when they add genuine value to the user journey
 
-### 2. **Mobile-First & Touch-Friendly** 
+### 2. **Mobile-First & Touch-Friendly**
+
 44px minimum touch targets, thumb-friendly placement, gesture-aware
 
 ### 3. **Progressive Disclosure**
+
 Start minimal, reveal complexity only when needed
 
 ### 4. **Design System Aligned**
+
 CardContainer, coral #FF6B6B actions, consistent typography hierarchy
 
 ---
 
 ## 📂 Priority Enhancements
 
-| Feature | Description | Priority | Pages | Complexity |
-|---------|-------------|----------|-------|------------|
-| **Context-Aware BackButton** | Smart back button with logical fallback navigation | **High** | Deep pages (edit, profile, setup) | Medium |
-| **Enhanced RoleSwitcher** | Shows last-viewed event with role context tooltips | **High** | Event pages | Medium |  
-| **Event Jump Actions** | Direct "Continue as Host/Guest" buttons on select-event | **High** | `/select-event` | Low |
-| **Smart Breadcrumbs** | Optional breadcrumbs for multi-step flows only | **Medium** | Complex flows | Medium |
-| **Navigation Loading** | Enhanced loading states during transitions | **Medium** | All pages | Low |
+| Feature                      | Description                                             | Priority   | Pages                             | Complexity |
+| ---------------------------- | ------------------------------------------------------- | ---------- | --------------------------------- | ---------- |
+| **Context-Aware BackButton** | Smart back button with logical fallback navigation      | **High**   | Deep pages (edit, profile, setup) | Medium     |
+| **Enhanced RoleSwitcher**    | Shows last-viewed event with role context tooltips      | **High**   | Event pages                       | Medium     |
+| **Event Jump Actions**       | Direct "Continue as Host/Guest" buttons on select-event | **High**   | `/select-event`                   | Low        |
+| **Smart Breadcrumbs**        | Optional breadcrumbs for multi-step flows only          | **Medium** | Complex flows                     | Medium     |
+| **Navigation Loading**       | Enhanced loading states during transitions              | **Medium** | All pages                         | Low        |
 
-*Note: Removed FAB and gesture navigation to avoid UI clutter and focus on essential improvements*
+_Note: Removed FAB and gesture navigation to avoid UI clutter and focus on essential improvements_
 
 ---
 
@@ -54,10 +59,11 @@ CardContainer, coral #FF6B6B actions, consistent typography hierarchy
 ### New Components
 
 #### `<BackButton />`
+
 ```tsx
 interface BackButtonProps {
-  href?: string;           // Custom back URL
-  fallback?: string;       // Fallback if no history
+  href?: string; // Custom back URL
+  fallback?: string; // Fallback if no history
   variant?: 'subtle' | 'prominent';
   className?: string;
 }
@@ -66,11 +72,12 @@ interface BackButtonProps {
 **Smart Logic**: Uses `router.back()` with intelligent fallbacks based on page hierarchy
 
 #### `<SmartRoleSwitcher />`
+
 ```tsx
 interface SmartRoleSwitcherProps {
   currentEventId: string;
   currentRole: 'host' | 'guest';
-  showContext?: boolean;   // Show last-viewed indicators
+  showContext?: boolean; // Show last-viewed indicators
   className?: string;
 }
 ```
@@ -78,6 +85,7 @@ interface SmartRoleSwitcherProps {
 **Enhanced Features**: Last-viewed events, role tooltips, visual context indicators
 
 #### `<EventJumpActions />`
+
 ```tsx
 interface EventJumpActionsProps {
   event: {
@@ -91,7 +99,8 @@ interface EventJumpActionsProps {
 
 **Direct Navigation**: "Continue as Host" / "Continue as Guest" buttons on event cards
 
-#### `<SmartBreadcrumbs />` *(Optional)*
+#### `<SmartBreadcrumbs />` _(Optional)_
+
 ```tsx
 interface SmartBreadcrumbsProps {
   items: Array<{
@@ -99,7 +108,7 @@ interface SmartBreadcrumbsProps {
     href?: string;
     active?: boolean;
   }>;
-  autoGenerate?: boolean;  // Generate from URL structure
+  autoGenerate?: boolean; // Generate from URL structure
 }
 ```
 
@@ -109,8 +118,10 @@ interface SmartBreadcrumbsProps {
 
 ## 📅 Implementation Phases
 
-### 🏗️ Phase 1: Foundation Components *(Week 1)* ✅ **COMPLETE**
+### 🏗️ Phase 1: Foundation Components _(Week 1)_ ✅ **COMPLETE**
+
 - [x] **Build BackButton Component**
+
   - [x] Create base component with TypeScript interface
   - [x] Implement smart fallback logic with useRouter
   - [x] Add design system styling (subtle gray → coral hover)
@@ -124,14 +135,16 @@ interface SmartBreadcrumbsProps {
   - [x] `/setup` - Back to login
   - [x] Test navigation paths and responsive design
 
-### 🎯 Phase 2: Enhanced Role Context *(Week 1-2)* ✅ **COMPLETE**
+### 🎯 Phase 2: Enhanced Role Context _(Week 1-2)_ ✅ **COMPLETE**
+
 - [x] **Upgrade to SmartRoleSwitcher**
   - [x] Add last-viewed event tracking (localStorage)
   - [x] Implement context tooltips and visual indicators (👑 Host, 🎊 Guest)
   - [x] Enhance dropdown with better visual hierarchy and role descriptions
   - [x] Deploy across all event-scoped pages via BottomNavigation
 
-### ⚡ Phase 3: Quick Access Features *(Week 2)* ✅ **COMPLETE** 
+### ⚡ Phase 3: Quick Access Features _(Week 2)_ ✅ **COMPLETE**
+
 - [x] **Simplified Select-Event Experience**
   - [x] Implement full-card clickable interaction (more intuitive than separate buttons)
   - [x] Add proper accessibility with ARIA labels and keyboard navigation
@@ -139,19 +152,21 @@ interface SmartBreadcrumbsProps {
   - [x] Preserve role badges with improved styling (👑 Host, 🎊 Guest)
   - [x] Touch-friendly design with 44px minimum targets and active states
 
-### 📍 Phase 4: Smart Breadcrumbs *(Week 2-3)*
+### 📍 Phase 4: Smart Breadcrumbs _(Week 2-3)_
+
 - [ ] **Selective Breadcrumb Integration**
   - [ ] Build flexible breadcrumb component
   - [ ] Add only to complex flows (host dashboard tabs, multi-step processes)
   - [ ] Test mobile responsiveness and truncation
 
-### ✅ Phase 5: Polish & Testing *(Week 3)* ✅ **COMPLETE**
+### ✅ Phase 5: Polish & Testing _(Week 3)_ ✅ **COMPLETE**
+
 - [x] **Comprehensive QA & Accessibility Testing**
   - [x] All 41 tests passing with zero regressions
   - [x] ARIA compliance verified across all navigation components
   - [x] Keyboard navigation and focus management confirmed
   - [x] Touch-friendly design (44px targets) validated
-- [x] **Performance Optimization** 
+- [x] **Performance Optimization**
   - [x] Bundle size analysis: select-event optimized to 5.06kB (within <15KB target)
   - [x] Zero ESLint warnings or errors
   - [x] Clean production build with excellent Lighthouse metrics
@@ -165,14 +180,16 @@ interface SmartBreadcrumbsProps {
 ## 🧪 Testing Strategy
 
 ### Core Testing Areas
+
 - **Navigation Logic**: Back button fallbacks, role switching, deep linking
 - **Mobile Experience**: Touch targets, responsive design, performance
 - **Accessibility**: Keyboard navigation, screen readers, focus management
 - **Integration**: Auth flows, RLS policies, real-time updates
 
 ### Success Metrics
+
 - **Efficiency**: 30% reduction in clicks to common destinations
-- **Orientation**: 50% fewer "where am I?" user issues  
+- **Orientation**: 50% fewer "where am I?" user issues
 - **Performance**: Maintain <2s page loads, <15KB bundle increase
 - **Accessibility**: 100% Lighthouse accessibility score
 
@@ -181,12 +198,14 @@ interface SmartBreadcrumbsProps {
 ## 🚨 Implementation Guidelines
 
 ### ⚠️ **DO NOT MODIFY**
+
 - Authentication logic or Supabase calls
-- Business logic, form handling, or data processing  
+- Business logic, form handling, or data processing
 - Core routing or navigation behavior
 - Existing BottomNavigation functionality
 
 ### ✅ **SAFE TO ENHANCE**
+
 - UI components and styling
 - Navigation UX and visual feedback
 - Loading states and transitions
@@ -201,8 +220,9 @@ interface SmartBreadcrumbsProps {
 ### 🎉 **PROJECT COMPLETE - PRODUCTION READY**
 
 **Navigation Enhancements Successfully Delivered:**
+
 - ✅ Smart Back Navigation (BackButton component)
-- ✅ Enhanced Role Context (SmartRoleSwitcher with localStorage tracking)  
+- ✅ Enhanced Role Context (SmartRoleSwitcher with localStorage tracking)
 - ✅ Simplified Quick Access (Intuitive clickable event cards)
 - ✅ Comprehensive QA & Testing (All accessibility and performance targets met)
 
@@ -213,6 +233,7 @@ interface SmartBreadcrumbsProps {
 ## 📋 **Final QA Summary**
 
 ### ✅ **Accessibility Compliance - PASSED**
+
 - **ARIA Labels**: All interactive elements have descriptive `aria-label` attributes
 - **Keyboard Navigation**: Tab order is logical, focus indicators are visible and consistent
 - **Screen Reader Support**: Semantic HTML with proper heading structure and landmarks
@@ -220,18 +241,21 @@ interface SmartBreadcrumbsProps {
 - **Focus Management**: Focus rings properly implemented with `focus:ring-2 focus:ring-pink-300`
 
 ### ✅ **Mobile Responsiveness - PASSED**
+
 - **Touch Interactions**: Full-card clickable areas with active state feedback (`active:scale-[0.98]`)
 - **Responsive Design**: Cards adapt properly across screen sizes with proper spacing
 - **Visual Feedback**: Hover states work on desktop, tap states optimized for mobile
 - **Safe Areas**: Components respect mobile viewport constraints
 
-### ✅ **Performance Metrics - PASSED** 
+### ✅ **Performance Metrics - PASSED**
+
 - **Bundle Size**: select-event page at 5.06kB (well within <15KB target)
 - **Build Performance**: Clean production build with zero warnings/errors
 - **Test Coverage**: 41/41 tests passing (100% success rate)
 - **Code Quality**: Zero ESLint warnings, TypeScript strict mode compliance
 
 ### ✅ **Functional Testing - PASSED**
+
 - **Navigation Flows**: All routes tested and working correctly
   - `/select-event` → host/guest dashboards based on role
   - BackButton smart navigation with proper fallbacks
@@ -240,6 +264,7 @@ interface SmartBreadcrumbsProps {
 - **Error Handling**: Graceful fallbacks for edge cases and network issues
 
 ### ✅ **Design System Compliance - PASSED**
+
 - **Visual Consistency**: Pink accent colors (`#FF6B6B`), coral hover states
 - **Component Patterns**: Follows CardContainer and button patterns
 - **Role Theming**: Purple for Host (👑), Rose for Guest (🎊) consistently applied

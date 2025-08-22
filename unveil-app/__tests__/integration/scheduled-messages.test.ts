@@ -1,6 +1,6 @@
 /**
  * Integration tests for scheduled message recipient count fixes
- * 
+ *
  * These tests verify that:
  * 1. Explicit guest selection creates correct recipient counts
  * 2. UTC timezone conversion validation works
@@ -16,8 +16,8 @@ jest.mock('@/lib/supabase/client', () => ({
     auth: {
       getUser: jest.fn(() => ({
         data: { user: { id: 'test-user-id' } },
-        error: null
-      }))
+        error: null,
+      })),
     },
     from: jest.fn(() => ({
       insert: jest.fn(() => ({
@@ -28,24 +28,27 @@ jest.mock('@/lib/supabase/client', () => ({
               recipient_count: 3,
               send_at: '2025-08-22T10:00:00.000Z',
               scheduled_tz: 'America/Denver',
-              scheduled_local: '2025-08-22T04:00:00'
+              scheduled_local: '2025-08-22T04:00:00',
             },
-            error: null
-          }))
-        }))
-      }))
-    }))
-  }
+            error: null,
+          })),
+        })),
+      })),
+    })),
+  },
 }));
 
 // Mock the resolveMessageRecipients function to return predictable results
 jest.mock('@/lib/services/messaging-client', () => ({
   ...jest.requireActual('@/lib/services/messaging-client'),
-  resolveMessageRecipients: jest.fn()
+  resolveMessageRecipients: jest.fn(),
 }));
 
 import { resolveMessageRecipients } from '@/lib/services/messaging-client';
-const mockResolveMessageRecipients = resolveMessageRecipients as jest.MockedFunction<typeof resolveMessageRecipients>;
+const mockResolveMessageRecipients =
+  resolveMessageRecipients as jest.MockedFunction<
+    typeof resolveMessageRecipients
+  >;
 
 describe('Scheduled Messages Integration Tests', () => {
   const eventId = 'test-event-id';
@@ -59,7 +62,7 @@ describe('Scheduled Messages Integration Tests', () => {
     messageType: 'announcement',
     sendViaSms: true,
     sendViaEmail: false,
-    sendViaPush: false
+    sendViaPush: false,
   };
 
   beforeEach(() => {
@@ -71,45 +74,42 @@ describe('Scheduled Messages Integration Tests', () => {
       // Mock resolveMessageRecipients to return 3 recipients for explicit selection
       mockResolveMessageRecipients.mockResolvedValue({
         guestIds: ['guest-1', 'guest-2', 'guest-3'],
-        recipientCount: 3
+        recipientCount: 3,
       });
 
       const scheduleData: CreateScheduledMessageData = {
         ...baseScheduleData,
         recipientFilter: {
           type: 'explicit_selection',
-          selectedGuestIds: ['guest-1', 'guest-2', 'guest-3']
-        }
+          selectedGuestIds: ['guest-1', 'guest-2', 'guest-3'],
+        },
       };
 
       const result = await createScheduledMessage(scheduleData);
 
       expect(result.success).toBe(true);
       expect(result.data?.recipient_count).toBe(3);
-      
+
       // Verify resolveMessageRecipients was called with correct filter
-      expect(mockResolveMessageRecipients).toHaveBeenCalledWith(
-        eventId,
-        {
-          type: 'explicit_selection',
-          selectedGuestIds: ['guest-1', 'guest-2', 'guest-3']
-        }
-      );
+      expect(mockResolveMessageRecipients).toHaveBeenCalledWith(eventId, {
+        type: 'explicit_selection',
+        selectedGuestIds: ['guest-1', 'guest-2', 'guest-3'],
+      });
     });
 
     it('should create scheduled message with correct recipient count for 1 selected guest', async () => {
       // Mock resolveMessageRecipients to return 1 recipient for explicit selection
       mockResolveMessageRecipients.mockResolvedValue({
         guestIds: ['guest-1'],
-        recipientCount: 1
+        recipientCount: 1,
       });
 
       const scheduleData: CreateScheduledMessageData = {
         ...baseScheduleData,
         recipientFilter: {
           type: 'explicit_selection',
-          selectedGuestIds: ['guest-1']
-        }
+          selectedGuestIds: ['guest-1'],
+        },
       };
 
       const result = await createScheduledMessage(scheduleData);
@@ -121,15 +121,17 @@ describe('Scheduled Messages Integration Tests', () => {
     it('should fail when no recipients are selected', async () => {
       // Mock resolveMessageRecipients to throw error for empty selection
       mockResolveMessageRecipients.mockRejectedValue(
-        new Error('No recipients selected. Please select at least one guest to send the message to.')
+        new Error(
+          'No recipients selected. Please select at least one guest to send the message to.',
+        ),
       );
 
       const scheduleData: CreateScheduledMessageData = {
         ...baseScheduleData,
         recipientFilter: {
           type: 'explicit_selection',
-          selectedGuestIds: []
-        }
+          selectedGuestIds: [],
+        },
       };
 
       const result = await createScheduledMessage(scheduleData);
@@ -143,7 +145,7 @@ describe('Scheduled Messages Integration Tests', () => {
     it('should accept valid UTC conversion', async () => {
       mockResolveMessageRecipients.mockResolvedValue({
         guestIds: ['guest-1'],
-        recipientCount: 1
+        recipientCount: 1,
       });
 
       // Denver time 4:00 AM = UTC 10:00 AM (during DST)
@@ -154,8 +156,8 @@ describe('Scheduled Messages Integration Tests', () => {
         scheduledLocal: '2025-08-22T04:00:00',
         recipientFilter: {
           type: 'explicit_selection',
-          selectedGuestIds: ['guest-1']
-        }
+          selectedGuestIds: ['guest-1'],
+        },
       };
 
       const result = await createScheduledMessage(scheduleData);
@@ -166,7 +168,7 @@ describe('Scheduled Messages Integration Tests', () => {
     it('should reject invalid timezone', async () => {
       mockResolveMessageRecipients.mockResolvedValue({
         guestIds: ['guest-1'],
-        recipientCount: 1
+        recipientCount: 1,
       });
 
       const scheduleData: CreateScheduledMessageData = {
@@ -176,14 +178,16 @@ describe('Scheduled Messages Integration Tests', () => {
         scheduledLocal: '2025-08-22T04:00:00',
         recipientFilter: {
           type: 'explicit_selection',
-          selectedGuestIds: ['guest-1']
-        }
+          selectedGuestIds: ['guest-1'],
+        },
       };
 
       const result = await createScheduledMessage(scheduleData);
 
       expect(result.success).toBe(false);
-      expect(result.error?.message).toContain('Invalid scheduled time or timezone');
+      expect(result.error?.message).toContain(
+        'Invalid scheduled time or timezone',
+      );
     });
   });
 
@@ -194,8 +198,8 @@ describe('Scheduled Messages Integration Tests', () => {
         content: '',
         recipientFilter: {
           type: 'explicit_selection',
-          selectedGuestIds: ['guest-1']
-        }
+          selectedGuestIds: ['guest-1'],
+        },
       };
 
       const result = await createScheduledMessage(scheduleData);
@@ -206,14 +210,14 @@ describe('Scheduled Messages Integration Tests', () => {
 
     it('should reject message content over 1000 characters', async () => {
       const longContent = 'A'.repeat(1001);
-      
+
       const scheduleData: CreateScheduledMessageData = {
         ...baseScheduleData,
         content: longContent,
         recipientFilter: {
           type: 'explicit_selection',
-          selectedGuestIds: ['guest-1']
-        }
+          selectedGuestIds: ['guest-1'],
+        },
       };
 
       const result = await createScheduledMessage(scheduleData);
@@ -224,20 +228,22 @@ describe('Scheduled Messages Integration Tests', () => {
 
     it('should reject scheduled time in the past', async () => {
       const pastTime = new Date(Date.now() - 60000).toISOString(); // 1 minute ago
-      
+
       const scheduleData: CreateScheduledMessageData = {
         ...baseScheduleData,
         sendAt: pastTime,
         recipientFilter: {
           type: 'explicit_selection',
-          selectedGuestIds: ['guest-1']
-        }
+          selectedGuestIds: ['guest-1'],
+        },
       };
 
       const result = await createScheduledMessage(scheduleData);
 
       expect(result.success).toBe(false);
-      expect(result.error?.message).toContain('Scheduled time must be in the future');
+      expect(result.error?.message).toContain(
+        'Scheduled time must be in the future',
+      );
     });
   });
 
@@ -246,21 +252,25 @@ describe('Scheduled Messages Integration Tests', () => {
       // This test simulates what the worker does:
       // 1. Reconstructs filter from scheduled message data
       // 2. Uses target_guest_ids directly for explicit selection
-      
+
       const scheduledMessageData = {
         target_all_guests: false,
         target_guest_tags: [],
-        target_guest_ids: ['guest-1', 'guest-2', 'guest-3']
+        target_guest_ids: ['guest-1', 'guest-2', 'guest-3'],
       };
 
       // Simulate the reconstructRecipientFilter logic
       const reconstructedFilter = {
         type: 'explicit_selection' as const,
-        selectedGuestIds: scheduledMessageData.target_guest_ids
+        selectedGuestIds: scheduledMessageData.target_guest_ids,
       };
 
       expect(reconstructedFilter.type).toBe('explicit_selection');
-      expect(reconstructedFilter.selectedGuestIds).toEqual(['guest-1', 'guest-2', 'guest-3']);
+      expect(reconstructedFilter.selectedGuestIds).toEqual([
+        'guest-1',
+        'guest-2',
+        'guest-3',
+      ]);
       expect(reconstructedFilter.selectedGuestIds?.length).toBe(3);
     });
   });

@@ -46,10 +46,7 @@ function NotificationCenterComponent({ eventId }: NotificationCenterProps) {
 
     // Process guest updates (decline changes) - using hook data
     guests?.forEach((guest) => {
-      if (
-        guest.declined_at &&
-        guest.declined_at > dayAgo.toISOString()
-      ) {
+      if (guest.declined_at && guest.declined_at > dayAgo.toISOString()) {
         notificationItems.push({
           id: `guest-${guest.id}`,
           type: 'rsvp',
@@ -64,26 +61,31 @@ function NotificationCenterComponent({ eventId }: NotificationCenterProps) {
     });
 
     // Process media uploads - using hook data
-    media?.forEach((mediaItem: { 
-      id: string; 
-      created_at: string | null; 
-      media_type: string;
-      uploader?: { full_name: string | null } 
-    }) => {
-      if (mediaItem.created_at && mediaItem.created_at > dayAgo.toISOString()) {
-        const uploaderName = mediaItem.uploader?.full_name || 'A guest';
-        notificationItems.push({
-          id: `media-${mediaItem.id}`,
-          type: 'media',
-          title: 'New Photo Shared',
-          description: `${uploaderName} shared a ${mediaItem.media_type === 'video' ? 'video' : 'photo'}`,
-          timestamp: mediaItem.created_at,
-          isRead: false,
-          icon: mediaItem.media_type === 'video' ? '🎥' : '📸',
-          color: 'text-purple-600',
-        });
-      }
-    });
+    media?.forEach(
+      (mediaItem: {
+        id: string;
+        created_at: string | null;
+        media_type: string;
+        uploader?: { full_name: string | null };
+      }) => {
+        if (
+          mediaItem.created_at &&
+          mediaItem.created_at > dayAgo.toISOString()
+        ) {
+          const uploaderName = mediaItem.uploader?.full_name || 'A guest';
+          notificationItems.push({
+            id: `media-${mediaItem.id}`,
+            type: 'media',
+            title: 'New Photo Shared',
+            description: `${uploaderName} shared a ${mediaItem.media_type === 'video' ? 'video' : 'photo'}`,
+            timestamp: mediaItem.created_at,
+            isRead: false,
+            icon: mediaItem.media_type === 'video' ? '🎥' : '📸',
+            color: 'text-purple-600',
+          });
+        }
+      },
+    );
 
     // Process messages (from guests only) - using hook data
     messages?.forEach((message) => {
@@ -112,11 +114,7 @@ function NotificationCenterComponent({ eventId }: NotificationCenterProps) {
     });
 
     return notificationItems.slice(0, 20); // Keep last 20 notifications
-  }, [
-    guests,
-    media,
-    messages,
-  ]);
+  }, [guests, media, messages]);
 
   const fetchNotifications = useCallback(async () => {
     try {
@@ -134,47 +132,46 @@ function NotificationCenterComponent({ eventId }: NotificationCenterProps) {
     eventId,
     table: 'event_guests',
     event: '*',
-    onDataChange: useCallback(
-      (payload) => {
-        if (payload.eventType === 'INSERT') {
-          console.log('New guest:', payload);
+    onDataChange: useCallback((payload) => {
+      if (payload.eventType === 'INSERT') {
+        console.log('New guest:', payload);
+        setNotifications((prev) => [
+          {
+            id: Date.now().toString(),
+            type: 'general' as const,
+            title: 'New Guest',
+            description: 'A new guest joined the event',
+            timestamp: new Date().toISOString(),
+            isRead: false,
+            icon: '👋',
+            color: 'text-emerald-600',
+          },
+          ...prev,
+        ]);
+        setUnreadCount((prev) => prev + 1);
+      } else if (payload.eventType === 'UPDATE') {
+        console.log('Guest updated:', payload);
+        if (payload.new.declined_at !== payload.old?.declined_at) {
+          const hasDeclined = !!payload.new.declined_at;
           setNotifications((prev) => [
             {
               id: Date.now().toString(),
-              type: 'general' as const,
-              title: 'New Guest',
-              description: 'A new guest joined the event',
+              type: 'rsvp' as const,
+              title: hasDeclined ? 'Guest Declined' : 'Decline Cleared',
+              description: hasDeclined
+                ? 'Guest marked as unable to attend'
+                : 'Guest decline status cleared',
               timestamp: new Date().toISOString(),
               isRead: false,
-              icon: '👋',
-              color: 'text-emerald-600',
+              icon: hasDeclined ? '❌' : '✅',
+              color: hasDeclined ? 'text-red-600' : 'text-green-600',
             },
             ...prev,
           ]);
           setUnreadCount((prev) => prev + 1);
-        } else if (payload.eventType === 'UPDATE') {
-          console.log('Guest updated:', payload);
-          if (payload.new.declined_at !== payload.old?.declined_at) {
-            const hasDeclined = !!payload.new.declined_at;
-            setNotifications((prev) => [
-              {
-                id: Date.now().toString(),
-                type: 'rsvp' as const,
-                title: hasDeclined ? 'Guest Declined' : 'Decline Cleared',
-                description: hasDeclined ? 'Guest marked as unable to attend' : 'Guest decline status cleared',
-                timestamp: new Date().toISOString(),
-                isRead: false,
-                icon: hasDeclined ? '❌' : '✅',
-                color: hasDeclined ? 'text-red-600' : 'text-green-600',
-              },
-              ...prev,
-            ]);
-            setUnreadCount((prev) => prev + 1);
-          }
         }
-      },
-      [],
-    ),
+      }
+    }, []),
     enabled: Boolean(eventId),
   });
 

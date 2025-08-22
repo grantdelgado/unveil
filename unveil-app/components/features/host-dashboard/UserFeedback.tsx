@@ -39,17 +39,26 @@ export function FeedbackProvider({ children }: { children: React.ReactNode }) {
     }, 4000);
   }, []);
 
-  const showSuccess = useCallback((title: string, message?: string) => {
-    showFeedback({ type: 'success', title, message });
-  }, [showFeedback]);
+  const showSuccess = useCallback(
+    (title: string, message?: string) => {
+      showFeedback({ type: 'success', title, message });
+    },
+    [showFeedback],
+  );
 
-  const showError = useCallback((title: string, message?: string) => {
-    showFeedback({ type: 'error', title, message });
-  }, [showFeedback]);
+  const showError = useCallback(
+    (title: string, message?: string) => {
+      showFeedback({ type: 'error', title, message });
+    },
+    [showFeedback],
+  );
 
-  const showWarning = useCallback((title: string, message?: string) => {
-    showFeedback({ type: 'warning', title, message });
-  }, [showFeedback]);
+  const showWarning = useCallback(
+    (title: string, message?: string) => {
+      showFeedback({ type: 'warning', title, message });
+    },
+    [showFeedback],
+  );
 
   const contextValue: FeedbackContextValue = {
     showSuccess,
@@ -60,9 +69,11 @@ export function FeedbackProvider({ children }: { children: React.ReactNode }) {
   return (
     <FeedbackContext.Provider value={contextValue}>
       {children}
-      <FeedbackContainer 
-        messages={messages} 
-        onDismiss={(id) => setMessages(prev => prev.filter(m => m.id !== id))} 
+      <FeedbackContainer
+        messages={messages}
+        onDismiss={(id) =>
+          setMessages((prev) => prev.filter((m) => m.id !== id))
+        }
       />
     </FeedbackContext.Provider>
   );
@@ -95,27 +106,36 @@ function FeedbackContainer({
     <div className="fixed top-4 right-4 z-50 space-y-2 max-w-sm">
       {messages.map((message) => {
         const typeConfig = {
-          success: { icon: '✅', bgColor: 'bg-green-50', textColor: 'text-green-800' },
-          error: { icon: '❌', bgColor: 'bg-red-50', textColor: 'text-red-800' },
-          warning: { icon: '⚠️', bgColor: 'bg-yellow-50', textColor: 'text-yellow-800' },
+          success: {
+            icon: '✅',
+            bgColor: 'bg-green-50',
+            textColor: 'text-green-800',
+          },
+          error: {
+            icon: '❌',
+            bgColor: 'bg-red-50',
+            textColor: 'text-red-800',
+          },
+          warning: {
+            icon: '⚠️',
+            bgColor: 'bg-yellow-50',
+            textColor: 'text-yellow-800',
+          },
         };
-        
+
         const config = typeConfig[message.type];
-        
+
         return (
           <div
             key={message.id}
-            className={cn(
-              'border rounded-lg p-4 shadow-lg',
-              config.bgColor
-            )}
+            className={cn('border rounded-lg p-4 shadow-lg', config.bgColor)}
             role="alert"
           >
             <div className="flex items-start gap-3">
               <span className="text-lg" aria-hidden="true">
                 {config.icon}
               </span>
-              
+
               <div className="flex-1 min-w-0">
                 <h3 className={cn('font-medium text-sm', config.textColor)}>
                   {message.title}
@@ -126,7 +146,7 @@ function FeedbackContainer({
                   </p>
                 )}
               </div>
-              
+
               <button
                 onClick={() => onDismiss(message.id)}
                 className={cn('text-xs hover:opacity-70', config.textColor)}

@@ -20,7 +20,7 @@ describe('BackButton', () => {
     mockedUseRouter.mockReturnValue(mockRouter);
     mockRouter.push.mockClear();
     mockRouter.back.mockClear();
-    
+
     // Mock window.history.length
     Object.defineProperty(window, 'history', {
       value: { length: 2 },
@@ -120,4 +120,4 @@ describe('BackButton', () => {
     const button = screen.getByRole('button');
     expect(button).toHaveClass('custom-class');
   });
-}); 
+});

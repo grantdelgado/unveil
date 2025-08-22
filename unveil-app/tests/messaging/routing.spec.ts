@@ -2,10 +2,10 @@ import { describe, it, expect } from 'vitest';
 
 /**
  * Messaging Module Route Tests - Phase 1
- * 
+ *
  * These tests validate:
  * - All 4 messaging routes render without crashing
- * - Host-only route protection is enforced  
+ * - Host-only route protection is enforced
  * - Guest users cannot access host messaging routes
  * - Proper authentication and role redirection
  */
@@ -74,10 +74,10 @@ describe('Messaging Routes - Phase 1', () => {
 
 /*
  * Implementation Notes for Future Development:
- * 
+ *
  * 1. Use @testing-library/react for component rendering tests
- * 2. Mock Supabase client for authentication tests  
+ * 2. Mock Supabase client for authentication tests
  * 3. Use Next.js router mocking for redirect tests
  * 4. Consider using MSW (Mock Service Worker) for API mocking
  * 5. Add E2E tests with Playwright for full user flows
- */ 
+ */

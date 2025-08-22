@@ -33,7 +33,9 @@ export function useGuestJoinTimestamp({ eventId }: UseGuestJoinTimestampProps) {
         setJoinTimestamp(data ? new Date(data) : null);
       } catch (err) {
         console.error('Error fetching guest join timestamp:', err);
-        setError(err instanceof Error ? err.message : 'Failed to fetch join timestamp');
+        setError(
+          err instanceof Error ? err.message : 'Failed to fetch join timestamp',
+        );
         setJoinTimestamp(null);
       } finally {
         setLoading(false);

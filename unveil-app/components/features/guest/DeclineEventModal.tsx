@@ -10,18 +10,18 @@ interface DeclineEventModalProps {
   eventTitle: string;
 }
 
-export function DeclineEventModal({ 
-  isOpen, 
-  onClose, 
-  onConfirm, 
-  eventTitle 
+export function DeclineEventModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  eventTitle,
 }: DeclineEventModalProps) {
   const [reason, setReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
     if (isSubmitting) return;
-    
+
     setIsSubmitting(true);
     try {
       await onConfirm(reason.trim() || undefined);
@@ -44,24 +44,27 @@ export function DeclineEventModal({
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
       {/* Backdrop */}
-      <div 
+      <div
         className="fixed inset-0 bg-black/50 transition-opacity"
         onClick={handleClose}
       />
-      
+
       {/* Modal */}
-      <div className={cn(
-        "relative w-full max-w-md mx-4 bg-white rounded-t-2xl sm:rounded-2xl shadow-xl",
-        "transform transition-transform duration-300",
-        "max-h-[85vh] flex flex-col"
-      )}>
+      <div
+        className={cn(
+          'relative w-full max-w-md mx-4 bg-white rounded-t-2xl sm:rounded-2xl shadow-xl',
+          'transform transition-transform duration-300',
+          'max-h-[85vh] flex flex-col',
+        )}
+      >
         {/* Header */}
         <div className="px-6 py-5 border-b border-stone-200">
           <h2 className="text-xl font-semibold text-stone-900">
             Can&apos;t make it to this event?
           </h2>
           <p className="text-sm text-stone-600 mt-1">
-            You&apos;ll stop receiving day-of logistics unless the host includes you.
+            You&apos;ll stop receiving day-of logistics unless the host includes
+            you.
           </p>
         </div>
 
@@ -74,8 +77,8 @@ export function DeclineEventModal({
             </div>
 
             <div>
-              <label 
-                htmlFor="decline-reason" 
+              <label
+                htmlFor="decline-reason"
                 className="block text-sm font-medium text-stone-700 mb-2"
               >
                 Share a brief reason (optional)
@@ -86,10 +89,10 @@ export function DeclineEventModal({
                 onChange={(e) => setReason(e.target.value)}
                 placeholder="Optional: Share a brief reason (private to hosts)"
                 className={cn(
-                  "w-full px-4 py-3 rounded-xl border border-stone-300",
-                  "focus:ring-2 focus:ring-purple-500 focus:border-transparent",
-                  "resize-none text-stone-900 placeholder-stone-500",
-                  "disabled:bg-stone-50 disabled:text-stone-500"
+                  'w-full px-4 py-3 rounded-xl border border-stone-300',
+                  'focus:ring-2 focus:ring-purple-500 focus:border-transparent',
+                  'resize-none text-stone-900 placeholder-stone-500',
+                  'disabled:bg-stone-50 disabled:text-stone-500',
                 )}
                 rows={3}
                 maxLength={200}
@@ -113,12 +116,12 @@ export function DeclineEventModal({
             onClick={handleSubmit}
             disabled={isSubmitting}
             className={cn(
-              "w-full py-3 px-4 rounded-xl font-medium",
-              "bg-stone-900 text-white",
-              "hover:bg-stone-800 active:bg-stone-950",
-              "focus:outline-none focus:ring-2 focus:ring-stone-500 focus:ring-offset-2",
-              "disabled:opacity-50 disabled:cursor-not-allowed",
-              "transition-colors duration-200"
+              'w-full py-3 px-4 rounded-xl font-medium',
+              'bg-stone-900 text-white',
+              'hover:bg-stone-800 active:bg-stone-950',
+              'focus:outline-none focus:ring-2 focus:ring-stone-500 focus:ring-offset-2',
+              'disabled:opacity-50 disabled:cursor-not-allowed',
+              'transition-colors duration-200',
             )}
           >
             {isSubmitting ? (
@@ -130,17 +133,17 @@ export function DeclineEventModal({
               'Mark as not attending'
             )}
           </button>
-          
+
           <button
             onClick={handleClose}
             disabled={isSubmitting}
             className={cn(
-              "w-full py-3 px-4 rounded-xl font-medium",
-              "bg-stone-100 text-stone-700",
-              "hover:bg-stone-200 active:bg-stone-300",
-              "focus:outline-none focus:ring-2 focus:ring-stone-300 focus:ring-offset-2",
-              "disabled:opacity-50 disabled:cursor-not-allowed",
-              "transition-colors duration-200"
+              'w-full py-3 px-4 rounded-xl font-medium',
+              'bg-stone-100 text-stone-700',
+              'hover:bg-stone-200 active:bg-stone-300',
+              'focus:outline-none focus:ring-2 focus:ring-stone-300 focus:ring-offset-2',
+              'disabled:opacity-50 disabled:cursor-not-allowed',
+              'transition-colors duration-200',
             )}
           >
             Cancel

@@ -12,4 +12,4 @@ export { ScheduledMessagesList } from './ScheduledMessagesList';
 // Core components used by MVP
 export { RecipientSelector } from './RecipientSelector';
 export { RecipientPreview } from './RecipientPreview';
-export { SendConfirmationModal } from './SendConfirmationModal'; 
+export { SendConfirmationModal } from './SendConfirmationModal';

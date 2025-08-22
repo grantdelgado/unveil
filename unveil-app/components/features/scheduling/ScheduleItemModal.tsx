@@ -5,12 +5,12 @@
 import { useState, useEffect } from 'react';
 import { X, Calendar, Clock, MapPin, Shirt } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { 
-  PrimaryButton, 
+import {
+  PrimaryButton,
   SecondaryButton,
   LoadingSpinner,
   Input,
-  FieldLabel
+  FieldLabel,
 } from '@/components/ui';
 import { toUTCFromEventZone, fromUTCToEventZone } from '@/lib/utils/timezone';
 import { cn } from '@/lib/utils';
@@ -44,12 +44,12 @@ interface FormData {
   attire: string;
 }
 
-export function ScheduleItemModal({ 
-  eventId, 
-  event, 
-  item, 
-  onSave, 
-  onCancel 
+export function ScheduleItemModal({
+  eventId,
+  event,
+  item,
+  onSave,
+  onCancel,
 }: ScheduleItemModalProps) {
   const [formData, setFormData] = useState<FormData>({
     title: '',
@@ -57,7 +57,7 @@ export function ScheduleItemModal({
     startTime: '',
     endTime: '',
     location: '',
-    attire: ''
+    attire: '',
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -66,8 +66,11 @@ export function ScheduleItemModal({
   useEffect(() => {
     if (item) {
       // Convert UTC times back to event timezone for editing
-      const startTimeData = fromUTCToEventZone(item.start_at, event.time_zone || 'UTC');
-      const endTimeData = item.end_at 
+      const startTimeData = fromUTCToEventZone(
+        item.start_at,
+        event.time_zone || 'UTC',
+      );
+      const endTimeData = item.end_at
         ? fromUTCToEventZone(item.end_at, event.time_zone || 'UTC')
         : null;
 
@@ -77,7 +80,7 @@ export function ScheduleItemModal({
         startTime: startTimeData?.time || '',
         endTime: endTimeData?.time || '',
         location: item.location || '',
-        attire: item.attire || ''
+        attire: item.attire || '',
       });
     }
   }, [item, event]);
@@ -102,7 +105,7 @@ export function ScheduleItemModal({
     if (formData.endTime && formData.startTime) {
       const startMinutes = timeToMinutes(formData.startTime);
       const endMinutes = timeToMinutes(formData.endTime);
-      
+
       if (endMinutes <= startMinutes) {
         newErrors.endTime = 'End time must be after start time';
       }
@@ -121,7 +124,7 @@ export function ScheduleItemModal({
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -133,14 +136,14 @@ export function ScheduleItemModal({
       const startAtUTC = toUTCFromEventZone(
         formData.date,
         formData.startTime,
-        event.time_zone || 'UTC'
+        event.time_zone || 'UTC',
       );
 
       const endAtUTC = formData.endTime
         ? toUTCFromEventZone(
             formData.date,
             formData.endTime,
-            event.time_zone || 'UTC'
+            event.time_zone || 'UTC',
           )
         : null;
 
@@ -156,7 +159,7 @@ export function ScheduleItemModal({
         start_at: startAtUTC,
         end_at: endAtUTC,
         location: formData.location.trim() || null,
-        attire: formData.attire.trim() || null
+        attire: formData.attire.trim() || null,
       };
 
       let result;
@@ -168,14 +171,14 @@ export function ScheduleItemModal({
           .eq('id', item.id);
       } else {
         // Create new item
-        result = await supabase
-          .from('event_schedule_items')
-          .insert(itemData);
+        result = await supabase.from('event_schedule_items').insert(itemData);
       }
 
       if (result.error) {
         console.error('Error saving schedule item:', result.error);
-        setErrors({ general: 'Failed to save schedule item. Please try again.' });
+        setErrors({
+          general: 'Failed to save schedule item. Please try again.',
+        });
         setLoading(false);
         return;
       }
@@ -189,10 +192,10 @@ export function ScheduleItemModal({
   };
 
   const handleInputChange = (field: keyof FormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
+      setErrors((prev) => ({ ...prev, [field]: '' }));
     }
   };
 
@@ -222,7 +225,11 @@ export function ScheduleItemModal({
 
           {/* Title */}
           <div>
-            <FieldLabel htmlFor="title" required className="flex items-center space-x-2">
+            <FieldLabel
+              htmlFor="title"
+              required
+              className="flex items-center space-x-2"
+            >
               <Calendar className="w-4 h-4" />
               <span>Event Title</span>
             </FieldLabel>
@@ -242,7 +249,9 @@ export function ScheduleItemModal({
 
           {/* Date */}
           <div>
-            <FieldLabel htmlFor="date" required>Date</FieldLabel>
+            <FieldLabel htmlFor="date" required>
+              Date
+            </FieldLabel>
             <Input
               id="date"
               type="date"
@@ -258,7 +267,11 @@ export function ScheduleItemModal({
           {/* Times */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <FieldLabel htmlFor="startTime" required className="flex items-center space-x-2">
+              <FieldLabel
+                htmlFor="startTime"
+                required
+                className="flex items-center space-x-2"
+              >
                 <Clock className="w-4 h-4" />
                 <span>Start Time</span>
               </FieldLabel>
@@ -291,7 +304,10 @@ export function ScheduleItemModal({
 
           {/* Location */}
           <div>
-            <FieldLabel htmlFor="location" className="flex items-center space-x-2">
+            <FieldLabel
+              htmlFor="location"
+              className="flex items-center space-x-2"
+            >
               <MapPin className="w-4 h-4" />
               <span>Location</span>
             </FieldLabel>
@@ -307,7 +323,10 @@ export function ScheduleItemModal({
 
           {/* Attire */}
           <div>
-            <FieldLabel htmlFor="attire" className="flex items-center space-x-2">
+            <FieldLabel
+              htmlFor="attire"
+              className="flex items-center space-x-2"
+            >
               <Shirt className="w-4 h-4" />
               <span>Attire</span>
             </FieldLabel>
@@ -325,33 +344,32 @@ export function ScheduleItemModal({
           {event.time_zone && (
             <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
               <p className="text-sm text-blue-800">
-                <strong>Note:</strong> Times will be saved in {event.time_zone} timezone
+                <strong>Note:</strong> Times will be saved in {event.time_zone}{' '}
+                timezone
               </p>
             </div>
           )}
 
           {/* Actions */}
           <div className="flex space-x-3 pt-4">
-            <SecondaryButton 
-              type="button" 
+            <SecondaryButton
+              type="button"
               onClick={onCancel}
               className="flex-1"
               disabled={loading}
             >
               Cancel
             </SecondaryButton>
-            <PrimaryButton 
-              type="submit" 
-              className="flex-1"
-              disabled={loading}
-            >
+            <PrimaryButton type="submit" className="flex-1" disabled={loading}>
               {loading ? (
                 <div className="flex items-center justify-center space-x-2">
                   <LoadingSpinner size="sm" />
                   <span>Saving...</span>
                 </div>
+              ) : item ? (
+                'Update Item'
               ) : (
-                item ? 'Update Item' : 'Add Item'
+                'Add Item'
               )}
             </PrimaryButton>
           </div>

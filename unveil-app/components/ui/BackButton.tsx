@@ -6,8 +6,8 @@ import { ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface BackButtonProps {
-  href?: string;           // Custom back URL
-  fallback?: string;       // Fallback URL if no history
+  href?: string; // Custom back URL
+  fallback?: string; // Fallback URL if no history
   variant?: 'subtle' | 'prominent';
   className?: string;
   children?: React.ReactNode;
@@ -59,4 +59,4 @@ export const BackButton: React.FC<BackButtonProps> = ({
   );
 };
 
-BackButton.displayName = 'BackButton'; 
+BackButton.displayName = 'BackButton';

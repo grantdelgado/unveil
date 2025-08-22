@@ -36,4 +36,4 @@ export const CardContainer: React.FC<CardContainerProps> = ({
   );
 };
 
-CardContainer.displayName = 'CardContainer'; 
+CardContainer.displayName = 'CardContainer';

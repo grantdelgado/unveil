@@ -4,9 +4,9 @@ import { supabase } from '@/lib/supabase/admin';
 
 /**
  * Twilio Webhook Handler for SMS Delivery Status Updates
- * 
+ *
  * Processes delivery status callbacks from Twilio and updates message_deliveries table
- * 
+ *
  * Expected webhook parameters from Twilio:
  * - MessageSid: Unique identifier for the message
  * - MessageStatus: Current status (queued, sent, delivered, undelivered, failed)
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
 
     // Parse form data from Twilio webhook
     const formData = await request.formData();
-    
+
     const messageSid = formData.get('MessageSid')?.toString();
     const messageStatus = formData.get('MessageStatus')?.toString();
     const toNumber = formData.get('To')?.toString();
@@ -31,10 +31,12 @@ export async function POST(request: NextRequest) {
 
     // Validate required parameters
     if (!messageSid || !messageStatus) {
-      logger.apiError('Invalid Twilio webhook: missing MessageSid or MessageStatus');
+      logger.apiError(
+        'Invalid Twilio webhook: missing MessageSid or MessageStatus',
+      );
       return NextResponse.json(
         { error: 'Missing required parameters' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -43,7 +45,7 @@ export async function POST(request: NextRequest) {
       status: messageStatus,
       to: toNumber ? toNumber.slice(0, 6) + '...' : 'unknown',
       errorCode,
-      hasError: !!errorCode
+      hasError: !!errorCode,
     });
 
     // Map Twilio status to our internal status
@@ -55,7 +57,7 @@ export async function POST(request: NextRequest) {
       .update({
         sms_status: internalStatus,
         sms_provider_id: messageSid,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .eq('sms_provider_id', messageSid)
       .select();
@@ -68,7 +70,7 @@ export async function POST(request: NextRequest) {
           .update({
             sms_status: internalStatus,
             sms_provider_id: messageSid,
-            updated_at: new Date().toISOString()
+            updated_at: new Date().toISOString(),
           })
           .eq('phone_number', toNumber)
           .is('sms_provider_id', null)
@@ -77,35 +79,38 @@ export async function POST(request: NextRequest) {
           .select();
 
         if (phoneError) {
-          logger.apiError('Error updating delivery record by phone', phoneError);
+          logger.apiError(
+            'Error updating delivery record by phone',
+            phoneError,
+          );
           return NextResponse.json(
             { error: 'Failed to update delivery record' },
-            { status: 500 }
+            { status: 500 },
           );
         }
 
         if (phoneRecords && phoneRecords.length > 0) {
           logger.api('Updated delivery record by phone number', {
             recordId: phoneRecords[0].id,
-            status: internalStatus
+            status: internalStatus,
           });
         } else {
           logger.apiError('No delivery record found for message', {
             messageSid: messageSid.slice(0, 10) + '...',
-            phone: toNumber ? toNumber.slice(0, 6) + '...' : 'unknown'
+            phone: toNumber ? toNumber.slice(0, 6) + '...' : 'unknown',
           });
         }
       } else {
         logger.apiError('Error updating delivery record', updateError);
         return NextResponse.json(
           { error: 'Failed to update delivery record' },
-          { status: 500 }
+          { status: 500 },
         );
       }
     } else {
       logger.api('Successfully updated delivery record', {
         recordsUpdated: updatedRecords?.length || 0,
-        status: internalStatus
+        status: internalStatus,
       });
     }
 
@@ -120,7 +125,7 @@ export async function POST(request: NextRequest) {
         messageSid: messageSid.slice(0, 10) + '...',
         errorCode,
         errorMessage,
-        phone: toNumber ? toNumber.slice(0, 6) + '...' : 'unknown'
+        phone: toNumber ? toNumber.slice(0, 6) + '...' : 'unknown',
       });
     }
 
@@ -129,19 +134,18 @@ export async function POST(request: NextRequest) {
       success: true,
       messageSid,
       status: internalStatus,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-
   } catch (error) {
     logger.apiError('Error processing Twilio webhook', error);
-    
+
     return NextResponse.json(
       {
         error: 'Failed to process webhook',
         timestamp: new Date().toISOString(),
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -182,7 +186,7 @@ async function updateMessageAggregateStats(messageSid: string) {
     if (findError || !deliveryRecord) {
       logger.apiError('Could not find delivery record for aggregate update', {
         messageSid: messageSid.slice(0, 10) + '...',
-        error: findError?.message
+        error: findError?.message,
       });
       return;
     }
@@ -196,7 +200,6 @@ async function updateMessageAggregateStats(messageSid: string) {
     if (deliveryRecord.scheduled_message_id) {
       await updateScheduledMessageStats(deliveryRecord.scheduled_message_id);
     }
-
   } catch (error) {
     logger.apiError('Error updating aggregate message stats', error);
   }
@@ -217,20 +220,25 @@ async function updateImmediateMessageStats(messageId: string) {
       return;
     }
 
-    const delivered = statusCounts.filter(r => r.sms_status === 'delivered').length;
-    const failed = statusCounts.filter(r => r.sms_status && ['failed', 'undelivered'].includes(r.sms_status)).length;
+    const delivered = statusCounts.filter(
+      (r) => r.sms_status === 'delivered',
+    ).length;
+    const failed = statusCounts.filter(
+      (r) => r.sms_status && ['failed', 'undelivered'].includes(r.sms_status),
+    ).length;
 
     // TODO: Update message delivery statistics
     // Note: delivered_count and failed_count fields don't exist in messages table
     // Consider adding these fields to the database schema or tracking in message_deliveries table
-    console.log(`Message ${messageId} delivery status: ${delivered} delivered, ${failed} failed`);
+    console.log(
+      `Message ${messageId} delivery status: ${delivered} delivered, ${failed} failed`,
+    );
 
     logger.api('Updated immediate message stats', {
       messageId,
       delivered,
-      failed
+      failed,
     });
-
   } catch (error) {
     logger.apiError('Error updating immediate message stats', error);
   }
@@ -251,24 +259,27 @@ async function updateScheduledMessageStats(scheduledMessageId: string) {
       return;
     }
 
-    const delivered = statusCounts.filter(r => r.sms_status === 'delivered').length;
-    const failed = statusCounts.filter(r => r.sms_status && ['failed', 'undelivered'].includes(r.sms_status)).length;
+    const delivered = statusCounts.filter(
+      (r) => r.sms_status === 'delivered',
+    ).length;
+    const failed = statusCounts.filter(
+      (r) => r.sms_status && ['failed', 'undelivered'].includes(r.sms_status),
+    ).length;
 
     // Update scheduled message record
     await supabase
       .from('scheduled_messages')
       .update({
         success_count: delivered,
-        failure_count: failed
+        failure_count: failed,
       })
       .eq('id', scheduledMessageId);
 
     logger.api('Updated scheduled message stats', {
       scheduledMessageId,
       delivered,
-      failed
+      failed,
     });
-
   } catch (error) {
     logger.apiError('Error updating scheduled message stats', error);
   }
@@ -282,6 +293,6 @@ export async function GET() {
     endpoint: '/api/webhooks/twilio',
     methods: ['POST'],
     timestamp: new Date().toISOString(),
-    note: 'Configure this URL in your Twilio Console as the webhook endpoint'
+    note: 'Configure this URL in your Twilio Console as the webhook endpoint',
   });
 }

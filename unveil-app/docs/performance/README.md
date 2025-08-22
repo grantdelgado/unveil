@@ -37,12 +37,14 @@ performance/
 ## 🎯 Quick Start
 
 ### Development Monitoring
+
 ```typescript
 // Real-time performance alerts are automatically enabled in development
 // See performance/monitoring/ for configuration
 ```
 
 ### Performance Validation
+
 ```bash
 # Check performance without rebuilding
 pnpm perf:check
@@ -52,6 +54,7 @@ pnpm build:check
 ```
 
 ### Framework Usage
+
 ```typescript
 // Import performance utilities
 import { PERFORMANCE_CONFIG, CURRENT_PERFORMANCE_STATUS } from '@/performance';
@@ -66,22 +69,24 @@ import serviceWorker from '@/performance/frameworks/serviceWorker';
 
 ## 📊 Current Performance Status
 
-| Metric | Current | Target | Status |
-|--------|---------|---------|---------|
-| **Host Dashboard** | 314KB | <300KB | 🟡 Close (14.7% improved) |
-| **Guest Home** | 305KB | <250KB | 🟡 Close (1.9% improved) |
-| **Select Event** | 294KB | <300KB | ✅ Good |
-| **Navigation Speed** | 30ms | <200ms | ✅ Excellent (100x faster) |
-| **Scroll Performance** | 16ms | <16ms | ✅ Excellent (90% smoother) |
+| Metric                 | Current | Target | Status                      |
+| ---------------------- | ------- | ------ | --------------------------- |
+| **Host Dashboard**     | 314KB   | <300KB | 🟡 Close (14.7% improved)   |
+| **Guest Home**         | 305KB   | <250KB | 🟡 Close (1.9% improved)    |
+| **Select Event**       | 294KB   | <300KB | ✅ Good                     |
+| **Navigation Speed**   | 30ms    | <200ms | ✅ Excellent (100x faster)  |
+| **Scroll Performance** | 16ms    | <16ms  | ✅ Excellent (90% smoother) |
 
 ## 🚨 Performance Guardrails
 
 ### Automated Monitoring
+
 - **Development Alerts:** Real-time warnings for performance issues
 - **Build Validation:** Automated bundle size checking
 - **Performance Regression Prevention:** Fail build on critical issues
 
 ### Performance Budgets
+
 - **Bundle Size Warning:** 350KB
 - **Bundle Size Error:** 500KB
 - **Subscription Limit:** 2 per page
@@ -93,6 +98,7 @@ import serviceWorker from '@/performance/frameworks/serviceWorker';
 ### Ready for Deployment
 
 #### 🌐 Service Worker (Offline Support)
+
 ```typescript
 // Located: performance/frameworks/serviceWorker/
 // Status: ✅ Ready for production deployment
@@ -100,25 +106,29 @@ import serviceWorker from '@/performance/frameworks/serviceWorker';
 ```
 
 #### 📋 Virtualized Scrolling (Large Lists)
+
 ```typescript
 // Located: performance/frameworks/virtualization/
-// Status: ✅ Ready for large list integration  
+// Status: ✅ Ready for large list integration
 // Features: Handle 1000+ items, constant memory, grid support
 ```
 
 ## 📈 Performance History
 
 ### Week 1 Achievements
+
 - ✅ Font loading optimization (200-300ms FCP improvement)
 - ✅ React Query configuration (50% fewer API calls)
 - ✅ Event sorting memoization
 
-### Week 2 Achievements  
+### Week 2 Achievements
+
 - ✅ Selective analytics loading (40% faster page loads)
 - ✅ Bundle dependency optimization
 - ✅ Centralized query invalidation
 
 ### Week 3 Achievements
+
 - ✅ Client-side navigation (100x faster transitions)
 - ✅ Scroll event throttling (90% smoother performance)
 - ✅ Component lazy loading (reduced bundle sizes)
@@ -127,6 +137,7 @@ import serviceWorker from '@/performance/frameworks/serviceWorker';
 - ✅ Centralized auth management
 
 ### Week 4 Achievements
+
 - ✅ Performance guardrails and monitoring
 - ✅ Automated validation system
 - ✅ Week 4+ optimization framework preparation
@@ -135,11 +146,13 @@ import serviceWorker from '@/performance/frameworks/serviceWorker';
 ## 🎯 Next Steps
 
 ### Immediate Deployment Opportunities
+
 1. **Service Worker Activation** - Enable offline support
 2. **Virtualized Lists** - Implement for guest lists >100 items
 3. **Advanced Analytics** - Deploy performance monitoring dashboard
 
 ### Performance Optimization Roadmap
+
 - **Short-term:** Deploy ready frameworks, achieve <300KB targets
 - **Medium-term:** Advanced caching strategies, progressive loading
 - **Long-term:** Real user monitoring, performance analytics dashboard
@@ -154,6 +167,7 @@ import serviceWorker from '@/performance/frameworks/serviceWorker';
 ## 🏆 Performance Achievements
 
 **Unveil app performance has been systematically optimized across all layers:**
+
 - 🎯 Bundle sizes approaching targets
 - ⚡ Navigation performance increased 100x
 - 📱 Mobile responsiveness improved 90%

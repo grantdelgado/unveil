@@ -14,14 +14,14 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     include: ['**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     exclude: [
-      'node_modules', 
-      'dist', 
-      '.next', 
+      'node_modules',
+      'dist',
+      '.next',
       'playwright-tests/**/*',
       'tests/**/*', // Exclude Playwright e2e tests
       'test-results/**/*',
       '**/*.e2e.*',
-      '**/playwright.config.*'
+      '**/playwright.config.*',
     ],
     env: {
       NEXT_PUBLIC_SUPABASE_URL: 'https://test.supabase.co',

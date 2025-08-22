@@ -77,7 +77,7 @@ export type CreateScheduledMessageData = {
   eventId: string;
   content: string;
   sendAt: string; // UTC timestamp for execution
-  scheduledTz?: string; // IANA timezone identifier 
+  scheduledTz?: string; // IANA timezone identifier
   scheduledLocal?: string; // Original local date/time string for display
   idempotencyKey?: string; // SHA256 hash to prevent duplicates
   recipientFilter: RecipientFilter;
@@ -88,9 +88,15 @@ export type CreateScheduledMessageData = {
   subject?: string;
 };
 
-// Filter types - unified across all components  
+// Filter types - unified across all components
 export type RecipientFilter = {
-  type: 'all' | 'tags' | 'rsvp_status' | 'individual' | 'combined' | 'explicit_selection';
+  type:
+    | 'all'
+    | 'tags'
+    | 'rsvp_status'
+    | 'individual'
+    | 'combined'
+    | 'explicit_selection';
   tags?: string[];
   rsvpStatuses?: string[]; // DEPRECATED: Will be removed in favor of explicit selection
   guestIds?: string[];
@@ -206,9 +212,9 @@ export type RecipientPreviewData = {
 // RSVP status constants for consistency
 export const RSVP_STATUSES = {
   ATTENDING: 'attending',
-  PENDING: 'pending', 
+  PENDING: 'pending',
   MAYBE: 'maybe',
-  DECLINED: 'declined'
+  DECLINED: 'declined',
 } as const;
 
-export type RsvpStatus = typeof RSVP_STATUSES[keyof typeof RSVP_STATUSES]; 
+export type RsvpStatus = (typeof RSVP_STATUSES)[keyof typeof RSVP_STATUSES];

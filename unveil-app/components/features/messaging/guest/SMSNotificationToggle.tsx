@@ -21,7 +21,13 @@ interface ConfirmationModalProps {
   isLoading: boolean;
 }
 
-function ConfirmationModal({ isOpen, currentState, onConfirm, onCancel, isLoading }: ConfirmationModalProps) {
+function ConfirmationModal({
+  isOpen,
+  currentState,
+  onConfirm,
+  onCancel,
+  isLoading,
+}: ConfirmationModalProps) {
   if (!isOpen) return null;
 
   const willOptOut = !currentState;
@@ -32,12 +38,11 @@ function ConfirmationModal({ isOpen, currentState, onConfirm, onCancel, isLoadin
         <h3 className="text-lg font-semibold text-stone-800 mb-3">
           Text message updates
         </h3>
-        
+
         <p className="text-sm text-stone-600 mb-6">
-          {willOptOut 
-            ? "Turn off SMS updates from your hosts?"
-            : "Turn on SMS updates from your hosts?"
-          }
+          {willOptOut
+            ? 'Turn off SMS updates from your hosts?'
+            : 'Turn on SMS updates from your hosts?'}
         </p>
 
         <div className="flex gap-3">
@@ -58,8 +63,10 @@ function ConfirmationModal({ isOpen, currentState, onConfirm, onCancel, isLoadin
                 <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 Saving...
               </>
+            ) : willOptOut ? (
+              'Turn Off'
             ) : (
-              willOptOut ? 'Turn Off' : 'Turn On'
+              'Turn On'
             )}
           </button>
         </div>
@@ -68,7 +75,12 @@ function ConfirmationModal({ isOpen, currentState, onConfirm, onCancel, isLoadin
   );
 }
 
-export function SMSNotificationToggle({ eventId, guestId, initialOptOut = false, onToggle }: SMSNotificationToggleProps) {
+export function SMSNotificationToggle({
+  eventId,
+  guestId,
+  initialOptOut = false,
+  onToggle,
+}: SMSNotificationToggleProps) {
   const { user } = useAuth();
   const [smsOptOut, setSmsOptOut] = useState(initialOptOut);
   const [isLoading, setIsLoading] = useState(false);
@@ -95,7 +107,7 @@ export function SMSNotificationToggle({ eventId, guestId, initialOptOut = false,
 
     try {
       const newOptOutValue = !smsOptOut;
-      
+
       // Optimistic update
       setSmsOptOut(newOptOutValue);
       onToggle?.(newOptOutValue);
@@ -103,9 +115,9 @@ export function SMSNotificationToggle({ eventId, guestId, initialOptOut = false,
       // Update the database
       const { error: updateError } = await supabase
         .from('event_guests')
-        .update({ 
+        .update({
           sms_opt_out: newOptOutValue,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
         .eq('event_id', eventId)
         .eq('user_id', user.id);
@@ -116,26 +128,30 @@ export function SMSNotificationToggle({ eventId, guestId, initialOptOut = false,
 
       // Success - close modal and show success toast
       setShowConfirmation(false);
-      setSuccessMessage(newOptOutValue ? 'SMS updates turned off.' : 'SMS updates turned on.');
-      
+      setSuccessMessage(
+        newOptOutValue ? 'SMS updates turned off.' : 'SMS updates turned on.',
+      );
+
       logger.info('SMS notification preference updated', {
         eventId,
         guestId,
-        smsOptOut: newOptOutValue
+        smsOptOut: newOptOutValue,
       });
-
     } catch (err) {
       // Revert optimistic update on error
       setSmsOptOut(!smsOptOut);
       onToggle?.(!smsOptOut);
-      
-      const errorMessage = err instanceof Error ? err.message : 'Couldn\'t update SMS settings. Please try again.';
+
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Couldn't update SMS settings. Please try again.";
       setError(errorMessage);
-      
+
       logger.error('Failed to update SMS notification preference', {
         error: err,
         eventId,
-        guestId
+        guestId,
       });
     } finally {
       setIsLoading(false);
@@ -174,9 +190,10 @@ export function SMSNotificationToggle({ eventId, guestId, initialOptOut = false,
         disabled={isLoading}
         className={`
           relative p-2 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-stone-400
-          ${isOptedIn 
-            ? 'text-stone-600 hover:text-stone-700 hover:bg-stone-100' 
-            : 'text-stone-400 hover:text-stone-500 hover:bg-stone-50'
+          ${
+            isOptedIn
+              ? 'text-stone-600 hover:text-stone-700 hover:bg-stone-100'
+              : 'text-stone-400 hover:text-stone-500 hover:bg-stone-50'
           }
           ${isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
         `}
@@ -184,7 +201,7 @@ export function SMSNotificationToggle({ eventId, guestId, initialOptOut = false,
         title={ariaLabel}
       >
         <IconComponent className="h-5 w-5" />
-        
+
         {/* Loading indicator */}
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center">

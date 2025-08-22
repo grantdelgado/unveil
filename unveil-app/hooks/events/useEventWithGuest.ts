@@ -47,9 +47,13 @@ export function useEventWithGuest(
 
       // Fetch event data using the service function
       const eventResult = await getEventById(eventId);
-      
+
       if (!eventResult.success) {
-        throw new Error(eventResult.error instanceof Error ? eventResult.error.message : 'Failed to fetch event');
+        throw new Error(
+          eventResult.error instanceof Error
+            ? eventResult.error.message
+            : 'Failed to fetch event',
+        );
       }
 
       if (eventResult.data) {
@@ -60,10 +64,12 @@ export function useEventWithGuest(
       // Only include guests who haven't been removed from the event
       const { data: guestData, error: guestError } = await supabase
         .from('event_guests')
-        .select(`
+        .select(
+          `
           *,
           users:user_id(*)
-        `)
+        `,
+        )
         .eq('event_id', eventId)
         .eq('user_id', userId)
         .is('removed_at', null) // Only include guests who haven't been removed
@@ -86,8 +92,6 @@ export function useEventWithGuest(
     }
   }, [eventId, userId]);
 
-
-
   const refetch = useCallback(async () => {
     await fetchEventData();
   }, [fetchEventData]);
@@ -104,28 +108,45 @@ export function useEventWithGuest(
     table: 'event_guests',
     event: '*',
     // Filter to only this user's guest record to reduce noise
-    filter: eventId && userId ? `event_id=eq.${eventId}.and.user_id=eq.${userId}` : undefined,
-    onDataChange: useCallback((payload) => {
-      try {
-        // This subscription is already filtered to the current user's row
-        const updated = payload.new as unknown as { id?: string; event_id?: string; user_id?: string; declined_at?: string; decline_reason?: string };
-        if (!updated || updated.event_id !== eventId || updated.user_id !== userId) return;
+    filter:
+      eventId && userId
+        ? `event_id=eq.${eventId}.and.user_id=eq.${userId}`
+        : undefined,
+    onDataChange: useCallback(
+      (payload) => {
+        try {
+          // This subscription is already filtered to the current user's row
+          const updated = payload.new as unknown as {
+            id?: string;
+            event_id?: string;
+            user_id?: string;
+            declined_at?: string;
+            decline_reason?: string;
+          };
+          if (
+            !updated ||
+            updated.event_id !== eventId ||
+            updated.user_id !== userId
+          )
+            return;
 
-        logger.realtime('Guest info updated via realtime', { 
-          eventId, 
-          userId, 
-          declined: !!updated.declined_at 
-        });
+          logger.realtime('Guest info updated via realtime', {
+            eventId,
+            userId,
+            declined: !!updated.declined_at,
+          });
 
-        // Merge minimal fields into guestInfo; realtime payload has flat record
-        setGuestInfo((prev) => ({
-          ...(prev || ({} as EventGuestWithUser)),
-          ...(updated as Partial<EventGuestWithUser>),
-        }));
-      } catch (err) {
-        logger.realtimeError('Failed to apply realtime guest update', err);
-      }
-    }, [eventId, userId]),
+          // Merge minimal fields into guestInfo; realtime payload has flat record
+          setGuestInfo((prev) => ({
+            ...(prev || ({} as EventGuestWithUser)),
+            ...(updated as Partial<EventGuestWithUser>),
+          }));
+        } catch (err) {
+          logger.realtimeError('Failed to apply realtime guest update', err);
+        }
+      },
+      [eventId, userId],
+    ),
     onError: useCallback((err: Error) => {
       logger.realtimeError('Guest realtime subscription error', err);
     }, []),
@@ -140,4 +161,4 @@ export function useEventWithGuest(
     error,
     refetch,
   };
-} 
+}

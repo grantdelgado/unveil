@@ -90,10 +90,7 @@ class RefactoringVerifier {
 
     // Test 3: Verify users table
     try {
-      const { data } = await supabase
-        .from('users')
-        .select('*')
-        .limit(1);
+      const { data } = await supabase.from('users').select('*').limit(1);
       this.addResult(
         'MCP Schema - Views',
         'PASS',
@@ -295,8 +292,7 @@ class RefactoringVerifier {
         rsvp_status: 'attending' as const,
       };
 
-      const result =
-        await GuestsService.addParticipantToEvent(guestData);
+      const result = await GuestsService.addParticipantToEvent(guestData);
       if (result?.data) {
         this.addResult(
           'Guests - Addition',
@@ -321,9 +317,7 @@ class RefactoringVerifier {
 
     // Test 2: Get event participants
     try {
-      const result = await GuestsService.getEventParticipants(
-        this.testEventId,
-      );
+      const result = await GuestsService.getEventParticipants(this.testEventId);
       if (result?.data && Array.isArray(result.data)) {
         this.addResult(
           'Guests - Retrieval',
@@ -331,11 +325,7 @@ class RefactoringVerifier {
           'Guest retrieval successful',
         );
       } else {
-        this.addResult(
-          'Guests - Retrieval',
-          'FAIL',
-          'Guest retrieval failed',
-        );
+        this.addResult('Guests - Retrieval', 'FAIL', 'Guest retrieval failed');
       }
     } catch (error) {
       this.addResult(
@@ -360,11 +350,7 @@ class RefactoringVerifier {
           'RSVP update successful',
         );
       } else {
-        this.addResult(
-          'Guests - RSVP Update',
-          'FAIL',
-          'RSVP update failed',
-        );
+        this.addResult('Guests - RSVP Update', 'FAIL', 'RSVP update failed');
       }
     } catch (error) {
       this.addResult(

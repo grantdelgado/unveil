@@ -3,7 +3,9 @@ import { CheckCircle, AlertCircle, XCircle } from 'lucide-react';
 import { ValidationResult } from '@/lib/utils/validation';
 
 // Validation feedback icon component
-export const ValidationIcon: React.FC<{ result?: ValidationResult }> = ({ result }) => {
+export const ValidationIcon: React.FC<{ result?: ValidationResult }> = ({
+  result,
+}) => {
   if (!result) return null;
 
   if (!result.isValid) {
@@ -11,19 +13,23 @@ export const ValidationIcon: React.FC<{ result?: ValidationResult }> = ({ result
   }
 
   if (result.success) {
-    return <CheckCircle className="w-5 h-5 text-emerald-500" aria-hidden="true" />;
+    return (
+      <CheckCircle className="w-5 h-5 text-emerald-500" aria-hidden="true" />
+    );
   }
 
   if (result.warning) {
-    return <AlertCircle className="w-5 h-5 text-amber-500" aria-hidden="true" />;
+    return (
+      <AlertCircle className="w-5 h-5 text-amber-500" aria-hidden="true" />
+    );
   }
 
   return null;
 };
 
 // Validation message component
-export const ValidationMessage: React.FC<{ 
-  result?: ValidationResult; 
+export const ValidationMessage: React.FC<{
+  result?: ValidationResult;
   error?: string;
 }> = ({ result, error }) => {
   // Prioritize explicit error prop over validation result
@@ -33,7 +39,10 @@ export const ValidationMessage: React.FC<{
 
   if (displayError) {
     return (
-      <p className="text-sm text-red-600 mt-1 flex items-center gap-2" role="alert">
+      <p
+        className="text-sm text-red-600 mt-1 flex items-center gap-2"
+        role="alert"
+      >
         <XCircle className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
         {displayError}
       </p>
@@ -59,4 +68,4 @@ export const ValidationMessage: React.FC<{
   }
 
   return null;
-}; 
+};

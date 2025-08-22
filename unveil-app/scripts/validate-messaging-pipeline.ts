@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 /**
  * Messaging Pipeline Validation Script
- * 
+ *
  * This script validates the complete messaging delivery pipeline:
  * 1. Environment configuration
  * 2. Database connectivity and permissions
@@ -37,12 +37,17 @@ class MessagingPipelineValidator {
     this.supabase = createClient(supabaseUrl, supabaseKey);
   }
 
-  private addResult(step: string, status: 'pass' | 'fail' | 'warning', message: string, details?: any) {
+  private addResult(
+    step: string,
+    status: 'pass' | 'fail' | 'warning',
+    message: string,
+    details?: any,
+  ) {
     this.results.push({ step, status, message, details });
-    
+
     const emoji = status === 'pass' ? '✅' : status === 'fail' ? '❌' : '⚠️';
     console.log(`${emoji} ${step}: ${message}`);
-    
+
     if (details) {
       console.log(`   Details:`, details);
     }
@@ -56,7 +61,7 @@ class MessagingPipelineValidator {
       TWILIO_ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID,
       TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN,
       TWILIO_PHONE_NUMBER: process.env.TWILIO_PHONE_NUMBER,
-      TWILIO_MESSAGING_SERVICE_SID: process.env.TWILIO_MESSAGING_SERVICE_SID
+      TWILIO_MESSAGING_SERVICE_SID: process.env.TWILIO_MESSAGING_SERVICE_SID,
     };
 
     const missingTwilioVars = Object.entries(twilioVars)
@@ -64,19 +69,35 @@ class MessagingPipelineValidator {
       .map(([key]) => key);
 
     if (twilioVars.TWILIO_ACCOUNT_SID && twilioVars.TWILIO_AUTH_TOKEN) {
-      if (twilioVars.TWILIO_PHONE_NUMBER || twilioVars.TWILIO_MESSAGING_SERVICE_SID) {
-        this.addResult('Twilio Config', 'pass', 'All required Twilio variables present');
+      if (
+        twilioVars.TWILIO_PHONE_NUMBER ||
+        twilioVars.TWILIO_MESSAGING_SERVICE_SID
+      ) {
+        this.addResult(
+          'Twilio Config',
+          'pass',
+          'All required Twilio variables present',
+        );
       } else {
-        this.addResult('Twilio Config', 'fail', 'Missing TWILIO_PHONE_NUMBER or TWILIO_MESSAGING_SERVICE_SID');
+        this.addResult(
+          'Twilio Config',
+          'fail',
+          'Missing TWILIO_PHONE_NUMBER or TWILIO_MESSAGING_SERVICE_SID',
+        );
       }
     } else {
-      this.addResult('Twilio Config', 'fail', 'Missing critical Twilio credentials', missingTwilioVars);
+      this.addResult(
+        'Twilio Config',
+        'fail',
+        'Missing critical Twilio credentials',
+        missingTwilioVars,
+      );
     }
 
     // Check Supabase configuration
     const supabaseVars = {
       NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-      SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY
+      SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
     };
 
     const missingSupabaseVars = Object.entries(supabaseVars)
@@ -84,20 +105,41 @@ class MessagingPipelineValidator {
       .map(([key]) => key);
 
     if (missingSupabaseVars.length === 0) {
-      this.addResult('Supabase Config', 'pass', 'All Supabase variables present');
+      this.addResult(
+        'Supabase Config',
+        'pass',
+        'All Supabase variables present',
+      );
     } else {
-      this.addResult('Supabase Config', 'fail', 'Missing Supabase variables', missingSupabaseVars);
+      this.addResult(
+        'Supabase Config',
+        'fail',
+        'Missing Supabase variables',
+        missingSupabaseVars,
+      );
     }
 
     // Check CRON secret
     if (process.env.CRON_SECRET) {
       if (process.env.CRON_SECRET.length >= 32) {
-        this.addResult('CRON Security', 'pass', 'CRON_SECRET is properly configured');
+        this.addResult(
+          'CRON Security',
+          'pass',
+          'CRON_SECRET is properly configured',
+        );
       } else {
-        this.addResult('CRON Security', 'warning', 'CRON_SECRET should be at least 32 characters long');
+        this.addResult(
+          'CRON Security',
+          'warning',
+          'CRON_SECRET should be at least 32 characters long',
+        );
       }
     } else {
-      this.addResult('CRON Security', 'fail', 'Missing CRON_SECRET for scheduled message processing');
+      this.addResult(
+        'CRON Security',
+        'fail',
+        'Missing CRON_SECRET for scheduled message processing',
+      );
     }
   }
 
@@ -112,15 +154,30 @@ class MessagingPipelineValidator {
         .limit(1);
 
       if (healthError) {
-        this.addResult('DB Connection', 'fail', 'Cannot connect to Supabase', healthError.message);
+        this.addResult(
+          'DB Connection',
+          'fail',
+          'Cannot connect to Supabase',
+          healthError.message,
+        );
         return;
       }
 
-      this.addResult('DB Connection', 'pass', 'Successfully connected to Supabase');
+      this.addResult(
+        'DB Connection',
+        'pass',
+        'Successfully connected to Supabase',
+      );
 
       // Test required tables exist
-      const requiredTables = ['events', 'event_guests', 'messages', 'scheduled_messages', 'message_deliveries'];
-      
+      const requiredTables = [
+        'events',
+        'event_guests',
+        'messages',
+        'scheduled_messages',
+        'message_deliveries',
+      ];
+
       for (const table of requiredTables) {
         try {
           const { error } = await this.supabase
@@ -128,35 +185,67 @@ class MessagingPipelineValidator {
             .select('*')
             .limit(1);
 
-          if (error && error.code !== 'PGRST116') { // PGRST116 = empty result (OK)
+          if (error && error.code !== 'PGRST116') {
+            // PGRST116 = empty result (OK)
             throw error;
           }
 
-          this.addResult(`Table: ${table}`, 'pass', 'Table exists and accessible');
+          this.addResult(
+            `Table: ${table}`,
+            'pass',
+            'Table exists and accessible',
+          );
         } catch (error: any) {
-          this.addResult(`Table: ${table}`, 'fail', 'Table missing or inaccessible', error.message);
+          this.addResult(
+            `Table: ${table}`,
+            'fail',
+            'Table missing or inaccessible',
+            error.message,
+          );
         }
       }
 
       // Test RLS helper functions
       try {
-        const { data, error } = await this.supabase
-          .rpc('is_event_host', { p_event_id: '00000000-0000-0000-0000-000000000000' });
+        const { data, error } = await this.supabase.rpc('is_event_host', {
+          p_event_id: '00000000-0000-0000-0000-000000000000',
+        });
 
         if (error && !error.message.includes('permission denied')) {
           // Function exists but might fail due to auth - that's OK
-          this.addResult('RLS Functions', 'pass', 'Helper functions are available');
+          this.addResult(
+            'RLS Functions',
+            'pass',
+            'Helper functions are available',
+          );
         } else if (error) {
-          this.addResult('RLS Functions', 'warning', 'RLS functions may have permission issues');
+          this.addResult(
+            'RLS Functions',
+            'warning',
+            'RLS functions may have permission issues',
+          );
         } else {
-          this.addResult('RLS Functions', 'pass', 'Helper functions working correctly');
+          this.addResult(
+            'RLS Functions',
+            'pass',
+            'Helper functions working correctly',
+          );
         }
       } catch (error: any) {
-        this.addResult('RLS Functions', 'fail', 'RLS helper functions missing', error.message);
+        this.addResult(
+          'RLS Functions',
+          'fail',
+          'RLS helper functions missing',
+          error.message,
+        );
       }
-
     } catch (error: any) {
-      this.addResult('DB Connection', 'fail', 'Database validation failed', error.message);
+      this.addResult(
+        'DB Connection',
+        'fail',
+        'Database validation failed',
+        error.message,
+      );
     }
   }
 
@@ -169,12 +258,20 @@ class MessagingPipelineValidator {
       const authToken = process.env.TWILIO_AUTH_TOKEN;
 
       if (!accountSid || !authToken) {
-        this.addResult('Twilio Client', 'fail', 'Missing Twilio credentials for testing');
+        this.addResult(
+          'Twilio Client',
+          'fail',
+          'Missing Twilio credentials for testing',
+        );
         return;
       }
 
       // Try to initialize Twilio client (without actually importing the library)
-      this.addResult('Twilio Client', 'pass', 'Twilio credentials are available');
+      this.addResult(
+        'Twilio Client',
+        'pass',
+        'Twilio credentials are available',
+      );
 
       // Validate phone number format
       const twilioPhone = process.env.TWILIO_PHONE_NUMBER;
@@ -182,23 +279,48 @@ class MessagingPipelineValidator {
 
       if (twilioPhone) {
         if (twilioPhone.match(/^\+[1-9]\d{1,14}$/)) {
-          this.addResult('Phone Format', 'pass', 'Twilio phone number is in E.164 format');
+          this.addResult(
+            'Phone Format',
+            'pass',
+            'Twilio phone number is in E.164 format',
+          );
         } else {
-          this.addResult('Phone Format', 'fail', 'Twilio phone number is not in E.164 format', twilioPhone);
+          this.addResult(
+            'Phone Format',
+            'fail',
+            'Twilio phone number is not in E.164 format',
+            twilioPhone,
+          );
         }
       } else if (messagingSid) {
         if (messagingSid.startsWith('MG')) {
-          this.addResult('Messaging Service', 'pass', 'Twilio Messaging Service SID format is correct');
+          this.addResult(
+            'Messaging Service',
+            'pass',
+            'Twilio Messaging Service SID format is correct',
+          );
         } else {
-          this.addResult('Messaging Service', 'warning', 'Messaging Service SID format may be incorrect');
+          this.addResult(
+            'Messaging Service',
+            'warning',
+            'Messaging Service SID format may be incorrect',
+          );
         }
       }
 
       // Test SMS sending function (dry run)
-      this.addResult('SMS Function', 'pass', 'SMS sending functions are importable');
-
+      this.addResult(
+        'SMS Function',
+        'pass',
+        'SMS sending functions are importable',
+      );
     } catch (error: any) {
-      this.addResult('Twilio Integration', 'fail', 'Twilio integration test failed', error.message);
+      this.addResult(
+        'Twilio Integration',
+        'fail',
+        'Twilio integration test failed',
+        error.message,
+      );
     }
   }
 
@@ -208,29 +330,57 @@ class MessagingPipelineValidator {
     try {
       // Test that message types are properly defined
       const messageTypes = ['announcement', 'reminder', 'thank_you', 'direct'];
-      this.addResult('Message Types', 'pass', `Supported message types: ${messageTypes.join(', ')}`);
+      this.addResult(
+        'Message Types',
+        'pass',
+        `Supported message types: ${messageTypes.join(', ')}`,
+      );
 
       // Test recipient filter types
-      const filterTypes = ['all', 'tags', 'rsvp_status', 'individual', 'combined'];
-      this.addResult('Filter Types', 'pass', `Supported filter types: ${filterTypes.join(', ')}`);
+      const filterTypes = [
+        'all',
+        'tags',
+        'rsvp_status',
+        'individual',
+        'combined',
+      ];
+      this.addResult(
+        'Filter Types',
+        'pass',
+        `Supported filter types: ${filterTypes.join(', ')}`,
+      );
 
       // Validate API endpoints exist
       const endpoints = [
         '/api/messages/process-scheduled',
         '/api/cron/process-messages',
-        '/api/webhooks/twilio'
+        '/api/webhooks/twilio',
       ];
 
       for (const endpoint of endpoints) {
         // Check if the file exists
-        const filePath = endpoint.replace('/api/', 'app/api/').replace(/\//g, '/') + '/route.ts';
-        this.addResult(`Endpoint: ${endpoint}`, 'pass', 'API route file exists');
+        const filePath =
+          endpoint.replace('/api/', 'app/api/').replace(/\//g, '/') +
+          '/route.ts';
+        this.addResult(
+          `Endpoint: ${endpoint}`,
+          'pass',
+          'API route file exists',
+        );
       }
 
-      this.addResult('Delivery Flow', 'pass', 'All message delivery components are in place');
-
+      this.addResult(
+        'Delivery Flow',
+        'pass',
+        'All message delivery components are in place',
+      );
     } catch (error: any) {
-      this.addResult('Delivery Flow', 'fail', 'Message delivery flow validation failed', error.message);
+      this.addResult(
+        'Delivery Flow',
+        'fail',
+        'Message delivery flow validation failed',
+        error.message,
+      );
     }
   }
 
@@ -240,11 +390,19 @@ class MessagingPipelineValidator {
     try {
       // Test scheduled message processing endpoint
       const cronSecret = process.env.CRON_SECRET;
-      
+
       if (cronSecret) {
-        this.addResult('CRON Auth', 'pass', 'CRON secret is configured for scheduled processing');
+        this.addResult(
+          'CRON Auth',
+          'pass',
+          'CRON secret is configured for scheduled processing',
+        );
       } else {
-        this.addResult('CRON Auth', 'fail', 'Missing CRON_SECRET - scheduled processing will fail');
+        this.addResult(
+          'CRON Auth',
+          'fail',
+          'Missing CRON_SECRET - scheduled processing will fail',
+        );
       }
 
       // Check for scheduled message table columns
@@ -254,15 +412,32 @@ class MessagingPipelineValidator {
           .select('status, send_at, success_count, failure_count')
           .limit(1);
 
-        this.addResult('Scheduled Schema', 'pass', 'Scheduled messages table has required columns');
+        this.addResult(
+          'Scheduled Schema',
+          'pass',
+          'Scheduled messages table has required columns',
+        );
       } catch (error: any) {
-        this.addResult('Scheduled Schema', 'fail', 'Scheduled messages table schema issues', error.message);
+        this.addResult(
+          'Scheduled Schema',
+          'fail',
+          'Scheduled messages table schema issues',
+          error.message,
+        );
       }
 
-      this.addResult('Scheduled Processing', 'pass', 'Scheduled message processing setup validated');
-
+      this.addResult(
+        'Scheduled Processing',
+        'pass',
+        'Scheduled message processing setup validated',
+      );
     } catch (error: any) {
-      this.addResult('Scheduled Processing', 'fail', 'Scheduled processing validation failed', error.message);
+      this.addResult(
+        'Scheduled Processing',
+        'fail',
+        'Scheduled processing validation failed',
+        error.message,
+      );
     }
   }
 
@@ -271,7 +446,11 @@ class MessagingPipelineValidator {
 
     try {
       // Check webhook endpoint
-      this.addResult('Webhook Endpoint', 'pass', 'Twilio webhook handler exists at /api/webhooks/twilio');
+      this.addResult(
+        'Webhook Endpoint',
+        'pass',
+        'Twilio webhook handler exists at /api/webhooks/twilio',
+      );
 
       // Validate message_deliveries table for webhook updates
       try {
@@ -280,22 +459,39 @@ class MessagingPipelineValidator {
           .select('sms_status, sms_provider_id, phone_number')
           .limit(1);
 
-        this.addResult('Delivery Tracking', 'pass', 'Message deliveries table ready for webhook updates');
+        this.addResult(
+          'Delivery Tracking',
+          'pass',
+          'Message deliveries table ready for webhook updates',
+        );
       } catch (error: any) {
-        this.addResult('Delivery Tracking', 'fail', 'Delivery tracking table issues', error.message);
+        this.addResult(
+          'Delivery Tracking',
+          'fail',
+          'Delivery tracking table issues',
+          error.message,
+        );
       }
 
       // Remind about Twilio console setup
-      this.addResult('Twilio Console', 'warning', 'Remember to configure webhook URL in Twilio Console');
-
+      this.addResult(
+        'Twilio Console',
+        'warning',
+        'Remember to configure webhook URL in Twilio Console',
+      );
     } catch (error: any) {
-      this.addResult('Webhook Setup', 'fail', 'Webhook validation failed', error.message);
+      this.addResult(
+        'Webhook Setup',
+        'fail',
+        'Webhook validation failed',
+        error.message,
+      );
     }
   }
 
   async runAllValidations(): Promise<void> {
     console.log('🧪 Starting Comprehensive Messaging Pipeline Validation\n');
-    console.log('=' .repeat(60));
+    console.log('='.repeat(60));
 
     await this.validateEnvironmentConfiguration();
     await this.validateDatabaseConnectivity();
@@ -312,9 +508,9 @@ class MessagingPipelineValidator {
     console.log('📊 VALIDATION REPORT');
     console.log('='.repeat(60));
 
-    const passed = this.results.filter(r => r.status === 'pass').length;
-    const failed = this.results.filter(r => r.status === 'fail').length;
-    const warnings = this.results.filter(r => r.status === 'warning').length;
+    const passed = this.results.filter((r) => r.status === 'pass').length;
+    const failed = this.results.filter((r) => r.status === 'fail').length;
+    const warnings = this.results.filter((r) => r.status === 'warning').length;
 
     console.log(`\n✅ Passed: ${passed}`);
     console.log(`❌ Failed: ${failed}`);
@@ -324,8 +520,8 @@ class MessagingPipelineValidator {
     if (failed > 0) {
       console.log('\n🚨 CRITICAL ISSUES FOUND:');
       this.results
-        .filter(r => r.status === 'fail')
-        .forEach(result => {
+        .filter((r) => r.status === 'fail')
+        .forEach((result) => {
           console.log(`   ❌ ${result.step}: ${result.message}`);
         });
     }
@@ -333,22 +529,27 @@ class MessagingPipelineValidator {
     if (warnings > 0) {
       console.log('\n⚠️  WARNINGS:');
       this.results
-        .filter(r => r.status === 'warning')
-        .forEach(result => {
+        .filter((r) => r.status === 'warning')
+        .forEach((result) => {
           console.log(`   ⚠️  ${result.step}: ${result.message}`);
         });
     }
 
-    const overallStatus = failed === 0 ? 'READY FOR PRODUCTION' : 'NOT READY - FIX CRITICAL ISSUES';
+    const overallStatus =
+      failed === 0 ? 'READY FOR PRODUCTION' : 'NOT READY - FIX CRITICAL ISSUES';
     const statusEmoji = failed === 0 ? '🚀' : '🚨';
 
     console.log(`\n${statusEmoji} OVERALL STATUS: ${overallStatus}`);
 
     if (failed === 0) {
       console.log('\n✅ All critical validations passed!');
-      console.log('🚀 The messaging delivery pipeline is ready for production use.');
+      console.log(
+        '🚀 The messaging delivery pipeline is ready for production use.',
+      );
     } else {
-      console.log('\n❌ Critical issues must be resolved before production deployment.');
+      console.log(
+        '\n❌ Critical issues must be resolved before production deployment.',
+      );
     }
 
     console.log('\n📋 NEXT STEPS:');

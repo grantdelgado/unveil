@@ -21,10 +21,7 @@ export { GuestManagement } from './GuestManagement';
 export { GuestControlPanel } from './GuestControlPanel';
 
 // Re-export messaging components from new location for backwards compatibility
-export { 
-  MessageCenter,
-  MessageComposer
-} from '../messaging/host';
+export { MessageCenter, MessageComposer } from '../messaging/host';
 export { EventAnalytics } from './EventAnalytics';
 export { QuickActions } from './QuickActions';
 export { NotificationCenter } from './NotificationCenter';

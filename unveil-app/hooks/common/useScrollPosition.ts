@@ -28,7 +28,9 @@ export function useScrollPosition({
   throttleMs = 16, // ~60fps
 }: UseScrollPositionOptions = {}): UseScrollPositionReturn {
   const [position, setPosition] = useState<ScrollPosition>({ x: 0, y: 0 });
-  const [scrollDirection, setScrollDirection] = useState<'up' | 'down' | null>(null);
+  const [scrollDirection, setScrollDirection] = useState<'up' | 'down' | null>(
+    null,
+  );
   const lastScrollYRef = useRef(0);
   const ticking = useRef(false);
 
@@ -36,16 +38,19 @@ export function useScrollPosition({
     const target = element || (useWindow ? window : null);
     if (!target) return;
 
-    const scrollY = target instanceof Window 
-      ? target.scrollY 
-      : target.scrollTop;
-    const scrollX = target instanceof Window 
-      ? target.scrollX 
-      : target.scrollLeft;
+    const scrollY =
+      target instanceof Window ? target.scrollY : target.scrollTop;
+    const scrollX =
+      target instanceof Window ? target.scrollX : target.scrollLeft;
 
     // Determine scroll direction
-    const direction = scrollY > lastScrollYRef.current ? 'down' : scrollY < lastScrollYRef.current ? 'up' : null;
-    
+    const direction =
+      scrollY > lastScrollYRef.current
+        ? 'down'
+        : scrollY < lastScrollYRef.current
+          ? 'up'
+          : null;
+
     setPosition({ x: scrollX, y: scrollY });
     setScrollDirection(direction);
     lastScrollYRef.current = scrollY;
@@ -65,12 +70,12 @@ export function useScrollPosition({
   useEffect(() => {
     const target = element || (useWindow ? window : null);
     if (!target) return;
-    
+
     target.addEventListener('scroll', throttledHandleScroll, { passive: true });
-    
+
     // Get initial position
     handleScroll();
-    
+
     return () => {
       target.removeEventListener('scroll', throttledHandleScroll);
     };
@@ -79,13 +84,18 @@ export function useScrollPosition({
   // Calculate derived states
   const isScrolled = position.y > 0;
   const isAtTop = position.y === 0;
-  
+
   // For bottom detection, we need to handle both window and element cases
   const isAtBottom = (() => {
     if (!element && useWindow) {
-      return window.innerHeight + window.scrollY >= document.documentElement.offsetHeight - 1;
+      return (
+        window.innerHeight + window.scrollY >=
+        document.documentElement.offsetHeight - 1
+      );
     } else if (element) {
-      return element.scrollTop + element.clientHeight >= element.scrollHeight - 1;
+      return (
+        element.scrollTop + element.clientHeight >= element.scrollHeight - 1
+      );
     }
     return false;
   })();

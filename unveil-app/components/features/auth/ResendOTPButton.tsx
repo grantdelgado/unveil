@@ -28,7 +28,7 @@ export const ResendOTPButton: React.FC<ResendOTPButtonProps> = ({
 }) => {
   const [resendState, setResendState] = useState<ResendState>({
     isResending: false,
-    cooldownEndsAt: Date.now() + (initialCooldownSeconds * 1000), // Start with initial cooldown
+    cooldownEndsAt: Date.now() + initialCooldownSeconds * 1000, // Start with initial cooldown
     remainingSeconds: initialCooldownSeconds,
     canResend: false,
   });
@@ -39,16 +39,19 @@ export const ResendOTPButton: React.FC<ResendOTPButtonProps> = ({
 
     const updateCountdown = () => {
       const now = Date.now();
-      const remaining = Math.max(0, Math.ceil((resendState.cooldownEndsAt! - now) / 1000));
-      
-      setResendState(prev => ({
+      const remaining = Math.max(
+        0,
+        Math.ceil((resendState.cooldownEndsAt! - now) / 1000),
+      );
+
+      setResendState((prev) => ({
         ...prev,
         remainingSeconds: remaining,
         canResend: remaining === 0,
       }));
 
       if (remaining === 0) {
-        setResendState(prev => ({
+        setResendState((prev) => ({
           ...prev,
           cooldownEndsAt: null,
         }));
@@ -68,7 +71,7 @@ export const ResendOTPButton: React.FC<ResendOTPButtonProps> = ({
       return;
     }
 
-    setResendState(prev => ({ ...prev, isResending: true }));
+    setResendState((prev) => ({ ...prev, isResending: true }));
 
     try {
       logAuth('Requesting OTP resend', { phone: phone.slice(0, 6) + '...' });
@@ -89,10 +92,12 @@ export const ResendOTPButton: React.FC<ResendOTPButtonProps> = ({
       if (!response.ok) {
         // Handle rate limiting
         if (response.status === 429) {
-          const retryAfter = parseInt(response.headers.get('Retry-After') || '60');
-          const cooldownEndsAt = Date.now() + (retryAfter * 1000);
-          
-          setResendState(prev => ({
+          const retryAfter = parseInt(
+            response.headers.get('Retry-After') || '60',
+          );
+          const cooldownEndsAt = Date.now() + retryAfter * 1000;
+
+          setResendState((prev) => ({
             ...prev,
             isResending: false,
             cooldownEndsAt,
@@ -100,10 +105,10 @@ export const ResendOTPButton: React.FC<ResendOTPButtonProps> = ({
             canResend: false,
           }));
 
-          const errorMessage = data.retryAfter 
+          const errorMessage = data.retryAfter
             ? `Please wait ${data.retryAfter} seconds before trying again`
             : 'Too many attempts. Please wait before trying again.';
-          
+
           logAuthError('OTP resend rate limited', { retryAfter });
           onResendError?.(errorMessage);
           return;
@@ -113,8 +118,8 @@ export const ResendOTPButton: React.FC<ResendOTPButtonProps> = ({
       }
 
       // Success - start new cooldown period
-      const cooldownEndsAt = Date.now() + (30 * 1000); // 30 second cooldown
-      setResendState(prev => ({
+      const cooldownEndsAt = Date.now() + 30 * 1000; // 30 second cooldown
+      setResendState((prev) => ({
         ...prev,
         isResending: false,
         cooldownEndsAt,
@@ -124,15 +129,22 @@ export const ResendOTPButton: React.FC<ResendOTPButtonProps> = ({
 
       logAuth('OTP resend successful');
       onResendSuccess?.();
-
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to resend code';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to resend code';
       logAuthError('OTP resend failed', errorMessage);
-      
-      setResendState(prev => ({ ...prev, isResending: false }));
+
+      setResendState((prev) => ({ ...prev, isResending: false }));
       onResendError?.(errorMessage);
     }
-  }, [phone, resendState.canResend, resendState.isResending, disabled, onResendSuccess, onResendError]);
+  }, [
+    phone,
+    resendState.canResend,
+    resendState.isResending,
+    disabled,
+    onResendSuccess,
+    onResendError,
+  ]);
 
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -147,15 +159,16 @@ export const ResendOTPButton: React.FC<ResendOTPButtonProps> = ({
     if (resendState.isResending) {
       return 'Sending...';
     }
-    
+
     if (!resendState.canResend && resendState.remainingSeconds > 0) {
       return `Resend in ${formatTime(resendState.remainingSeconds)}`;
     }
-    
+
     return 'Resend Code';
   };
 
-  const isButtonDisabled = disabled || resendState.isResending || !resendState.canResend;
+  const isButtonDisabled =
+    disabled || resendState.isResending || !resendState.canResend;
 
   return (
     <SecondaryButton

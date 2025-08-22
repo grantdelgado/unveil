@@ -2,14 +2,14 @@
 
 /**
  * Utility script to backfill user_id in event_guests table
- * 
- * This script uses the database function `backfill_user_id_from_phone()` 
+ *
+ * This script uses the database function `backfill_user_id_from_phone()`
  * to safely update existing event_guests rows where user_id is NULL
  * but a matching users.phone exists.
- * 
+ *
  * Usage:
  *   npm run script:backfill-user-ids
- *   
+ *
  * Features:
  * - Safe for reruns (only updates rows where user_id IS NULL)
  * - Reports count of updated rows
@@ -44,8 +44,7 @@ async function runBackfill(): Promise<void> {
 
   try {
     // Call the backfill function
-    const { data, error } = await supabase
-      .rpc('backfill_user_id_from_phone');
+    const { data, error } = await supabase.rpc('backfill_user_id_from_phone');
 
     if (error) {
       console.error('❌ Error running backfill:', error);
@@ -58,7 +57,7 @@ async function runBackfill(): Promise<void> {
     }
 
     const result = data[0] as BackfillResult;
-    
+
     console.log('📊 Backfill Results:');
     console.log(`   • Eligible rows: ${result.total_eligible_count}`);
     console.log(`   • Updated rows: ${result.updated_count}`);
@@ -66,13 +65,16 @@ async function runBackfill(): Promise<void> {
 
     if (result.updated_count > 0) {
       console.log('✅ Backfill completed successfully!');
-      console.log(`   Updated ${result.updated_count} event_guests records with matching user_id values.`);
+      console.log(
+        `   Updated ${result.updated_count} event_guests records with matching user_id values.`,
+      );
     } else if (result.total_eligible_count === 0) {
-      console.log('✅ No updates needed - all event_guests already have user_id or no matching users found.');
+      console.log(
+        '✅ No updates needed - all event_guests already have user_id or no matching users found.',
+      );
     } else {
       console.log('⚠️  Some rows may need manual review.');
     }
-
   } catch (err) {
     console.error('❌ Unexpected error:', err);
     process.exit(1);
@@ -105,25 +107,29 @@ async function checkCurrentState(): Promise<void> {
       return;
     }
 
-    const userPhones = new Set(users?.map(u => u.phone) || []);
-    const potentialMatches = unlinkedGuests?.filter(guest => 
-      guest.phone && userPhones.has(guest.phone)
-    ) || [];
+    const userPhones = new Set(users?.map((u) => u.phone) || []);
+    const potentialMatches =
+      unlinkedGuests?.filter(
+        (guest) => guest.phone && userPhones.has(guest.phone),
+      ) || [];
 
     console.log(`📈 Current State:`);
     console.log(`   • Total users: ${users?.length || 0}`);
-    console.log(`   • Event guests without user_id: ${unlinkedGuests?.length || 0}`);
+    console.log(
+      `   • Event guests without user_id: ${unlinkedGuests?.length || 0}`,
+    );
     console.log(`   • Potential matches found: ${potentialMatches.length}\n`);
 
     if (potentialMatches.length > 0) {
       console.log('🎯 Potential matches:');
-      potentialMatches.forEach(guest => {
-        const matchingUser = users?.find(u => u.phone === guest.phone);
-        console.log(`   • Guest "${guest.guest_name}" (${guest.phone}) → User "${matchingUser?.full_name}"`);
+      potentialMatches.forEach((guest) => {
+        const matchingUser = users?.find((u) => u.phone === guest.phone);
+        console.log(
+          `   • Guest "${guest.guest_name}" (${guest.phone}) → User "${matchingUser?.full_name}"`,
+        );
       });
       console.log('');
     }
-
   } catch (err) {
     console.error('Error checking current state:', err);
   }

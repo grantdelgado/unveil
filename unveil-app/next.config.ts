@@ -27,15 +27,16 @@ const nextConfig: NextConfig = {
       // Prevent importing from the website package
       '@unveil-website': false,
     };
-    
+
     // Suppress Supabase realtime warnings about dynamic imports
     config.ignoreWarnings = [
       {
         module: /@supabase\/realtime-js/,
-        message: /Critical dependency: the request of a dependency is an expression/,
+        message:
+          /Critical dependency: the request of a dependency is an expression/,
       },
     ];
-    
+
     return config;
   },
   // PWA and mobile optimizations
@@ -179,7 +180,7 @@ export default withBundleAnalyzer(
     // Sentry build-time configuration
     org: process.env.SENTRY_ORG,
     project: process.env.SENTRY_PROJECT,
-    
+
     // Upload source maps in production for better error tracking
     silent: true, // Always silent to reduce console noise
     widenClientFileUpload: true,
@@ -191,5 +192,5 @@ export default withBundleAnalyzer(
       disable: true,
     },
     disableLogger: true, // Always disable logger
-  })
+  }),
 );

@@ -15,11 +15,16 @@ export interface AdminVerificationResult {
  * Verify if the current user has admin privileges
  * Checks both JWT claims and database role
  */
-export async function verifyAdminRole(userId?: string): Promise<AdminVerificationResult> {
+export async function verifyAdminRole(
+  userId?: string,
+): Promise<AdminVerificationResult> {
   try {
     // If userId not provided, get from current session
     if (!userId) {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
       if (userError || !user) {
         return { isAdmin: false, error: 'User not authenticated' };
       }
@@ -41,19 +46,21 @@ export async function verifyAdminRole(userId?: string): Promise<AdminVerificatio
     // TODO: Add proper role system to users table
     const adminEmails = ['grant@sendunveil.com', 'admin@sendunveil.com'];
     const adminPhones = ['+15712364686']; // Add your admin phone numbers
-    
-    const isAdmin = adminEmails.includes(userData.email || '') || 
-                   adminPhones.includes(userData.phone || '');
+
+    const isAdmin =
+      adminEmails.includes(userData.email || '') ||
+      adminPhones.includes(userData.phone || '');
 
     return {
       isAdmin,
       userId,
-      error: isAdmin ? undefined : 'Insufficient privileges'
+      error: isAdmin ? undefined : 'Insufficient privileges',
     };
   } catch (error) {
     return {
       isAdmin: false,
-      error: error instanceof Error ? error.message : 'Admin verification failed'
+      error:
+        error instanceof Error ? error.message : 'Admin verification failed',
     };
   }
 }
@@ -64,9 +71,12 @@ export async function verifyAdminRole(userId?: string): Promise<AdminVerificatio
 export async function verifyAdminRoleServer(): Promise<AdminVerificationResult> {
   try {
     const supabase = await createServerSupabaseClient();
-    
+
     // Get authenticated user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
       return { isAdmin: false, error: 'Authentication required' };
     }
@@ -86,19 +96,21 @@ export async function verifyAdminRoleServer(): Promise<AdminVerificationResult> 
     // TODO: Add proper role system to users table
     const adminEmails = ['grant@sendunveil.com', 'admin@sendunveil.com'];
     const adminPhones = ['+15712364686']; // Add your admin phone numbers
-    
-    const isAdmin = adminEmails.includes(userData.email || '') || 
-                   adminPhones.includes(userData.phone || '');
+
+    const isAdmin =
+      adminEmails.includes(userData.email || '') ||
+      adminPhones.includes(userData.phone || '');
 
     return {
       isAdmin,
       userId: user.id,
-      error: isAdmin ? undefined : 'Insufficient privileges'
+      error: isAdmin ? undefined : 'Insufficient privileges',
     };
   } catch (error) {
     return {
       isAdmin: false,
-      error: error instanceof Error ? error.message : 'Admin verification failed'
+      error:
+        error instanceof Error ? error.message : 'Admin verification failed',
     };
   }
 }
@@ -107,19 +119,21 @@ export async function verifyAdminRoleServer(): Promise<AdminVerificationResult> 
  * Middleware-style admin guard for API routes
  * Returns 403 response if user is not admin
  */
-export async function requireAdmin(): Promise<{ isAdmin: true; userId: string } | Response> {
+export async function requireAdmin(): Promise<
+  { isAdmin: true; userId: string } | Response
+> {
   const verification = await verifyAdminRoleServer();
-  
+
   if (!verification.isAdmin) {
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         error: verification.error || 'Admin access required',
-        code: 'INSUFFICIENT_PRIVILEGES'
+        code: 'INSUFFICIENT_PRIVILEGES',
       }),
-      { 
+      {
         status: 403,
-        headers: { 'Content-Type': 'application/json' }
-      }
+        headers: { 'Content-Type': 'application/json' },
+      },
     );
   }
 

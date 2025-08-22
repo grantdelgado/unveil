@@ -72,18 +72,17 @@ HOST READ FLOW:
 
 ```typescript
 // Initial Load Query
-const { data, error } = await supabase
-  .rpc('get_guest_event_messages', { 
-    p_event_id: eventId, 
-    p_limit: 20,
-    p_before: null
-  });
+const { data, error } = await supabase.rpc('get_guest_event_messages', {
+  p_event_id: eventId,
+  p_limit: 20,
+  p_before: null,
+});
 ```
 
 **Equivalent SQL (executed by RPC):**
 
 ```sql
--- RPC: get_guest_event_messages() 
+-- RPC: get_guest_event_messages()
 -- Security: SECURITY DEFINER with user verification
 WITH user_messages AS (
   -- Messages delivered to this user
@@ -102,9 +101,9 @@ WITH user_messages AS (
   WHERE md.user_id = current_user_id
     AND m.event_id = p_event_id
     AND (p_before IS NULL OR m.created_at < p_before)
-  
+
   UNION ALL
-  
+
   -- User's own messages (replies)
   SELECT DISTINCT
     m.id as message_id,
@@ -121,8 +120,8 @@ WITH user_messages AS (
     AND m.event_id = p_event_id
     AND (p_before IS NULL OR m.created_at < p_before)
 )
-SELECT * FROM user_messages 
-ORDER BY created_at DESC 
+SELECT * FROM user_messages
+ORDER BY created_at DESC
 LIMIT p_limit;
 ```
 
@@ -143,8 +142,8 @@ const { data: messagesData, error } = await supabase
 **Equivalent SQL:**
 
 ```sql
-SELECT * FROM messages 
-WHERE event_id = $1 
+SELECT * FROM messages
+WHERE event_id = $1
   AND (
     -- RLS Policy: messages_select_optimized
     public.can_access_event(event_id) = true
@@ -164,17 +163,18 @@ ORDER BY created_at ASC;
 
 ### Active RLS Policies
 
-| Table | Policy Name | Access Type | Logic |
-|-------|-------------|-------------|-------|
-| **messages** | `messages_select_optimized` | SELECT | `can_access_event(event_id)` |
-| **messages** | `messages_insert_update_host_only` | INSERT/UPDATE | `is_event_host(event_id)` |
-| **message_deliveries** | `message_deliveries_select_optimized` | SELECT | `user_id = auth.uid()` OR host via event |
-| **message_deliveries** | `message_deliveries_modify_host_only` | ALL | Host only via event ownership |
-| **scheduled_messages** | `scheduled_messages_host_only_optimized` | ALL | `is_event_host(event_id)` |
+| Table                  | Policy Name                              | Access Type   | Logic                                    |
+| ---------------------- | ---------------------------------------- | ------------- | ---------------------------------------- |
+| **messages**           | `messages_select_optimized`              | SELECT        | `can_access_event(event_id)`             |
+| **messages**           | `messages_insert_update_host_only`       | INSERT/UPDATE | `is_event_host(event_id)`                |
+| **message_deliveries** | `message_deliveries_select_optimized`    | SELECT        | `user_id = auth.uid()` OR host via event |
+| **message_deliveries** | `message_deliveries_modify_host_only`    | ALL           | Host only via event ownership            |
+| **scheduled_messages** | `scheduled_messages_host_only_optimized` | ALL           | `is_event_host(event_id)`                |
 
 ### Phone-Based Fallback Access
 
 **Legacy Policy (Deprecated):**
+
 ```sql
 -- In message_deliveries RLS
 EXISTS (
@@ -191,14 +191,14 @@ EXISTS (
 
 ## Visibility Matrix
 
-| User Type | Can See Messages? | Access Method | Reason |
-|-----------|------------------|---------------|---------|
-| **Event Host** | ✅ All messages | Direct `messages` table query | `is_event_host()` returns true |
-| **Linked Guest** | ✅ Delivered messages only | RPC + `message_deliveries` | `user_id` match in deliveries |
-| **Unlinked Guest** | ❌ No access | N/A | No `user_id` in `event_guests` table |
-| **Guest with phone-only auth** | ❌ No access | N/A | RPC requires `user_id` match in `event_guests` |
-| **Removed Guest** | ❌ No access | N/A | RPC checks `removed_at IS NOT NULL` |
-| **Non-member** | ❌ No access | N/A | Not in `event_guests` table |
+| User Type                      | Can See Messages?          | Access Method                 | Reason                                         |
+| ------------------------------ | -------------------------- | ----------------------------- | ---------------------------------------------- |
+| **Event Host**                 | ✅ All messages            | Direct `messages` table query | `is_event_host()` returns true                 |
+| **Linked Guest**               | ✅ Delivered messages only | RPC + `message_deliveries`    | `user_id` match in deliveries                  |
+| **Unlinked Guest**             | ❌ No access               | N/A                           | No `user_id` in `event_guests` table           |
+| **Guest with phone-only auth** | ❌ No access               | N/A                           | RPC requires `user_id` match in `event_guests` |
+| **Removed Guest**              | ❌ No access               | N/A                           | RPC checks `removed_at IS NOT NULL`            |
+| **Non-member**                 | ❌ No access               | N/A                           | Not in `event_guests` table                    |
 
 ---
 
@@ -206,18 +206,18 @@ EXISTS (
 
 ### Top 10 Visibility Issues
 
-| # | Edge Case | Detection Query | 1-Line Fix Check |
-|---|-----------|----------------|------------------|
-| 1 | **Guest has `user_id` but no deliveries** | `SELECT * FROM event_guests eg WHERE user_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM message_deliveries md WHERE md.user_id = eg.user_id)` | Check if messages were sent before guest linked |
-| 2 | **Deliveries exist but `user_id` is NULL** | `SELECT * FROM message_deliveries WHERE user_id IS NULL AND guest_id IS NOT NULL` | Guest not linked when message sent |
-| 3 | **Phone mismatch** | `SELECT * FROM event_guests eg JOIN users u ON u.id = eg.user_id WHERE eg.phone != u.phone` | User changed phone after guest creation |
-| 4 | **Guest removed from event** | `SELECT * FROM event_guests WHERE removed_at IS NOT NULL` | RPC blocks access with specific error |
-| 5 | **JWT phone is NULL** | Check `auth.jwt() ->> 'phone'` in logs | Phone-first auth not working |
-| 6 | **Message without deliveries** | `SELECT * FROM messages m WHERE NOT EXISTS (SELECT 1 FROM message_deliveries md WHERE md.message_id = m.id)` | Send process failed after message creation |
-| 7 | **Future scheduled message visible** | `SELECT * FROM scheduled_messages WHERE send_at > NOW()` | Client incorrectly showing scheduled |
-| 8 | **Wrong event ID in query** | Check `eventId` parameter in client logs | Client routing issue |
-| 9 | **RLS function returns false** | `SELECT can_access_event('event-id')` with user context | Permission boundary issue |
-| 10 | **Realtime subscription stale** | Check subscription status in client | WebSocket connection dropped |
+| #   | Edge Case                                  | Detection Query                                                                                                                              | 1-Line Fix Check                                |
+| --- | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| 1   | **Guest has `user_id` but no deliveries**  | `SELECT * FROM event_guests eg WHERE user_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM message_deliveries md WHERE md.user_id = eg.user_id)` | Check if messages were sent before guest linked |
+| 2   | **Deliveries exist but `user_id` is NULL** | `SELECT * FROM message_deliveries WHERE user_id IS NULL AND guest_id IS NOT NULL`                                                            | Guest not linked when message sent              |
+| 3   | **Phone mismatch**                         | `SELECT * FROM event_guests eg JOIN users u ON u.id = eg.user_id WHERE eg.phone != u.phone`                                                  | User changed phone after guest creation         |
+| 4   | **Guest removed from event**               | `SELECT * FROM event_guests WHERE removed_at IS NOT NULL`                                                                                    | RPC blocks access with specific error           |
+| 5   | **JWT phone is NULL**                      | Check `auth.jwt() ->> 'phone'` in logs                                                                                                       | Phone-first auth not working                    |
+| 6   | **Message without deliveries**             | `SELECT * FROM messages m WHERE NOT EXISTS (SELECT 1 FROM message_deliveries md WHERE md.message_id = m.id)`                                 | Send process failed after message creation      |
+| 7   | **Future scheduled message visible**       | `SELECT * FROM scheduled_messages WHERE send_at > NOW()`                                                                                     | Client incorrectly showing scheduled            |
+| 8   | **Wrong event ID in query**                | Check `eventId` parameter in client logs                                                                                                     | Client routing issue                            |
+| 9   | **RLS function returns false**             | `SELECT can_access_event('event-id')` with user context                                                                                      | Permission boundary issue                       |
+| 10  | **Realtime subscription stale**            | Check subscription status in client                                                                                                          | WebSocket connection dropped                    |
 
 ### Client-Side Filters That Can Hide Messages
 
@@ -236,23 +236,23 @@ EXISTS (
 
 ### Message Counts
 
-| Metric | Count | Notes |
-|--------|-------|-------|
-| **Total Messages** | 9 | All from host (David Banner) |
-| **Total Deliveries** | 19 | 2-3 deliveries per message |
-| **Scheduled Messages** | 1 | 1 pending/completed scheduled |
-| **Unique Recipients** | 6 | Mix of linked/unlinked guests |
+| Metric                 | Count | Notes                         |
+| ---------------------- | ----- | ----------------------------- |
+| **Total Messages**     | 9     | All from host (David Banner)  |
+| **Total Deliveries**   | 19    | 2-3 deliveries per message    |
+| **Scheduled Messages** | 1     | 1 pending/completed scheduled |
+| **Unique Recipients**  | 6     | Mix of linked/unlinked guests |
 
 ### Delivery Distribution
 
-| Guest | User Status | Deliveries Received | RSVP Status |
-|-------|-------------|-------------------|-------------|
-| David Banner | ✅ Linked | 6 | attending |
-| Lori Delgado | ✅ Linked | 8 | pending |
-| Providence I | ✅ Linked | 3 | pending |
-| Garrett Delgado | ✅ Linked | 1 | pending |
-| Kendra Delgado | ❌ Unlinked | 1 | pending |
-| Lori Delgado (2nd) | ✅ Linked | 0 | pending |
+| Guest              | User Status | Deliveries Received | RSVP Status |
+| ------------------ | ----------- | ------------------- | ----------- |
+| David Banner       | ✅ Linked   | 6                   | attending   |
+| Lori Delgado       | ✅ Linked   | 8                   | pending     |
+| Providence I       | ✅ Linked   | 3                   | pending     |
+| Garrett Delgado    | ✅ Linked   | 1                   | pending     |
+| Kendra Delgado     | ❌ Unlinked | 1                   | pending     |
+| Lori Delgado (2nd) | ✅ Linked   | 0                   | pending     |
 
 ### Edge Cases Found
 
@@ -269,7 +269,7 @@ EXISTS (
 
 ```sql
 -- Should return messages if user is host
-SELECT COUNT(*) FROM messages 
+SELECT COUNT(*) FROM messages
 WHERE event_id = '41191573-7726-4b98-a7c9-a27d139af93a';
 ```
 
@@ -278,8 +278,8 @@ WHERE event_id = '41191573-7726-4b98-a7c9-a27d139af93a';
 ```sql
 -- Should return delivered messages for authenticated guest
 SELECT * FROM get_guest_event_messages(
-  '41191573-7726-4b98-a7c9-a27d139af93a'::uuid, 
-  50, 
+  '41191573-7726-4b98-a7c9-a27d139af93a'::uuid,
+  50,
   NULL
 );
 ```
@@ -298,7 +298,7 @@ SELECT can_access_event('41191573-7726-4b98-a7c9-a27d139af93a'::uuid);
 When a user reports "I can't see messages":
 
 1. **Verify event membership** - Check `event_guests` table for user
-2. **Check user linking** - Ensure `event_guests.user_id` is populated  
+2. **Check user linking** - Ensure `event_guests.user_id` is populated
 3. **Validate deliveries** - Look for `message_deliveries` with their `user_id`
 4. **Test RPC access** - Call `get_guest_event_messages()` directly
 5. **Check removal status** - Verify `removed_at IS NULL`

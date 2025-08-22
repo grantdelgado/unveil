@@ -21,30 +21,33 @@ export function EventImageStep({
   onImageChange,
   onPreviewChange,
   error,
-  disabled
+  disabled,
 }: EventImageStepProps) {
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    const file = acceptedFiles[0];
-    if (file) {
-      onImageChange(file);
-      
-      // Create preview URL
-      const reader = new FileReader();
-      reader.onload = () => {
-        onPreviewChange(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  }, [onImageChange, onPreviewChange]);
+  const onDrop = useCallback(
+    (acceptedFiles: File[]) => {
+      const file = acceptedFiles[0];
+      if (file) {
+        onImageChange(file);
+
+        // Create preview URL
+        const reader = new FileReader();
+        reader.onload = () => {
+          onPreviewChange(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      }
+    },
+    [onImageChange, onPreviewChange],
+  );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      'image/*': ['.png', '.jpg', '.jpeg', '.webp']
+      'image/*': ['.png', '.jpg', '.jpeg', '.webp'],
     },
     maxSize: 10 * 1024 * 1024, // 10MB
     multiple: false,
-    disabled
+    disabled,
   });
 
   const removeImage = useCallback(() => {
@@ -56,7 +59,8 @@ export function EventImageStep({
     <div className="space-y-6">
       <div className="text-center">
         <MicroCopy className="text-base">
-          Add a beautiful header image to make your wedding hub memorable (optional)
+          Add a beautiful header image to make your wedding hub memorable
+          (optional)
         </MicroCopy>
       </div>
 
@@ -69,7 +73,7 @@ export function EventImageStep({
               ? 'border-pink-400 bg-pink-50'
               : 'border-gray-300 hover:border-pink-300 hover:bg-gray-50',
             error && 'border-red-300 bg-red-50',
-            disabled && 'cursor-not-allowed opacity-50'
+            disabled && 'cursor-not-allowed opacity-50',
           )}
         >
           <input {...getInputProps()} />
@@ -97,7 +101,7 @@ export function EventImageStep({
                 Drag & drop or click to browse • PNG, JPG up to 10MB
               </MicroCopy>
             </div>
-            
+
             {/* Mobile-friendly upload button */}
             <div className="sm:hidden">
               <div className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 min-h-[44px]">
@@ -137,12 +141,17 @@ export function EventImageStep({
               />
             </svg>
           </button>
-          
+
           {/* Image info */}
           <div className="mt-4 p-3 bg-gray-50 rounded-lg">
             <div className="flex items-center justify-between text-sm text-gray-600">
               <span>{headerImage?.name}</span>
-              <span>{headerImage ? (headerImage.size / (1024 * 1024)).toFixed(1) : 0}MB</span>
+              <span>
+                {headerImage
+                  ? (headerImage.size / (1024 * 1024)).toFixed(1)
+                  : 0}
+                MB
+              </span>
             </div>
           </div>
         </div>
@@ -157,9 +166,10 @@ export function EventImageStep({
       {/* Skip option */}
       <div className="text-center">
         <MicroCopy>
-          You can always add or change your header image later in your event settings
+          You can always add or change your header image later in your event
+          settings
         </MicroCopy>
       </div>
     </div>
   );
-} 
+}

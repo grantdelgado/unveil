@@ -21,7 +21,7 @@ interface DevToolsConfig {
 
 /**
  * Centralized gate for all development debug tools
- * 
+ *
  * Activation methods:
  * - URL param: ?debug=1 (all tools) or ?debug=msg (messaging only) or ?debug=rq (react-query only)
  * - Env var: NEXT_PUBLIC_DEBUG_OVERLAYS=true
@@ -30,7 +30,7 @@ interface DevToolsConfig {
 export function DevToolsGate({ children }: DevToolsGateProps) {
   const searchParams = useSearchParams();
   const { session } = useAuth();
-  
+
   const [config, setConfig] = useState<DevToolsConfig>({
     enabled: false,
     showReactQuery: false,
@@ -45,7 +45,7 @@ export function DevToolsGate({ children }: DevToolsGateProps) {
 
     const debugParam = searchParams?.get('debug');
     const envEnabled = process.env.NEXT_PUBLIC_DEBUG_OVERLAYS === 'true';
-    
+
     let enabled = false;
     let showReactQuery = false;
     let showMessaging = false;
@@ -79,7 +79,7 @@ export function DevToolsGate({ children }: DevToolsGateProps) {
       }
     }
 
-    setConfig(prev => ({
+    setConfig((prev) => ({
       ...prev,
       enabled,
       showReactQuery,
@@ -97,7 +97,7 @@ export function DevToolsGate({ children }: DevToolsGateProps) {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.ctrlKey && event.shiftKey && event.key === 'D') {
         event.preventDefault();
-        setConfig(prev => ({
+        setConfig((prev) => ({
           ...prev,
           enabled: !prev.enabled,
           showReactQuery: !prev.enabled,
@@ -126,7 +126,7 @@ export function DevToolsGate({ children }: DevToolsGateProps) {
       guestId = undefined;
     }
 
-    setConfig(prev => ({
+    setConfig((prev) => ({
       ...prev,
       eventId,
       guestId,
@@ -141,7 +141,7 @@ export function DevToolsGate({ children }: DevToolsGateProps) {
   return (
     <>
       {children}
-      
+
       {/* React Query Devtools */}
       {config.enabled && config.showReactQuery && (
         <ReactQueryDevtools
@@ -151,17 +151,20 @@ export function DevToolsGate({ children }: DevToolsGateProps) {
       )}
 
       {/* Message Debug Overlay - only show on pages with event context */}
-      {config.enabled && config.showMessaging && config.eventId && config.userId && (
-        <MessageDebugOverlay
-          eventId={config.eventId}
-          userId={config.userId}
-          guestId={config.guestId}
-        />
-      )}
+      {config.enabled &&
+        config.showMessaging &&
+        config.eventId &&
+        config.userId && (
+          <MessageDebugOverlay
+            eventId={config.eventId}
+            userId={config.userId}
+            guestId={config.guestId}
+          />
+        )}
 
       {/* Debug status indicator */}
       {config.enabled && (
-        <div 
+        <div
           className="fixed top-4 right-4 z-40 bg-blue-500 text-white px-2 py-1 text-xs rounded opacity-75 pointer-events-none"
           title="Dev Tools Active"
         >

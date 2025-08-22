@@ -1,6 +1,6 @@
 /**
  * Event Creation Types
- * 
+ *
  * Shared types for the event creation wizard to avoid circular dependencies
  */
 

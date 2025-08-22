@@ -7,4 +7,4 @@ export function AuthForm() {
       <p>Please use /login page for authentication.</p>
     </div>
   );
-} 
+}

@@ -12,20 +12,21 @@ interface DashboardActionsProps {
   className?: string;
 }
 
-export function DashboardActions({ 
-  eventId, 
-  guestCount, 
-  pendingRSVPs, 
-  className 
+export function DashboardActions({
+  eventId,
+  guestCount,
+  pendingRSVPs,
+  className,
 }: DashboardActionsProps) {
   const router = useRouter();
 
   const actions = [
     {
       title: 'Manage Guests',
-      description: guestCount === 0 
-        ? 'Import your guest list to get started' 
-        : `Manage ${guestCount} guests and RSVPs`,
+      description:
+        guestCount === 0
+          ? 'Import your guest list to get started'
+          : `Manage ${guestCount} guests and RSVPs`,
       icon: '👥',
       href: `/host/events/${eventId}/guests`,
       variant: 'primary' as const,
@@ -39,10 +40,11 @@ export function DashboardActions({
       variant: 'secondary' as const,
     },
     {
-      title: 'Send Messages', 
-      description: pendingRSVPs > 0 
-        ? `Send reminders to ${pendingRSVPs} pending guests`
-        : 'Send announcements and updates',
+      title: 'Send Messages',
+      description:
+        pendingRSVPs > 0
+          ? `Send reminders to ${pendingRSVPs} pending guests`
+          : 'Send announcements and updates',
       icon: '💬',
       href: `/host/events/${eventId}/messages`,
       variant: 'secondary' as const,
@@ -59,10 +61,14 @@ export function DashboardActions({
   ];
 
   return (
-    <CardContainer className={cn("bg-white border border-gray-200 shadow-sm", className)}>
+    <CardContainer
+      className={cn('bg-white border border-gray-200 shadow-sm', className)}
+    >
       <div className="space-y-6">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Quick Actions</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            Quick Actions
+          </h2>
           <p className="text-gray-600 text-sm">
             Manage your event, guests, and communications
           </p>
@@ -70,13 +76,11 @@ export function DashboardActions({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {actions.map((action) => {
-            const Button = action.variant === 'primary' ? PrimaryButton : SecondaryButton;
-            
+            const Button =
+              action.variant === 'primary' ? PrimaryButton : SecondaryButton;
+
             return (
-              <div
-                key={action.title}
-                className="group relative"
-              >
+              <div key={action.title} className="group relative">
                 <Button
                   onClick={() => {
                     if (action.external) {
@@ -86,11 +90,11 @@ export function DashboardActions({
                     }
                   }}
                   className={cn(
-                    "w-full h-auto p-4 text-left justify-start flex-col items-start space-y-2",
-                    "hover:shadow-md transition-all duration-200",
-                    action.variant === 'primary' 
-                      ? "bg-purple-600 hover:bg-purple-700 text-white border-purple-600" 
-                      : "bg-white hover:bg-gray-50 text-gray-900 border-gray-300"
+                    'w-full h-auto p-4 text-left justify-start flex-col items-start space-y-2',
+                    'hover:shadow-md transition-all duration-200',
+                    action.variant === 'primary'
+                      ? 'bg-purple-600 hover:bg-purple-700 text-white border-purple-600'
+                      : 'bg-white hover:bg-gray-50 text-gray-900 border-gray-300',
                   )}
                 >
                   <div className="flex items-start justify-between w-full">
@@ -102,26 +106,31 @@ export function DashboardActions({
                         <div className="font-semibold text-base mb-1">
                           {action.title}
                         </div>
-                        <div className={cn(
-                          "text-sm leading-snug",
-                          action.variant === 'primary' 
-                            ? "text-purple-100" 
-                            : "text-gray-600"
-                        )}>
+                        <div
+                          className={cn(
+                            'text-sm leading-snug',
+                            action.variant === 'primary'
+                              ? 'text-purple-100'
+                              : 'text-gray-600',
+                          )}
+                        >
                           {action.description}
                         </div>
                       </div>
                     </div>
-                    
+
                     {action.badge && (
-                      <span className={cn(
-                        "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium",
-                        action.variant === 'primary'
-                          ? "bg-purple-500 text-purple-100"
-                          : action.title.includes('Messages') && pendingRSVPs > 5
-                          ? "bg-amber-100 text-amber-800"
-                          : "bg-gray-100 text-gray-700"
-                      )}>
+                      <span
+                        className={cn(
+                          'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium',
+                          action.variant === 'primary'
+                            ? 'bg-purple-500 text-purple-100'
+                            : action.title.includes('Messages') &&
+                                pendingRSVPs > 5
+                              ? 'bg-amber-100 text-amber-800'
+                              : 'bg-gray-100 text-gray-700',
+                        )}
+                      >
                         {action.badge}
                       </span>
                     )}
@@ -143,14 +152,25 @@ export function DashboardActions({
                 </h4>
                 <ul className="text-sm text-blue-800 space-y-1">
                   {guestCount === 0 ? (
-                    <li>• Start by importing your guest list to send invitations</li>
+                    <li>
+                      • Start by importing your guest list to send invitations
+                    </li>
                   ) : (
                     <>
-                      <li>• Use bulk actions to quickly update multiple guest RSVPs</li>
-                      <li>• Send reminders to pending guests to increase response rates</li>
+                      <li>
+                        • Use bulk actions to quickly update multiple guest
+                        RSVPs
+                      </li>
+                      <li>
+                        • Send reminders to pending guests to increase response
+                        rates
+                      </li>
                     </>
                   )}
-                  <li>• Preview the guest view to see how your event appears to attendees</li>
+                  <li>
+                    • Preview the guest view to see how your event appears to
+                    attendees
+                  </li>
                 </ul>
               </div>
             </div>

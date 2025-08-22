@@ -12,9 +12,9 @@ const supabase = createClient<Database>(
   {
     auth: {
       autoRefreshToken: false,
-      persistSession: false
-    }
-  }
+      persistSession: false,
+    },
+  },
 );
 
 async function healthCheckAddOrRestoreGuest() {
@@ -29,7 +29,7 @@ async function healthCheckAddOrRestoreGuest() {
       p_phone: '+1234567890',
       p_name: 'Health Check Test',
       p_email: 'test@example.com',
-      p_role: 'guest'
+      p_role: 'guest',
     });
 
     if (error) {
@@ -37,19 +37,25 @@ async function healthCheckAddOrRestoreGuest() {
         console.log('❌ FAIL: Function not found in database');
         console.log('   Error:', error.message);
         return false;
-      } else if (error.message.includes('Authentication required') || 
-                 error.message.includes('Only event hosts can add guests') ||
-                 error.message.includes('violates foreign key constraint')) {
+      } else if (
+        error.message.includes('Authentication required') ||
+        error.message.includes('Only event hosts can add guests') ||
+        error.message.includes('violates foreign key constraint')
+      ) {
         console.log('✅ PASS: Function exists and has proper security checks');
         console.log('   Expected error:', error.message);
         return true;
       } else {
-        console.log('⚠️  WARN: Unexpected error (function may exist but have issues)');
+        console.log(
+          '⚠️  WARN: Unexpected error (function may exist but have issues)',
+        );
         console.log('   Error:', error.message);
         return true; // Function exists but has other issues
       }
     } else {
-      console.log('⚠️  WARN: Function executed without authentication (security issue?)');
+      console.log(
+        '⚠️  WARN: Function executed without authentication (security issue?)',
+      );
       console.log('   Result:', data);
       return true; // Function exists but may have security issues
     }
@@ -87,7 +93,7 @@ async function checkFunctionSignature() {
     console.log('   Details:', {
       routine_name: data[0].routine_name,
       data_type: data[0].data_type,
-      security_type: data[0].security_type
+      security_type: data[0].security_type,
     });
     return true;
   } catch (err) {
@@ -102,10 +108,10 @@ async function main() {
 
   const results = await Promise.all([
     healthCheckAddOrRestoreGuest(),
-    checkFunctionSignature()
+    checkFunctionSignature(),
   ]);
 
-  const allPassed = results.every(result => result);
+  const allPassed = results.every((result) => result);
 
   console.log('\n📊 Summary');
   console.log('==========');

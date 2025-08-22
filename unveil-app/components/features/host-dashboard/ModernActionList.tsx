@@ -2,13 +2,13 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-  Users, 
-  MessageCircle, 
-  Edit, 
+import {
+  Users,
+  MessageCircle,
+  Edit,
   Eye,
   Calendar,
-  ChevronRight 
+  ChevronRight,
 } from 'lucide-react';
 import { CardContainer } from '@/components/ui';
 import { cn } from '@/lib/utils';
@@ -29,11 +29,11 @@ interface ActionItem {
   external?: boolean;
 }
 
-export function ModernActionList({ 
-  eventId, 
-  guestCount, 
-  pendingRSVPs, 
-  className 
+export function ModernActionList({
+  eventId,
+  guestCount,
+  pendingRSVPs,
+  className,
 }: ModernActionListProps) {
   const router = useRouter();
 
@@ -41,18 +41,20 @@ export function ModernActionList({
     {
       id: 'manage-guests',
       title: 'Manage Guests',
-      subtitle: guestCount === 0 
-        ? 'Import your guest list to get started' 
-        : `Manage ${guestCount} guests and RSVPs`,
+      subtitle:
+        guestCount === 0
+          ? 'Import your guest list to get started'
+          : `Manage ${guestCount} guests and RSVPs`,
       icon: Users,
       href: `/host/events/${eventId}/guests`,
     },
     {
       id: 'send-messages',
       title: 'Send Messages',
-      subtitle: pendingRSVPs > 0 
-        ? `Send reminders to ${pendingRSVPs} pending guests`
-        : 'Send announcements and updates',
+      subtitle:
+        pendingRSVPs > 0
+          ? `Send reminders to ${pendingRSVPs} pending guests`
+          : 'Send announcements and updates',
       icon: MessageCircle,
       href: `/host/events/${eventId}/messages`,
     },
@@ -89,11 +91,15 @@ export function ModernActionList({
   };
 
   return (
-    <CardContainer className={cn("bg-white border border-gray-200 shadow-sm", className)}>
+    <CardContainer
+      className={cn('bg-white border border-gray-200 shadow-sm', className)}
+    >
       <div className="space-y-4">
         {/* Section Header */}
         <div>
-          <h2 className="text-base font-semibold text-gray-900">Quick Actions</h2>
+          <h2 className="text-base font-semibold text-gray-900">
+            Quick Actions
+          </h2>
         </div>
 
         {/* Action List */}
@@ -101,21 +107,21 @@ export function ModernActionList({
           {actions.map((action, index) => {
             const Icon = action.icon;
             const isLast = index === actions.length - 1;
-            
+
             return (
               <button
                 key={action.id}
                 onClick={() => handleActionClick(action)}
                 className={cn(
-                  "w-full flex items-center gap-4 px-6 py-4 text-left hover:bg-gray-50 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-inset",
-                  !isLast && "border-b border-gray-100"
+                  'w-full flex items-center gap-4 px-6 py-4 text-left hover:bg-gray-50 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-inset',
+                  !isLast && 'border-b border-gray-100',
                 )}
                 style={{ minHeight: '64px' }}
               >
                 {/* Leading Icon */}
                 <div className="flex-shrink-0">
-                  <Icon 
-                    className="h-5 w-5 text-purple-600" 
+                  <Icon
+                    className="h-5 w-5 text-purple-600"
                     aria-hidden="true"
                   />
                 </div>
@@ -131,13 +137,13 @@ export function ModernActionList({
                         {action.subtitle}
                       </p>
                     </div>
-                    
+
                     {/* Trailing Chevron */}
                     <div className="flex-shrink-0 ml-4">
-                                          <ChevronRight 
-                      className="h-4 w-4 text-gray-400" 
-                      aria-hidden="true"
-                    />
+                      <ChevronRight
+                        className="h-4 w-4 text-gray-400"
+                        aria-hidden="true"
+                      />
                     </div>
                   </div>
                 </div>

@@ -1,9 +1,9 @@
-'use client'
+'use client';
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { useState } from 'react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useState } from 'react';
 
-import { logger } from './logger'
+import { logger } from './logger';
 
 // Query client configuration with optimized defaults
 const createQueryClient = () =>
@@ -28,23 +28,25 @@ const createQueryClient = () =>
         retry: 1,
         // Log mutation errors
         onError: (error) => {
-          logger.error('Mutation error:', error)
+          logger.error('Mutation error:', error);
         },
       },
     },
-  })
+  });
 
 // React Query Provider Component
-export function ReactQueryProvider({ children }: { children: React.ReactNode }) {
+export function ReactQueryProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   // Create a new query client instance for each app instance
   // This ensures SSR compatibility
-  const [queryClient] = useState(() => createQueryClient())
+  const [queryClient] = useState(() => createQueryClient());
 
   return (
-    <QueryClientProvider client={queryClient}>
-      {children}
-    </QueryClientProvider>
-  )
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
 }
 
 // Query keys for consistent cache management
@@ -52,7 +54,7 @@ export const queryKeys = {
   // User queries
   user: (userId?: string) => ['user', userId] as const,
   currentUser: () => ['user', 'current'] as const,
-  
+
   // Event queries
   events: () => ['events'] as const,
   event: (eventId: string) => ['events', eventId] as const,
@@ -61,57 +63,65 @@ export const queryKeys = {
   userEvents: (userId: string) => ['events', 'user', userId] as const,
   hostEvents: (userId: string) => ['events', 'host', userId] as const,
   guestEvents: (userId: string) => ['events', 'guest', userId] as const,
-  
+
   // Media queries
   eventMedia: (eventId: string) => ['media', 'event', eventId] as const,
   mediaItem: (mediaId: string) => ['media', mediaId] as const,
   mediaStats: (eventId: string) => ['media', 'stats', eventId] as const,
-  
+
   // Message queries
   eventMessages: (eventId: string) => ['messages', 'event', eventId] as const,
   messageStats: (eventId: string) => ['messages', 'stats', eventId] as const,
-  
+
   // Guest queries
   eventGuestsList: (eventId: string) => ['guests', 'event', eventId] as const,
   guestStats: (eventId: string) => ['guests', 'stats', eventId] as const,
-} as const
+} as const;
 
 // Cache invalidation utilities
 export const cacheUtils = {
   // Invalidate all event-related data
   invalidateEvent: (queryClient: QueryClient, eventId: string) => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.event(eventId) })
-    queryClient.invalidateQueries({ queryKey: queryKeys.eventGuests(eventId) })
-    queryClient.invalidateQueries({ queryKey: queryKeys.eventStats(eventId) })
-    queryClient.invalidateQueries({ queryKey: queryKeys.eventMedia(eventId) })
-    queryClient.invalidateQueries({ queryKey: queryKeys.eventMessages(eventId) })
-    queryClient.invalidateQueries({ queryKey: queryKeys.eventGuestsList(eventId) })
+    queryClient.invalidateQueries({ queryKey: queryKeys.event(eventId) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.eventGuests(eventId) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.eventStats(eventId) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.eventMedia(eventId) });
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.eventMessages(eventId),
+    });
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.eventGuestsList(eventId),
+    });
   },
-  
+
   // Invalidate all user events
   invalidateUserEvents: (queryClient: QueryClient, userId: string) => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.userEvents(userId) })
-    queryClient.invalidateQueries({ queryKey: queryKeys.hostEvents(userId) })
-    queryClient.invalidateQueries({ queryKey: queryKeys.guestEvents(userId) })
+    queryClient.invalidateQueries({ queryKey: queryKeys.userEvents(userId) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.hostEvents(userId) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.guestEvents(userId) });
   },
-  
+
   // Invalidate media for an event
   invalidateEventMedia: (queryClient: QueryClient, eventId: string) => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.eventMedia(eventId) })
-    queryClient.invalidateQueries({ queryKey: queryKeys.mediaStats(eventId) })
+    queryClient.invalidateQueries({ queryKey: queryKeys.eventMedia(eventId) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.mediaStats(eventId) });
   },
-  
+
   // Invalidate messages for an event
   invalidateEventMessages: (queryClient: QueryClient, eventId: string) => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.eventMessages(eventId) })
-    queryClient.invalidateQueries({ queryKey: queryKeys.messageStats(eventId) })
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.eventMessages(eventId),
+    });
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.messageStats(eventId),
+    });
   },
-  
+
   // Clear all cached data (useful for logout)
   clearAll: (queryClient: QueryClient) => {
-    queryClient.clear()
+    queryClient.clear();
   },
-}
+};
 
 // Export the query client type for hooks
-export type { QueryClient } from '@tanstack/react-query' 
+export type { QueryClient } from '@tanstack/react-query';

@@ -5,7 +5,9 @@ Developer guides, deployment procedures, and implementation details for the Unve
 ## 👨‍💻 Development Files
 
 ### `DEVELOPMENT_GUIDE.md`
+
 **Comprehensive developer setup and workflow guide**
+
 - Environment setup instructions
 - Development workflow and conventions
 - Code quality standards
@@ -13,7 +15,9 @@ Developer guides, deployment procedures, and implementation details for the Unve
 - Local development best practices
 
 ### `DEPLOYMENT.md`
+
 **Production deployment and infrastructure**
+
 - Deployment procedures and environments
 - Environment configuration
 - Infrastructure requirements
@@ -21,7 +25,9 @@ Developer guides, deployment procedures, and implementation details for the Unve
 - Rollback procedures
 
 ### `AUTH_FLOW_REPORT.md`
+
 **Authentication system implementation details**
+
 - Phone-first authentication flow
 - Magic link implementation
 - Session management
@@ -29,6 +35,7 @@ Developer guides, deployment procedures, and implementation details for the Unve
 - Security considerations
 
 ## 🔗 Related Documentation
+
 - **System Architecture:** `../architecture/`
 - **Project Requirements:** `../project/`
 - **Performance Optimization:** `../../performance/documentation/`

@@ -2,7 +2,7 @@
 
 /**
  * Script to Fix Realtime Subscription Issues
- * 
+ *
  * This script:
  * 1. Tests current subscription health
  * 2. Applies the realtime optimization migration
@@ -29,7 +29,8 @@ const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
   realtime: {
     timeout: 30000,
     heartbeatIntervalMs: 30000,
-    reconnectAfterMs: (tries: number) => Math.min(1000 * Math.pow(2, tries), 30000),
+    reconnectAfterMs: (tries: number) =>
+      Math.min(1000 * Math.pow(2, tries), 30000),
   },
 });
 
@@ -44,7 +45,8 @@ interface TestResult {
 const results: TestResult[] = [];
 
 function logResult(result: TestResult) {
-  const icon = result.status === 'PASS' ? '✅' : result.status === 'FAIL' ? '❌' : '⚠️';
+  const icon =
+    result.status === 'PASS' ? '✅' : result.status === 'FAIL' ? '❌' : '⚠️';
   const duration = result.duration ? ` (${result.duration}ms)` : '';
   console.log(`${icon} ${result.name}: ${result.status}${duration}`);
   if (result.message) {
@@ -58,9 +60,9 @@ function logResult(result: TestResult) {
 
 async function testRealtimeConnection(): Promise<void> {
   console.log('\n🔍 Testing Realtime Connection...');
-  
+
   const startTime = Date.now();
-  
+
   return new Promise((resolve) => {
     const timeout = setTimeout(() => {
       logResult({
@@ -71,13 +73,13 @@ async function testRealtimeConnection(): Promise<void> {
       });
       resolve();
     }, 10000);
-    
+
     const channel = supabase.channel('test-connection-health');
-    
+
     channel.subscribe((status, error) => {
       clearTimeout(timeout);
       const duration = Date.now() - startTime;
-      
+
       if (error) {
         logResult({
           name: 'Realtime Connection',
@@ -101,7 +103,7 @@ async function testRealtimeConnection(): Promise<void> {
           duration,
         });
       }
-      
+
       // Clean up
       supabase.removeChannel(channel);
       resolve();
@@ -111,18 +113,18 @@ async function testRealtimeConnection(): Promise<void> {
 
 async function testDatabaseAccess(): Promise<void> {
   console.log('\n🔍 Testing Database Access...');
-  
+
   try {
     const startTime = Date.now();
-    
+
     // Test basic database connection
     const { data: events, error } = await supabase
       .from('events')
       .select('id, title, host_user_id')
       .limit(1);
-    
+
     const duration = Date.now() - startTime;
-    
+
     if (error) {
       logResult({
         name: 'Database Access',
@@ -151,19 +153,19 @@ async function testDatabaseAccess(): Promise<void> {
 
 async function checkRLSPolicies(): Promise<void> {
   console.log('\n🔍 Checking RLS Policies...');
-  
+
   try {
     const startTime = Date.now();
-    
+
     // Check messages table policies
     const { data: policies, error } = await supabase
       .from('pg_policies')
       .select('*')
       .eq('schemaname', 'public')
       .eq('tablename', 'messages');
-    
+
     const duration = Date.now() - startTime;
-    
+
     if (error) {
       logResult({
         name: 'RLS Policy Check',
@@ -174,14 +176,16 @@ async function checkRLSPolicies(): Promise<void> {
       });
     } else {
       const policyCount = policies?.length || 0;
-      const hasOptimizedPolicy = policies?.some(p => p.policyname === 'messages_realtime_optimized');
-      
+      const hasOptimizedPolicy = policies?.some(
+        (p) => p.policyname === 'messages_realtime_optimized',
+      );
+
       logResult({
         name: 'RLS Policy Check',
         status: hasOptimizedPolicy ? 'PASS' : 'WARNING',
         message: `Found ${policyCount} policies on messages table${hasOptimizedPolicy ? ' (including optimized policy)' : ' (no optimized policy found)'}`,
         duration,
-        details: policies?.map(p => p.policyname),
+        details: policies?.map((p) => p.policyname),
       });
     }
   } catch (error) {
@@ -196,14 +200,14 @@ async function checkRLSPolicies(): Promise<void> {
 
 async function testMessageSubscription(eventId?: string): Promise<void> {
   console.log('\n🔍 Testing Message Subscription...');
-  
+
   if (!eventId) {
     // Try to find an event to test with
     const { data: events } = await supabase
       .from('events')
       .select('id')
       .limit(1);
-    
+
     if (!events || events.length === 0) {
       logResult({
         name: 'Message Subscription Test',
@@ -212,12 +216,12 @@ async function testMessageSubscription(eventId?: string): Promise<void> {
       });
       return;
     }
-    
+
     eventId = events[0].id;
   }
-  
+
   const startTime = Date.now();
-  
+
   return new Promise((resolve) => {
     const timeout = setTimeout(() => {
       logResult({
@@ -228,9 +232,9 @@ async function testMessageSubscription(eventId?: string): Promise<void> {
       });
       resolve();
     }, 15000);
-    
+
     let receivedData = false;
-    
+
     const channel = supabase
       .channel(`test-messages-${eventId}`)
       .on(
@@ -244,11 +248,11 @@ async function testMessageSubscription(eventId?: string): Promise<void> {
         (payload) => {
           receivedData = true;
           console.log('📡 Received test data:', payload.eventType);
-        }
+        },
       )
       .subscribe((status, error) => {
         const duration = Date.now() - startTime;
-        
+
         if (error) {
           clearTimeout(timeout);
           logResult({
@@ -289,7 +293,7 @@ async function testMessageSubscription(eventId?: string): Promise<void> {
 
 async function applyOptimizationMigration(): Promise<void> {
   console.log('\n🚀 Applying Realtime Optimization Migration...');
-  
+
   const migrationSQL = `
     -- Fix Realtime Subscription Issues Migration
     
@@ -356,14 +360,14 @@ async function applyOptimizationMigration(): Promise<void> {
     ANALYZE public.events;
     ANALYZE public.event_guests;
   `;
-  
+
   try {
     const startTime = Date.now();
-    
+
     const { error } = await supabase.rpc('exec_sql', { sql: migrationSQL });
-    
+
     const duration = Date.now() - startTime;
-    
+
     if (error) {
       logResult({
         name: 'Migration Application',
@@ -393,81 +397,88 @@ async function applyOptimizationMigration(): Promise<void> {
 async function generateReport(): Promise<void> {
   console.log('\n📊 Test Summary Report');
   console.log('='.repeat(50));
-  
-  const passed = results.filter(r => r.status === 'PASS').length;
-  const failed = results.filter(r => r.status === 'FAIL').length;
-  const warnings = results.filter(r => r.status === 'WARNING').length;
-  
+
+  const passed = results.filter((r) => r.status === 'PASS').length;
+  const failed = results.filter((r) => r.status === 'FAIL').length;
+  const warnings = results.filter((r) => r.status === 'WARNING').length;
+
   console.log(`Total Tests: ${results.length}`);
   console.log(`✅ Passed: ${passed}`);
   console.log(`❌ Failed: ${failed}`);
   console.log(`⚠️  Warnings: ${warnings}`);
-  
+
   if (failed > 0) {
     console.log('\n❌ Failed Tests:');
     results
-      .filter(r => r.status === 'FAIL')
-      .forEach(r => {
+      .filter((r) => r.status === 'FAIL')
+      .forEach((r) => {
         console.log(`   - ${r.name}: ${r.message}`);
       });
   }
-  
+
   if (warnings > 0) {
     console.log('\n⚠️  Warnings:');
     results
-      .filter(r => r.status === 'WARNING')
-      .forEach(r => {
+      .filter((r) => r.status === 'WARNING')
+      .forEach((r) => {
         console.log(`   - ${r.name}: ${r.message}`);
       });
   }
-  
+
   console.log('\n🔧 Recommended Actions:');
-  
+
   if (failed > 0 || warnings > 0) {
     console.log('   1. Review failed tests and address underlying issues');
     console.log('   2. Run this script again to verify fixes');
     console.log('   3. Monitor realtime subscription health in production');
   } else {
-    console.log('   ✅ All tests passed! Your realtime subscriptions should work correctly now.');
+    console.log(
+      '   ✅ All tests passed! Your realtime subscriptions should work correctly now.',
+    );
   }
-  
+
   console.log('\n🐛 Debugging Tools:');
   console.log('   - Use debug_message_access(event_id, phone) to test access');
-  console.log('   - Check realtime_subscription_health view for policy analysis');
+  console.log(
+    '   - Check realtime_subscription_health view for policy analysis',
+  );
   console.log('   - Monitor subscription manager logs in browser console');
 }
 
 async function main(): Promise<void> {
   console.log('🚀 Realtime Subscription Fix & Test Script');
   console.log('==========================================\n');
-  
+
   const args = process.argv.slice(2);
-  const testEventId = args.find(arg => arg.startsWith('--event-id='))?.split('=')[1];
+  const testEventId = args
+    .find((arg) => arg.startsWith('--event-id='))
+    ?.split('=')[1];
   const skipMigration = args.includes('--skip-migration');
-  
+
   if (testEventId) {
     console.log(`🎯 Testing with specific event ID: ${testEventId}`);
   }
-  
+
   try {
     // Pre-fix tests
     await testDatabaseAccess();
     await testRealtimeConnection();
     await checkRLSPolicies();
-    
+
     // Apply fixes if not skipped
     if (!skipMigration) {
       await applyOptimizationMigration();
     } else {
-      console.log('\n⏭️  Skipping migration application (--skip-migration flag set)');
+      console.log(
+        '\n⏭️  Skipping migration application (--skip-migration flag set)',
+      );
     }
-    
+
     // Post-fix tests
     await testMessageSubscription(testEventId);
-    
+
     // Generate report
     await generateReport();
-    
   } catch (error) {
     console.error('\n💥 Script execution failed:', error);
     process.exit(1);
@@ -475,11 +486,11 @@ async function main(): Promise<void> {
     // Cleanup
     await supabase.auth.signOut();
   }
-  
+
   console.log('\n🎉 Script completed!');
-  
+
   // Exit with error code if any tests failed
-  const hasFailures = results.some(r => r.status === 'FAIL');
+  const hasFailures = results.some((r) => r.status === 'FAIL');
   process.exit(hasFailures ? 1 : 0);
 }
 
@@ -491,4 +502,4 @@ if (require.main === module) {
   });
 }
 
-export { main as fixRealtimeSubscriptions }; 
+export { main as fixRealtimeSubscriptions };

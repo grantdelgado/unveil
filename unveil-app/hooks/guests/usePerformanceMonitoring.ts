@@ -1,6 +1,6 @@
 /**
  * Performance Monitoring Hook for Guest Management
- * 
+ *
  * Tracks key performance metrics and provides insights into
  * component performance, rendering times, and user interactions.
  */
@@ -14,16 +14,16 @@ interface PerformanceMetrics {
   renderCount: number;
   lastRenderTime: number;
   averageRenderTime: number;
-  
+
   // Interaction metrics
   filterResponseTime: number;
   rsvpUpdateTime: number;
   searchResponseTime: number;
-  
+
   // Memory metrics
   memoryUsage: number;
   guestCount: number;
-  
+
   // Real-time metrics
   realtimeLatency: number;
   subscriptionHealth: 'healthy' | 'degraded' | 'disconnected';
@@ -70,18 +70,21 @@ export function usePerformanceMonitoring(eventId: string, enabled = true) {
     if (!enabled) return;
 
     const renderTime = performance.now();
-    const renderDuration = renderTime - (lastInteractionTime.current || componentMountTime.current);
-    
+    const renderDuration =
+      renderTime - (lastInteractionTime.current || componentMountTime.current);
+
     renderTimes.current.push(renderDuration);
-    
+
     // Keep only last 100 render times for rolling average
     if (renderTimes.current.length > 100) {
       renderTimes.current.shift();
     }
 
-    const averageRenderTime = renderTimes.current.reduce((sum, time) => sum + time, 0) / renderTimes.current.length;
+    const averageRenderTime =
+      renderTimes.current.reduce((sum, time) => sum + time, 0) /
+      renderTimes.current.length;
 
-    setMetrics(prev => ({
+    setMetrics((prev) => ({
       ...prev,
       renderCount: prev.renderCount + 1,
       lastRenderTime: renderDuration,
@@ -89,7 +92,10 @@ export function usePerformanceMonitoring(eventId: string, enabled = true) {
     }));
 
     // Log slow renders in development
-    if (process.env.NODE_ENV === 'development' && renderDuration > DEFAULT_THRESHOLDS.maxRenderTime) {
+    if (
+      process.env.NODE_ENV === 'development' &&
+      renderDuration > DEFAULT_THRESHOLDS.maxRenderTime
+    ) {
       logger.performance('Slow render detected', {
         eventId,
         renderTime: renderDuration,
@@ -105,7 +111,7 @@ export function usePerformanceMonitoring(eventId: string, enabled = true) {
     const measureMemory = () => {
       if ('memory' in performance) {
         const memory = (performance as any).memory;
-        setMetrics(prev => ({
+        setMetrics((prev) => ({
           ...prev,
           memoryUsage: memory.usedJSHeapSize,
         }));
@@ -128,111 +134,123 @@ export function usePerformanceMonitoring(eventId: string, enabled = true) {
   }, [enabled, eventId]);
 
   // Performance measurement utilities
-  const measureFilterPerformance = useCallback(async (filterOperation: () => Promise<void> | void) => {
-    if (!enabled) {
-      await filterOperation();
-      return;
-    }
-
-    const startTime = performance.now();
-    lastInteractionTime.current = startTime;
-
-    try {
-      await filterOperation();
-    } finally {
-      const endTime = performance.now();
-      const duration = endTime - startTime;
-
-      setMetrics(prev => ({
-        ...prev,
-        filterResponseTime: duration,
-      }));
-
-      if (duration > DEFAULT_THRESHOLDS.maxFilterResponseTime) {
-        logger.performance('Slow filter response', {
-          eventId,
-          duration,
-          threshold: DEFAULT_THRESHOLDS.maxFilterResponseTime,
-        });
+  const measureFilterPerformance = useCallback(
+    async (filterOperation: () => Promise<void> | void) => {
+      if (!enabled) {
+        await filterOperation();
+        return;
       }
-    }
-  }, [enabled, eventId]);
 
-  const measureRSVPUpdate = useCallback(async (updateOperation: () => Promise<void>) => {
-    if (!enabled) {
-      await updateOperation();
-      return;
-    }
+      const startTime = performance.now();
+      lastInteractionTime.current = startTime;
 
-    const startTime = performance.now();
-    lastInteractionTime.current = startTime;
+      try {
+        await filterOperation();
+      } finally {
+        const endTime = performance.now();
+        const duration = endTime - startTime;
 
-    try {
-      await updateOperation();
-    } finally {
-      const endTime = performance.now();
-      const duration = endTime - startTime;
+        setMetrics((prev) => ({
+          ...prev,
+          filterResponseTime: duration,
+        }));
 
-      setMetrics(prev => ({
-        ...prev,
-        rsvpUpdateTime: duration,
-      }));
-
-      if (duration > DEFAULT_THRESHOLDS.maxRSVPUpdateTime) {
-        logger.performance('Slow RSVP update', {
-          eventId,
-          duration,
-          threshold: DEFAULT_THRESHOLDS.maxRSVPUpdateTime,
-        });
+        if (duration > DEFAULT_THRESHOLDS.maxFilterResponseTime) {
+          logger.performance('Slow filter response', {
+            eventId,
+            duration,
+            threshold: DEFAULT_THRESHOLDS.maxFilterResponseTime,
+          });
+        }
       }
-    }
-  }, [enabled, eventId]);
+    },
+    [enabled, eventId],
+  );
 
-  const measureSearchPerformance = useCallback(async (searchOperation: () => Promise<void> | void) => {
-    if (!enabled) {
-      await searchOperation();
-      return;
-    }
+  const measureRSVPUpdate = useCallback(
+    async (updateOperation: () => Promise<void>) => {
+      if (!enabled) {
+        await updateOperation();
+        return;
+      }
 
-    const startTime = performance.now();
-    lastInteractionTime.current = startTime;
+      const startTime = performance.now();
+      lastInteractionTime.current = startTime;
 
-    try {
-      await searchOperation();
-    } finally {
-      const endTime = performance.now();
-      const duration = endTime - startTime;
+      try {
+        await updateOperation();
+      } finally {
+        const endTime = performance.now();
+        const duration = endTime - startTime;
 
-      setMetrics(prev => ({
-        ...prev,
-        searchResponseTime: duration,
-      }));
-    }
-  }, [enabled, eventId]);
+        setMetrics((prev) => ({
+          ...prev,
+          rsvpUpdateTime: duration,
+        }));
+
+        if (duration > DEFAULT_THRESHOLDS.maxRSVPUpdateTime) {
+          logger.performance('Slow RSVP update', {
+            eventId,
+            duration,
+            threshold: DEFAULT_THRESHOLDS.maxRSVPUpdateTime,
+          });
+        }
+      }
+    },
+    [enabled, eventId],
+  );
+
+  const measureSearchPerformance = useCallback(
+    async (searchOperation: () => Promise<void> | void) => {
+      if (!enabled) {
+        await searchOperation();
+        return;
+      }
+
+      const startTime = performance.now();
+      lastInteractionTime.current = startTime;
+
+      try {
+        await searchOperation();
+      } finally {
+        const endTime = performance.now();
+        const duration = endTime - startTime;
+
+        setMetrics((prev) => ({
+          ...prev,
+          searchResponseTime: duration,
+        }));
+      }
+    },
+    [enabled, eventId],
+  );
 
   // Update guest count for metrics
   const updateGuestCount = useCallback((count: number) => {
-    setMetrics(prev => ({
+    setMetrics((prev) => ({
       ...prev,
       guestCount: count,
     }));
   }, []);
 
   // Update real-time metrics
-  const updateRealtimeMetrics = useCallback((latency: number, health: PerformanceMetrics['subscriptionHealth']) => {
-    setMetrics(prev => ({
-      ...prev,
-      realtimeLatency: latency,
-      subscriptionHealth: health,
-    }));
-  }, []);
+  const updateRealtimeMetrics = useCallback(
+    (latency: number, health: PerformanceMetrics['subscriptionHealth']) => {
+      setMetrics((prev) => ({
+        ...prev,
+        realtimeLatency: latency,
+        subscriptionHealth: health,
+      }));
+    },
+    [],
+  );
 
   // Record initial load time
   useEffect(() => {
     if (!enabled) return;
 
     const loadTime = performance.now() - componentMountTime.current;
-    setMetrics(prev => ({
+    setMetrics((prev) => ({
       ...prev,
       initialLoadTime: loadTime,
     }));
@@ -251,9 +269,13 @@ export function usePerformanceMonitoring(eventId: string, enabled = true) {
       metrics,
       thresholds: DEFAULT_THRESHOLDS,
       health: {
-        renderingHealthy: metrics.averageRenderTime <= DEFAULT_THRESHOLDS.maxRenderTime,
-        filteringHealthy: metrics.filterResponseTime <= DEFAULT_THRESHOLDS.maxFilterResponseTime,
-        rsvpHealthy: metrics.rsvpUpdateTime <= DEFAULT_THRESHOLDS.maxRSVPUpdateTime,
+        renderingHealthy:
+          metrics.averageRenderTime <= DEFAULT_THRESHOLDS.maxRenderTime,
+        filteringHealthy:
+          metrics.filterResponseTime <=
+          DEFAULT_THRESHOLDS.maxFilterResponseTime,
+        rsvpHealthy:
+          metrics.rsvpUpdateTime <= DEFAULT_THRESHOLDS.maxRSVPUpdateTime,
         memoryHealthy: metrics.memoryUsage <= DEFAULT_THRESHOLDS.maxMemoryUsage,
         realtimeHealthy: metrics.subscriptionHealth === 'healthy',
       },
@@ -280,6 +302,6 @@ export function usePerformanceMonitoring(eventId: string, enabled = true) {
 export function useLightweightPerformanceMonitoring(eventId: string) {
   const isProduction = process.env.NODE_ENV === 'production';
   const isDevelopment = process.env.NODE_ENV === 'development';
-  
+
   return usePerformanceMonitoring(eventId, isDevelopment);
 }

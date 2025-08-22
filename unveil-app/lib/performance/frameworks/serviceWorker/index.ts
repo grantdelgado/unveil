@@ -1,13 +1,13 @@
 /**
  * 🚀 WEEK 4 OPTIMIZATION: Service Worker Implementation
- * 
+ *
  * Service Worker setup for offline support and aggressive caching:
  * - Instant subsequent loads through aggressive caching
  * - Offline functionality for critical app features
  * - Background sync for data synchronization
  * - Cache-first strategy for static assets
  * - Network-first strategy for dynamic data
- * 
+ *
  * Expected Impact:
  * - 90% faster return visits (cached resources)
  * - Offline capability for core features
@@ -59,7 +59,10 @@ export function registerServiceWorker(): Promise<ServiceWorkerRegistration | nul
       navigator.serviceWorker
         .register('/sw.js')
         .then((registration) => {
-          console.log('📱 Service Worker registered successfully:', registration);
+          console.log(
+            '📱 Service Worker registered successfully:',
+            registration,
+          );
           resolve(registration);
         })
         .catch((error) => {
@@ -75,13 +78,18 @@ export function registerServiceWorker(): Promise<ServiceWorkerRegistration | nul
 /**
  * Update service worker when new version is available
  */
-export function updateServiceWorker(registration: ServiceWorkerRegistration): Promise<boolean> {
+export function updateServiceWorker(
+  registration: ServiceWorkerRegistration,
+): Promise<boolean> {
   return new Promise((resolve) => {
     registration.addEventListener('updatefound', () => {
       const newWorker = registration.installing;
       if (newWorker) {
         newWorker.addEventListener('statechange', () => {
-          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+          if (
+            newWorker.state === 'installed' &&
+            navigator.serviceWorker.controller
+          ) {
             // New service worker is available
             console.log('🔄 New app version available');
             resolve(true);
@@ -98,9 +106,7 @@ export function updateServiceWorker(registration: ServiceWorkerRegistration): Pr
 export async function clearServiceWorkerCache(): Promise<void> {
   if ('caches' in window) {
     const cacheNames = await caches.keys();
-    await Promise.all(
-      cacheNames.map(cacheName => caches.delete(cacheName))
-    );
+    await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
     console.log('🧹 Service Worker cache cleared');
   }
 }

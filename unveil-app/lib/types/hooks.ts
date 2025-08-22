@@ -19,7 +19,10 @@ import type { DomainErrorUnion } from './errors';
 import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
 
 // Base hook result pattern
-export interface BaseHookResult<TData = Record<string, never>, TError = DomainErrorUnion> {
+export interface BaseHookResult<
+  TData = Record<string, never>,
+  TError = DomainErrorUnion,
+> {
   loading: boolean;
   error: TError | null;
   refetch: () => Promise<void>;
@@ -81,8 +84,7 @@ export interface EventListHookResult extends BaseHookResult<Event[]> {
 }
 
 // Guest Hook Types
-export interface GuestHookResult
-  extends BaseHookResult<EventGuestWithUser[]> {
+export interface GuestHookResult extends BaseHookResult<EventGuestWithUser[]> {
   guests: EventGuestWithUser[];
   hosts: EventGuestWithUser[];
   regularGuests: EventGuestWithUser[];
@@ -212,7 +214,9 @@ export interface PaginatedHookResult<TData = Record<string, never>>
 }
 
 // Filter and search types
-export interface FilterState<TFilters = Record<string, string | number | boolean>> {
+export interface FilterState<
+  TFilters = Record<string, string | number | boolean>,
+> {
   filters: TFilters;
   searchQuery: string;
   sortBy: string;
@@ -288,7 +292,10 @@ export interface OptimisticHookResult<TData = Record<string, never>>
 
 // Subscription management for real-time features
 export interface SubscriptionState {
-  subscriptions: Map<string, { channel: string; callback: (data: Record<string, never>) => void }>;
+  subscriptions: Map<
+    string,
+    { channel: string; callback: (data: Record<string, never>) => void }
+  >;
   activeChannels: string[];
   connectionErrors: DomainErrorUnion[];
   reconnectAttempts: number;
@@ -297,7 +304,10 @@ export interface SubscriptionState {
 
 export interface SubscriptionHookResult {
   subscriptionState: SubscriptionState;
-  subscribe: (channel: string, callback: (data: Record<string, never>) => void) => string;
+  subscribe: (
+    channel: string,
+    callback: (data: Record<string, never>) => void,
+  ) => string;
   unsubscribe: (subscriptionId: string) => void;
   unsubscribeAll: () => void;
   reconnect: () => Promise<void>;

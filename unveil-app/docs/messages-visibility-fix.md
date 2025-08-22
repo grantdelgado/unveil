@@ -17,6 +17,7 @@
 **Change Type**: Removed client-side `.eq('user_id', user.id)` filters
 
 #### Before (Problematic Code)
+
 ```typescript
 // Line 73 - Initial message fetch
 const { data: deliveries, error: deliveryError } = await supabase
@@ -26,7 +27,7 @@ const { data: deliveries, error: deliveryError } = await supabase
   .order('created_at', { ascending: false })
   .limit(INITIAL_WINDOW_SIZE + 1);
 
-// Line 235 - Realtime message handling  
+// Line 235 - Realtime message handling
 const { data: deliveries, error: deliveryError } = await supabase
   .from('message_deliveries')
   .select(...)
@@ -36,6 +37,7 @@ const { data: deliveries, error: deliveryError } = await supabase
 ```
 
 #### After (Fixed Code)
+
 ```typescript
 // Line 73 - Initial message fetch
 // Note: Removed .eq('user_id', user.id) filter to let RLS handle access control
@@ -60,6 +62,7 @@ const { data: deliveries, error: deliveryError } = await supabase
 ### Why This Fix Works
 
 1. **RLS Policy is Correct**: The `message_deliveries_select_optimized` policy properly handles both scenarios:
+
    - `user_id IS NOT NULL`: Direct user_id match via `(user_id = (SELECT auth.uid()))`
    - `user_id IS NULL`: Guest access via `can_access_event()` function
 
@@ -70,21 +73,24 @@ const { data: deliveries, error: deliveryError } = await supabase
 ## Data Analysis
 
 ### Scope of Issue
+
 - **Total deliveries**: 71
 - **Inconsistent deliveries**: 3 (4.23%)
 - **Affected guests**: 2 (Nick Molcsan, Connor Smith)
 - **Affected events**: 1
 
 ### Impact After Fix
-| Guest | Before Fix | After Fix |
-|-------|------------|-----------|
+
+| Guest        | Before Fix         | After Fix             |
+| ------------ | ------------------ | --------------------- |
 | Nick Molcsan | 0 messages visible | 2 messages visible ✅ |
-| Connor Smith | 1 message visible | 2 messages visible ✅ |
-| Tom Gazzard | 2 messages visible | 2 messages visible ✅ |
+| Connor Smith | 1 message visible  | 2 messages visible ✅ |
+| Tom Gazzard  | 2 messages visible | 2 messages visible ✅ |
 
 ## Testing & Validation
 
 ### RLS Policy Validation
+
 ```sql
 -- Verified RLS allows access via two paths:
 -- 1. Direct user_id match: (user_id = (SELECT auth.uid()))
@@ -95,17 +101,20 @@ const { data: deliveries, error: deliveryError } = await supabase
 ```
 
 ### Security Testing
+
 - ✅ Host access: Unchanged, works correctly
-- ✅ Linked guest access: Works via user_id path  
+- ✅ Linked guest access: Works via user_id path
 - ✅ Unlinked guest access: Works via can_access_event() path
 - ✅ Non-member access: Properly blocked by RLS
 
 ## Monitoring & Safety
 
 ### Integrity Check Script
+
 **File**: `scripts/check-message-delivery-integrity.sql`
 
 **Usage**: Run daily to monitor for data inconsistencies
+
 ```bash
 # Check current integrity status
 psql -f scripts/check-message-delivery-integrity.sql
@@ -114,9 +123,11 @@ psql -f scripts/check-message-delivery-integrity.sql
 ```
 
 ### Data Repair Script (If Needed)
+
 **File**: `scripts/repair-message-delivery-user-ids.sql`
 
 **Usage**: Fix any future data inconsistencies discovered
+
 ```bash
 # Preview what would be repaired
 psql -f scripts/repair-message-delivery-user-ids.sql
@@ -138,6 +149,7 @@ If issues arise, the fix can be easily reversed:
 ## Future Prevention
 
 ### Root Cause Prevention
+
 The underlying data inconsistency (NULL `user_id` in deliveries) should be addressed by:
 
 1. **Message Creation Process**: Ensure delivery records always populate `user_id` when guest has one
@@ -145,6 +157,7 @@ The underlying data inconsistency (NULL `user_id` in deliveries) should be addre
 3. **Regular Monitoring**: Use the integrity check script to catch issues early
 
 ### Best Practices
+
 1. **Trust RLS**: Don't duplicate RLS logic in client queries unless absolutely necessary
 2. **Minimal Filters**: Use the least restrictive client filters that still provide good performance
 3. **Regular Audits**: Periodically review client queries vs RLS policies for consistency
@@ -152,11 +165,13 @@ The underlying data inconsistency (NULL `user_id` in deliveries) should be addre
 ## Testing Instructions
 
 ### Local Testing
+
 1. Create test guests with both linked (`user_id` set) and unlinked (`user_id` NULL) deliveries
 2. Verify both can access messages through the guest UI
 3. Verify non-guests cannot access messages
 
 ### Production Testing
+
 1. Test with the original affected guests (Nick, Connor, Tom)
 2. Verify message visibility matches expected counts
 3. Monitor for any new access control issues

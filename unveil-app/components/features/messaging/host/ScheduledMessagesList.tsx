@@ -8,7 +8,8 @@ import { useScheduledMessages } from '@/hooks/messaging/useScheduledMessages';
 // Analytics temporarily removed
 import type { Database } from '@/app/reference/supabase.types';
 
-type ScheduledMessage = Database['public']['Tables']['scheduled_messages']['Row'];
+type ScheduledMessage =
+  Database['public']['Tables']['scheduled_messages']['Row'];
 
 interface ScheduledMessagesListProps {
   eventId: string;
@@ -24,12 +25,16 @@ export function ScheduledMessagesList({
   eventId,
   onEditMessage: _onEditMessage, // Reserved for future functionality
   showAnalytics = true,
-  className
+  className,
 }: ScheduledMessagesListProps) {
   // Suppress unused variable warning - reserved for future use
   void _onEditMessage;
-  const [deletingMessageId, setDeletingMessageId] = useState<string | null>(null);
-  const [cancellingMessageId, setCancellingMessageId] = useState<string | null>(null);
+  const [deletingMessageId, setDeletingMessageId] = useState<string | null>(
+    null,
+  );
+  const [cancellingMessageId, setCancellingMessageId] = useState<string | null>(
+    null,
+  );
 
   const {
     scheduledMessages,
@@ -40,22 +45,26 @@ export function ScheduledMessagesList({
     upcomingCount,
     sentCount,
     cancelledCount,
-    refreshMessages
+    refreshMessages,
   } = useScheduledMessages({ eventId });
 
   const getMessageTypeEmoji = (messageType: string) => {
     switch (messageType) {
-      case 'reminder': return '📧';
-      case 'thank_you': return '🎉';
-      case 'channel': return '📢';
-      default: return '📢';
+      case 'reminder':
+        return '📧';
+      case 'thank_you':
+        return '🎉';
+      case 'channel':
+        return '📢';
+      default:
+        return '📢';
     }
   };
 
   const getStatusEmoji = (status: string, sendAt: string) => {
     const sendTime = new Date(sendAt);
     const now = new Date();
-    
+
     switch (status) {
       case 'scheduled':
         return sendTime > now ? '⏰' : '⚠️';
@@ -73,7 +82,7 @@ export function ScheduledMessagesList({
   const getStatusText = (status: string, sendAt: string) => {
     const sendTime = new Date(sendAt);
     const now = new Date();
-    
+
     switch (status) {
       case 'scheduled':
         return sendTime > now ? 'Scheduled' : 'Overdue';
@@ -92,29 +101,42 @@ export function ScheduledMessagesList({
     const sendTime = new Date(sendAt);
     const now = new Date();
     const diffMs = sendTime.getTime() - now.getTime();
-    
+
     if (diffMs <= 0) {
       const pastDiffMs = now.getTime() - sendTime.getTime();
       const pastDays = Math.floor(pastDiffMs / (1000 * 60 * 60 * 24));
-      const pastHours = Math.floor((pastDiffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const pastMinutes = Math.floor((pastDiffMs % (1000 * 60 * 60)) / (1000 * 60));
-      
-      if (pastDays > 0) return `${pastDays} day${pastDays !== 1 ? 's' : ''} ago`;
-      if (pastHours > 0) return `${pastHours} hour${pastHours !== 1 ? 's' : ''} ago`;
+      const pastHours = Math.floor(
+        (pastDiffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
+      );
+      const pastMinutes = Math.floor(
+        (pastDiffMs % (1000 * 60 * 60)) / (1000 * 60),
+      );
+
+      if (pastDays > 0)
+        return `${pastDays} day${pastDays !== 1 ? 's' : ''} ago`;
+      if (pastHours > 0)
+        return `${pastHours} hour${pastHours !== 1 ? 's' : ''} ago`;
       return `${pastMinutes} minute${pastMinutes !== 1 ? 's' : ''} ago`;
     }
-    
+
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const diffHours = Math.floor(
+      (diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
+    );
     const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-    
+
     if (diffDays > 0) return `in ${diffDays} day${diffDays !== 1 ? 's' : ''}`;
-    if (diffHours > 0) return `in ${diffHours} hour${diffHours !== 1 ? 's' : ''}`;
+    if (diffHours > 0)
+      return `in ${diffHours} hour${diffHours !== 1 ? 's' : ''}`;
     return `in ${diffMinutes} minute${diffMinutes !== 1 ? 's' : ''}`;
   };
 
   const handleDeleteMessage = async (messageId: string) => {
-    if (!confirm('Are you sure you want to delete this scheduled message? This action cannot be undone.')) {
+    if (
+      !confirm(
+        'Are you sure you want to delete this scheduled message? This action cannot be undone.',
+      )
+    ) {
       return;
     }
 
@@ -158,34 +180,45 @@ export function ScheduledMessagesList({
   };
 
   // Group messages by status
-  const upcomingMessages = scheduledMessages.filter(msg => 
-    msg.status === 'scheduled' && new Date(msg.send_at) > new Date()
+  const upcomingMessages = scheduledMessages.filter(
+    (msg) => msg.status === 'scheduled' && new Date(msg.send_at) > new Date(),
   );
-  const pastMessages = scheduledMessages.filter(msg => 
-    msg.status === 'sent' || 
-    msg.status === 'cancelled' || 
-    msg.status === 'failed' ||
-    (msg.status === 'scheduled' && new Date(msg.send_at) <= new Date())
+  const pastMessages = scheduledMessages.filter(
+    (msg) =>
+      msg.status === 'sent' ||
+      msg.status === 'cancelled' ||
+      msg.status === 'failed' ||
+      (msg.status === 'scheduled' && new Date(msg.send_at) <= new Date()),
   );
 
   if (loading) {
     return (
       <div className={cn('flex items-center justify-center py-8', className)}>
         <LoadingSpinner size="lg" />
-        <span className="ml-2 text-gray-600">Loading scheduled messages...</span>
+        <span className="ml-2 text-gray-600">
+          Loading scheduled messages...
+        </span>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className={cn('bg-red-50 border border-red-200 rounded-lg p-4', className)}>
+      <div
+        className={cn(
+          'bg-red-50 border border-red-200 rounded-lg p-4',
+          className,
+        )}
+      >
         <div className="text-red-800">
-          <span className="font-medium">❌ Error loading scheduled messages:</span> {error}
+          <span className="font-medium">
+            ❌ Error loading scheduled messages:
+          </span>{' '}
+          {error}
         </div>
-        <Button 
-          variant="outline" 
-          size="sm" 
+        <Button
+          variant="outline"
+          size="sm"
           onClick={refreshMessages}
           className="mt-2"
         >
@@ -222,7 +255,9 @@ export function ScheduledMessagesList({
           <div className="text-xs text-green-600">Sent</div>
         </div>
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
-          <div className="text-lg font-bold text-gray-700">{cancelledCount}</div>
+          <div className="text-lg font-bold text-gray-700">
+            {cancelledCount}
+          </div>
           <div className="text-xs text-gray-600">Cancelled</div>
         </div>
       </div>
@@ -243,7 +278,11 @@ export function ScheduledMessagesList({
                     <div className="flex-1 min-w-0">
                       {/* Header */}
                       <div className="flex items-center space-x-2 mb-2">
-                        <span className="text-lg">{getMessageTypeEmoji(message.message_type || 'announcement')}</span>
+                        <span className="text-lg">
+                          {getMessageTypeEmoji(
+                            message.message_type || 'announcement',
+                          )}
+                        </span>
                         <span className="text-sm font-medium text-gray-900 capitalize">
                           {message.message_type || 'announcement'}
                         </span>
@@ -254,22 +293,24 @@ export function ScheduledMessagesList({
 
                       {/* Message Content Preview */}
                       <div className="text-sm text-gray-700 mb-3">
-                        {message.content.length > 100 
+                        {message.content.length > 100
                           ? `${message.content.substring(0, 100)}...`
-                          : message.content
-                        }
+                          : message.content}
                       </div>
 
                       {/* Message Details */}
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-gray-500">
                         <div>
-                          <span className="font-medium">Recipients:</span> {message.recipient_count || 0}
+                          <span className="font-medium">Recipients:</span>{' '}
+                          {message.recipient_count || 0}
                         </div>
                         <div>
-                          <span className="font-medium">Delivery:</span> {getDeliveryMethods(message)}
+                          <span className="font-medium">Delivery:</span>{' '}
+                          {getDeliveryMethods(message)}
                         </div>
                         <div>
-                          <span className="font-medium">Time:</span> {new Date(message.send_at).toLocaleString()}
+                          <span className="font-medium">Time:</span>{' '}
+                          {new Date(message.send_at).toLocaleString()}
                         </div>
                       </div>
                     </div>
@@ -327,49 +368,70 @@ export function ScheduledMessagesList({
                     <div className="flex-1 min-w-0">
                       {/* Header */}
                       <div className="flex items-center space-x-2 mb-2">
-                        <span className="text-lg">{getMessageTypeEmoji(message.message_type || 'announcement')}</span>
+                        <span className="text-lg">
+                          {getMessageTypeEmoji(
+                            message.message_type || 'announcement',
+                          )}
+                        </span>
                         <span className="text-sm font-medium text-gray-900 capitalize">
                           {message.message_type || 'announcement'}
                         </span>
-                        <span className={cn(
-                          "text-xs px-2 py-1 rounded-full",
-                          message.status === 'sent' ? "bg-green-100 text-green-800" :
-                          message.status === 'cancelled' ? "bg-gray-100 text-gray-800" :
-                          "bg-red-100 text-red-800"
-                        )}>
-                          {getStatusEmoji(message.status || 'scheduled', message.send_at)} {getStatusText(message.status || 'scheduled', message.send_at)}
+                        <span
+                          className={cn(
+                            'text-xs px-2 py-1 rounded-full',
+                            message.status === 'sent'
+                              ? 'bg-green-100 text-green-800'
+                              : message.status === 'cancelled'
+                                ? 'bg-gray-100 text-gray-800'
+                                : 'bg-red-100 text-red-800',
+                          )}
+                        >
+                          {getStatusEmoji(
+                            message.status || 'scheduled',
+                            message.send_at,
+                          )}{' '}
+                          {getStatusText(
+                            message.status || 'scheduled',
+                            message.send_at,
+                          )}
                         </span>
                       </div>
 
                       {/* Message Content Preview */}
                       <div className="text-sm text-gray-600 mb-3">
-                        {message.content.length > 100 
+                        {message.content.length > 100
                           ? `${message.content.substring(0, 100)}...`
-                          : message.content
-                        }
+                          : message.content}
                       </div>
 
                       {/* Message Details */}
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-gray-500">
                         <div>
-                          <span className="font-medium">Recipients:</span> {message.recipient_count || 0}
-                          {message.status === 'sent' && message.success_count !== undefined && (
-                            <span className="text-green-600 ml-1">({message.success_count} delivered)</span>
-                          )}
+                          <span className="font-medium">Recipients:</span>{' '}
+                          {message.recipient_count || 0}
+                          {message.status === 'sent' &&
+                            message.success_count !== undefined && (
+                              <span className="text-green-600 ml-1">
+                                ({message.success_count} delivered)
+                              </span>
+                            )}
                         </div>
                         <div>
-                          <span className="font-medium">Delivery:</span> {getDeliveryMethods(message)}
+                          <span className="font-medium">Delivery:</span>{' '}
+                          {getDeliveryMethods(message)}
                         </div>
                         <div>
                           <span className="font-medium">
                             {message.status === 'sent' ? 'Sent:' : 'Scheduled:'}
-                          </span> {getRelativeTime(message.sent_at || message.send_at)}
+                          </span>{' '}
+                          {getRelativeTime(message.sent_at || message.send_at)}
                         </div>
                       </div>
                     </div>
 
                     {/* Actions for cancelled/failed messages */}
-                    {(message.status === 'cancelled' || message.status === 'failed') && (
+                    {(message.status === 'cancelled' ||
+                      message.status === 'failed') && (
                       <div className="flex items-center space-x-2 ml-4">
                         <Button
                           variant="outline"

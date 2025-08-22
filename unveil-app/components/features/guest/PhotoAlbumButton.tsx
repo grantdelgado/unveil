@@ -7,7 +7,11 @@ import { cn } from '@/lib/utils';
 // Extend window type for gtag
 declare global {
   interface Window {
-    gtag?: (command: string, action: string, parameters: Record<string, unknown>) => void;
+    gtag?: (
+      command: string,
+      action: string,
+      parameters: Record<string, unknown>,
+    ) => void;
   }
 }
 
@@ -17,7 +21,11 @@ interface PhotoAlbumButtonProps {
   className?: string;
 }
 
-export function PhotoAlbumButton({ albumUrl, eventId, className }: PhotoAlbumButtonProps) {
+export function PhotoAlbumButton({
+  albumUrl,
+  eventId,
+  className,
+}: PhotoAlbumButtonProps) {
   const handleClick = () => {
     if (albumUrl) {
       // Analytics tracking for photo album clicks
@@ -29,17 +37,20 @@ export function PhotoAlbumButton({ albumUrl, eventId, className }: PhotoAlbumBut
             window.gtag('event', 'photo_album_opened', {
               event_category: 'engagement',
               event_label: eventId,
-              value: 1
+              value: 1,
             });
           }
-          
+
           // Console log for development/debugging
-          console.log('Photo album opened:', { eventId, albumUrl: albumUrl.substring(0, 50) + '...' });
+          console.log('Photo album opened:', {
+            eventId,
+            albumUrl: albumUrl.substring(0, 50) + '...',
+          });
         } catch (error) {
           console.warn('Analytics tracking failed:', error);
         }
       }
-      
+
       window.open(albumUrl, '_blank', 'noopener,noreferrer');
     }
   };
@@ -51,13 +62,13 @@ export function PhotoAlbumButton({ albumUrl, eventId, className }: PhotoAlbumBut
       onClick={handleClick}
       disabled={!albumUrl}
       className={cn(
-        "w-full py-4 text-base border-2 border-stone-300 hover:border-stone-400 hover:bg-stone-50",
-        "disabled:opacity-60 disabled:cursor-not-allowed",
-        className
+        'w-full py-4 text-base border-2 border-stone-300 hover:border-stone-400 hover:bg-stone-50',
+        'disabled:opacity-60 disabled:cursor-not-allowed',
+        className,
       )}
     >
       <Camera className="w-5 h-5 mr-2" />
-      {albumUrl ? "Open Shared Photo Album" : "Photo Album Coming Soon"}
+      {albumUrl ? 'Open Shared Photo Album' : 'Photo Album Coming Soon'}
     </Button>
   );
 }

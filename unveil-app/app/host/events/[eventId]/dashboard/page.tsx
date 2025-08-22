@@ -11,10 +11,7 @@ import {
   EventSummaryCard,
   ModernActionList,
 } from '@/components/features/host-dashboard';
-import {
-  PageWrapper,
-  BackButton
-} from '@/components/ui';
+import { PageWrapper, BackButton } from '@/components/ui';
 
 type Event = Database['public']['Tables']['events']['Row'];
 
@@ -27,12 +24,9 @@ export default function EventDashboardPage() {
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Use unified guest counts for consistency
   const { counts: guestCounts } = useUnifiedGuestCounts(eventId);
-
-
-
 
   // Fetch event data and guest stats
   useEffect(() => {
@@ -53,8 +47,10 @@ export default function EventDashboardPage() {
         }
 
         // Check if user is authorized as host (primary or delegated)
-        const { data: hostCheck, error: hostError } = await supabase
-          .rpc('is_event_host', { p_event_id: eventId });
+        const { data: hostCheck, error: hostError } = await supabase.rpc(
+          'is_event_host',
+          { p_event_id: eventId },
+        );
 
         if (hostError) {
           console.error('Host authorization check failed:', hostError);
@@ -127,7 +123,7 @@ export default function EventDashboardPage() {
             <div className="h-4 bg-gray-200 rounded w-1/2"></div>
             <div className="h-16 bg-gray-200 rounded"></div>
           </div>
-          
+
           {/* Actions skeleton */}
           <div className="animate-pulse space-y-4 bg-white rounded-lg border p-6">
             <div className="h-5 bg-gray-200 rounded w-1/4"></div>
@@ -158,7 +154,7 @@ export default function EventDashboardPage() {
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between py-4">
               <div className="flex items-center gap-4 min-w-0 flex-1">
-                <BackButton 
+                <BackButton
                   href="/select-event"
                   fallback="/select-event"
                   className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200"
@@ -169,9 +165,7 @@ export default function EventDashboardPage() {
                   <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
                     Event Dashboard
                   </h1>
-                  <p className="text-sm text-gray-500 mt-0.5">
-                    Unable to load
-                  </p>
+                  <p className="text-sm text-gray-500 mt-0.5">Unable to load</p>
                 </div>
               </div>
             </div>
@@ -198,13 +192,13 @@ export default function EventDashboardPage() {
     <PageWrapper centered={false}>
       {/* Compact Event Header */}
       <CompactEventHeader event={event} />
-      
+
       <div className="max-w-4xl mx-auto space-y-6 px-4 sm:px-6 lg:px-8 py-6">
         {/* Event Summary Card */}
         <EventSummaryCard event={event} />
 
         {/* Modern Action List */}
-        <ModernActionList 
+        <ModernActionList
           eventId={eventId}
           guestCount={guestCounts.total_invited}
           pendingRSVPs={0} // RSVP-Lite: No pending RSVPs concept

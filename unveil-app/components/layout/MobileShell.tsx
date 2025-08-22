@@ -24,7 +24,7 @@ interface MobileShellProps {
  * - Proper viewport height handling (iOS 100vh bug)
  * - Keyboard-aware layout
  * - Sticky header/footer positioning
- * 
+ *
  * Structure:
  * - Header: Optional sticky header with safe-area-top padding
  * - Main: Flexible content area that fills available space
@@ -39,26 +39,22 @@ export default function MobileShell({
   safePadding = true,
 }: MobileShellProps) {
   return (
-    <div 
+    <div
       className={cn(
         'relative flex flex-col min-h-mobile',
         safePadding && 'safe-x',
-        className
+        className,
       )}
     >
       {/* Header Section */}
-      {header && (
-        <header className="safe-top flex-shrink-0">
-          {header}
-        </header>
-      )}
+      {header && <header className="safe-top flex-shrink-0">{header}</header>}
 
       {/* Main Content Section */}
-      <main 
+      <main
         className={cn(
           'flex-1',
           scrollable ? 'min-h-0 overflow-auto scroll-container' : '',
-          footer && 'scroll-pb-safe'
+          footer && 'scroll-pb-safe',
         )}
       >
         {children}
@@ -94,39 +90,30 @@ export function MobilePageShell({
   footer?: ReactNode;
   className?: string;
 }) {
-  const header = (title || subtitle || backButton || action) ? (
-    <div className="px-4 py-4 bg-background border-b border-gray-200">
-      {/* Back button and action row */}
-      {(backButton || action) && (
-        <div className="flex items-center justify-between mb-3">
-          {backButton || <div />}
-          {action}
-        </div>
-      )}
-      
-      {/* Title and subtitle */}
-      {title && (
-        <h1 className="text-2xl font-bold text-gray-900 mb-1 break-words">
-          {title}
-        </h1>
-      )}
-      {subtitle && (
-        <p className="text-gray-600 break-words">
-          {subtitle}
-        </p>
-      )}
-    </div>
-  ) : undefined;
+  const header =
+    title || subtitle || backButton || action ? (
+      <div className="px-4 py-4 bg-background border-b border-gray-200">
+        {/* Back button and action row */}
+        {(backButton || action) && (
+          <div className="flex items-center justify-between mb-3">
+            {backButton || <div />}
+            {action}
+          </div>
+        )}
+
+        {/* Title and subtitle */}
+        {title && (
+          <h1 className="text-2xl font-bold text-gray-900 mb-1 break-words">
+            {title}
+          </h1>
+        )}
+        {subtitle && <p className="text-gray-600 break-words">{subtitle}</p>}
+      </div>
+    ) : undefined;
 
   return (
-    <MobileShell
-      header={header}
-      footer={footer}
-      className={className}
-    >
-      <div className="px-4 py-6">
-        {children}
-      </div>
+    <MobileShell header={header} footer={footer} className={className}>
+      <div className="px-4 py-6">{children}</div>
     </MobileShell>
   );
 }

@@ -9,16 +9,19 @@ This document outlines comprehensive mobile responsive improvements implemented 
 ### Issues Found & Fixed
 
 1. **Viewport Height Problems (15+ occurrences)**
+
    - **Issue**: `min-h-screen` used throughout causing iOS 100vh bug
    - **Fix**: Replaced with `min-h-mobile` using `100svh`/`100dvh`
    - **Files**: `app/select-event/page.tsx`, `app/guest/events/[eventId]/home/page.tsx`, etc.
 
 2. **Safe Area Support**
+
    - **Issue**: Incomplete safe-area handling for notched devices
    - **Fix**: Added comprehensive CSS variables and utility classes
    - **Files**: `app/globals.css`
 
 3. **Hard Pixel Widths**
+
    - **Issue**: `max-w-[390px]` and similar causing overflow on smaller screens
    - **Fix**: Replaced with responsive `max-w-md` and proper breakpoints
    - **Files**: `components/ui/PageWrapper.tsx`
@@ -44,13 +47,26 @@ This document outlines comprehensive mobile responsive improvements implemented 
 }
 
 /* Utility classes */
-.safe-top { padding-top: max(var(--sat), 0px); }
-.safe-bottom { padding-bottom: max(var(--sab), 0px); }
-.safe-x { padding-left: max(var(--sal), 0px); padding-right: max(var(--sar), 0px); }
+.safe-top {
+  padding-top: max(var(--sat), 0px);
+}
+.safe-bottom {
+  padding-bottom: max(var(--sab), 0px);
+}
+.safe-x {
+  padding-left: max(var(--sal), 0px);
+  padding-right: max(var(--sar), 0px);
+}
 
 /* Mobile viewport height fixes */
-.min-h-mobile { min-height: 100svh; min-height: 100dvh; }
-.h-mobile { height: 100svh; height: 100dvh; }
+.min-h-mobile {
+  min-height: 100svh;
+  min-height: 100dvh;
+}
+.h-mobile {
+  height: 100svh;
+  height: 100dvh;
+}
 ```
 
 ### 2. MobileShell Component
@@ -58,6 +74,7 @@ This document outlines comprehensive mobile responsive improvements implemented 
 **File**: `components/layout/MobileShell.tsx`
 
 A consistent mobile layout wrapper that handles:
+
 - Safe area insets for notched devices
 - Proper viewport height (iOS 100vh bug fix)
 - Keyboard-aware layout
@@ -87,7 +104,8 @@ A consistent mobile layout wrapper that handles:
 ### 1. Event Selection (`/select-event`)
 
 **Before**: Fixed height containers, potential overflow
-**After**: 
+**After**:
+
 - Proper MobileShell wrapper with safe areas
 - Responsive header and footer
 - Break-word text handling
@@ -97,6 +115,7 @@ A consistent mobile layout wrapper that handles:
 
 **Before**: Complex sticky header without safe area support
 **After**:
+
 - MobileShell integration
 - Safe-area aware sticky header
 - Responsive text wrapping
@@ -106,6 +125,7 @@ A consistent mobile layout wrapper that handles:
 
 **Before**: Centered layout that could break on small screens
 **After**:
+
 - Mobile-first responsive design
 - Proper keyboard handling
 - Safe area support
@@ -135,6 +155,7 @@ Comprehensive Playwright tests covering:
 **File**: `docs/mobile-qa-checklist.md`
 
 Detailed checklist covering:
+
 - Device matrix testing
 - Orientation changes
 - Network conditions
@@ -144,28 +165,33 @@ Detailed checklist covering:
 ## 🎯 Key Improvements
 
 ### Safe Area Handling
+
 - ✅ Content never clipped by notch/Dynamic Island
 - ✅ Proper spacing around home indicator
 - ✅ Consistent padding across all devices
 
 ### Viewport & Scrolling
+
 - ✅ No more iOS 100vh bugs
 - ✅ Smooth 60fps scrolling
 - ✅ Proper momentum scrolling
 - ✅ No unwanted rubber-band effects
 
 ### Touch Targets
+
 - ✅ All buttons meet 44px minimum (iOS) / 48px (Android)
 - ✅ Proper touch feedback
 - ✅ No accidental taps
 
 ### Typography & Content
+
 - ✅ Text wraps properly with `break-words`
 - ✅ No horizontal overflow
 - ✅ Responsive font sizes
 - ✅ High contrast support
 
 ### Keyboard Handling
+
 - ✅ Numeric keypad for phone/OTP inputs
 - ✅ Auto-complete for OTP codes
 - ✅ Proper `enterKeyHint` attributes
@@ -181,6 +207,7 @@ Detailed checklist covering:
 ## 🔄 Backward Compatibility
 
 All changes maintain full backward compatibility:
+
 - Legacy CSS classes still work
 - Existing components unaffected
 - Gradual migration path available
@@ -188,17 +215,20 @@ All changes maintain full backward compatibility:
 ## 🚀 Next Steps & Recommendations
 
 ### Immediate
+
 1. **Deploy and test** on real devices across the support matrix
 2. **Monitor** for any edge cases in production
 3. **Gather feedback** from mobile users
 
 ### Future Enhancements
+
 1. **Progressive Enhancement**: Add PWA install prompts
-2. **Advanced Gestures**: Implement swipe navigation where appropriate  
+2. **Advanced Gestures**: Implement swipe navigation where appropriate
 3. **Haptic Feedback**: Add tactile feedback for key interactions
 4. **Dark Mode**: Ensure mobile optimizations work in dark mode
 
 ### Ongoing Maintenance
+
 1. **Regular Testing**: Run responsive tests in CI/CD
 2. **Device Updates**: Test on new device releases
 3. **Performance Monitoring**: Track Core Web Vitals on mobile
@@ -206,17 +236,20 @@ All changes maintain full backward compatibility:
 ## 📋 Files Changed
 
 ### Core Infrastructure
+
 - `app/globals.css` - Safe area variables and mobile utilities
 - `tailwind.config.ts` - Mobile breakpoints and utilities
 - `components/layout/MobileShell.tsx` - New mobile layout component
 
 ### Screen Updates
+
 - `app/select-event/page.tsx` - MobileShell integration
 - `app/guest/events/[eventId]/home/page.tsx` - Mobile optimizations
 - `app/login/page.tsx` - Responsive auth flow
 - `components/ui/PageWrapper.tsx` - Flexible width handling
 
 ### Testing & Documentation
+
 - `tests/responsive.spec.ts` - Comprehensive mobile test suite
 - `docs/mobile-qa-checklist.md` - Manual testing guidelines
 - `docs/mobile-responsive-improvements.md` - This document
@@ -224,7 +257,7 @@ All changes maintain full backward compatibility:
 ## ✅ Verification Checklist
 
 - [x] No horizontal scrolling on any supported device
-- [x] Safe areas properly handled on notched devices  
+- [x] Safe areas properly handled on notched devices
 - [x] Touch targets meet accessibility guidelines
 - [x] Text wraps and truncates appropriately
 - [x] Keyboard interactions work correctly
@@ -235,6 +268,7 @@ All changes maintain full backward compatibility:
 ## 🎉 Success Metrics
 
 The mobile responsive improvements deliver:
+
 - **100% elimination** of horizontal scroll issues
 - **44px minimum** touch targets across all interactive elements
 - **Safe area compliance** on all modern devices

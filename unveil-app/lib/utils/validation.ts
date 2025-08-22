@@ -64,136 +64,140 @@ export interface ValidationOptions {
 // Phone number validation
 export function validatePhoneNumber(phoneNumber: string): ValidationResult {
   const trimmed = phoneNumber.trim();
-  
+
   if (!trimmed) {
     return { isValid: false, error: 'Phone number is required' };
   }
 
   // Remove all non-digits
   const digitsOnly = trimmed.replace(/\D/g, '');
-  
+
   // Check for US phone number (10 digits)
   if (digitsOnly.length < 10) {
-    return { 
-      isValid: false, 
-      error: `Phone number must be 10 digits (${digitsOnly.length}/10)` 
+    return {
+      isValid: false,
+      error: `Phone number must be 10 digits (${digitsOnly.length}/10)`,
     };
   }
-  
+
   if (digitsOnly.length > 11) {
     return { isValid: false, error: 'Phone number is too long' };
   }
-  
+
   // Check for valid US format (10 digits or 11 with leading 1)
-  const isValid = digitsOnly.length === 10 || 
+  const isValid =
+    digitsOnly.length === 10 ||
     (digitsOnly.length === 11 && digitsOnly.startsWith('1'));
-  
+
   if (!isValid) {
     return { isValid: false, error: 'Please enter a valid US phone number' };
   }
 
   // Success feedback
-  return { 
-    isValid: true, 
-    success: '✓ Valid phone number'
+  return {
+    isValid: true,
+    success: '✓ Valid phone number',
   };
 }
 
 // Email validation
 export function validateEmail(email: string): ValidationResult {
   const trimmed = email.trim();
-  
+
   if (!trimmed) {
     return { isValid: false, error: 'Email address is required' };
   }
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  
+
   if (!emailRegex.test(trimmed)) {
     return { isValid: false, error: 'Please enter a valid email address' };
   }
 
   // Check for common typos
   const domain = trimmed.split('@')[1]?.toLowerCase();
-  
+
   // Suggest common domain corrections
   if (domain) {
     if (domain === 'gmai.com' || domain === 'gmial.com') {
-      return { 
-        isValid: false, 
-        error: 'Did you mean gmail.com?' 
+      return {
+        isValid: false,
+        error: 'Did you mean gmail.com?',
       };
     }
     if (domain === 'yahho.com' || domain === 'yaho.com') {
-      return { 
-        isValid: false, 
-        error: 'Did you mean yahoo.com?' 
+      return {
+        isValid: false,
+        error: 'Did you mean yahoo.com?',
       };
     }
   }
 
-  return { 
-    isValid: true, 
-    success: '✓ Valid email'
+  return {
+    isValid: true,
+    success: '✓ Valid email',
   };
 }
 
 // Name validation
-export function validateName(name: string, fieldName: string = 'Name'): ValidationResult {
+export function validateName(
+  name: string,
+  fieldName: string = 'Name',
+): ValidationResult {
   const trimmed = name.trim();
-  
+
   if (!trimmed) {
     return { isValid: false, error: `${fieldName} is required` };
   }
 
   if (trimmed.length < 2) {
-    return { 
-      isValid: false, 
-      error: `${fieldName} must be at least 2 characters` 
+    return {
+      isValid: false,
+      error: `${fieldName} must be at least 2 characters`,
     };
   }
 
   if (trimmed.length > 50) {
-    return { 
-      isValid: false, 
-      error: `${fieldName} must be 50 characters or less` 
+    return {
+      isValid: false,
+      error: `${fieldName} must be 50 characters or less`,
     };
   }
 
   // Check for valid characters (letters, spaces, hyphens, apostrophes)
   const nameRegex = /^[a-zA-Z\s'-]+$/;
   if (!nameRegex.test(trimmed)) {
-    return { 
-      isValid: false, 
-      error: `${fieldName} can only contain letters, spaces, hyphens, and apostrophes` 
+    return {
+      isValid: false,
+      error: `${fieldName} can only contain letters, spaces, hyphens, and apostrophes`,
     };
   }
 
-  return { 
-    isValid: true, 
-    success: '✓ Valid name'
+  return {
+    isValid: true,
+    success: '✓ Valid name',
   };
 }
 
 // Event title validation
 export function validateEventTitle(title: string): ValidationResult {
   const trimmed = title.trim();
-  
+
   if (!trimmed) {
     return { isValid: false, error: 'Event title is required' };
   }
 
   if (trimmed.length < 3) {
-    return { 
-      isValid: false, 
-      error: `Title too short (${trimmed.length}/3 minimum)` 
+    return {
+      isValid: false,
+      error: `Title too short (${trimmed.length}/3 minimum)`,
     };
   }
 
   if (trimmed.length > 100) {
-    return { 
-      isValid: false, 
-      error: `Title too long (${trimmed.length}/100 maximum)` 
+    return {
+      isValid: false,
+      error: `Title too long (${trimmed.length}/100 maximum)`,
     };
   }
 
@@ -201,56 +205,56 @@ export function validateEventTitle(title: string): ValidationResult {
   if (trimmed.length < 10) {
     return {
       isValid: true,
-      warning: 'Consider adding more detail to your title'
+      warning: 'Consider adding more detail to your title',
     };
   }
 
-  return { 
-    isValid: true, 
-    success: '✓ Great title!'
+  return {
+    isValid: true,
+    success: '✓ Great title!',
   };
 }
 
 // Location validation
 export function validateLocation(location: string): ValidationResult {
   const trimmed = location.trim();
-  
+
   if (!trimmed) {
     return { isValid: true }; // Location is optional
   }
 
   if (trimmed.length < 3) {
-    return { 
-      isValid: false, 
-      error: 'Location must be at least 3 characters' 
+    return {
+      isValid: false,
+      error: 'Location must be at least 3 characters',
     };
   }
 
   if (trimmed.length > 200) {
-    return { 
-      isValid: false, 
-      error: `Location too long (${trimmed.length}/200 maximum)` 
+    return {
+      isValid: false,
+      error: `Location too long (${trimmed.length}/200 maximum)`,
     };
   }
 
-  return { 
-    isValid: true, 
-    success: '✓ Location added'
+  return {
+    isValid: true,
+    success: '✓ Location added',
   };
 }
 
 // Description validation
 export function validateDescription(description: string): ValidationResult {
   const trimmed = description.trim();
-  
+
   if (!trimmed) {
     return { isValid: true }; // Description is optional
   }
 
   if (trimmed.length > 1000) {
-    return { 
-      isValid: false, 
-      error: `Description too long (${trimmed.length}/1000 maximum)` 
+    return {
+      isValid: false,
+      error: `Description too long (${trimmed.length}/1000 maximum)`,
     };
   }
 
@@ -258,13 +262,13 @@ export function validateDescription(description: string): ValidationResult {
   if (trimmed.length < 20) {
     return {
       isValid: true,
-      warning: 'Consider adding more details about your event'
+      warning: 'Consider adding more details about your event',
     };
   }
 
-  return { 
-    isValid: true, 
-    success: '✓ Great description!'
+  return {
+    isValid: true,
+    success: '✓ Great description!',
   };
 }
 
@@ -275,7 +279,7 @@ export function validateEventDate(dateString: string): ValidationResult {
   }
 
   const date = new Date(dateString);
-  
+
   // Check if date is valid
   if (isNaN(date.getTime())) {
     return { isValid: false, error: 'Please enter a valid date' };
@@ -284,7 +288,7 @@ export function validateEventDate(dateString: string): ValidationResult {
   // Check if date is in the past
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  
+
   if (date < today) {
     return { isValid: false, error: 'Event date cannot be in the past' };
   }
@@ -292,38 +296,38 @@ export function validateEventDate(dateString: string): ValidationResult {
   // Warning for dates too far in the future
   const oneYearFromNow = new Date();
   oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
-  
+
   if (date > oneYearFromNow) {
     return {
       isValid: true,
-      warning: 'Event is more than a year away'
+      warning: 'Event is more than a year away',
     };
   }
 
   // Warning for dates very soon
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
-  
+
   if (date < tomorrow) {
     return {
       isValid: true,
-      warning: 'Event is very soon!'
+      warning: 'Event is very soon!',
     };
   }
 
-  return { 
-    isValid: true, 
-    success: '✓ Date set'
+  return {
+    isValid: true,
+    success: '✓ Date set',
   };
 }
 
 // Generic text validation
 export function validateText(
-  value: string, 
-  options: ValidationOptions = {}
+  value: string,
+  options: ValidationOptions = {},
 ): ValidationResult {
   const trimmed = value.trim();
-  
+
   // Required check
   if (options.required && !trimmed) {
     return { isValid: false, error: 'This field is required' };
@@ -331,16 +335,16 @@ export function validateText(
 
   // Length checks
   if (options.minLength && trimmed.length < options.minLength) {
-    return { 
-      isValid: false, 
-      error: `Must be at least ${options.minLength} characters (${trimmed.length}/${options.minLength})` 
+    return {
+      isValid: false,
+      error: `Must be at least ${options.minLength} characters (${trimmed.length}/${options.minLength})`,
     };
   }
 
   if (options.maxLength && trimmed.length > options.maxLength) {
-    return { 
-      isValid: false, 
-      error: `Must be ${options.maxLength} characters or less (${trimmed.length}/${options.maxLength})` 
+    return {
+      isValid: false,
+      error: `Must be ${options.maxLength} characters or less (${trimmed.length}/${options.maxLength})`,
     };
   }
 
@@ -364,9 +368,9 @@ export function validatePassword(password: string): ValidationResult {
   }
 
   if (password.length < 8) {
-    return { 
-      isValid: false, 
-      error: `Password must be at least 8 characters (${password.length}/8)` 
+    return {
+      isValid: false,
+      error: `Password must be at least 8 characters (${password.length}/8)`,
     };
   }
 
@@ -376,14 +380,22 @@ export function validatePassword(password: string): ValidationResult {
 
   // Check for common weak passwords
   const weakPasswords = [
-    'password', '12345678', 'qwerty', 'abc123', 'password123',
-    'admin', 'letmein', 'welcome', 'monkey', 'dragon'
+    'password',
+    '12345678',
+    'qwerty',
+    'abc123',
+    'password123',
+    'admin',
+    'letmein',
+    'welcome',
+    'monkey',
+    'dragon',
   ];
-  
+
   if (weakPasswords.includes(password.toLowerCase())) {
-    return { 
-      isValid: false, 
-      error: 'Please choose a stronger password' 
+    return {
+      isValid: false,
+      error: 'Please choose a stronger password',
     };
   }
 
@@ -393,36 +405,40 @@ export function validatePassword(password: string): ValidationResult {
   const hasNumbers = /\d/.test(password);
   const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
 
-  const strengthScore = [hasUpperCase, hasLowerCase, hasNumbers, hasSpecialChar]
-    .filter(Boolean).length;
+  const strengthScore = [
+    hasUpperCase,
+    hasLowerCase,
+    hasNumbers,
+    hasSpecialChar,
+  ].filter(Boolean).length;
 
   if (strengthScore < 2) {
     return {
       isValid: true,
-      warning: 'Consider adding uppercase, numbers, or symbols'
+      warning: 'Consider adding uppercase, numbers, or symbols',
     };
   }
 
   if (strengthScore >= 3) {
-    return { 
-      isValid: true, 
-      success: '✓ Strong password'
+    return {
+      isValid: true,
+      success: '✓ Strong password',
     };
   }
 
-  return { 
-    isValid: true, 
-    success: '✓ Good password'
+  return {
+    isValid: true,
+    success: '✓ Good password',
   };
 }
 
 // Real-time validation debouncing
 export function debounceValidation<T extends unknown[]>(
   validationFn: (...args: T) => ValidationResult,
-  delay: number = 300
+  delay: number = 300,
 ): (...args: T) => Promise<ValidationResult> {
   let timeoutId: NodeJS.Timeout;
-  
+
   return (...args: T): Promise<ValidationResult> => {
     return new Promise((resolve) => {
       clearTimeout(timeoutId);
@@ -439,29 +455,31 @@ export interface ValidationState {
 }
 
 export function isFormValid(validationState: ValidationState): boolean {
-  return Object.values(validationState).every(result => result.isValid);
+  return Object.values(validationState).every((result) => result.isValid);
 }
 
 export function getFormErrors(validationState: ValidationState): string[] {
   return Object.values(validationState)
-    .filter(result => !result.isValid && result.error)
-    .map(result => result.error!);
+    .filter((result) => !result.isValid && result.error)
+    .map((result) => result.error!);
 }
 
-export function getFieldValidationClass(result: ValidationResult | undefined): string {
+export function getFieldValidationClass(
+  result: ValidationResult | undefined,
+): string {
   if (!result) return '';
-  
+
   if (!result.isValid) {
     return 'border-red-300 focus:border-red-500 focus:ring-red-200';
   }
-  
+
   if (result.success) {
     return 'border-emerald-300 focus:border-emerald-500 focus:ring-emerald-200';
   }
-  
+
   if (result.warning) {
     return 'border-amber-300 focus:border-amber-500 focus:ring-amber-200';
   }
-  
+
   return '';
 }

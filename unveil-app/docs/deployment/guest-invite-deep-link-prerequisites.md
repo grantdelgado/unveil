@@ -24,6 +24,7 @@ CREATE TRIGGER trigger_auto_link_guest_invitations
 ```
 
 **Key Features:**
+
 - **Automatic**: Triggers immediately when user is created in `public.users` table
 - **Phone Format Handling**: Handles various phone number formats (E.164, US formats, with/without +)
 - **Robust**: Handles edge cases, conflicts, and errors gracefully
@@ -31,6 +32,7 @@ CREATE TRIGGER trigger_auto_link_guest_invitations
 - **Zero Client Dependencies**: Works regardless of client-side code execution
 
 **Phone Format Variants Handled:**
+
 - `+15712364686` (E.164 format - used in guest records)
 - `15712364686` (11-digit with country code - from auth.users)
 - `5712364686` (10-digit US format)
@@ -47,12 +49,14 @@ SECURITY DEFINER
 ```
 
 **Key Features:**
+
 - **Idempotent**: Safe to call multiple times
 - **Secure**: Validates all inputs and prevents unauthorized access
 - **Atomic**: All-or-nothing operation
 - **Auditable**: Returns detailed status information
 
 **Return Values:**
+
 - `linked`: Successfully linked user to invitation
 - `already_linked`: User already linked to this event
 - `not_invited`: No invitation found for this phone number
@@ -69,6 +73,7 @@ RETURNS jsonb
 ```
 
 **Features:**
+
 - Links user to ALL their guest invitations across multiple events
 - Handles phone format variations automatically
 - Returns detailed status and statistics
@@ -77,6 +82,7 @@ RETURNS jsonb
 ### 3. Enhanced Phone Normalization
 
 Created centralized phone utility (`lib/utils/phone.ts`):
+
 - Consistent E.164 format normalization
 - Better error messages
 - Logging utilities (masked for privacy)
@@ -84,6 +90,7 @@ Created centralized phone utility (`lib/utils/phone.ts`):
 ### 4. Updated Auto-Join Service
 
 Modified `lib/services/guestAutoJoin.ts`:
+
 - Uses new RPC functions instead of direct table updates
 - Better error handling and logging
 - Improved phone validation
@@ -91,6 +98,7 @@ Modified `lib/services/guestAutoJoin.ts`:
 ### 5. Enhanced Guest Page
 
 Updated `app/guest/events/[eventId]/page.tsx`:
+
 - Better error messages for different failure scenarios
 - Telemetry logging (no PII)
 - Improved user experience
@@ -98,6 +106,7 @@ Updated `app/guest/events/[eventId]/page.tsx`:
 ### 6. Improved Auth Provider
 
 Updated `lib/auth/AuthProvider.tsx`:
+
 - Proper phone number normalization
 - Enhanced GuestLinkingManager with debug logging
 - Better phone extraction from user metadata
@@ -123,6 +132,7 @@ Updated `lib/auth/AuthProvider.tsx`:
 ### Phone Format Handling
 
 The system now handles all common phone number variations:
+
 - **Guest Records**: Stored in E.164 format (`+15712364686`)
 - **Auth Records**: May be stored without + prefix (`15712364686`)
 - **User Input**: Can be in various formats (`571-236-4686`, `(571) 236-4686`, etc.)
@@ -140,7 +150,8 @@ The system now handles all common phone number variations:
 ### Test Case Data
 
 **Event ID**: `24caa3a8-020e-4a80-9899-35ff2797dcc0`
-**Guest Record**: 
+**Guest Record**:
+
 - ID: `770ee5bc-3004-404d-bb80-3705006b6254`
 - Phone: `+15712364686`
 - Name: `Providence Ilisevich`
@@ -155,16 +166,19 @@ The system now handles all common phone number variations:
 
 ### Testing the Fix
 
-1. **Deep Link URL** (Legacy - now using hub links): 
+1. **Deep Link URL** (Legacy - now using hub links):
+
    ```
    https://app.sendunveil.com/guest/events/24caa3a8-020e-4a80-9899-35ff2797dcc0?phone=%2B15712364686
    ```
 
 2. **Expected Flow**:
+
    - Unauthenticated: Shows join gate → Login (OTP) → Auto-join → Redirect to event home
    - Authenticated: Auto-join immediately → Redirect to event home
 
 3. **Success Indicators**:
+
    - `event_guests.user_id` gets populated with `auth.uid()`
    - User redirected to `/guest/events/{eventId}/home`
    - Console logs show "Auto-join success" telemetry
@@ -195,27 +209,30 @@ The new RPC function bypasses these policies safely using `SECURITY DEFINER`.
 ### Client-Side Telemetry
 
 Success logs:
+
 ```javascript
 console.log('Auto-join success:', {
   eventId,
   userId,
-  hasPhone: boolean
+  hasPhone: boolean,
 });
 ```
 
 Error logs:
+
 ```javascript
 console.log('Auto-join telemetry:', {
   eventId,
   userId,
   hasPhone: boolean,
-  error: string
+  error: string,
 });
 ```
 
 ### Server-Side Logging
 
 The `guestAutoJoin.ts` service includes structured logging:
+
 - Phone numbers are masked for privacy (`+15712...`)
 - All operations logged with context
 - Errors include full details for debugging

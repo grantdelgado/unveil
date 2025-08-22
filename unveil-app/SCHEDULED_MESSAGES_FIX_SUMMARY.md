@@ -7,15 +7,18 @@ This PR fixes critical issues in the scheduled messaging system, ensuring accura
 ## Problems Fixed
 
 ### 1. ❌ Incorrect Recipient Counts (Critical Bug)
+
 - **Issue**: `explicit_selection` filter type was not handled in `resolveMessageRecipients()`
 - **Impact**: Scheduled messages showed 6 recipients when only 3 were selected
 - **Root Cause**: Function fell through to RPC call with undefined parameters, returning all event recipients
 
 ### 2. ⚠️ Missing Server-Side Validation
+
 - **Issue**: No validation of UTC timezone conversions during scheduling
 - **Impact**: Potential for invalid scheduled times, especially during DST transitions
 
 ### 3. 📱 Poor UI Messaging
+
 - **Issue**: UI showed "6 recipients" instead of "3 people"
 - **Impact**: Confusing user experience, unclear what the count represented
 
@@ -24,32 +27,39 @@ This PR fixes critical issues in the scheduled messaging system, ensuring accura
 ### A) Core Logic Fixes
 
 #### 1. Fixed `resolveMessageRecipients()` in `lib/services/messaging-client.ts`
+
 ```typescript
 // NEW: Handle explicit guest selection properly
 if (filter.type === 'explicit_selection' && filter.selectedGuestIds) {
   if (filter.selectedGuestIds.length === 0) {
-    throw new Error('No recipients selected. Please select at least one guest to send the message to.');
+    throw new Error(
+      'No recipients selected. Please select at least one guest to send the message to.',
+    );
   }
-  
-  return { 
-    guestIds: filter.selectedGuestIds, 
-    recipientCount: filter.selectedGuestIds.length 
+
+  return {
+    guestIds: filter.selectedGuestIds,
+    recipientCount: filter.selectedGuestIds.length,
   };
 }
 ```
 
 #### 2. Added Server-Side UTC Validation
+
 ```typescript
 // Verify UTC conversion is correct (within 60 second tolerance)
 const timeDifference = Math.abs(expectedUTCTime - storedUTCTime);
 if (timeDifference > 60000) {
-  throw new Error('Invalid scheduled time. Please check the date and time, especially during daylight saving transitions.');
+  throw new Error(
+    'Invalid scheduled time. Please check the date and time, especially during daylight saving transitions.',
+  );
 }
 ```
 
 ### B) Data Integrity
 
 #### 3. Backfill Script for Existing Data
+
 - **File**: `scripts/backfill-scheduled-message-recipient-counts.ts`
 - **Action**: Fixed 1 scheduled message (recipient_count: 6 → 3)
 - **Safety**: Idempotent, only updates `recipient_count` field
@@ -58,19 +68,21 @@ if (timeDifference > 60000) {
 ### C) UI Improvements
 
 #### 4. Better Count Display
-- **Before**: "6 recipients"  
+
+- **Before**: "6 recipients"
 - **After**: "3 people" (singular: "1 person")
-- **Files Updated**: 
+- **Files Updated**:
   - `components/features/messaging/host/RecentMessages.tsx`
   - `components/features/messaging/host/MessageComposer.tsx`
 
 ### D) Future-Proofing
 
 #### 5. Optional Recipient Snapshot (Feature Flag)
+
 - **Column**: `scheduled_messages.recipient_snapshot` (JSONB, nullable)
 - **Purpose**: Store resolved recipients at schedule time for audit trail
 - **Activation**: Set `NEXT_PUBLIC_ENABLE_RECIPIENT_SNAPSHOT=true`
-- **Format**: 
+- **Format**:
   ```json
   [
     {
@@ -86,6 +98,7 @@ if (timeDifference > 60000) {
 ### E) Comprehensive Testing
 
 #### 6. Test Coverage Added
+
 - **Unit Tests**: `__tests__/lib/recipient-count-fix.test.ts` (13 tests ✅)
 - **Integration Tests**: Scheduled message creation flow
 - **Backfill Tests**: Script validation and edge cases
@@ -93,27 +106,31 @@ if (timeDifference > 60000) {
 ## Verification Steps
 
 ### 1. Database State ✅
+
 ```sql
 SELECT id, recipient_count, cardinality(target_guest_ids) as actual_count
-FROM scheduled_messages 
+FROM scheduled_messages
 WHERE target_guest_ids IS NOT NULL;
 -- Result: All counts now match (3 = 3)
 ```
 
 ### 2. Manual Testing ✅
+
 - [x] Schedule message with 3 selected guests → shows "3 people"
-- [x] Schedule message with 1 selected guest → shows "1 person"  
+- [x] Schedule message with 1 selected guest → shows "1 person"
 - [x] Try to schedule with 0 selected → proper error message
 - [x] Invalid timezone → proper error message
 - [x] UI displays correct counts in Recent Messages
 
 ### 3. Automated Testing ✅
+
 ```bash
 npm test -- __tests__/lib/recipient-count-fix.test.ts
 # ✓ 13 tests passed
 ```
 
 ### 4. Linting ✅
+
 ```bash
 npm run lint
 # ✔ No ESLint warnings or errors
@@ -124,7 +141,7 @@ npm run lint
 ```
 MessageComposer (3 guests selected)
     ↓
-resolveMessageRecipients() 
+resolveMessageRecipients()
     ↓ [FIXED: Now handles explicit_selection]
 recipient_count = 3 ✅
     ↓
@@ -140,16 +157,18 @@ SMS sent to 3 recipients ✅
 ## Rollback Plan
 
 ### Safe Rollback Options:
+
 1. **Code Changes**: Standard git revert (backwards compatible)
 2. **Database Column**: `recipient_snapshot` is nullable, can be ignored
 3. **Backfill**: Idempotent script can be re-run if needed
 
 ### Emergency Rollback:
+
 ```sql
 -- If needed, revert recipient counts (NOT RECOMMENDED)
-UPDATE scheduled_messages 
+UPDATE scheduled_messages
 SET recipient_count = cardinality(target_guest_ids)
-WHERE target_guest_ids IS NOT NULL 
+WHERE target_guest_ids IS NOT NULL
 AND status IN ('scheduled', 'sending');
 ```
 
@@ -170,12 +189,14 @@ AND status IN ('scheduled', 'sending');
 ## Monitoring
 
 ### Key Metrics to Watch:
+
 1. **Scheduled Message Creation Success Rate** (should remain 100%)
 2. **Worker Processing Success Rate** (should remain high)
 3. **Recipient Count Accuracy** (manual spot checks)
 4. **UTC Conversion Errors** (should be rare, logged when they occur)
 
 ### Alerts to Add:
+
 - UTC validation failures (indicates timezone/DST issues)
 - Scheduled messages with 0 recipients (should be blocked now)
 

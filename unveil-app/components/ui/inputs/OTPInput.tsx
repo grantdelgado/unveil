@@ -1,6 +1,9 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
-import { getFieldValidationClass, ValidationResult } from '@/lib/utils/validation';
+import {
+  getFieldValidationClass,
+  ValidationResult,
+} from '@/lib/utils/validation';
 import { ValidationIcon, ValidationMessage } from './InputValidation';
 import { OTPInputProps } from './types';
 
@@ -22,10 +25,12 @@ export const OTPInput: React.FC<OTPInputProps> = ({
   onBlur,
   ...props
 }) => {
-  const [internalValidation, setInternalValidation] = useState<ValidationResult | undefined>();
+  const [internalValidation, setInternalValidation] = useState<
+    ValidationResult | undefined
+  >();
   const [hasBlurred, setHasBlurred] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  
+
   const validationResult = validation || internalValidation;
   const validationClass = getFieldValidationClass(validationResult);
 
@@ -36,24 +41,27 @@ export const OTPInput: React.FC<OTPInputProps> = ({
     }
   }, [autoFocus]);
 
-  const handleValidation = useCallback((value: string) => {
-    if (!validationFn) return;
+  const handleValidation = useCallback(
+    (value: string) => {
+      if (!validationFn) return;
 
-    const result = validationFn(value);
-    setInternalValidation(result);
-    onValidationChange?.(result);
-  }, [validationFn, onValidationChange]);
+      const result = validationFn(value);
+      setInternalValidation(result);
+      onValidationChange?.(result);
+    },
+    [validationFn, onValidationChange],
+  );
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     const digits = inputValue.replace(/\D/g, '').slice(0, 6);
-    
+
     onChange(digits);
-    
+
     if (realTimeValidation && (hasBlurred || digits.length > 0)) {
       handleValidation(digits);
     }
-    
+
     // Auto-complete when reaching 6 digits
     if (digits.length === 6 && onComplete) {
       setTimeout(() => {
@@ -62,21 +70,24 @@ export const OTPInput: React.FC<OTPInputProps> = ({
     }
   };
 
-  const handleBlur = useCallback((e: React.FocusEvent<HTMLInputElement>) => {
-    setHasBlurred(true);
-    onBlur?.(e);
-    
-    if (validationFn) {
-      handleValidation(value);
-    }
-  }, [onBlur, validationFn, value, handleValidation]);
+  const handleBlur = useCallback(
+    (e: React.FocusEvent<HTMLInputElement>) => {
+      setHasBlurred(true);
+      onBlur?.(e);
+
+      if (validationFn) {
+        handleValidation(value);
+      }
+    },
+    [onBlur, validationFn, value, handleValidation],
+  );
 
   // Handle paste events for better UX
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
     const pastedData = e.clipboardData.getData('text');
     const digits = pastedData.replace(/\D/g, '').slice(0, 6);
-    
+
     if (digits.length > 0) {
       onChange(digits);
       if (realTimeValidation) {
@@ -90,14 +101,22 @@ export const OTPInput: React.FC<OTPInputProps> = ({
     }
   };
 
-  const inputId = props.id || `otp-input-${Math.random().toString(36).substr(2, 9)}`;
+  const inputId =
+    props.id || `otp-input-${Math.random().toString(36).substr(2, 9)}`;
 
   return (
     <div className="space-y-2">
       {label && (
-        <label htmlFor={inputId} className="block text-sm font-medium text-gray-700">
+        <label
+          htmlFor={inputId}
+          className="block text-sm font-medium text-gray-700"
+        >
           {label}
-          {props.required && <span className="text-red-500 ml-1" aria-label="required">*</span>}
+          {props.required && (
+            <span className="text-red-500 ml-1" aria-label="required">
+              *
+            </span>
+          )}
         </label>
       )}
 
@@ -124,7 +143,8 @@ export const OTPInput: React.FC<OTPInputProps> = ({
             // Prevent iOS zoom and ensure touch-friendly size
             'text-[18px] md:text-lg min-h-[52px]',
             // Validation-based styling
-            validationClass || 'border-gray-300 focus:ring-pink-200 focus:border-pink-400',
+            validationClass ||
+              'border-gray-300 focus:ring-pink-200 focus:border-pink-400',
             // Icon spacing
             validationResult && 'pr-12',
             className,
@@ -158,4 +178,4 @@ export const OTPInput: React.FC<OTPInputProps> = ({
   );
 };
 
-OTPInput.displayName = 'OTPInput'; 
+OTPInput.displayName = 'OTPInput';

@@ -3,4 +3,4 @@ export {
   useLazyComponentMonitor,
   useBundleMonitor,
   performanceUtils,
-} from './usePerformanceMonitor' 
+} from './usePerformanceMonitor';

@@ -64,7 +64,10 @@ Sentry.init({
         }
 
         // Add real-time error context
-        if ('message' in error && (error.message as string).includes('realtime')) {
+        if (
+          'message' in error &&
+          (error.message as string).includes('realtime')
+        ) {
           event.tags = {
             ...event.tags,
             error_type: 'realtime',
@@ -78,4 +81,4 @@ Sentry.init({
 });
 
 // Export required hooks for Next.js App Router
-export const onRouterTransitionStart = Sentry.captureRouterTransitionStart; 
+export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;

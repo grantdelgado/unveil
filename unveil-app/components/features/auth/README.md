@@ -31,18 +31,18 @@ const [otp, setOtp] = useState('');
   error={error}
   autoFocus
   disabled={loading}
-/>
+/>;
 ```
 
 ## Keyboard Interactions
 
-| Key | Action |
-|-----|--------|
-| `0-9` | Enter digit and auto-advance to next box |
-| `Backspace` | Delete current digit, or move to previous box if empty |
-| `Arrow Left/Right` | Navigate between boxes |
-| `Tab` | Normal tab navigation |
-| `Paste` | Distribute pasted 6-digit code across all boxes |
+| Key                | Action                                                 |
+| ------------------ | ------------------------------------------------------ |
+| `0-9`              | Enter digit and auto-advance to next box               |
+| `Backspace`        | Delete current digit, or move to previous box if empty |
+| `Arrow Left/Right` | Navigate between boxes                                 |
+| `Tab`              | Normal tab navigation                                  |
+| `Paste`            | Distribute pasted 6-digit code across all boxes        |
 
 ## Props
 
@@ -61,7 +61,7 @@ All props from the original `OTPInput` component are supported:
 The component uses Tailwind classes and follows these design patterns:
 
 - **Box Size**: `w-12 h-12` (48x48px) for optimal touch targets
-- **Spacing**: `gap-3` between boxes for clear separation  
+- **Spacing**: `gap-3` between boxes for clear separation
 - **Typography**: Large text (`text-xl`) with monospace font for better digit recognition
 - **Focus States**: Pink ring consistent with Unveil's brand colors
 - **Error States**: Red borders when validation fails
@@ -79,17 +79,17 @@ The `ModernOTPInput` is a drop-in replacement for the old `OTPInput`:
 
 ```tsx
 // Old
-<OTPInput 
-  value={otp} 
-  onChange={setOtp} 
-  onComplete={handleComplete} 
+<OTPInput
+  value={otp}
+  onChange={setOtp}
+  onComplete={handleComplete}
 />
 
 // New - same interface!
-<ModernOTPInput 
-  value={otp} 
-  onChange={setOtp} 
-  onComplete={handleComplete} 
+<ModernOTPInput
+  value={otp}
+  onChange={setOtp}
+  onComplete={handleComplete}
 />
 ```
 

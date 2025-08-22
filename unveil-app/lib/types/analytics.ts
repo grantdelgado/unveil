@@ -9,4 +9,4 @@ export interface GtagConfig {
 
 export interface WindowWithGtag extends Window {
   gtag?: (command: string, targetId: string, config?: GtagConfig) => void;
-} 
+}

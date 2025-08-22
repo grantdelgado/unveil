@@ -15,4 +15,4 @@ export async function register() {
 }
 
 // Export required hooks for Next.js App Router
-export const onRequestError = Sentry.captureRequestError; 
+export const onRequestError = Sentry.captureRequestError;

@@ -29,8 +29,8 @@ export function MessageThread({
   messages = [],
   currentUserId,
   loading = false,
-  emptyTitle = "No messages yet",
-  emptyDescription = "Start the conversation by sending the first message!",
+  emptyTitle = 'No messages yet',
+  emptyDescription = 'Start the conversation by sending the first message!',
   autoScroll = true,
   className,
 }: MessageThreadProps) {
@@ -68,23 +68,21 @@ export function MessageThread({
 
   const groupMessagesByDate = (messages: MessageWithSender[]) => {
     const groups: { [key: string]: MessageWithSender[] } = {};
-    
+
     messages.forEach((message) => {
       if (!message.created_at) return;
-      
+
       const date = new Date(message.created_at);
       const dateKey = date.toDateString();
-      
+
       if (!groups[dateKey]) {
         groups[dateKey] = [];
       }
       groups[dateKey].push(message);
     });
-    
+
     return groups;
   };
-
-
 
   const groupedMessages = groupMessagesByDate(messages);
 
@@ -102,9 +100,13 @@ export function MessageThread({
           {/* Messages for this date */}
           <div className="space-y-3">
             {dateMessages.map((message, index) => {
-              const isOwnMessage = Boolean(currentUserId && message.sender_user_id === currentUserId);
+              const isOwnMessage = Boolean(
+                currentUserId && message.sender_user_id === currentUserId,
+              );
               const prevMessage = index > 0 ? dateMessages[index - 1] : null;
-              const showSender = !prevMessage || prevMessage.sender_user_id !== message.sender_user_id;
+              const showSender =
+                !prevMessage ||
+                prevMessage.sender_user_id !== message.sender_user_id;
 
               return (
                 <MessageBubble
@@ -123,4 +125,4 @@ export function MessageThread({
       <div ref={messagesEndRef} />
     </div>
   );
-} 
+}

@@ -46,7 +46,11 @@ interface DebugInfo {
   };
 }
 
-export function MessageDebugOverlay({ eventId, userId, guestId }: MessageDebugOverlayProps) {
+export function MessageDebugOverlay({
+  eventId,
+  userId,
+  guestId,
+}: MessageDebugOverlayProps) {
   const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
   const [loading, setLoading] = useState(false);
   const [showOverlay, setShowOverlay] = useState(false);
@@ -58,13 +62,14 @@ export function MessageDebugOverlay({ eventId, userId, guestId }: MessageDebugOv
 
   const fetchDebugInfo = async () => {
     if (!userId) return;
-    
+
     setLoading(true);
     try {
       // Get message deliveries for this user
       const { data: deliveries, error: deliveryError } = await supabase
         .from('message_deliveries')
-        .select(`
+        .select(
+          `
           id,
           message_id,
           user_id,
@@ -77,7 +82,8 @@ export function MessageDebugOverlay({ eventId, userId, guestId }: MessageDebugOv
             event_id,
             created_at
           )
-        `)
+        `,
+        )
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
         .limit(5);
@@ -108,8 +114,8 @@ export function MessageDebugOverlay({ eventId, userId, guestId }: MessageDebugOv
         errors: {
           deliveryError: deliveryError?.message,
           guestError: guestError?.message,
-          messagesError: messagesError?.message
-        }
+          messagesError: messagesError?.message,
+        },
       });
     } catch (error) {
       console.error('Debug info fetch error:', error);
@@ -121,8 +127,9 @@ export function MessageDebugOverlay({ eventId, userId, guestId }: MessageDebugOv
         eventGuest: null,
         allMessages: [],
         errors: {
-          deliveryError: error instanceof Error ? error.message : 'Unknown error'
-        }
+          deliveryError:
+            error instanceof Error ? error.message : 'Unknown error',
+        },
       });
     } finally {
       setLoading(false);
@@ -167,34 +174,53 @@ export function MessageDebugOverlay({ eventId, userId, guestId }: MessageDebugOv
             <div className="space-y-3">
               <div className="bg-gray-100 p-3 rounded">
                 <h4 className="font-semibold">Context:</h4>
-                <pre className="text-xs">{JSON.stringify({
-                  userId: debugInfo.userId,
-                  eventId: debugInfo.eventId,
-                  guestId: debugInfo.guestId
-                }, null, 2)}</pre>
+                <pre className="text-xs">
+                  {JSON.stringify(
+                    {
+                      userId: debugInfo.userId,
+                      eventId: debugInfo.eventId,
+                      guestId: debugInfo.guestId,
+                    },
+                    null,
+                    2,
+                  )}
+                </pre>
               </div>
 
               <div className="bg-green-100 p-3 rounded">
                 <h4 className="font-semibold">Event Guest Record:</h4>
-                <pre className="text-xs">{JSON.stringify(debugInfo.eventGuest, null, 2)}</pre>
+                <pre className="text-xs">
+                  {JSON.stringify(debugInfo.eventGuest, null, 2)}
+                </pre>
               </div>
 
               <div className="bg-blue-100 p-3 rounded">
-                <h4 className="font-semibold">Message Deliveries ({debugInfo.deliveries?.length || 0}):</h4>
-                <pre className="text-xs">{JSON.stringify(debugInfo.deliveries, null, 2)}</pre>
+                <h4 className="font-semibold">
+                  Message Deliveries ({debugInfo.deliveries?.length || 0}):
+                </h4>
+                <pre className="text-xs">
+                  {JSON.stringify(debugInfo.deliveries, null, 2)}
+                </pre>
               </div>
 
               <div className="bg-yellow-100 p-3 rounded">
-                <h4 className="font-semibold">All Event Messages ({debugInfo.allMessages?.length || 0}):</h4>
-                <pre className="text-xs">{JSON.stringify(debugInfo.allMessages, null, 2)}</pre>
+                <h4 className="font-semibold">
+                  All Event Messages ({debugInfo.allMessages?.length || 0}):
+                </h4>
+                <pre className="text-xs">
+                  {JSON.stringify(debugInfo.allMessages, null, 2)}
+                </pre>
               </div>
 
-              {debugInfo.errors && Object.values(debugInfo.errors).some(Boolean) && (
-                <div className="bg-red-100 p-3 rounded">
-                  <h4 className="font-semibold">Errors:</h4>
-                  <pre className="text-xs">{JSON.stringify(debugInfo.errors, null, 2)}</pre>
-                </div>
-              )}
+              {debugInfo.errors &&
+                Object.values(debugInfo.errors).some(Boolean) && (
+                  <div className="bg-red-100 p-3 rounded">
+                    <h4 className="font-semibold">Errors:</h4>
+                    <pre className="text-xs">
+                      {JSON.stringify(debugInfo.errors, null, 2)}
+                    </pre>
+                  </div>
+                )}
             </div>
           )}
         </div>

@@ -1,6 +1,6 @@
 /**
  * Critical Flow Smoke Tests
- * 
+ *
  * These tests verify the most essential user journeys work end-to-end.
  * They focus on integration points and critical business logic.
  */
@@ -120,9 +120,7 @@ describe('Critical Flow Smoke Tests', () => {
         }),
       });
 
-      const result = await mockSupabase
-        .from('messages')
-        .insert(messageData);
+      const result = await mockSupabase.from('messages').insert(messageData);
 
       expect(result.error).toBeNull();
       expect(result.data).toBeTruthy();
@@ -235,7 +233,7 @@ describe('Critical Flow Smoke Tests', () => {
       });
 
       const result = await mockSupabase.auth.getUser();
-      
+
       expect(result.data.user).toBeNull();
       expect(result.error).toBeTruthy();
     });

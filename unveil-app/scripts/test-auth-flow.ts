@@ -13,8 +13,11 @@ async function testAuthFlow() {
   try {
     // Test 1: Check initial session state
     console.log('1. Getting initial session...');
-    const { data: { session }, error } = await supabase.auth.getSession();
-    
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.getSession();
+
     if (error) {
       console.error('❌ Error getting session:', error.message);
       return;
@@ -46,7 +49,6 @@ async function testAuthFlow() {
     }
 
     console.log('\n🎉 Auth flow test completed successfully!');
-    
   } catch (error) {
     console.error('💥 Auth flow test failed:', error);
   }
@@ -58,4 +60,4 @@ testAuthFlow()
   .catch((error) => {
     console.error('Test execution failed:', error);
     process.exit(1);
-  }); 
+  });

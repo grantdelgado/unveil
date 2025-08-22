@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     if (!message.to || !message.message || !message.eventId) {
       return NextResponse.json(
         { error: 'Invalid request: to, message, and eventId are required' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -22,22 +22,23 @@ export async function POST(request: NextRequest) {
     logger.api(`Single SMS API completed:`, {
       success: result.success,
       messageId: result.messageId,
-      phone: message.to.slice(0, 6) + '...'
+      phone: message.to.slice(0, 6) + '...',
     });
 
     return NextResponse.json({
       success: true,
-      data: result
+      data: result,
     });
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Failed to send SMS message';
+    const errorMessage =
+      error instanceof Error ? error.message : 'Failed to send SMS message';
     logger.apiError('Single SMS API error', error);
     return NextResponse.json(
-      { 
-        success: false, 
-        error: errorMessage
+      {
+        success: false,
+        error: errorMessage,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

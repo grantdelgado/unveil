@@ -13,7 +13,7 @@ interface UseEventsReturn {
   currentEvent: Event | null;
   loading: boolean;
   error: Error | null;
-  
+
   // Actions
   createEvent: (eventData: EventInsert) => Promise<Event>;
   updateEvent: (id: string, updates: EventUpdate) => Promise<Event>;
@@ -26,19 +26,25 @@ interface UseEventsReturn {
 
 export function useEvents(): UseEventsReturn {
   const queryClient = useQueryClient();
-  
+
   // Get all events for current user
-  const { data: events, isLoading: loading, error } = useQuery({
+  const {
+    data: events,
+    isLoading: loading,
+    error,
+  } = useQuery({
     queryKey: ['events'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('events')
-        .select(`
+        .select(
+          `
           *,
           host:users!events_host_user_id_fkey(*)
-        `)
+        `,
+        )
         .order('event_date', { ascending: true });
-      
+
       if (error) throw new Error(error.message);
       return data as Event[];
     },
@@ -52,7 +58,7 @@ export function useEvents(): UseEventsReturn {
         .insert(eventData)
         .select('*')
         .single();
-      
+
       if (error) throw new Error(error.message);
       return data;
     },
@@ -63,14 +69,20 @@ export function useEvents(): UseEventsReturn {
 
   // Update event mutation
   const updateEventMutation = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: EventUpdate }): Promise<Event> => {
+    mutationFn: async ({
+      id,
+      updates,
+    }: {
+      id: string;
+      updates: EventUpdate;
+    }): Promise<Event> => {
       const { data, error } = await supabase
         .from('events')
         .update(updates)
         .eq('id', id)
         .select('*')
         .single();
-      
+
       if (error) throw new Error(error.message);
       return data;
     },
@@ -82,11 +94,8 @@ export function useEvents(): UseEventsReturn {
   // Delete event mutation
   const deleteEventMutation = useMutation({
     mutationFn: async (id: string): Promise<void> => {
-      const { error } = await supabase
-        .from('events')
-        .delete()
-        .eq('id', id);
-      
+      const { error } = await supabase.from('events').delete().eq('id', id);
+
       if (error) throw new Error(error.message);
     },
     onSuccess: () => {
@@ -95,29 +104,34 @@ export function useEvents(): UseEventsReturn {
   });
 
   // Helper functions
-  const getEventById = useCallback(async (id: string): Promise<Event | null> => {
-    const { data, error } = await supabase
-      .from('events')
-      .select('*')
-      .eq('id', id)
-      .single();
-    
-    if (error) return null;
-    return data;
-  }, []);
+  const getEventById = useCallback(
+    async (id: string): Promise<Event | null> => {
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) return null;
+      return data;
+    },
+    [],
+  );
 
   const getUserEvents = useCallback(async (): Promise<Event[]> => {
     const { data, error } = await supabase
       .from('events')
       .select('*')
       .order('event_date', { ascending: true });
-    
+
     if (error) throw new Error(error.message);
     return data;
   }, []);
 
   const getHostEvents = useCallback(async (): Promise<Event[]> => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
     const { data, error } = await supabase
@@ -125,7 +139,7 @@ export function useEvents(): UseEventsReturn {
       .select('*')
       .eq('host_user_id', user.id)
       .order('event_date', { ascending: true });
-    
+
     if (error) throw new Error(error.message);
     return data;
   }, []);
@@ -140,7 +154,7 @@ export function useEvents(): UseEventsReturn {
     loading,
     error: error as Error | null,
     createEvent: createEventMutation.mutateAsync,
-    updateEvent: (id: string, updates: EventUpdate) => 
+    updateEvent: (id: string, updates: EventUpdate) =>
       updateEventMutation.mutateAsync({ id, updates }),
     deleteEvent: deleteEventMutation.mutateAsync,
     getEventById,
@@ -148,4 +162,4 @@ export function useEvents(): UseEventsReturn {
     getHostEvents,
     refreshEvents,
   };
-} 
+}

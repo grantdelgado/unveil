@@ -27,7 +27,8 @@ export const supabase = createBrowserClient<Database>(
       // Enable heartbeat every 30 seconds to keep connection alive
       heartbeatIntervalMs: 30000,
       // Reconnect automatically with exponential backoff
-      reconnectAfterMs: (tries: number) => Math.min(1000 * Math.pow(2, tries), 30000),
+      reconnectAfterMs: (tries: number) =>
+        Math.min(1000 * Math.pow(2, tries), 30000),
       // Reduce realtime logging noise - only log errors
       logger: (kind: string, msg: string, data?: unknown) => {
         if (kind === 'error' || kind === 'close') {
@@ -44,7 +45,7 @@ export const supabase = createBrowserClient<Database>(
       // Connection params for better auth context
       params: {
         // Add event filter optimization
-        'log_level': process.env.NODE_ENV === 'development' ? 'debug' : 'info',
+        log_level: process.env.NODE_ENV === 'development' ? 'debug' : 'info',
       },
     },
     // Global request timeout with better error handling
@@ -60,7 +61,7 @@ export const supabase = createBrowserClient<Database>(
         const timeoutId = setTimeout(() => {
           controller.abort();
         }, 10000); // Reduced to 10 seconds for faster failure feedback
-        
+
         // Combine user signal with timeout signal
         if (options.signal) {
           if (options.signal.aborted) {
@@ -73,7 +74,7 @@ export const supabase = createBrowserClient<Database>(
             });
           }
         }
-        
+
         return fetch(url, {
           ...options,
           signal: controller.signal,

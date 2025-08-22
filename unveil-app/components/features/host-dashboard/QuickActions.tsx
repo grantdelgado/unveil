@@ -7,7 +7,7 @@ import {
   SectionTitle,
   SecondaryButton,
   MicroCopy,
-  LoadingSpinner
+  LoadingSpinner,
 } from '@/components/ui';
 
 interface QuickActionsProps {
@@ -112,7 +112,7 @@ export function QuickActions({ eventId }: QuickActionsProps) {
             >
               👁️ Preview Guest View
             </SecondaryButton>
-            
+
             {stats.pendingRSVPs > 0 && (
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
                 <div className="text-sm text-amber-700 font-medium mb-1">

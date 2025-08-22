@@ -6,19 +6,19 @@ export * from './guest-import';
 export * from './logger';
 
 // Explicitly re-export to avoid function name conflicts between utils and validations
-export { 
+export {
   cn,
   formatPhoneNumber,
   generateUniqueId,
   debounce,
   formatEventDate,
-  formatRelativeTime
+  formatRelativeTime,
 } from './utils';
 
 export {
   validatePhoneNumber,
-  validateEmail, 
+  validateEmail,
   validateEventTitle,
   validateGuestCSV,
-  validateMessageContent
+  validateMessageContent,
 } from './validations';

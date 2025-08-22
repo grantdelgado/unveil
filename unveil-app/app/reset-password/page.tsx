@@ -11,7 +11,7 @@ import {
   FieldLabel,
   TextInput,
   PrimaryButton,
-  LoadingSpinner
+  LoadingSpinner,
 } from '@/components/ui';
 
 function ResetPasswordForm() {
@@ -96,11 +96,13 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={
-      <PageWrapper>
-        <LoadingSpinner size="lg" text="Loading password reset..." />
-      </PageWrapper>
-    }>
+    <Suspense
+      fallback={
+        <PageWrapper>
+          <LoadingSpinner size="lg" text="Loading password reset..." />
+        </PageWrapper>
+      }
+    >
       <ResetPasswordForm />
     </Suspense>
   );

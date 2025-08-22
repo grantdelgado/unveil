@@ -35,12 +35,15 @@ export interface SMSInvitationResult {
 export async function sendGuestInvitationsAPI(
   eventId: string,
   guests: SMSInvitationGuest[],
-  options: SMSInvitationOptions = {}
+  options: SMSInvitationOptions = {},
 ): Promise<SMSInvitationResult> {
   try {
     // Get the user's session token with better error handling
     const { supabase } = await import('../supabase/client');
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession();
 
     if (sessionError) {
       console.error('Session error:', sessionError);
@@ -68,13 +71,17 @@ export async function sendGuestInvitationsAPI(
     }
 
     // Check if current user is authorized as host (either primary host or delegated host)
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
       throw new Error('User authentication required');
     }
 
-    const { data: hostCheck, error: hostError } = await supabase
-      .rpc('is_event_host', { p_event_id: eventId });
+    const { data: hostCheck, error: hostError } = await supabase.rpc(
+      'is_event_host',
+      { p_event_id: eventId },
+    );
 
     if (hostError) {
       console.error('Host authorization check failed:', hostError);
@@ -82,26 +89,28 @@ export async function sendGuestInvitationsAPI(
     }
 
     if (!hostCheck) {
-      throw new Error('You must be authorized as a host for this event to send invitations');
+      throw new Error(
+        'You must be authorized as a host for this event to send invitations',
+      );
     }
 
     console.log('Sending SMS invitations:', {
       eventId,
       eventTitle: event.title,
       guestCount: guests.length,
-      userId: user.id
+      userId: user.id,
     });
 
     const response = await fetch('/api/sms/send-invitations', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
+        Authorization: `Bearer ${session.access_token}`,
       },
       body: JSON.stringify({
         eventId,
         guests,
-        options
+        options,
       }),
     });
 
@@ -112,9 +121,12 @@ export async function sendGuestInvitationsAPI(
         status: response.status,
         statusText: response.statusText,
         error: result.error,
-        details: result.details
+        details: result.details,
       });
-      throw new Error(result.error || `SMS API error (${response.status}): ${response.statusText}`);
+      throw new Error(
+        result.error ||
+          `SMS API error (${response.status}): ${response.statusText}`,
+      );
     }
 
     return {
@@ -123,9 +135,8 @@ export async function sendGuestInvitationsAPI(
       failed: result.failed,
       rateLimited: result.rateLimited,
       message: result.message,
-      results: result.results
+      results: result.results,
     };
-
   } catch (error) {
     console.error('Error sending SMS invitations:', error);
     return {
@@ -134,7 +145,7 @@ export async function sendGuestInvitationsAPI(
       failed: 0,
       rateLimited: 0,
       message: 'Failed to send invitations',
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     };
   }
 }
@@ -145,7 +156,7 @@ export async function sendGuestInvitationsAPI(
 export async function sendSingleGuestInvitationAPI(
   eventId: string,
   guest: SMSInvitationGuest,
-  options: SMSInvitationOptions = {}
+  options: SMSInvitationOptions = {},
 ): Promise<SMSInvitationResult> {
   return sendGuestInvitationsAPI(eventId, [guest], options);
 }
