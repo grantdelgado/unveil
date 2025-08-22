@@ -1,0 +1,268 @@
+-- ============================================================================
+-- Migration: Baseline Schema - Consolidation of Core Tables and Functions
+-- ============================================================================
+--
+-- This migration establishes a clean baseline for the Unveil application schema,
+-- consolidating functionality from archived migrations and ensuring all core
+-- components are properly defined.
+
+-- Enable required extensions
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "moddatetime";
+
+-- Create ENUM types
+DO $$ BEGIN
+    CREATE TYPE user_link_outcome_enum AS ENUM ('linked', 'no_match', 'ambiguous', 'skipped');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE message_type_enum AS ENUM ('direct', 'announcement', 'channel');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+-- Ensure all core tables exist with proper structure
+-- (This is idempotent - only creates if not exists)
+
+-- Users table
+CREATE TABLE IF NOT EXISTS public.users (
+    id uuid PRIMARY KEY DEFAULT auth.uid(),
+    phone text UNIQUE NOT NULL,
+    full_name text,
+    avatar_url text,
+    email text,
+    created_at timestamptz DEFAULT now(),
+    updated_at timestamptz DEFAULT now(),
+    onboarding_completed boolean NOT NULL DEFAULT false,
+    intended_redirect text
+);
+
+-- Events table  
+CREATE TABLE IF NOT EXISTS public.events (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    title text NOT NULL,
+    event_date date NOT NULL,
+    location text,
+    description text,
+    host_user_id uuid NOT NULL REFERENCES public.users(id),
+    header_image_url text,
+    is_public boolean DEFAULT false,
+    created_at timestamptz DEFAULT now(),
+    updated_at timestamptz DEFAULT now(),
+    allow_open_signup boolean NOT NULL DEFAULT true,
+    website_url text,
+    time_zone text CHECK (time_zone IS NULL OR time_zone ~ '^[A-Za-z_]+/[A-Za-z_]+$' AND length(time_zone) >= 3 AND length(time_zone) <= 50),
+    photo_album_url text,
+    creation_key uuid
+);
+
+-- Event guests table
+CREATE TABLE IF NOT EXISTS public.event_guests (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    event_id uuid NOT NULL REFERENCES public.events(id) ON DELETE CASCADE,
+    user_id uuid REFERENCES public.users(id),
+    guest_name text,
+    guest_email text,
+    phone text CHECK (phone IS NULL OR phone ~ '^\\+[1-9]\\d{1,14}$'),
+    rsvp_status text DEFAULT 'pending' CHECK (rsvp_status = ANY (ARRAY['attending', 'declined', 'maybe', 'pending'])),
+    notes text,
+    guest_tags text[] DEFAULT '{}' CHECK (array_length(guest_tags, 1) IS NULL OR array_length(guest_tags, 1) <= 10),
+    created_at timestamptz DEFAULT now(),
+    updated_at timestamptz DEFAULT now(),
+    role text NOT NULL DEFAULT 'guest' CHECK (role = ANY (ARRAY['host', 'guest', 'admin'])),
+    invited_at timestamptz,
+    phone_number_verified boolean DEFAULT false,
+    sms_opt_out boolean DEFAULT false,
+    preferred_communication varchar DEFAULT 'sms' CHECK (preferred_communication::text = ANY (ARRAY['sms', 'push', 'email', 'none'])),
+    display_name text,
+    declined_at timestamptz,
+    decline_reason text,
+    last_invited_at timestamptz,
+    invite_attempts integer DEFAULT 0,
+    joined_at timestamptz,
+    removed_at timestamptz,
+    last_messaged_at timestamptz,
+    first_invited_at timestamptz
+);
+
+-- Messages table
+CREATE TABLE IF NOT EXISTS public.messages (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    event_id uuid NOT NULL REFERENCES public.events(id) ON DELETE CASCADE,
+    sender_user_id uuid REFERENCES public.users(id),
+    content text NOT NULL,
+    message_type message_type_enum DEFAULT 'direct',
+    created_at timestamptz DEFAULT now(),
+    delivered_count integer DEFAULT 0 CHECK (delivered_count >= 0),
+    failed_count integer DEFAULT 0 CHECK (failed_count >= 0),
+    delivered_at timestamptz,
+    scheduled_message_id uuid
+);
+
+-- Scheduled messages table
+CREATE TABLE IF NOT EXISTS public.scheduled_messages (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    event_id uuid NOT NULL REFERENCES public.events(id) ON DELETE CASCADE,
+    sender_user_id uuid NOT NULL REFERENCES public.users(id),
+    subject varchar,
+    content text NOT NULL,
+    message_type message_type_enum DEFAULT 'announcement',
+    send_at timestamptz NOT NULL,
+    target_all_guests boolean DEFAULT false,
+    target_sub_event_ids uuid[],
+    target_guest_tags text[],
+    target_guest_ids uuid[],
+    send_via_sms boolean DEFAULT true,
+    send_via_push boolean DEFAULT true,
+    send_via_email boolean DEFAULT false,
+    status varchar DEFAULT 'scheduled' CHECK (status::text = ANY (ARRAY['scheduled', 'sending', 'sent', 'failed', 'cancelled'])),
+    sent_at timestamptz,
+    recipient_count integer DEFAULT 0,
+    success_count integer DEFAULT 0,
+    failure_count integer DEFAULT 0,
+    created_at timestamptz DEFAULT now(),
+    updated_at timestamptz DEFAULT now(),
+    scheduled_tz text,
+    scheduled_local text,
+    idempotency_key text,
+    recipient_snapshot jsonb
+);
+
+-- Message deliveries table
+CREATE TABLE IF NOT EXISTS public.message_deliveries (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    scheduled_message_id uuid REFERENCES public.scheduled_messages(id),
+    message_id uuid NOT NULL REFERENCES public.messages(id) ON DELETE CASCADE,
+    guest_id uuid REFERENCES public.event_guests(id),
+    phone_number varchar,
+    email varchar,
+    user_id uuid REFERENCES public.users(id),
+    sms_status varchar DEFAULT 'pending' CHECK (sms_status::text = ANY (ARRAY['pending', 'sent', 'delivered', 'failed', 'undelivered'])),
+    push_status varchar DEFAULT 'pending' CHECK (push_status::text = ANY (ARRAY['pending', 'sent', 'delivered', 'failed', 'not_applicable'])),
+    email_status varchar DEFAULT 'pending' CHECK (email_status::text = ANY (ARRAY['pending', 'sent', 'delivered', 'failed', 'not_applicable'])),
+    sms_provider_id varchar,
+    push_provider_id varchar,
+    email_provider_id varchar,
+    has_responded boolean DEFAULT false,
+    response_message_id uuid REFERENCES public.messages(id),
+    created_at timestamptz DEFAULT now(),
+    updated_at timestamptz DEFAULT now()
+);
+
+-- Media table
+CREATE TABLE IF NOT EXISTS public.media (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    event_id uuid NOT NULL REFERENCES public.events(id) ON DELETE CASCADE,
+    uploader_user_id uuid REFERENCES public.users(id),
+    storage_path text NOT NULL,
+    media_type text NOT NULL CHECK (media_type = ANY (ARRAY['image', 'video'])),
+    caption text,
+    created_at timestamptz DEFAULT now()
+);
+
+-- Event schedule items table
+CREATE TABLE IF NOT EXISTS public.event_schedule_items (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    event_id uuid NOT NULL REFERENCES public.events(id) ON DELETE CASCADE,
+    title text NOT NULL,
+    start_at timestamptz NOT NULL,
+    end_at timestamptz,
+    attire text,
+    location text,
+    created_at timestamptz DEFAULT now(),
+    updated_at timestamptz DEFAULT now()
+);
+
+-- User link audit table
+CREATE TABLE IF NOT EXISTS public.user_link_audit (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    table_name text NOT NULL,
+    record_id uuid NOT NULL,
+    event_id uuid NOT NULL REFERENCES public.events(id),
+    normalized_phone text NOT NULL,
+    matched_guest_id uuid REFERENCES public.event_guests(id),
+    linked_user_id uuid REFERENCES public.users(id),
+    outcome user_link_outcome_enum NOT NULL,
+    created_at timestamptz DEFAULT now()
+);
+
+-- Create essential indexes
+CREATE INDEX IF NOT EXISTS idx_events_host_user_id ON public.events(host_user_id);
+CREATE INDEX IF NOT EXISTS idx_event_guests_event_id ON public.event_guests(event_id);
+CREATE INDEX IF NOT EXISTS idx_event_guests_user_id ON public.event_guests(user_id) WHERE user_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_event_guests_phone ON public.event_guests(phone) WHERE phone IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_messages_event_id ON public.messages(event_id);
+CREATE INDEX IF NOT EXISTS idx_messages_event_type_created ON public.messages(event_id, message_type, created_at);
+CREATE INDEX IF NOT EXISTS idx_messages_scheduled_message_id ON public.messages(scheduled_message_id) WHERE scheduled_message_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_message_deliveries_user_id ON public.message_deliveries(user_id) WHERE user_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_message_deliveries_message_id ON public.message_deliveries(message_id);
+CREATE INDEX IF NOT EXISTS idx_scheduled_messages_send_at ON public.scheduled_messages(send_at) WHERE status = 'scheduled';
+
+-- Add unique constraint for event creation idempotency
+CREATE UNIQUE INDEX IF NOT EXISTS idx_events_creation_key_unique ON public.events(creation_key) WHERE creation_key IS NOT NULL;
+
+-- Add foreign key constraint for messages.scheduled_message_id
+DO $$ BEGIN
+    ALTER TABLE public.messages 
+    ADD CONSTRAINT messages_scheduled_message_id_fkey 
+    FOREIGN KEY (scheduled_message_id) REFERENCES public.scheduled_messages(id);
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+-- Enable RLS on all tables
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.events ENABLE ROW LEVEL SECURITY;  
+ALTER TABLE public.event_guests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.scheduled_messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.message_deliveries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.media ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.event_schedule_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_link_audit ENABLE ROW LEVEL SECURITY;
+
+-- Force RLS where appropriate
+ALTER TABLE public.event_guests FORCE ROW LEVEL SECURITY;
+ALTER TABLE public.messages FORCE ROW LEVEL SECURITY;
+ALTER TABLE public.message_deliveries FORCE ROW LEVEL SECURITY;
+
+-- Add update triggers for updated_at columns
+DROP TRIGGER IF EXISTS handle_updated_at ON public.users;
+CREATE TRIGGER handle_updated_at BEFORE UPDATE ON public.users 
+    FOR EACH ROW EXECUTE PROCEDURE moddatetime (updated_at);
+
+DROP TRIGGER IF EXISTS handle_updated_at ON public.events;
+CREATE TRIGGER handle_updated_at BEFORE UPDATE ON public.events 
+    FOR EACH ROW EXECUTE PROCEDURE moddatetime (updated_at);
+
+DROP TRIGGER IF EXISTS handle_updated_at ON public.event_guests;
+CREATE TRIGGER handle_updated_at BEFORE UPDATE ON public.event_guests 
+    FOR EACH ROW EXECUTE PROCEDURE moddatetime (updated_at);
+
+DROP TRIGGER IF EXISTS handle_updated_at ON public.scheduled_messages;
+CREATE TRIGGER handle_updated_at BEFORE UPDATE ON public.scheduled_messages 
+    FOR EACH ROW EXECUTE PROCEDURE moddatetime (updated_at);
+
+DROP TRIGGER IF EXISTS handle_updated_at ON public.message_deliveries;
+CREATE TRIGGER handle_updated_at BEFORE UPDATE ON public.message_deliveries 
+    FOR EACH ROW EXECUTE PROCEDURE moddatetime (updated_at);
+
+DROP TRIGGER IF EXISTS handle_updated_at ON public.event_schedule_items;
+CREATE TRIGGER handle_updated_at BEFORE UPDATE ON public.event_schedule_items 
+    FOR EACH ROW EXECUTE PROCEDURE moddatetime (updated_at);
+
+-- Record this baseline migration
+INSERT INTO public.schema_migrations (version, description)
+VALUES (
+  '20250130000020_baseline_schema',
+  'Baseline schema consolidation with all core tables, indexes, and constraints. Incorporates functionality from archived migrations.'
+)
+ON CONFLICT (version) DO NOTHING;
+
+COMMENT ON TABLE public.events IS 'Core events table with idempotency support via creation_key';
+COMMENT ON TABLE public.event_guests IS 'Guest records with soft delete support (removed_at) and invitation tracking';
+COMMENT ON TABLE public.messages IS 'Messages with type-based routing (direct/announcement/channel)';
+COMMENT ON TABLE public.message_deliveries IS 'Delivery tracking with user_id linkage for message access';
+COMMENT ON TABLE public.user_link_audit IS 'Audit trail for automatic user-guest linking by phone number';

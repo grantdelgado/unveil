@@ -1,0 +1,30 @@
+[
+  {
+    "file": "docs/database/auto-link-user-by-phone.md",
+    "line": 45,
+    "type": "us_phone",
+    "text": "+1234567890",
+    "context": "Example: +1234567890 -> normalized to +1234567890"
+  },
+  {
+    "file": "docs/database/auto-link-quick-reference.md", 
+    "line": 23,
+    "type": "us_phone",
+    "text": "+15551234567",
+    "context": "Test phone: +15551234567 (555 area code - fake)"
+  },
+  {
+    "file": "docs/archive/project-docs-legacy/06-REFERENCE/CLAUDE.md",
+    "line": 156,
+    "type": "email",
+    "text": "example@unveil.app",
+    "context": "Example user: example@unveil.app"
+  },
+  {
+    "file": "docs/archive/project-docs-legacy/06-REFERENCE/CLAUDE.md",
+    "line": 178,
+    "type": "us_phone", 
+    "text": "(555) 123-4567",
+    "context": "Sample contact: (555) 123-4567"
+  }
+]

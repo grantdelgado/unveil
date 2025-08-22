@@ -1,0 +1,28 @@
+{
+  "ignorePatterns": [
+    {
+      "pattern": "^https://github.com"
+    },
+    {
+      "pattern": "^https://supabase.com"
+    },
+    {
+      "pattern": "^https://vercel.com"
+    },
+    {
+      "pattern": "^https://twilio.com"
+    }
+  ],
+  "timeout": "10s",
+  "retryOn429": true,
+  "retryCount": 3,
+  "fallbackRetryDelay": "30s",
+  "aliveStatusCodes": [200, 206, 301, 302, 307, 308, 403, 405],
+  "ignoreDisable": false,
+  "replacementPatterns": [
+    {
+      "pattern": "^/",
+      "replacement": "{{BASEURL}}/"
+    }
+  ]
+}

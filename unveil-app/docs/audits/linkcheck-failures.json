@@ -1,0 +1,56 @@
+{
+  "broken_internal_links": [
+    {
+      "file": "docs/archive/project-docs-legacy/01-ENGINEERING/docs-messaging-system-guide.md",
+      "line": 350,
+      "link": "./docs-SMS_SETUP_GUIDE.md",
+      "status": "missing_file",
+      "target": "docs/archive/project-docs-legacy/01-ENGINEERING/docs-SMS_SETUP_GUIDE.md"
+    },
+    {
+      "file": "docs/archive/project-docs-legacy/01-ENGINEERING/docs-messaging-system-guide.md", 
+      "line": 351,
+      "link": "./docs-production-environment-setup.md",
+      "status": "missing_file",
+      "target": "docs/archive/project-docs-legacy/01-ENGINEERING/docs-production-environment-setup.md"
+    },
+    {
+      "file": "docs/archive/project-docs-legacy/01-ENGINEERING/docs-messaging-system-guide.md",
+      "line": 352,
+      "link": "../app/reference/schema.sql", 
+      "status": "incorrect_path",
+      "target": "app/reference/schema.sql"
+    },
+    {
+      "file": "docs/archive/project-docs-legacy/00-OVERVIEW/README.md",
+      "line": 13,
+      "link": "./docs-architecture-guide.md",
+      "status": "incorrect_path", 
+      "target": "docs/archive/project-docs-legacy/01-ENGINEERING/docs-architecture-guide.md"
+    },
+    {
+      "file": "docs/archive/project-docs-legacy/00-OVERVIEW/README.md",
+      "line": 24,
+      "link": "./docs-architecture-guide.md",
+      "status": "incorrect_path",
+      "target": "docs/archive/project-docs-legacy/01-ENGINEERING/docs-architecture-guide.md"
+    }
+  ],
+  "external_link_timeouts": [
+    {
+      "file": "docs/archive/project-docs-legacy/04-OPERATIONS/docs-SMS_SETUP_GUIDE.md",
+      "line": 11,
+      "link": "https://twilio.com",
+      "status": "timeout",
+      "error": "Connection timeout after 5 seconds"
+    }
+  ],
+  "anchor_link_failures": [],
+  "summary": {
+    "total_files_checked": 213,
+    "files_with_broken_links": 3,
+    "total_broken_internal_links": 5,
+    "total_external_timeouts": 1,
+    "total_anchor_failures": 0
+  }
+}

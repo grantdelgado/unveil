@@ -1,0 +1,115 @@
+name: Documentation Quality
+
+on:
+  push:
+    paths:
+      - 'docs/**'
+      - '*.md'
+      - '.github/workflows/docs-quality.yml'
+  pull_request:
+    paths:
+      - 'docs/**'
+      - '*.md'
+      - '.github/workflows/docs-quality.yml'
+
+jobs:
+  markdown-lint:
+    name: Markdown Linting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install markdownlint-cli2
+        run: npm install -g markdownlint-cli2
+
+      - name: Run markdownlint
+        run: markdownlint-cli2 "**/*.md" "#node_modules" "#.next"
+
+  link-check:
+    name: Link Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install markdown-link-check
+        run: npm install -g markdown-link-check
+
+      - name: Check internal links
+        run: |
+          find . -name "*.md" -not -path "./node_modules/*" -not -path "./.next/*" | \
+          xargs -I {} markdown-link-check {} --config .github/markdown-link-check-config.json
+
+  pii-scan:
+    name: PII Detection
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install PII scanner
+        run: |
+          pip install re
+
+      - name: Run PII scan
+        run: python .github/scripts/pii-scanner.py
+
+  front-matter-check:
+    name: Front Matter Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install front-matter parser
+        run: npm install -g gray-matter
+
+      - name: Check front matter
+        run: node .github/scripts/check-front-matter.js
+
+  doc-structure:
+    name: Documentation Structure
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify documentation structure
+        run: |
+          # Check for required files
+          test -f docs/README.md || (echo "Missing docs/README.md" && exit 1)
+          test -d docs/architecture || (echo "Missing docs/architecture/" && exit 1)
+          test -d docs/project || (echo "Missing docs/project/" && exit 1)
+          test -d docs/development || (echo "Missing docs/development/" && exit 1)
+          test -d docs/audits || (echo "Missing docs/audits/" && exit 1)
+          
+          # Check for orphaned files in root
+          orphaned=$(find docs/ -maxdepth 1 -name "*.md" -not -name "README.md" | wc -l)
+          if [ $orphaned -gt 5 ]; then
+            echo "Warning: $orphaned files in docs root (consider organizing into subdirectories)"
+            exit 1
+          fi
+          
+          echo "Documentation structure validation passed"
