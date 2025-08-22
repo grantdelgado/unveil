@@ -67,6 +67,7 @@ export function useGuestSelection({
       guest_name: recipient.guest_name,
       guest_email: recipient.guest_email,
       phone: recipient.phone,
+      a2p_notice_sent_at: null, // Not used in messaging UI
       rsvp_status: recipient.declined_at ? 'declined' : 'attending', // RSVP-Lite logic
       notes: null, // Not needed for messaging
       guest_tags: recipient.guest_tags,

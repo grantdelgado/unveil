@@ -120,6 +120,15 @@ export const eventDetailsSchema = z.object({
 
   photo_album_url: photoAlbumUrlSchema,
 
+  // SMS branding
+  sms_tag: z
+    .string()
+    .max(14, 'SMS tag must be 14 characters or less')
+    .regex(/^[a-zA-Z0-9+\s]*$/, 'SMS tag can only contain letters, numbers, spaces, and +')
+    .trim()
+    .optional()
+    .or(z.literal('')),
+
   // Visibility settings
   is_public: z.boolean(),
 
@@ -140,6 +149,7 @@ export function transformEventDetailsForDB(data: EventDetailsFormData) {
     location: data.location || null,
     website_url: data.website_url || null,
     photo_album_url: data.photo_album_url || null,
+    sms_tag: data.sms_tag || null,
     is_public: data.is_public,
     allow_open_signup: data.allow_open_signup,
   };

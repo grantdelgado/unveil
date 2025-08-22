@@ -92,6 +92,7 @@ export function EventDetailsEditor({
       location: event.location || '',
       website_url: event.website_url || '',
       photo_album_url: event.photo_album_url || '',
+      sms_tag: event.sms_tag || '',
       is_public: event.is_public ?? false,
       allow_open_signup: event.allow_open_signup ?? true,
     },
@@ -367,6 +368,40 @@ export function EventDetailsEditor({
               <MicroCopy>
                 Paste a link to your shared album (iCloud, Google Photos,
                 Dropbox, etc.). We&apos;ll add https:// if missing.
+              </MicroCopy>
+            </div>
+          </div>
+        </CardContainer>
+
+        {/* SMS Branding Group */}
+        <CardContainer className="p-6">
+          <div className="space-y-6">
+            <SectionTitle className="flex items-center gap-2">
+              <span className="text-2xl">💬</span>
+              SMS Branding
+            </SectionTitle>
+
+            <div className="space-y-2">
+              <FieldLabel htmlFor="sms_tag">
+                Event Tag for SMS
+              </FieldLabel>
+              <TextInput
+                id="sms_tag"
+                {...register('sms_tag')}
+                placeholder="e.g., Sarah+David, Wedding2025"
+                error={errors.sms_tag?.message}
+                disabled={isSubmitting}
+                maxLength={14}
+              />
+              <MicroCopy>
+                Optional: This tag appears in [brackets] at the start of SMS messages to identify your event.
+                Max 14 characters. Leave empty to auto-generate from event title.
+                {watchedValues.sms_tag && (
+                  <>
+                    <br />
+                    <span className="font-medium">Preview:</span> [{watchedValues.sms_tag}] Your message text here...
+                  </>
+                )}
               </MicroCopy>
             </div>
           </div>

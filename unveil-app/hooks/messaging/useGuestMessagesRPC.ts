@@ -9,6 +9,39 @@ import { mergeMessages, type GuestMessage } from '@/lib/utils/messageUtils';
 const INITIAL_WINDOW_SIZE = 30;
 const OLDER_MESSAGES_BATCH_SIZE = 20;
 
+/**
+ * Type adapter to safely map RPC response to GuestMessage
+ * Handles type mismatches between database RPC and UI types
+ */
+function mapRpcMessageToGuestMessage(rpcMessage: any): GuestMessage {
+  // Safely map source field with fallback
+  let source: 'delivery' | 'message' | undefined;
+  if (rpcMessage.source === 'delivery' || rpcMessage.source === 'message') {
+    source = rpcMessage.source;
+  } else if (rpcMessage.source) {
+    // Log unknown source types for debugging (no PII)
+    logger.debug('Unknown message source type encountered', {
+      sourceType: typeof rpcMessage.source,
+      hasSource: !!rpcMessage.source,
+    });
+    source = undefined; // Use undefined for unknown types
+  }
+
+  return {
+    message_id: rpcMessage.message_id,
+    content: rpcMessage.content,
+    created_at: rpcMessage.created_at,
+    delivery_status: rpcMessage.delivery_status,
+    sender_name: rpcMessage.sender_name,
+    sender_avatar_url: rpcMessage.sender_avatar_url,
+    message_type: rpcMessage.message_type,
+    is_own_message: rpcMessage.is_own_message,
+    source,
+    is_catchup: rpcMessage.is_catchup,
+    channel_tags: rpcMessage.channel_tags,
+  };
+}
+
 // Message type from RPC response (now imported from utils)
 // interface GuestMessage moved to lib/utils/messageUtils.ts
 
@@ -134,8 +167,11 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
         ? messagesArray.slice(0, INITIAL_WINDOW_SIZE)
         : messagesArray;
 
+      // Map RPC response to GuestMessage type with safe type adapter
+      const adaptedMessages = messagesToShow.map(mapRpcMessageToGuestMessage);
+      
       // Reverse to show chronological order (oldest first)
-      const sortedMessages = messagesToShow.reverse();
+      const sortedMessages = adaptedMessages.reverse();
 
       setMessages(sortedMessages);
       setHasMore(hasMoreMessages);
@@ -297,8 +333,11 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
         : messagesArray;
 
       if (messagesToPrepend.length > 0) {
+        // Map RPC response to GuestMessage type with safe type adapter
+        const adaptedMessages = messagesToPrepend.map(mapRpcMessageToGuestMessage);
+        
         // Reverse to chronological order and prepend to existing messages
-        const sortedOlderMessages = messagesToPrepend.reverse();
+        const sortedOlderMessages = adaptedMessages.reverse();
 
         // Deduplicate by ID to prevent duplicates during realtime updates
         setMessages((prevMessages) => {

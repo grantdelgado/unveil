@@ -61,10 +61,50 @@ vi.mock('@supabase/supabase-js', () => ({
   createClient: vi.fn(() => mockSupabaseClient),
 }));
 
+// Mock server-side Supabase client
+vi.mock('@/lib/supabase/server', () => ({
+  createServerSupabaseClient: vi.fn(() => mockSupabaseClient),
+}));
+
+// Mock logger
+vi.mock('@/lib/logger', () => ({
+  logger: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
+    sms: vi.fn(),
+    smsError: vi.fn(),
+    api: vi.fn(),
+    apiError: vi.fn(),
+  },
+}));
+
+// Mock Twilio
+const mockTwilioClient = {
+  messages: {
+    create: vi.fn().mockResolvedValue({
+      sid: 'SM1234567890abcdef1234567890abcdef',
+      status: 'queued',
+      to: '+12345678901',
+      from: '+12345678900',
+      body: 'Test message',
+    }),
+  },
+};
+
+vi.mock('twilio', () => ({
+  default: vi.fn(() => mockTwilioClient),
+}));
+
 // Mock environment variables - Vitest handles this via config, but we ensure they're available
 Object.assign(process.env, {
   NEXT_PUBLIC_SUPABASE_URL: 'https://test.supabase.co',
   NEXT_PUBLIC_SUPABASE_ANON_KEY: 'test-anon-key',
+  SMS_BRANDING_DISABLED: 'false', // Default to branding enabled
+  TWILIO_ACCOUNT_SID: 'test-account-sid',
+  TWILIO_AUTH_TOKEN: 'test-auth-token',
+  TWILIO_PHONE_NUMBER: '+12345678900',
 });
 
 // MSW server for API mocking
@@ -99,7 +139,7 @@ afterAll(() => {
 });
 
 // Test utilities
-export { mockSupabaseClient };
+export { mockSupabaseClient, mockTwilioClient };
 
 // User interface for testing
 interface TestUser {

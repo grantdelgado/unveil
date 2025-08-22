@@ -51,6 +51,7 @@ export function useRecipientPreview({
       guest_name: recipient.guest_name,
       guest_email: recipient.guest_email,
       phone: recipient.phone,
+      a2p_notice_sent_at: null, // Not used in preview
       rsvp_status: recipient.declined_at ? 'declined' : 'attending',
       notes: null,
       guest_tags: recipient.guest_tags,

@@ -1,6 +1,7 @@
 import { getErrorMessage } from './utils';
 import { SMSRetry } from '@/lib/utils/retry';
 import { logger } from '@/lib/logger';
+import { composeSmsText, markA2pNoticeSent } from '@/lib/sms-formatter';
 
 // Twilio configuration - will be dynamically imported to avoid server-side issues
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -182,16 +183,27 @@ export async function sendSMS({
       process.env.NODE_ENV === 'development' &&
       process.env.DEV_SIMULATE_INVITES === 'true'
     ) {
+      // Format SMS even in simulation mode for testing
+      const formattedSms = await composeSmsText(eventId, guestId, message);
+      
       logger.info('🔧 SMS SIMULATION MODE - No actual SMS sent', {
         phone: to.slice(0, 6) + '...',
-        messagePreview: message.substring(0, 100) + '...',
-        messageLength: message.length,
+        messagePreview: formattedSms.text.substring(0, 100) + '...',
+        originalLength: message.length,
+        finalLength: formattedSms.length,
+        segments: formattedSms.segments,
+        includedStopNotice: formattedSms.includedStopNotice,
         eventId,
         guestId,
         messageType,
       });
 
-      // Log to database for tracking (same as real SMS)
+      // Mark A2P notice as sent if it was included (even in simulation)
+      if (formattedSms.includedStopNotice && guestId) {
+        await markA2pNoticeSent(eventId, guestId);
+      }
+
+      // Log to database for tracking (use original message for consistency)
       await logSMSToDatabase({
         eventId,
         guestId,
@@ -236,6 +248,20 @@ export async function sendSMS({
       formatted: formattedPhone.slice(0, 6) + '...',
     });
 
+    // Format SMS with event tag branding and A2P footer
+    const formattedSms = await composeSmsText(eventId, guestId, message);
+    
+    // Log SMS formatting metrics (no PII)
+    logger.info('SMS formatting completed', {
+      eventId,
+      originalLength: message.length,
+      finalLength: formattedSms.length,
+      segments: formattedSms.segments,
+      includedStopNotice: formattedSms.includedStopNotice,
+      droppedLink: formattedSms.droppedLink,
+      truncatedBody: formattedSms.truncatedBody,
+    });
+
     // Redact phone number for logging (show first 3 and last 4 characters)
     const redactedPhone =
       formattedPhone.length > 7
@@ -243,7 +269,9 @@ export async function sendSMS({
         : '***redacted***';
 
     logger.sms(`Sending SMS to ${redactedPhone}`, {
-      messagePreview: message.substring(0, 50) + '...',
+      messagePreview: formattedSms.text.substring(0, 50) + '...',
+      finalLength: formattedSms.length,
+      segments: formattedSms.segments,
     });
 
     // Create message params - use messaging service if available, otherwise phone number
@@ -253,7 +281,7 @@ export async function sendSMS({
       messagingServiceSid?: string;
       from?: string;
     } = {
-      body: message,
+      body: formattedSms.text,
       to: formattedPhone,
     };
 
@@ -282,7 +310,12 @@ export async function sendSMS({
 
     logger.sms(`SMS sent successfully. SID: ${twilioMessage.sid}`);
 
-    // Log to database for tracking
+    // Mark A2P notice as sent if it was included in this SMS
+    if (formattedSms.includedStopNotice && guestId) {
+      await markA2pNoticeSent(eventId, guestId);
+    }
+
+    // Log to database for tracking (use original message for consistency)
     await logSMSToDatabase({
       eventId,
       guestId,

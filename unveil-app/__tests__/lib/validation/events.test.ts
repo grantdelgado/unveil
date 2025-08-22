@@ -14,6 +14,8 @@ describe('Event Details Validation', () => {
         time_zone: 'America/Los_Angeles',
         location: 'Test Venue',
         website_url: 'https://theknot.com/sarah-david',
+        photo_album_url: '',
+        sms_tag: '',
         is_public: false,
         allow_open_signup: true,
       };
@@ -27,6 +29,8 @@ describe('Event Details Validation', () => {
         title: 'A', // Too short
         event_date: '2025-08-15',
         time_zone: 'America/Los_Angeles',
+        photo_album_url: '',
+        sms_tag: '',
         is_public: false,
         allow_open_signup: true,
       };
@@ -45,6 +49,8 @@ describe('Event Details Validation', () => {
         title: 'Valid Title',
         event_date: '15-08-2025', // Wrong format
         time_zone: 'America/Los_Angeles',
+        photo_album_url: '',
+        sms_tag: '',
         is_public: false,
         allow_open_signup: true,
       };
@@ -59,6 +65,8 @@ describe('Event Details Validation', () => {
         event_date: '2025-08-15',
         time_zone: 'America/Los_Angeles',
         website_url: 'theknot.com/sarah-david',
+        photo_album_url: '',
+        sms_tag: '',
         is_public: false,
         allow_open_signup: true,
       };
@@ -76,7 +84,9 @@ describe('Event Details Validation', () => {
         event_date: '2025-08-15',
         time_zone: 'America/Los_Angeles',
         location: '',
-        website_url: null, // Include the required website_url field
+        website_url: null,
+        photo_album_url: '',
+        sms_tag: '',
         is_public: false,
         allow_open_signup: true,
       };
@@ -123,6 +133,8 @@ describe('Event Details Validation', () => {
         time_zone: 'America/Los_Angeles',
         location: 'Test Location',
         website_url: 'https://test.com',
+        photo_album_url: '',
+        sms_tag: '',
         is_public: false,
         allow_open_signup: true,
       };
@@ -135,6 +147,8 @@ describe('Event Details Validation', () => {
         time_zone: 'America/Los_Angeles',
         location: 'Test Location',
         website_url: 'https://test.com',
+        photo_album_url: null,
+        sms_tag: null,
         is_public: false,
         allow_open_signup: true,
       });
@@ -147,6 +161,8 @@ describe('Event Details Validation', () => {
         time_zone: 'America/Los_Angeles',
         location: '',
         website_url: '',
+        photo_album_url: '',
+        sms_tag: '',
         is_public: false,
         allow_open_signup: true,
       };
@@ -155,6 +171,8 @@ describe('Event Details Validation', () => {
 
       expect(transformed.location).toBeNull();
       expect(transformed.website_url).toBeNull();
+      expect(transformed.photo_album_url).toBeNull();
+      expect(transformed.sms_tag).toBeNull();
     });
   });
 });

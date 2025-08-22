@@ -12,7 +12,7 @@
     "lint": "next lint",
     "lint:fix": "eslint --fix .",
     "format": "prettier --write .",
-    "test": "vitest",
+    "test": "vitest run --reporter=default",
     "test:watch": "vitest --watch",
     "test:coverage": "vitest --coverage",
     "test:ui": "vitest --ui",
@@ -40,7 +40,10 @@
     "schema:test": "npx tsx scripts/test-schema-awareness.ts",
     "schema:demo": "npx tsx scripts/demo-schema-awareness.ts",
     "script:backfill-user-ids": "npx tsx scripts/backfill-user-ids.ts",
-    "test:user-id-trigger": "npx tsx scripts/test-user-id-trigger.ts"
+    "test:user-id-trigger": "npx tsx scripts/test-user-id-trigger.ts",
+    "validate:sms-schema": "npx tsx scripts/validate-sms-schema.ts",
+    "typecheck": "tsc --noEmit",
+    "precommit": "pnpm typecheck && pnpm lint && pnpm test && pnpm build"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
