@@ -19,7 +19,19 @@ import {
   toUTCFromEventZone,
   getTimezoneInfo,
   isValidTimezone,
+  fromUTCToEventZone,
 } from '@/lib/utils/timezone';
+import {
+  getNextValidScheduleTime,
+  formatMinLeadTime,
+} from '@/config/schedule';
+import {
+  MIN_SCHEDULE_BUFFER_MINUTES,
+  QUICK_SET_BUFFER_MINUTES,
+  addMinutes,
+  roundUpToMinute,
+} from '@/lib/constants/scheduling';
+import { scheduledMessageSchema } from '@/lib/validations';
 import type { CreateScheduledMessageData } from '@/lib/types/messaging';
 
 // Type for the enhanced API response that includes SMS delivery counts
@@ -84,6 +96,23 @@ export function MessageComposer({
   const [scheduledTime, setScheduledTime] = useState('');
   const [isScheduling, setIsScheduling] = useState(false);
 
+  // Real-time clock for continuous validation
+  const [nowUtc, setNowUtc] = useState(() => new Date());
+  
+  useEffect(() => {
+    // Only run the clock when scheduler is visible
+    if (sendMode !== 'schedule') return;
+    
+    const id = setInterval(() => setNowUtc(new Date()), 1000);
+    const onVis = () => document.visibilityState === 'visible' && setNowUtc(new Date());
+    document.addEventListener('visibilitychange', onVis);
+    
+    return () => {
+      clearInterval(id);
+      document.removeEventListener('visibilitychange', onVis);
+    };
+  }, [sendMode]);
+
   // includeHosts state removed - hosts are always included now
 
   // Use new guest selection hook instead of RSVP filters
@@ -132,36 +161,84 @@ export function MessageComposer({
     return getTimezoneInfo(eventDetails.time_zone);
   }, [eventDetails?.time_zone]);
 
-  // Validation for scheduling
-  const canSchedule = React.useMemo(() => {
-    if (!isValid || selectedGuestIds.length === 0) return false;
-    if (sendMode === 'now') return true;
+  // Compute minimum allowed UTC time (now + MIN_SCHEDULE_BUFFER_MINUTES)
+  const minAllowedUtc = React.useMemo(() => {
+    return addMinutes(nowUtc, MIN_SCHEDULE_BUFFER_MINUTES);
+  }, [nowUtc]);
 
-    if (!scheduledDate || !scheduledTime) return false;
+  // Derive scheduledAtUtc from inputs using existing helpers
+  const scheduledAtUtc = React.useMemo(() => {
+    if (!scheduledDate || !scheduledTime) return null;
 
-    // Check if scheduled time is in the future using event timezone
-    if (eventDetails?.time_zone) {
+    // Convert to UTC using event timezone if available
+    if (eventDetails?.time_zone && isValidTimezone(eventDetails.time_zone)) {
       const utcTime = toUTCFromEventZone(
         scheduledDate,
         scheduledTime,
         eventDetails.time_zone,
       );
-      if (!utcTime) return false;
-      return new Date(utcTime) > new Date();
+      return utcTime ? new Date(utcTime) : null;
     } else {
-      // Fallback to local time validation if no event timezone
-      const scheduledDateTime = new Date(`${scheduledDate}T${scheduledTime}`);
-      const now = new Date();
-      return scheduledDateTime > now;
+      // Fallback to treating input as local time
+      return new Date(`${scheduledDate}T${scheduledTime}:00`);
     }
+  }, [scheduledDate, scheduledTime, eventDetails?.time_zone]);
+
+  // Real-time validation that updates as time passes
+  const scheduleValidation = React.useMemo(() => {
+    if (sendMode === 'now') {
+      // For "Send Now", just check basic message validity - recipient validation is handled in canSend
+      return { canSchedule: isValid, error: null, isTooSoon: false };
+    }
+
+    if (!isValid) {
+      return { canSchedule: false, error: null, isTooSoon: false };
+    }
+
+    // Check recipient requirements based on message type
+    const hasValidRecipients = 
+      messageType === 'announcement' || // Announcements don't need selected recipients
+      (messageType === 'direct' && selectedGuestIds.length > 0) ||
+      (messageType === 'channel' && selectedTags.length > 0);
+
+    if (!hasValidRecipients) {
+      return { canSchedule: false, error: null, isTooSoon: false };
+    }
+
+    if (!scheduledDate || !scheduledTime || !scheduledAtUtc) {
+      return { canSchedule: false, error: null, isTooSoon: false };
+    }
+
+    // Real-time check: is the scheduled time too soon?
+    const isTooSoon = scheduledAtUtc < minAllowedUtc;
+    
+    if (isTooSoon) {
+      return { 
+        canSchedule: false, 
+        error: 'too_soon',
+        isTooSoon: true,
+        minLeadTime: formatMinLeadTime(),
+        nextValidTime: getNextValidScheduleTime(nowUtc),
+        scheduledAtUtc,
+        minAllowedUtc
+      };
+    }
+
+    return { canSchedule: true, error: null, isTooSoon: false, scheduledAtUtc };
   }, [
     isValid,
     selectedGuestIds.length,
     sendMode,
     scheduledDate,
     scheduledTime,
-    eventDetails?.time_zone,
+    scheduledAtUtc,
+    minAllowedUtc,
+    nowUtc,
+    messageType,
+    selectedTags.length,
   ]);
+
+  const canSchedule = scheduleValidation.canSchedule;
 
   // Message type change handler with session storage
   const handleMessageTypeChange = (
@@ -394,6 +471,11 @@ export function MessageComposer({
       setIsScheduling(true);
       setError(null);
 
+      // Defense in UI: early return if time is too soon
+      if (scheduleValidation.isTooSoon) {
+        throw new Error(`Cannot schedule messages less than ${MIN_SCHEDULE_BUFFER_MINUTES} minutes from now. Please select a later time.`);
+      }
+
       const eventTimeZone = eventDetails?.time_zone;
       let scheduledAtUTC: string;
       const scheduledLocal = `${scheduledDate}T${scheduledTime}:00`;
@@ -414,6 +496,19 @@ export function MessageComposer({
       } else {
         // Fallback to treating input as local time (not ideal but safe)
         scheduledAtUTC = new Date(scheduledLocal).toISOString();
+      }
+
+      // Client-side Zod validation
+      const validationResult = scheduledMessageSchema.safeParse({
+        content: message.trim(),
+        scheduledAtUtc: scheduledAtUTC,
+        eventId,
+        messageType: preselectionPreset === 'not_invited' ? 'announcement' : 'announcement',
+      });
+
+      if (!validationResult.success) {
+        const firstError = validationResult.error.errors[0];
+        throw new Error(firstError.message);
       }
 
       // Generate idempotency key to prevent duplicate schedules
@@ -449,9 +544,16 @@ export function MessageComposer({
       const result = await createScheduledMessage(scheduleData);
 
       if (!result.success) {
+        // Handle SCHEDULE_TOO_SOON error from server
+        if (result.error && typeof result.error === 'object' && 'code' in result.error && result.error.code === 'SCHEDULE_TOO_SOON') {
+          throw new Error(`Cannot schedule messages less than ${MIN_SCHEDULE_BUFFER_MINUTES} minutes from now. Please select a later time.`);
+        }
+        
         const errorMessage =
           typeof result.error === 'string'
             ? result.error
+            : typeof result.error === 'object' && result.error && 'message' in result.error
+            ? String(result.error.message)
             : 'Failed to schedule message';
         throw new Error(errorMessage);
       }
@@ -741,7 +843,96 @@ export function MessageComposer({
                 </div>
               </div>
 
-              {scheduledDate && scheduledTime && (
+              {/* Helper message for minimum lead time validation */}
+              {scheduleValidation.isTooSoon && scheduledDate && scheduledTime && (
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-3" aria-live="polite">
+                  <div className="text-sm text-orange-800">
+                    <div className="font-medium mb-2">⏰ Pick a time at least {MIN_SCHEDULE_BUFFER_MINUTES} minutes from now.</div>
+                    <div className="space-y-1 text-orange-700">
+                      <div>
+                        <span className="font-medium">Event time:</span>{' '}
+                        {eventTimezoneInfo ? (
+                          <>
+                            {new Date(`${scheduledDate}T${scheduledTime}`).toLocaleString([], {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                              hour: 'numeric',
+                              minute: '2-digit',
+                              hour12: true,
+                            })}{' '}
+                            {eventTimezoneInfo.abbreviation}
+                          </>
+                        ) : (
+                          new Date(`${scheduledDate}T${scheduledTime}`).toLocaleString()
+                        )}
+                      </div>
+                      <div>
+                        <span className="font-medium">Your time:</span>{' '}
+                        {(() => {
+                          const eventTimeZone = eventDetails?.time_zone;
+                          if (eventTimeZone) {
+                            const utcTime = toUTCFromEventZone(
+                              scheduledDate,
+                              scheduledTime,
+                              eventTimeZone,
+                            );
+                            if (utcTime) {
+                              return new Date(utcTime).toLocaleString([], {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                                hour: 'numeric',
+                                minute: '2-digit',
+                                hour12: true,
+                              });
+                            }
+                          }
+                          return new Date(`${scheduledDate}T${scheduledTime}`).toLocaleString();
+                        })()}
+                      </div>
+                    </div>
+                    <div className="flex gap-2 mt-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          // Compute target time: round up to next minute after adding QUICK_SET_BUFFER_MINUTES
+                          const targetUtc = roundUpToMinute(addMinutes(nowUtc, QUICK_SET_BUFFER_MINUTES));
+                          
+                          if (eventDetails?.time_zone) {
+                            const eventTime = fromUTCToEventZone(
+                              targetUtc.toISOString(),
+                              eventDetails.time_zone
+                            );
+                            if (eventTime) {
+                              setScheduledDate(eventTime.date);
+                              setScheduledTime(eventTime.time);
+                            }
+                          } else {
+                            // Fallback to local time
+                            const localDate = targetUtc.toISOString().split('T')[0];
+                            const localTime = targetUtc.toTimeString().slice(0, 5);
+                            setScheduledDate(localDate);
+                            setScheduledTime(localTime);
+                          }
+                        }}
+                        className="px-3 py-1.5 text-sm bg-orange-100 hover:bg-orange-200 text-orange-800 rounded-md transition-colors"
+                      >
+                        Use 5 minutes from now
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSendMode('now')}
+                        className="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors"
+                      >
+                        Send now
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {scheduledDate && scheduledTime && !scheduleValidation.isTooSoon && scheduledAtUtc && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                   <div className="text-sm text-blue-800">
                     <div className="font-medium mb-1">📅 Scheduled for:</div>
@@ -763,41 +954,58 @@ export function MessageComposer({
                         </div>
                         <div className="text-blue-600">
                           <span className="font-medium">Your time:</span>{' '}
+                          {scheduledAtUtc.toLocaleString([], {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            hour12: true,
+                          })}
+                        </div>
+                        <div className="text-blue-500 text-xs">
                           {(() => {
-                            const eventTimeZone = eventDetails?.time_zone;
-                            if (eventTimeZone) {
-                              const utcTime = toUTCFromEventZone(
-                                scheduledDate,
-                                scheduledTime,
-                                eventTimeZone,
-                              );
-                              if (utcTime) {
-                                return new Date(utcTime).toLocaleString([], {
-                                  year: 'numeric',
-                                  month: 'short',
-                                  day: 'numeric',
-                                  hour: 'numeric',
-                                  minute: '2-digit',
-                                  hour12: true,
-                                });
-                              }
+                            const diffMs = scheduledAtUtc.getTime() - nowUtc.getTime();
+                            const diffMinutes = Math.floor(diffMs / (1000 * 60));
+                            const diffHours = Math.floor(diffMinutes / 60);
+                            const remainingMinutes = diffMinutes % 60;
+                            
+                            if (diffHours > 0) {
+                              return `in ${diffHours}h ${remainingMinutes}m`;
+                            } else if (diffMinutes > 0) {
+                              return `in ${diffMinutes} minute${diffMinutes === 1 ? '' : 's'}`;
+                            } else {
+                              return 'sending soon';
                             }
-                            return new Date(
-                              `${scheduledDate}T${scheduledTime}`,
-                            ).toLocaleString();
                           })()}
                         </div>
                       </div>
                     ) : (
                       <div>
-                        {new Date(
-                          `${scheduledDate}T${scheduledTime}`,
-                        ).toLocaleString()}
-                        {!eventDetails?.time_zone && (
-                          <span className="text-orange-600 ml-2">
-                            (Event timezone not set)
-                          </span>
-                        )}
+                        <div>
+                          {scheduledAtUtc.toLocaleString()}
+                          {!eventDetails?.time_zone && (
+                            <span className="text-orange-600 ml-2">
+                              (Event timezone not set)
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-blue-500 text-xs mt-1">
+                          {(() => {
+                            const diffMs = scheduledAtUtc.getTime() - nowUtc.getTime();
+                            const diffMinutes = Math.floor(diffMs / (1000 * 60));
+                            const diffHours = Math.floor(diffMinutes / 60);
+                            const remainingMinutes = diffMinutes % 60;
+                            
+                            if (diffHours > 0) {
+                              return `in ${diffHours}h ${remainingMinutes}m`;
+                            } else if (diffMinutes > 0) {
+                              return `in ${diffMinutes} minute${diffMinutes === 1 ? '' : 's'}`;
+                            } else {
+                              return 'sending soon';
+                            }
+                          })()}
+                        </div>
                       </div>
                     )}
                   </div>
