@@ -17,7 +17,7 @@ export {
 
 export {
   validatePhoneNumber,
-  validateEmail,
+  // validateEmail removed for phone-only MVP
   validateEventTitle,
   validateGuestCSV,
   validateMessageContent,

@@ -22,7 +22,6 @@ import {
 
 interface UserProfile {
   id: string;
-  email: string | null;
   full_name: string | null;
   phone: string;
   avatar_url: string | null;
@@ -36,7 +35,6 @@ interface UserEvent {
 export default function ProfilePage() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [displayName, setDisplayName] = useState('');
-  const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -44,21 +42,15 @@ export default function ProfilePage() {
 
   const router = useRouter();
 
-  // Email validation helper
-  const isValidEmail = (email: string): boolean => {
-    if (!email.trim()) return true; // Empty email is valid since it's optional
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email.trim());
-  };
+  // Phone-only MVP - email validation removed
 
   // Check if there are any changes to enable/disable save button
   const hasChanges =
     userProfile &&
-    (displayName !== (userProfile.full_name || '') ||
-      email !== (userProfile.email || ''));
+    displayName !== (userProfile.full_name || '');
 
   // Check if form is valid
-  const isFormValid = displayName.trim() && isValidEmail(email);
+  const isFormValid = displayName.trim();
 
   useEffect(() => {
     const abortController = new AbortController();
@@ -88,7 +80,7 @@ export default function ProfilePage() {
           // Fetch user profile from users table
           supabase
             .from('users')
-            .select('id, email, full_name, phone, avatar_url')
+            .select('id, full_name, phone, avatar_url')
             .eq('id', user.id)
             .single(),
 
@@ -120,7 +112,6 @@ export default function ProfilePage() {
         const profile = profileResult.value.data;
         setUserProfile(profile);
         setDisplayName(profile.full_name || '');
-        setEmail(profile.email || '');
 
         // Handle events result
         if (eventsResult.status === 'fulfilled' && !eventsResult.value.error) {
@@ -166,39 +157,11 @@ export default function ProfilePage() {
     setMessage('');
 
     try {
-      // Prepare email value (null if empty, otherwise trimmed)
-      const emailValue = email.trim() || null;
-
-      // Check for email uniqueness if email is provided and different from current
-      if (emailValue && emailValue !== userProfile.email) {
-        const { data: existingUsers, error: checkError } = await supabase
-          .from('users')
-          .select('id')
-          .eq('email', emailValue)
-          .neq('id', userProfile.id); // Exclude current user
-
-        if (checkError) {
-          console.error('Email uniqueness check error:', checkError);
-          setMessage('Unable to verify email availability. Please try again.');
-          setIsSaving(false);
-          return;
-        }
-
-        if (existingUsers && existingUsers.length > 0) {
-          setMessage(
-            'This email address is already taken. Please use a different email.',
-          );
-          setIsSaving(false);
-          return;
-        }
-      }
-
-      // Update the users table with both email and full_name
+      // Update the users table with full_name only (phone-only MVP)
       const { error: dbError } = await supabase
         .from('users')
         .update({
           full_name: displayName.trim(),
-          email: emailValue,
         })
         .eq('id', userProfile.id);
 
@@ -209,16 +172,10 @@ export default function ProfilePage() {
         return;
       }
 
-      // Also update auth metadata for consistency (only if email is provided)
-      const authUpdateData: { data: { full_name: string }; email?: string } = {
+      // Also update auth metadata for consistency
+      await supabase.auth.updateUser({
         data: { full_name: displayName.trim() },
-      };
-
-      if (emailValue) {
-        authUpdateData.email = emailValue;
-      }
-
-      await supabase.auth.updateUser(authUpdateData);
+      });
 
       // Update local state
       setUserProfile((prev) =>
@@ -226,7 +183,6 @@ export default function ProfilePage() {
           ? {
               ...prev,
               full_name: displayName.trim(),
-              email: emailValue,
             }
           : null,
       );
@@ -361,29 +317,7 @@ export default function ProfilePage() {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <FieldLabel htmlFor="email">
-                    Email Address (Optional)
-                  </FieldLabel>
-                  <TextInput
-                    type="email"
-                    id="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email address (optional)"
-                    disabled={isSaving}
-                    className={
-                      email && !isValidEmail(email)
-                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
-                        : ''
-                    }
-                  />
-                  {email && !isValidEmail(email) && (
-                    <p className="text-sm text-red-600">
-                      Please enter a valid email address
-                    </p>
-                  )}
-                </div>
+                {/* Email field removed for phone-only MVP */}
 
                 {message && (
                   <div

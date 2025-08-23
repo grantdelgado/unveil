@@ -59,12 +59,7 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({
           </div>
           <div className="text-sm text-red-800">Invalid Rows</div>
         </div>
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-center">
-          <div className="text-2xl font-bold text-amber-600">
-            {summary.duplicateEmails}
-          </div>
-          <div className="text-sm text-amber-800">Duplicates</div>
-        </div>
+        {/* Duplicate emails card removed for phone-only MVP */}
       </div>
 
       {/* Validation Messages */}
@@ -115,9 +110,7 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({
                   <th className="px-4 py-2 text-left font-medium text-stone-700">
                     Name
                   </th>
-                  <th className="px-4 py-2 text-left font-medium text-stone-700">
-                    Email
-                  </th>
+                  {/* Email column header removed for phone-only MVP */}
                   <th className="px-4 py-2 text-left font-medium text-stone-700">
                     Phone
                   </th>
@@ -135,9 +128,7 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({
                     <td className="px-4 py-2 font-medium text-stone-800">
                       {guest.guest_name}
                     </td>
-                    <td className="px-4 py-2 text-stone-600">
-                      {guest.guest_email || '-'}
-                    </td>
+                    {/* Email table cell removed for phone-only MVP */}
                     <td className="px-4 py-2 text-stone-600">
                       {guest.phone || '-'}
                     </td>

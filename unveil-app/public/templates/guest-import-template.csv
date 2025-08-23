@@ -1,7 +1,7 @@
-name,phone,email,role,notes,tags
-"John Doe","+1234567890","john@example.com","guest","Best man","groomsmen;vip"
-"Jane Smith","1234567891","jane@example.com","guest","Maid of honor","bridesmaids;family"
-"Bob Johnson","123-456-7892","bob@example.com","guest","Uncle","family"
-"Alice Wilson","(123) 456-7893","alice@example.com","guest","College friend","friends"
-"Mike Brown","123.456.7894","mike@example.com","host","Co-host","wedding-party"
-"Sarah Admin","123.456.7895","sarah@example.com","admin","Event coordinator","admin;staff"
+name,phone,role,notes,tags
+"John Doe","+1234567890","guest","Best man","groomsmen;vip"
+"Jane Smith","1234567891","guest","Maid of honor","bridesmaids;family"
+"Bob Johnson","123-456-7892","guest","Uncle","family"
+"Alice Wilson","(123) 456-7893","guest","College friend","friends"
+"Mike Brown","123.456.7894","host","Co-host","wedding-party"
+"Sarah Admin","123.456.7895","admin","Event coordinator","admin;staff"

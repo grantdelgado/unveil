@@ -1,11 +1,7 @@
 import { z } from 'zod';
 import { DB_ENUMS, UI_CONFIG } from './constants';
 
-// Base schemas
-export const emailSchema = z
-  .string()
-  .email('Please enter a valid email address')
-  .min(1, 'Email is required');
+// Base schemas - email schema removed for phone-only MVP
 
 export const passwordSchema = z
   .string()
@@ -62,7 +58,7 @@ export const guestCreateSchema = z.object({
     .min(1, 'Guest name is required')
     .max(100, 'Guest name must be less than 100 characters')
     .trim(),
-  guest_email: emailSchema.optional().or(z.literal('')),
+  // guest_email removed for phone-only MVP
   phone: z
     .string()
     .max(20, 'Phone number must be less than 20 characters')
@@ -91,11 +87,7 @@ export const guestImportSchema = z.object({
     .max(20, 'Phone number must be less than 20 characters')
     .regex(/^[\+]?[1-9][\d]{0,15}$/, 'Invalid phone number format')
     .transform((val) => val.replace(/[\s\-\(\)]/g, '')), // Clean phone number
-  guest_email: z
-    .string()
-    .email('Invalid email format')
-    .optional()
-    .or(z.literal('')),
+  // guest_email removed for phone-only MVP
   role: z.enum(['guest', 'host', 'admin']).default('guest'),
   notes: z
     .string()
@@ -117,11 +109,11 @@ export const guestImportBatchSchema = z.object({
   event_id: z.string().uuid('Invalid event ID format'),
 });
 
-// CSV file validation schema
+// CSV file validation schema - phone-only
 export const csvHeaderSchema = z.object({
   name: z.literal('name'),
   phone: z.literal('phone'),
-  email: z.literal('email').optional(),
+  // email removed for phone-only MVP
   role: z.literal('role').optional(),
   notes: z.literal('notes').optional(),
   tags: z.literal('tags').optional(),
@@ -174,10 +166,8 @@ export const profileUpdateSchema = z.object({
   avatar_url: z.string().url('Invalid avatar URL').optional().or(z.literal('')),
 });
 
-// Auth schemas
-export const loginSchema = z.object({
-  email: emailSchema,
-});
+// Auth schemas - phone-only authentication
+// loginSchema removed - using phone-only auth
 
 export const resetPasswordSchema = z.object({
   password: passwordSchema,
@@ -194,7 +184,7 @@ export type CSVHeaderInput = z.infer<typeof csvHeaderSchema>;
 export type MessageCreateInput = z.infer<typeof messageCreateSchema>;
 export type MediaUploadInput = z.infer<typeof mediaUploadSchema>;
 export type ProfileUpdateInput = z.infer<typeof profileUpdateSchema>;
-export type LoginInput = z.infer<typeof loginSchema>;
+// LoginInput type removed for phone-only MVP
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 
 // Validation helper functions
@@ -212,7 +202,7 @@ export const validateMediaUpload = (data: unknown) =>
   mediaUploadSchema.safeParse(data);
 export const validateProfileUpdate = (data: unknown) =>
   profileUpdateSchema.safeParse(data);
-export const validateLogin = (data: unknown) => loginSchema.safeParse(data);
+// validateLogin removed for phone-only MVP
 export const validateResetPassword = (data: unknown) =>
   resetPasswordSchema.safeParse(data);
 export const validateGuestImport = (data: unknown) =>
@@ -275,24 +265,7 @@ export function validatePhoneNumber(phone: string): {
   };
 }
 
-/**
- * Validates email format
- */
-export function validateEmail(email: string): {
-  isValid: boolean;
-  error?: string;
-} {
-  if (!email || typeof email !== 'string') {
-    return { isValid: false, error: 'Email is required' };
-  }
-
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    return { isValid: false, error: 'Please enter a valid email address' };
-  }
-
-  return { isValid: true };
-}
+// validateEmail function removed for phone-only MVP
 
 /**
  * Validates event title
@@ -348,7 +321,7 @@ export function validateMessageContent(content: string): {
 }
 
 /**
- * Validates guest CSV data
+ * Validates guest CSV data - phone-only MVP
  */
 export function validateGuestCSV(csvData: Record<string, unknown>[]): {
   isValid: boolean;
@@ -359,8 +332,8 @@ export function validateGuestCSV(csvData: Record<string, unknown>[]): {
   const validGuests: Record<string, unknown>[] = [];
 
   csvData.forEach((row, index) => {
-    if (!row.guest_name && !row.guest_email) {
-      errors.push(`Row ${index + 1}: Guest name or email is required`);
+    if (!row.guest_name && !row.phone) {
+      errors.push(`Row ${index + 1}: Guest name or phone is required`);
     } else {
       validGuests.push(row);
     }

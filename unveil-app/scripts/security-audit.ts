@@ -281,7 +281,7 @@ async function testDatabaseSecurity() {
   try {
     const { data, error } = await supabase
       .from('users')
-      .select('phone, email')
+      .select('phone')
       .limit(1);
 
     if (error && error.message.includes('permission')) {

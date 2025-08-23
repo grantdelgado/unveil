@@ -36,7 +36,7 @@ async function checkDatabaseState() {
     // Check users
     const { data: users, error: usersError } = await supabase
       .from('users')
-      .select('id, email, full_name, phone, created_at')
+      .select('id, full_name, phone, created_at')
       .order('created_at', { ascending: false });
 
     if (usersError) {

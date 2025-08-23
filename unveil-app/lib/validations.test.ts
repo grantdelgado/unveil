@@ -1,40 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import {
-  emailSchema,
+  // emailSchema removed for phone-only MVP
   eventCreateSchema,
   guestCreateSchema,
   messageCreateSchema,
 } from './validations';
 
-describe('Email Validation', () => {
-  describe('emailSchema', () => {
-    it('should accept valid email addresses', () => {
-      const validEmails = [
-        'test@example.com',
-        'user.name@domain.co.uk',
-        'first+last@company.org',
-      ];
-
-      validEmails.forEach((email) => {
-        expect(() => emailSchema.parse(email)).not.toThrow();
-      });
-    });
-
-    it('should reject invalid email addresses', () => {
-      const invalidEmails = [
-        '',
-        'invalid-email',
-        '@domain.com',
-        'user@',
-        'user..name@domain.com',
-      ];
-
-      invalidEmails.forEach((email) => {
-        expect(() => emailSchema.parse(email)).toThrow();
-      });
-    });
-  });
-});
+// Email validation tests removed for phone-only MVP
 
 describe('Event Validation', () => {
   describe('eventCreateSchema', () => {
@@ -106,14 +78,7 @@ describe('Guest Validation', () => {
       expect(() => guestCreateSchema.parse(minimalGuest)).not.toThrow();
     });
 
-    it('should validate email format when provided', () => {
-      const guestWithInvalidEmail = {
-        guest_name: 'John Doe',
-        guest_email: 'invalid-email',
-      };
-
-      expect(() => guestCreateSchema.parse(guestWithInvalidEmail)).toThrow();
-    });
+    // Email validation test removed for phone-only MVP
   });
 });
 

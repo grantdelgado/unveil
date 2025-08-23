@@ -21,7 +21,6 @@ import { ArrowLeft } from 'lucide-react';
 
 export default function AccountSetupPage() {
   const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [userProfile, setUserProfile] = useState<User | null>(null);
@@ -86,9 +85,6 @@ export default function AccountSetupPage() {
           ) {
             setFullName(profile.full_name);
           }
-          if (profile.email) {
-            setEmail(profile.email);
-          }
         }
       } catch (err) {
         console.error('Error loading profile:', err);
@@ -129,7 +125,6 @@ export default function AccountSetupPage() {
         .from('users')
         .update({
           full_name: trimmedFullName,
-          email: email.trim() || null,
           onboarding_completed: true, // Mark setup as complete only with full name
         })
         .eq('id', userProfile.id);
@@ -214,20 +209,7 @@ export default function AccountSetupPage() {
               />
             </div>
 
-            <div className="space-y-2">
-              <FieldLabel htmlFor="email">Email Address (Optional)</FieldLabel>
-              <TextInput
-                type="email"
-                id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email address"
-                disabled={loading}
-                autoComplete="email"
-                inputMode="email"
-                className="min-h-[44px]" // Touch-friendly height
-              />
-            </div>
+            {/* Email field removed for phone-only MVP */}
 
             {error && (
               <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
@@ -250,8 +232,8 @@ export default function AccountSetupPage() {
           <div className="text-center space-y-1">
             <MicroCopy>Phone: {userProfile.phone}</MicroCopy>
             <MicroCopy>
-              This is your verified phone number. You can update your name or
-              email anytime in your profile.
+              This is your verified phone number. You can update your name
+              anytime in your profile.
             </MicroCopy>
           </div>
         </div>

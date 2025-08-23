@@ -31,18 +31,18 @@ interface GuestImportWizardProps {
 // Using GuestImportData from guest import service
 type GuestEntry = GuestImportData;
 
-// Enhanced guest entry with validation states
+// Enhanced guest entry with validation states - phone-only MVP
 interface EnhancedGuestEntry extends GuestEntry {
   id: string;
   validationStates: {
     guest_name: FieldValidation;
     phone: FieldValidation;
-    guest_email: FieldValidation;
+    // guest_email removed for phone-only MVP
   };
   touchedFields: {
     guest_name: boolean;
     phone: boolean;
-    guest_email: boolean;
+    // guest_email removed for phone-only MVP
   };
   duplicateWarning?: string;
   isCollapsed: boolean;
@@ -52,17 +52,17 @@ const createEmptyGuest = (): EnhancedGuestEntry => ({
   id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
   guest_name: '',
   phone: '',
-  guest_email: '',
+  // guest_email removed for phone-only MVP
   notes: '',
   validationStates: {
     guest_name: { isValid: true },
     phone: { isValid: true },
-    guest_email: { isValid: true },
+    // guest_email removed for phone-only MVP
   },
   touchedFields: {
     guest_name: false,
     phone: false,
-    guest_email: false,
+    // guest_email removed for phone-only MVP
   },
   isCollapsed: false,
 });
@@ -111,19 +111,18 @@ export function GuestImportWizard({
       updated[index].touchedFields.guest_name = true;
     } else if (field === 'phone') {
       updated[index].touchedFields.phone = true;
-    } else if (field === 'guest_email') {
-      updated[index].touchedFields.guest_email = true;
+    // guest_email field handling removed for phone-only MVP
     }
 
     // Update validation state for the field (only for validated fields)
     const validatedFields: readonly string[] = [
       'guest_name',
       'phone',
-      'guest_email',
+      // 'guest_email' removed for phone-only MVP
     ];
     const validation = validatedFields.includes(field)
       ? validateGuestField(
-          field as 'guest_name' | 'phone' | 'guest_email',
+          field as 'guest_name' | 'phone',
           value,
         )
       : { isValid: true };
@@ -133,8 +132,7 @@ export function GuestImportWizard({
       updated[index].validationStates.guest_name = validation;
     } else if (field === 'phone') {
       updated[index].validationStates.phone = validation;
-    } else if (field === 'guest_email') {
-      updated[index].validationStates.guest_email = validation;
+    // guest_email validation handling removed for phone-only MVP
     }
 
     // Handle phone number validation and duplicate check
@@ -203,7 +201,7 @@ export function GuestImportWizard({
         event_id: eventId,
         phone: normalizePhoneNumber(guest.phone),
         guest_name: guest.guest_name || null,
-        guest_email: guest.guest_email || null,
+        // guest_email removed for phone-only MVP
         notes: guest.notes || null,
         rsvp_status: 'pending',
         guest_tags: null,
@@ -339,7 +337,7 @@ export function GuestImportWizard({
     return (
       guest.validationStates.guest_name.isValid &&
       guest.validationStates.phone.isValid &&
-      guest.validationStates.guest_email.isValid
+      true // guest_email validation removed for phone-only MVP
     );
   };
 
@@ -426,11 +424,7 @@ export function GuestImportWizard({
                         <span className="text-gray-600 ml-2">
                           {guest.phone}
                         </span>
-                        {guest.guest_email && (
-                          <span className="text-gray-500 text-sm ml-2">
-                            • {guest.guest_email}
-                          </span>
-                        )}
+                        {/* Email display removed for phone-only MVP */}
                       </div>
                       <div className="flex items-center space-x-2">
                         <button
@@ -552,51 +546,7 @@ export function GuestImportWizard({
                         )}
                       </div>
 
-                      {/* Email Field */}
-                      <div>
-                        <FieldLabel htmlFor={`guest-${index}-email`}>
-                          Email (Optional)
-                        </FieldLabel>
-                        <input
-                          id={`guest-${index}-email`}
-                          type="email"
-                          value={guest.guest_email || ''}
-                          onChange={(e) =>
-                            handleUpdateGuest(
-                              index,
-                              'guest_email',
-                              e.target.value,
-                            )
-                          }
-                          placeholder="john@example.com"
-                          className={cn(
-                            'w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-pink-300 focus:border-pink-300 transition-colors text-gray-900',
-                            guest.touchedFields.guest_email &&
-                              guest.validationStates.guest_email.isValid ===
-                                false &&
-                              guest.guest_email
-                              ? 'border-red-300 bg-red-50'
-                              : guest.touchedFields.guest_email &&
-                                  guest.validationStates.guest_email.isValid &&
-                                  guest.guest_email
-                                ? 'border-green-300 bg-green-50'
-                                : 'border-gray-300',
-                          )}
-                        />
-                        {/* Field Error/Success Message */}
-                        {guest.touchedFields.guest_email &&
-                          guest.validationStates.guest_email.error && (
-                            <p className="mt-1 text-sm text-red-600">
-                              {guest.validationStates.guest_email.error}
-                            </p>
-                          )}
-                        {guest.touchedFields.guest_email &&
-                          guest.validationStates.guest_email.success && (
-                            <p className="mt-1 text-sm text-green-600">
-                              {guest.validationStates.guest_email.success}
-                            </p>
-                          )}
-                      </div>
+                      {/* Email field removed for phone-only MVP */}
 
                       {/* Notes Field */}
                       <div>

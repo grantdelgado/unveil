@@ -34,7 +34,7 @@ export async function verifyAdminRole(
     // Check user exists in database
     const { data: userData, error: dbError } = await supabase
       .from('users')
-      .select('id, email, phone')
+      .select('id, phone')
       .eq('id', userId)
       .single();
 
@@ -44,12 +44,9 @@ export async function verifyAdminRole(
 
     // For now, check if user is in admin list (can be moved to env var later)
     // TODO: Add proper role system to users table
-    const adminEmails = ['grant@sendunveil.com', 'admin@sendunveil.com'];
     const adminPhones = ['+15712364686']; // Add your admin phone numbers
 
-    const isAdmin =
-      adminEmails.includes(userData.email || '') ||
-      adminPhones.includes(userData.phone || '');
+    const isAdmin = adminPhones.includes(userData.phone || '');
 
     return {
       isAdmin,
@@ -84,7 +81,7 @@ export async function verifyAdminRoleServer(): Promise<AdminVerificationResult> 
     // Check user exists in database using server client
     const { data: userData, error: dbError } = await supabase
       .from('users')
-      .select('id, email, phone')
+      .select('id, phone')
       .eq('id', user.id)
       .single();
 
@@ -94,12 +91,9 @@ export async function verifyAdminRoleServer(): Promise<AdminVerificationResult> 
 
     // For now, check if user is in admin list (can be moved to env var later)
     // TODO: Add proper role system to users table
-    const adminEmails = ['grant@sendunveil.com', 'admin@sendunveil.com'];
     const adminPhones = ['+15712364686']; // Add your admin phone numbers
 
-    const isAdmin =
-      adminEmails.includes(userData.email || '') ||
-      adminPhones.includes(userData.phone || '');
+    const isAdmin = adminPhones.includes(userData.phone || '');
 
     return {
       isAdmin,

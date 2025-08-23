@@ -34,11 +34,7 @@ const FIELD_OPTIONS: Array<{
     description:
       'Full name of the guest (optional - will use phone if not provided)',
   },
-  {
-    value: 'guest_email',
-    label: 'Email Address',
-    description: 'Guest&apos;s email for additional contact',
-  },
+  // Email field removed for phone-only MVP
   {
     value: 'notes',
     label: 'Notes',

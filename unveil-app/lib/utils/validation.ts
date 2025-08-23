@@ -1,8 +1,5 @@
-// Validation utilities
-export const isValidEmail = (email: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-};
+// Validation utilities - phone-only MVP
+// isValidEmail function removed for phone-only MVP
 
 export const isValidPhoneNumber = (phone: string): boolean => {
   // Remove all non-digits and check if it's a valid US phone number
@@ -100,44 +97,7 @@ export function validatePhoneNumber(phoneNumber: string): ValidationResult {
   };
 }
 
-// Email validation
-export function validateEmail(email: string): ValidationResult {
-  const trimmed = email.trim();
-
-  if (!trimmed) {
-    return { isValid: false, error: 'Email address is required' };
-  }
-
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-  if (!emailRegex.test(trimmed)) {
-    return { isValid: false, error: 'Please enter a valid email address' };
-  }
-
-  // Check for common typos
-  const domain = trimmed.split('@')[1]?.toLowerCase();
-
-  // Suggest common domain corrections
-  if (domain) {
-    if (domain === 'gmai.com' || domain === 'gmial.com') {
-      return {
-        isValid: false,
-        error: 'Did you mean gmail.com?',
-      };
-    }
-    if (domain === 'yahho.com' || domain === 'yaho.com') {
-      return {
-        isValid: false,
-        error: 'Did you mean yahoo.com?',
-      };
-    }
-  }
-
-  return {
-    isValid: true,
-    success: '✓ Valid email',
-  };
-}
+// Email validation removed for phone-only MVP
 
 // Name validation
 export function validateName(

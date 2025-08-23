@@ -1,12 +1,12 @@
 import { z } from 'zod';
-import { isValidEmail, isValidPhoneNumber } from './utils/validation';
+import { isValidPhoneNumber } from './utils/validation';
 import { normalizePhoneNumberSimple as normalizePhoneNumber } from './utils/phone';
 import type { EventGuestInsert } from './supabase';
 
-// Guest import validation schema - phone is now required, name is optional
+// Guest import validation schema - phone-only MVP
 export const guestImportRowSchema = z.object({
   guest_name: z.string().optional().or(z.literal('')),
-  guest_email: z.string().email().optional().or(z.literal('')),
+  // guest_email removed for phone-only MVP
   phone: z.string().min(1, 'Phone number is required'),
   rsvp_status: z.enum(['attending', 'declined', 'maybe', 'pending']).optional(),
   notes: z.string().optional().or(z.literal('')),
@@ -36,7 +36,7 @@ export const COMMON_COLUMN_MAPPINGS = {
     'full_name',
     'guest_name',
   ],
-  email: ['email', 'email address', 'e-mail', 'guest email', 'guest_email'],
+  // email mapping removed for phone-only MVP
   notes: [
     'notes',
     'comments',
@@ -68,7 +68,7 @@ export interface ImportValidationResult {
     total: number;
     valid: number;
     invalid: number;
-    duplicateEmails: number;
+    // duplicateEmails removed for phone-only MVP
   };
 }
 
@@ -246,9 +246,8 @@ export const validateImportedGuests = (
     errors: string[];
   }> = [];
 
-  const seenEmails = new Set<string>();
   const seenPhones = new Set<string>();
-  let duplicateEmails = 0;
+  // email tracking removed for phone-only MVP
 
   data.forEach((row, index) => {
     const errors: string[] = [];
@@ -281,21 +280,7 @@ export const validateImportedGuests = (
         case 'guest_name':
           guestData.guest_name = value;
           break;
-        case 'guest_email':
-          if (value) {
-            if (isValidEmail(value)) {
-              if (seenEmails.has(value.toLowerCase())) {
-                duplicateEmails++;
-                errors.push(`Duplicate email: ${value}`);
-              } else {
-                seenEmails.add(value.toLowerCase());
-                guestData.guest_email = value;
-              }
-            } else {
-              errors.push(`Invalid email format: ${value}`);
-            }
-          }
-          break;
+        // guest_email case removed for phone-only MVP
         case 'notes':
           guestData.notes = value;
           break;
@@ -366,7 +351,7 @@ export const validateImportedGuests = (
       total: data.length,
       valid: validGuests.length,
       invalid: invalidGuests.length,
-      duplicateEmails,
+      // duplicateEmails removed for phone-only MVP
     },
   };
 };
@@ -382,7 +367,7 @@ export const convertToEventGuests = (
     event_id: eventId,
     phone: guest.phone,
     guest_name: guest.guest_name || guest.phone,
-    guest_email: guest.guest_email || null,
+    // guest_email removed for phone-only MVP
     guest_tags: guest.guest_tags || null,
     user_id: null, // Phone-only guests don't have user accounts initially
     role: 'guest' as const,
@@ -428,12 +413,11 @@ export const validateImportFile = (
  * Generate sample CSV template
  */
 export const generateSampleCSV = (): string => {
-  const headers = ['Phone', 'Name', 'Email', 'Notes', 'Tags', 'RSVP Status'];
+  const headers = ['Phone', 'Name', 'Notes', 'Tags', 'RSVP Status'];
   const sampleData = [
     [
       '(555) 123-4567',
       'John Smith',
-      'john@example.com',
       'Vegetarian meal',
       'Family,Groomsmen',
       'attending',
@@ -441,7 +425,6 @@ export const generateSampleCSV = (): string => {
     [
       '(555) 987-6543',
       'Jane Doe',
-      'jane@example.com',
       'Plus one: Mike Johnson',
       'Friends',
       'pending',
@@ -449,7 +432,6 @@ export const generateSampleCSV = (): string => {
     [
       '(555) 555-0123',
       'Bob Wilson',
-      'bob@example.com',
       'Wheelchair accessible seating',
       'Coworkers',
       'maybe',
