@@ -83,7 +83,6 @@ export type CreateScheduledMessageData = {
   recipientFilter: RecipientFilter;
   messageType: 'direct' | 'announcement' | 'channel';
   sendViaSms: boolean;
-  sendViaEmail: boolean;
   sendViaPush: boolean;
   subject?: string;
 };

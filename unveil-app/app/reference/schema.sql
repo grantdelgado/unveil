@@ -97,7 +97,6 @@ CREATE TABLE scheduled_messages (
     target_guest_ids uuid[],
     send_via_sms boolean DEFAULT true,
     send_via_push boolean DEFAULT true,
-    send_via_email boolean DEFAULT false,
     status varchar DEFAULT 'scheduled',
     sent_at timestamptz,
     recipient_count integer DEFAULT 0,

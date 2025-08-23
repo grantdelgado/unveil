@@ -443,7 +443,6 @@ export function MessageComposer({
             ? 'announcement'
             : 'announcement',
         sendViaSms: options.sendViaSms,
-        sendViaEmail: false,
         sendViaPush: options.sendViaPush,
       };
 

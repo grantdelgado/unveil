@@ -175,7 +175,6 @@ export function ScheduledMessagesList({
     const methods = [];
     if (message.send_via_push) methods.push('🔔 Push');
     if (message.send_via_sms) methods.push('💬 SMS');
-    if (message.send_via_email) methods.push('📧 Email');
     return methods.join(', ');
   };
 

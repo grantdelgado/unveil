@@ -65,7 +65,6 @@ describe('Scheduled Messages Cron Integration Tests', () => {
           target_guest_tags: [],
           send_via_sms: true,
           send_via_push: false,
-          send_via_email: false,
           recipient_count: 3,
           status: 'scheduled',
         },

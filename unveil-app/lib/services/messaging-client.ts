@@ -385,7 +385,6 @@ export async function createScheduledMessage(
         idempotency_key: messageData.idempotencyKey || null,
         message_type: messageData.messageType,
         send_via_sms: messageData.sendViaSms,
-        send_via_email: messageData.sendViaEmail,
         send_via_push: messageData.sendViaPush,
         subject: messageData.subject || null,
         sender_user_id: currentUser.data.user.id,

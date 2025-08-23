@@ -24,7 +24,6 @@ export type Database = {
           display_name: string | null
           event_id: string
           first_invited_at: string | null
-          guest_email: string | null
           guest_name: string | null
           guest_tags: string[] | null
           id: string
@@ -53,7 +52,6 @@ export type Database = {
           display_name?: string | null
           event_id: string
           first_invited_at?: string | null
-          guest_email?: string | null
           guest_name?: string | null
           guest_tags?: string[] | null
           id?: string
@@ -82,7 +80,6 @@ export type Database = {
           display_name?: string | null
           event_id?: string
           first_invited_at?: string | null
-          guest_email?: string | null
           guest_name?: string | null
           guest_tags?: string[] | null
           id?: string
@@ -276,9 +273,6 @@ export type Database = {
       message_deliveries: {
         Row: {
           created_at: string | null
-          email: string | null
-          email_provider_id: string | null
-          email_status: string | null
           guest_id: string | null
           has_responded: boolean | null
           id: string
@@ -295,9 +289,6 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
-          email?: string | null
-          email_provider_id?: string | null
-          email_status?: string | null
           guest_id?: string | null
           has_responded?: boolean | null
           id?: string
@@ -314,9 +305,6 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
-          email?: string | null
-          email_provider_id?: string | null
-          email_status?: string | null
           guest_id?: string | null
           has_responded?: boolean | null
           id?: string
@@ -444,7 +432,6 @@ export type Database = {
           scheduled_local: string | null
           scheduled_tz: string | null
           send_at: string
-          send_via_email: boolean | null
           send_via_push: boolean | null
           send_via_sms: boolean | null
           sender_user_id: string
@@ -471,7 +458,6 @@ export type Database = {
           scheduled_local?: string | null
           scheduled_tz?: string | null
           send_at: string
-          send_via_email?: boolean | null
           send_via_push?: boolean | null
           send_via_sms?: boolean | null
           sender_user_id: string
@@ -498,7 +484,6 @@ export type Database = {
           scheduled_local?: string | null
           scheduled_tz?: string | null
           send_at?: string
-          send_via_email?: boolean | null
           send_via_push?: boolean | null
           send_via_sms?: boolean | null
           sender_user_id?: string
@@ -591,7 +576,6 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string | null
-          email: string | null
           full_name: string | null
           id: string
           intended_redirect: string | null
@@ -602,7 +586,6 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string | null
-          email?: string | null
           full_name?: string | null
           id?: string
           intended_redirect?: string | null
@@ -613,7 +596,6 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           created_at?: string | null
-          email?: string | null
           full_name?: string | null
           id?: string
           intended_redirect?: string | null
@@ -630,7 +612,6 @@ export type Database = {
     Functions: {
       add_or_restore_guest: {
         Args: {
-          p_email?: string
           p_event_id: string
           p_name?: string
           p_phone: string
@@ -726,7 +707,6 @@ export type Database = {
           event_id: string
           first_invited_at: string
           guest_display_name: string
-          guest_email: string
           guest_name: string
           guest_tags: string[]
           id: string
@@ -746,7 +726,6 @@ export type Database = {
           updated_at: string
           user_avatar_url: string
           user_created_at: string
-          user_email: string
           user_full_name: string
           user_id: string
           user_intended_redirect: string
@@ -810,7 +789,6 @@ export type Database = {
           declined_at: string
           event_guest_id: string
           guest_display_name: string
-          guest_email: string
           guest_name: string
           guest_tags: string[]
           has_valid_phone: boolean
@@ -818,7 +796,6 @@ export type Database = {
           phone: string
           role: string
           sms_opt_out: boolean
-          user_email: string
           user_full_name: string
           user_phone: string
         }[]
@@ -838,7 +815,6 @@ export type Database = {
           scheduled_local: string | null
           scheduled_tz: string | null
           send_at: string
-          send_via_email: boolean | null
           send_via_push: boolean | null
           send_via_sms: boolean | null
           sender_user_id: string
@@ -946,7 +922,6 @@ export type Database = {
         Args: { user_phone: string }
         Returns: {
           created_at: string
-          email: string
           full_name: string
           id: string
           onboarding_completed: boolean
@@ -1017,8 +992,6 @@ export type Database = {
       }
       upsert_message_delivery: {
         Args: {
-          p_email_provider_id?: string
-          p_email_status?: string
           p_guest_id: string
           p_message_id: string
           p_phone_number?: string
