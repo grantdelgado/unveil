@@ -272,10 +272,8 @@ export async function POST(request: NextRequest) {
       phone_number: string;
       sms_status: string;
       push_status: string;
-      email_status: string;
       sms_provider_id?: string;
       push_provider_id?: string;
-      email_provider_id?: string;
     }> = [];
 
     // SMS Delivery
@@ -353,7 +351,6 @@ export async function POST(request: NextRequest) {
                 ?.phone || guest.phone) as string,
               sms_status: 'sent', // Will be updated by webhook
               push_status: 'not_applicable',
-              email_status: 'not_applicable',
             }));
 
           // DEBUG: Log delivery record creation for troubleshooting
@@ -386,10 +383,8 @@ export async function POST(request: NextRequest) {
             p_user_id: record.user_id || undefined,
             p_sms_status: record.sms_status,
             p_push_status: record.push_status,
-            p_email_status: record.email_status,
             p_sms_provider_id: record.sms_provider_id,
             p_push_provider_id: record.push_provider_id,
-            p_email_provider_id: record.email_provider_id,
           },
         );
 

@@ -184,7 +184,6 @@ describe('Scheduled Messages Cron Integration Tests', () => {
         p_user_id: undefined,
         p_sms_status: 'sent',
         p_push_status: 'not_applicable',
-        p_email_status: 'not_applicable',
       });
     });
 

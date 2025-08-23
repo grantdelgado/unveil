@@ -245,7 +245,6 @@ async function processDueScheduledMessages(
                   p_user_id: undefined, // RPC doesn't return user_id, will be handled by the function
                   p_sms_status: 'sent', // Will be updated by webhook
                   p_push_status: 'not_applicable',
-                  p_email_status: 'not_applicable',
                 },
               );
 
