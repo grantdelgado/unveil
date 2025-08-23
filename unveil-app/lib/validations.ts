@@ -137,6 +137,36 @@ export const messageCreateSchema = z.object({
   // recipient_user_id and recipient_tags removed - these fields don't exist in live database
 });
 
+// Scheduled message validation schema
+export const scheduledMessageSchema = z.object({
+  content: z
+    .string()
+    .min(1, 'Message content is required')
+    .max(1000, 'Message must be less than 1000 characters')
+    .trim(),
+  scheduledAtUtc: z
+    .string()
+    .datetime('Invalid datetime format')
+    .refine((dateStr) => {
+      const scheduledTime = new Date(dateStr);
+      const now = new Date();
+      // Import getScheduleMinLeadMs dynamically to avoid circular imports
+      const minLeadMs = parseInt(process.env.SCHEDULE_MIN_LEAD_SECONDS || '180', 10) * 1000;
+      const minValidTime = new Date(now.getTime() + minLeadMs);
+      return scheduledTime >= minValidTime;
+    }, {
+      message: 'Scheduled time must be at least 3 minutes from now',
+    }),
+  eventId: z.string().uuid('Invalid event ID'),
+  messageType: z
+    .enum([
+      DB_ENUMS.MESSAGE_TYPE.DIRECT,
+      DB_ENUMS.MESSAGE_TYPE.ANNOUNCEMENT,
+      DB_ENUMS.MESSAGE_TYPE.CHANNEL,
+    ] as const)
+    .default(DB_ENUMS.MESSAGE_TYPE.ANNOUNCEMENT),
+});
+
 // Media schemas
 export const mediaUploadSchema = z.object({
   file: z
@@ -182,6 +212,7 @@ export type GuestImportInput = z.infer<typeof guestImportSchema>;
 export type GuestImportBatchInput = z.infer<typeof guestImportBatchSchema>;
 export type CSVHeaderInput = z.infer<typeof csvHeaderSchema>;
 export type MessageCreateInput = z.infer<typeof messageCreateSchema>;
+export type ScheduledMessageInput = z.infer<typeof scheduledMessageSchema>;
 export type MediaUploadInput = z.infer<typeof mediaUploadSchema>;
 export type ProfileUpdateInput = z.infer<typeof profileUpdateSchema>;
 // LoginInput type removed for phone-only MVP
@@ -198,6 +229,8 @@ export const validateGuestCreate = (data: unknown) =>
   guestCreateSchema.safeParse(data);
 export const validateMessageCreate = (data: unknown) =>
   messageCreateSchema.safeParse(data);
+export const validateScheduledMessage = (data: unknown) =>
+  scheduledMessageSchema.safeParse(data);
 export const validateMediaUpload = (data: unknown) =>
   mediaUploadSchema.safeParse(data);
 export const validateProfileUpdate = (data: unknown) =>
