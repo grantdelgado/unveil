@@ -324,45 +324,10 @@ export async function createScheduledMessage(
     }
 
     // Pre-calculate recipient count for scheduling
-    const { recipientCount, guestIds } = await resolveMessageRecipients(
+    const { recipientCount } = await resolveMessageRecipients(
       messageData.eventId,
       recipientFilter,
     );
-
-    // Optional: Create recipient snapshot for audit purposes (behind feature flag)
-    let recipientSnapshot: Array<{
-      guest_id: string;
-      user_id?: string;
-      phone: string;
-      name: string;
-      channel: string;
-    }> | null = null;
-    const enableRecipientSnapshot =
-      process.env.NEXT_PUBLIC_ENABLE_RECIPIENT_SNAPSHOT === 'true';
-
-    if (enableRecipientSnapshot && guestIds.length > 0) {
-      try {
-        // Fetch guest details for snapshot
-        const { data: guestDetails, error: guestError } = await supabase
-          .from('event_guests')
-          .select('id, guest_name, phone, user_id')
-          .eq('event_id', messageData.eventId)
-          .in('id', guestIds);
-
-        if (!guestError && guestDetails) {
-          recipientSnapshot = guestDetails.map((guest) => ({
-            guest_id: guest.id,
-            user_id: guest.user_id || undefined,
-            phone: guest.phone || '',
-            name: guest.guest_name || 'Guest',
-            channel: 'sms', // Default channel for now
-          }));
-        }
-      } catch (snapshotError) {
-        console.warn('Failed to create recipient snapshot:', snapshotError);
-        // Don't fail the entire operation if snapshot creation fails
-      }
-    }
 
     if (recipientCount === 0) {
       throw new Error(
@@ -429,7 +394,7 @@ export async function createScheduledMessage(
         target_guest_tags: targetGuestTags,
         target_guest_ids: targetGuestIds,
         recipient_count: recipientCount,
-        recipient_snapshot: recipientSnapshot,
+        recipient_snapshot: null,
       })
       .select()
       .single();

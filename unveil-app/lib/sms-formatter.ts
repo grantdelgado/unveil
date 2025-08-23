@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
+import { flags } from '@/config/flags';
 
 /**
  * SMS Text Formatting Utility for Event Tag Branding + A2P Footer
@@ -43,7 +44,7 @@ export async function composeSmsText(
 ): Promise<SmsFormatResult> {
   try {
     // Emergency kill-switch check (defaults to branding ON)
-    if (process.env.SMS_BRANDING_DISABLED === 'true') {
+    if (flags.ops.smsBrandingDisabled) {
       return {
         text: body,
         includedStopNotice: false,

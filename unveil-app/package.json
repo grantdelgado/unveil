@@ -11,6 +11,7 @@
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "eslint --fix .",
+    "check:flags": "npx tsx scripts/check-temp-flags.ts",
     "format": "prettier --write .",
     "test": "vitest run --reporter=default",
     "test:watch": "vitest --watch",
