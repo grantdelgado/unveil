@@ -45,6 +45,19 @@ Successfully converted Unveil to a phone-only MVP by removing all email function
 
 **Result:** Profile and setup pages now work correctly with phone-only data model.
 
+## 🔧 Guest Import Function Conflict Resolution
+
+**Issue Discovered:** Guest import was failing with error: `Could not choose the best candidate function between: public.add_or_restore_guest(p_event_id => uuid, p_phone => text, p_name => text, p_role => text), public.add_or_restore_guest(p_event_id => uuid, p_phone => text, p_name => text, p_email => text, p_role => text)`
+
+**Root Cause:** The original migration didn't properly drop the old 5-parameter version of `add_or_restore_guest` that included the `p_email` parameter, leaving two function signatures in the database.
+
+**Fix Applied:** 
+- Applied hotfix migration: `fix_duplicate_add_or_restore_guest_function`
+- Dropped the old 5-parameter function: `DROP FUNCTION IF EXISTS public.add_or_restore_guest(uuid, text, text, text, text);`
+- Verified only the correct 4-parameter function remains
+
+**Result:** Guest import now works correctly without function signature conflicts.
+
 ## Code Changes Applied
 
 ### Core Libraries
