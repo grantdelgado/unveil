@@ -1116,6 +1116,18 @@ export function MessageComposer({
           scheduledDate={scheduledDate}
           scheduledTime={scheduledTime}
           eventTimezone={eventDetails?.time_zone}
+          onScheduleUpdate={(date: string, time: string) => {
+            setScheduledDate(date);
+            setScheduledTime(time);
+          }}
+          onEditSchedule={() => {
+            // Focus the date/time controls - we'll scroll to them
+            const dateInput = document.querySelector('input[type="date"]') as HTMLInputElement;
+            if (dateInput) {
+              dateInput.focus();
+              dateInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }}
         />
       </div>
     </div>

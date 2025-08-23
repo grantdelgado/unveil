@@ -20,3 +20,18 @@ declare module 'pg-protocol/dist/messages' {
     [key: string]: unknown;
   }
 }
+
+// Google Analytics gtag function
+declare global {
+  interface Window {
+    gtag?: (
+      command: 'event',
+      eventName: string,
+      parameters?: {
+        event_category?: string;
+        event_label?: string;
+        [key: string]: unknown;
+      }
+    ) => void;
+  }
+}

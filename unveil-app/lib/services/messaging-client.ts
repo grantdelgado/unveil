@@ -271,11 +271,48 @@ export async function createScheduledMessage(
       throw new Error('User not authenticated');
     }
 
-    // Validate send time is in the future
+    // Validate send time meets minimum lead time requirement
     const sendTime = new Date(messageData.sendAt);
     const now = new Date();
-    if (sendTime <= now) {
-      throw new Error('Scheduled time must be in the future');
+    
+    // Import config dynamically to avoid circular imports
+    const minLeadSeconds = parseInt(process.env.SCHEDULE_MIN_LEAD_SECONDS || '180', 10);
+    const minValidTime = new Date(now.getTime() + (minLeadSeconds * 1000));
+    
+    if (sendTime < minValidTime) {
+      const leadMinutes = Math.ceil(minLeadSeconds / 60);
+      
+      // Log metrics for observability (numbers only, no PII)
+      const userTzOffset = new Date().getTimezoneOffset();
+      const eventTzOffset = messageData.scheduledTz ? 
+        (() => {
+          try {
+            const testDate = new Date();
+            const utcTime = testDate.getTime();
+            const eventTime = new Date(testDate.toLocaleString('en-US', { timeZone: messageData.scheduledTz }));
+            return (utcTime - eventTime.getTime()) / (1000 * 60); // offset in minutes
+          } catch {
+            return null;
+          }
+        })() : null;
+      const selectedMinusMinMs = sendTime.getTime() - minValidTime.getTime();
+      
+      console.log('messaging.schedule_too_soon', {
+        count: 1,
+        userTzOffset,
+        eventTzOffset,
+        selectedMinusMinMs,
+        minLeadSeconds,
+      });
+      
+      return {
+        success: false,
+        error: {
+          code: 'SCHEDULE_TOO_SOON',
+          message: `Cannot schedule messages less than ${leadMinutes} minutes from now. Please select a later time.`,
+          minSeconds: minLeadSeconds,
+        },
+      };
     }
 
     // Validate message content

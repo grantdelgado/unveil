@@ -15,6 +15,7 @@ import { useAuth } from '@/lib/auth/AuthProvider';
 // Internal components (specific imports)
 import { SkeletonLoader } from '@/components/ui';
 import { MobileShell } from '@/components/layout';
+import { SupportFooter } from '@/components/shared';
 
 export default function SelectEventPage() {
   const { events, loading, error, refetch } = useUserEvents();
@@ -55,13 +56,7 @@ export default function SelectEventPage() {
       </div>
     );
 
-    const footer = (
-      <div className="max-w-md mx-auto w-full">
-        <div className="text-center text-sm text-gray-400 pb-6 px-4">
-          Loading...
-        </div>
-      </div>
-    );
+    const footer = <SupportFooter />;
 
     return (
       <MobileShell header={header} footer={footer}>
@@ -84,19 +79,7 @@ export default function SelectEventPage() {
       </div>
     );
 
-    const footer = (
-      <div className="max-w-md mx-auto w-full">
-        <div className="text-center text-sm text-gray-600 pb-6 px-4">
-          Need help? Text us at{' '}
-          <a
-            href="tel:+1234567890"
-            className="text-rose-500 hover:text-rose-600 transition-colors"
-          >
-            (123) 456-7890
-          </a>
-        </div>
-      </div>
-    );
+    const footer = <SupportFooter />;
 
     return (
       <MobileShell header={header} footer={footer}>
@@ -172,19 +155,7 @@ export default function SelectEventPage() {
     </div>
   );
 
-  const footer = (
-    <div className="max-w-md mx-auto w-full">
-      <div className="text-center text-sm text-gray-600 pb-6 px-4">
-        Need help? Text us at{' '}
-        <a
-          href="tel:+1234567890"
-          className="text-rose-500 hover:text-rose-600 transition-colors"
-        >
-          (123) 456-7890
-        </a>
-      </div>
-    </div>
-  );
+  const footer = <SupportFooter />;
 
   return (
     <div id="select-event">

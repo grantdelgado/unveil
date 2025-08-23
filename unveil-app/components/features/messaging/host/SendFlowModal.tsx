@@ -11,6 +11,13 @@ import {
   toUTCFromEventZone,
   formatScheduledDateTime,
 } from '@/lib/utils/timezone';
+import {
+  MIN_SCHEDULE_BUFFER_MINUTES,
+  QUICK_SET_BUFFER_MINUTES,
+  addMinutes,
+  roundUpToMinute,
+} from '@/lib/constants/scheduling';
+import { useScheduleFreshness } from '@/hooks/scheduling/useScheduleFreshness';
 import type { RecipientPreviewData } from '@/lib/types/messaging';
 
 // Modal state machine
@@ -55,6 +62,9 @@ interface SendFlowModalProps {
   scheduledDate?: string;
   scheduledTime?: string;
   eventTimezone?: string;
+  // Callbacks for updating parent schedule state
+  onScheduleUpdate?: (date: string, time: string) => void;
+  onEditSchedule?: () => void;
   className?: string;
 }
 
@@ -73,6 +83,8 @@ export function SendFlowModal({
   scheduledDate,
   scheduledTime,
   eventTimezone,
+  onScheduleUpdate,
+  onEditSchedule,
   className,
 }: SendFlowModalProps) {
   const [currentState, setCurrentState] = useState<ModalState>('review');
@@ -88,6 +100,38 @@ export function SendFlowModal({
   const totalCount = previewData?.totalCount || 0;
   const skippedCount = totalCount - validRecipientCount;
   const isLargeGroup = validRecipientCount > 50;
+
+  // Calculate scheduledAtUtc for freshness checking
+  const scheduledAtUtc = useMemo(() => {
+    if (sendMode !== 'schedule' || !scheduledDate || !scheduledTime) return null;
+
+    // Convert to UTC using event timezone if available
+    if (eventTimezone && isValidTimezone(eventTimezone)) {
+      const utcTime = toUTCFromEventZone(
+        scheduledDate,
+        scheduledTime,
+        eventTimezone,
+      );
+      return utcTime ? new Date(utcTime) : null;
+    } else {
+      // Fallback to treating input as local time
+      return new Date(`${scheduledDate}T${scheduledTime}:00`);
+    }
+  }, [sendMode, scheduledDate, scheduledTime, eventTimezone]);
+
+  // Live schedule freshness monitoring
+  const scheduleFreshness = useScheduleFreshness({
+    scheduledAtUtc: scheduledAtUtc || new Date(), // Fallback to prevent hook errors
+    onExpire: () => {
+      // Track when schedule expires in modal (non-PII)
+      if (typeof window !== 'undefined' && 'gtag' in window && typeof window.gtag === 'function') {
+        window.gtag('event', 'schedule_too_soon_modal_shown', {
+          event_category: 'messaging',
+          event_label: 'schedule_validation',
+        });
+      }
+    },
+  });
 
   // Calculate delivery time display (immediate vs scheduled)
   const deliveryTimeDisplay = useMemo(() => {
@@ -175,6 +219,12 @@ export function SendFlowModal({
     if (messageContent.trim().length === 0) return false;
     if (!sendOptions.sendViaPush && !sendOptions.sendViaSms) return false;
     if (isLargeGroup && !hasConfirmedLargeGroup) return false;
+    
+    // For scheduled messages, check if the time is still valid
+    if (sendMode === 'schedule' && scheduledAtUtc && scheduleFreshness.isTooSoon) {
+      return false;
+    }
+    
     return true;
   }, [
     currentState,
@@ -183,6 +233,9 @@ export function SendFlowModal({
     sendOptions,
     isLargeGroup,
     hasConfirmedLargeGroup,
+    sendMode,
+    scheduledAtUtc,
+    scheduleFreshness.isTooSoon,
   ]);
 
   // Reset state when modal opens/closes
@@ -221,6 +274,34 @@ export function SendFlowModal({
   const handleRetry = () => {
     setCurrentState('review');
     setSendResult(null);
+  };
+
+  // Handle quick-fix: Use 5 minutes from now
+  const handleUse5MinutesFromNow = () => {
+    if (!onScheduleUpdate) return;
+
+    const nowUtc = new Date();
+    const targetUtc = roundUpToMinute(addMinutes(nowUtc, QUICK_SET_BUFFER_MINUTES));
+
+    // Convert UTC back to event timezone for the form inputs
+    if (eventTimezone && isValidTimezone(eventTimezone)) {
+      const eventTime = fromUTCToEventZone(targetUtc.toISOString(), eventTimezone);
+      if (eventTime?.date && eventTime?.time) {
+        onScheduleUpdate(eventTime.date, eventTime.time);
+        return;
+      }
+    }
+
+    // Fallback: use local time
+    const localDate = targetUtc.toISOString().split('T')[0];
+    const localTime = targetUtc.toTimeString().slice(0, 5);
+    onScheduleUpdate(localDate, localTime);
+  };
+
+  // Handle edit time action
+  const handleEditTime = () => {
+    onEditSchedule?.();
+    onClose();
   };
 
   const getMessageTypeEmoji = () => {
@@ -274,6 +355,84 @@ export function SendFlowModal({
                 Review your message and recipients before sending
               </p>
             </div>
+
+            {/* Schedule Expiry Warning Banner */}
+            {sendMode === 'schedule' && scheduledAtUtc && scheduleFreshness.isTooSoon && (
+              <div 
+                className="bg-orange-50 border border-orange-200 rounded-lg p-4"
+                role="alert"
+                aria-live="polite"
+              >
+                <div className="flex items-start space-x-3">
+                  <span className="text-orange-500 text-xl">⏰</span>
+                  <div className="flex-1">
+                    <h4 className="text-sm font-medium text-orange-800 mb-2">
+                      Scheduled time has passed (or is too soon)
+                    </h4>
+                    <p className="text-xs text-orange-700 mb-3">
+                      Please pick a new time at least {MIN_SCHEDULE_BUFFER_MINUTES} minutes from now.
+                    </p>
+                    
+                    {/* Current schedule display */}
+                    <div className="bg-orange-100 border border-orange-200 rounded p-2 mb-3 text-xs">
+                      <div className="space-y-1 text-orange-800">
+                        <div>
+                          <span className="font-medium">Event time:</span>{' '}
+                          {(() => {
+                            const eventTimezoneInfo = eventTimezone && isValidTimezone(eventTimezone)
+                              ? getTimezoneInfo(eventTimezone)
+                              : null;
+                            
+                            if (eventTimezoneInfo) {
+                              return `${new Date(`${scheduledDate}T${scheduledTime}`).toLocaleString([], {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                                hour: 'numeric',
+                                minute: '2-digit',
+                                hour12: true,
+                              })} ${eventTimezoneInfo.abbreviation}`;
+                            } else {
+                              return new Date(`${scheduledDate}T${scheduledTime}`).toLocaleString();
+                            }
+                          })()}
+                        </div>
+                        <div>
+                          <span className="font-medium">Your time:</span>{' '}
+                          {scheduledAtUtc.toLocaleString([], {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            hour12: true,
+                          })}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Quick fix actions */}
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={handleUse5MinutesFromNow}
+                        className="text-xs px-3 py-1"
+                      >
+                        Use {QUICK_SET_BUFFER_MINUTES} minutes from now
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleEditTime}
+                        className="text-xs px-3 py-1"
+                      >
+                        Edit time
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Recipient Summary with Message Type Context */}
             <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg p-4">
