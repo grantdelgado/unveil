@@ -141,11 +141,12 @@ export function sanitizePhoneNumber(phone: string): string {
 }
 
 /**
- * Validate email format
+ * Validate email format (optional - phone-first approach)
+ * @deprecated Use phone validation as primary contact method
  */
-export function validateEmail(email: string): boolean {
-  if (typeof email !== 'string') return false;
-
+export function validateEmail(email: string | null | undefined): boolean {
+  if (!email || typeof email !== 'string') return true; // Email is optional
+  
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email) && email.length <= 254;
 }

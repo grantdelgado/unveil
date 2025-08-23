@@ -12,7 +12,6 @@ import { logger } from '@/lib/logger';
 export interface MessagingRecipient {
   event_guest_id: string;
   guest_name: string | null;
-  guest_email: string | null;
   phone: string | null;
   sms_opt_out: boolean;
   declined_at: string | null;
@@ -22,7 +21,6 @@ export interface MessagingRecipient {
   guest_display_name: string;
   user_full_name: string | null;
   user_phone: string | null;
-  user_email: string | null;
   has_valid_phone: boolean;
 }
 
@@ -99,7 +97,6 @@ export function useMessagingRecipients(
         (recipient: any) => ({
           event_guest_id: recipient.event_guest_id,
           guest_name: recipient.guest_name,
-          guest_email: recipient.guest_email,
           phone: recipient.phone,
           sms_opt_out: recipient.sms_opt_out || false,
           declined_at: recipient.declined_at,
@@ -109,7 +106,6 @@ export function useMessagingRecipients(
           guest_display_name: recipient.guest_display_name,
           user_full_name: recipient.user_full_name,
           user_phone: recipient.user_phone,
-          user_email: recipient.user_email,
           has_valid_phone: recipient.has_valid_phone || false,
         }),
       ) as MessagingRecipient[];

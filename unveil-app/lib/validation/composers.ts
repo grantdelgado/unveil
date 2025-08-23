@@ -131,17 +131,17 @@ export const ValidationRules = {
       };
     },
 
-  // Email validation
+  // Email validation (optional - phone-first approach)
   email:
     (field: string = 'Email') =>
     (value: string): ValidationResult => {
-      if (!value) return { success: true };
+      if (!value) return { success: true }; // Email is optional
 
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       return {
         success: emailRegex.test(value),
         error: !emailRegex.test(value)
-          ? `${field} must be a valid email address`
+          ? `${field} must be a valid format if provided (optional)`
           : undefined,
       };
     },
@@ -276,14 +276,19 @@ export const CommonSchemas = {
 
   email: z
     .string()
-    .email('Must be a valid email address')
-    .max(255, 'Email must be no more than 255 characters'),
+    .email('Must be a valid format if provided (optional)')
+    .max(255, 'Email must be no more than 255 characters')
+    .optional()
+    .nullable()
+    .transform(v => (v?.trim() ? v.trim() : undefined)),
 
   optionalEmail: z
     .string()
-    .email('Must be a valid email address')
+    .email('Must be a valid format if provided (optional)')
     .max(255, 'Email must be no more than 255 characters')
     .optional()
+    .nullable()
+    .transform(v => (v?.trim() ? v.trim() : undefined))
     .or(z.literal('')),
 
   // Event validation

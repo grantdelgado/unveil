@@ -133,15 +133,15 @@ export function validateGuestField(
 
     case 'guest_email':
       if (!trimmed) {
-        return { isValid: true }; // Email is optional
+        return { isValid: true }; // Email is optional - phone is primary contact
       }
 
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(trimmed)) {
-        return { isValid: false, error: 'Please enter a valid email address' };
+        return { isValid: false, error: 'Please enter a valid format if providing email (optional)' };
       }
 
-      return { isValid: true, success: '✓ Valid email' };
+      return { isValid: true, success: '✓ Valid email format' };
 
     default:
       return { isValid: true };

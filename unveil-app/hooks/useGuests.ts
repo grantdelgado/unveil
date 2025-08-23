@@ -164,7 +164,7 @@ export function useGuests(eventId?: string): UseGuestsReturn {
             p_event_id: eventId,
             p_phone: guest.phone || '',
             p_name: guest.guest_name || undefined,
-            p_email: guest.guest_email || undefined,
+            // p_email removed - no longer used in current implementation
             p_role: guest.role || 'guest',
           },
         );

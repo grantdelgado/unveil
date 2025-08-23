@@ -65,7 +65,6 @@ export function useGuestSelection({
       event_id: eventId,
       user_id: null, // Not needed for messaging
       guest_name: recipient.guest_name,
-      guest_email: recipient.guest_email,
       phone: recipient.phone,
       a2p_notice_sent_at: null, // Not used in messaging UI
       rsvp_status: recipient.declined_at ? 'declined' : 'attending', // RSVP-Lite logic
@@ -93,7 +92,6 @@ export function useGuestSelection({
             id: '', // Not needed for messaging
             full_name: recipient.user_full_name,
             phone: recipient.user_phone || '',
-            email: recipient.user_email,
             avatar_url: null,
             created_at: null,
             updated_at: null,
@@ -128,7 +126,6 @@ export function useGuestSelection({
       const searchableText = [
         guest.displayName,
         guest.guest_name,
-        guest.guest_email,
         guest.users?.full_name,
         ...(guest.guest_tags || []),
       ]

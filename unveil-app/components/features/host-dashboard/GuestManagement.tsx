@@ -190,14 +190,12 @@ function GuestManagementContent({
       filtered = filtered.filter((guest) => {
         const displayName = guest.guest_display_name?.toLowerCase() || '';
         const guestName = guest.guest_name?.toLowerCase() || '';
-        const guestEmail = guest.guest_email?.toLowerCase() || '';
         const phone = guest.phone?.toLowerCase() || '';
         const userFullName = guest.users?.full_name?.toLowerCase() || '';
 
         return (
           displayName.includes(searchLower) ||
           guestName.includes(searchLower) ||
-          guestEmail.includes(searchLower) ||
           phone.includes(searchLower) ||
           userFullName.includes(searchLower)
         );

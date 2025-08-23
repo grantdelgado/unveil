@@ -73,7 +73,6 @@ export async function getEventGuests(eventId: string) {
         ? {
             id: guest.user_id,
             full_name: guest.user_full_name,
-            email: guest.user_email,
             phone: guest.user_phone,
             avatar_url: guest.user_avatar_url,
             created_at: guest.user_created_at,

@@ -49,7 +49,6 @@ export function useRecipientPreview({
       event_id: eventId,
       user_id: null, // Not needed for preview
       guest_name: recipient.guest_name,
-      guest_email: recipient.guest_email,
       phone: recipient.phone,
       a2p_notice_sent_at: null, // Not used in preview
       rsvp_status: recipient.declined_at ? 'declined' : 'attending',
@@ -77,7 +76,6 @@ export function useRecipientPreview({
             id: '', // Not needed for preview
             full_name: recipient.user_full_name,
             phone: recipient.user_phone || '',
-            email: recipient.user_email,
             avatar_url: null,
             created_at: null,
             updated_at: null,

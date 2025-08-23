@@ -87,12 +87,12 @@ export default function SelectEventPage() {
     const footer = (
       <div className="max-w-md mx-auto w-full">
         <div className="text-center text-sm text-gray-600 pb-6 px-4">
-          Need help? Contact us at{' '}
+          Need help? Text us at{' '}
           <a
-            href="mailto:grant@sendunveil.com"
+            href="tel:+1234567890"
             className="text-rose-500 hover:text-rose-600 transition-colors"
           >
-            grant@sendunveil.com
+            (123) 456-7890
           </a>
         </div>
       </div>
@@ -175,12 +175,12 @@ export default function SelectEventPage() {
   const footer = (
     <div className="max-w-md mx-auto w-full">
       <div className="text-center text-sm text-gray-600 pb-6 px-4">
-        Need help? Drop a line to{' '}
+        Need help? Text us at{' '}
         <a
-          href="mailto:grant@sendunveil.com"
+          href="tel:+1234567890"
           className="text-rose-500 hover:text-rose-600 transition-colors"
         >
-          grant@sendunveil.com
+          (123) 456-7890
         </a>
       </div>
     </div>

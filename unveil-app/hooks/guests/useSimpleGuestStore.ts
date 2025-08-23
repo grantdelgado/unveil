@@ -17,7 +17,6 @@ interface SimpleGuest {
   event_id: string;
   user_id: string | null;
   guest_name: string | null;
-  guest_email: string | null;
   phone: string | null;
   rsvp_status: string | null;
   notes: string | null;
@@ -43,7 +42,6 @@ interface SimpleGuest {
   guest_display_name: string;
   // User fields from the join
   user_full_name: string | null;
-  user_email: string | null;
   user_phone: string | null;
   user_avatar_url: string | null;
   user_created_at: string | null;
@@ -54,7 +52,6 @@ interface SimpleGuest {
   users?: {
     id: string;
     full_name: string | null;
-    email: string | null;
     phone: string | null;
     avatar_url: string | null;
   } | null;
@@ -149,7 +146,6 @@ export function useSimpleGuestStore(eventId: string): SimpleGuestStoreReturn {
         event_id: guest.event_id,
         user_id: guest.user_id,
         guest_name: guest.guest_name,
-        guest_email: guest.guest_email,
         phone: guest.phone,
         rsvp_status: guest.rsvp_status,
         notes: guest.notes,
@@ -175,7 +171,6 @@ export function useSimpleGuestStore(eventId: string): SimpleGuestStoreReturn {
         guest_display_name: guest.guest_display_name,
         // User fields from the join
         user_full_name: guest.user_full_name,
-        user_email: guest.user_email,
         user_phone: guest.user_phone,
         user_avatar_url: guest.user_avatar_url,
         user_created_at: guest.user_created_at,
@@ -187,7 +182,6 @@ export function useSimpleGuestStore(eventId: string): SimpleGuestStoreReturn {
           ? {
               id: guest.user_id,
               full_name: guest.user_full_name,
-              email: guest.user_email || guest.guest_email,
               phone: guest.user_phone || guest.phone,
               avatar_url: guest.user_avatar_url,
             }

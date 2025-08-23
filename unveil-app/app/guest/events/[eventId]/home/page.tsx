@@ -239,7 +239,6 @@ export default function GuestEventHomePage() {
             <DeclineBanner
               eventId={eventId}
               eventTitle={event?.title || 'this event'}
-              hostEmail={event?.host?.email || undefined}
               onDismiss={handleDismissBanner}
               onRejoin={handleRejoin}
             />

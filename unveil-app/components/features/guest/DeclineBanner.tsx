@@ -7,7 +7,6 @@ import { useGuestRejoin } from '@/hooks/guests';
 interface DeclineBannerProps {
   eventId: string;
   eventTitle: string;
-  hostEmail?: string;
   onDismiss: () => void;
   onRejoin?: () => void;
   className?: string;
@@ -15,8 +14,7 @@ interface DeclineBannerProps {
 
 export function DeclineBanner({
   eventId,
-  eventTitle,
-  hostEmail,
+  eventTitle: _eventTitle, // eslint-disable-line @typescript-eslint/no-unused-vars
   onDismiss,
   onRejoin,
   className,
@@ -41,15 +39,7 @@ export function DeclineBanner({
     onDismiss();
   };
 
-  const handleContactHost = () => {
-    if (hostEmail) {
-      const subject = encodeURIComponent(`About ${eventTitle}`);
-      const body = encodeURIComponent(
-        `Hi! I wanted to reach out regarding ${eventTitle}...`,
-      );
-      window.location.href = `mailto:${hostEmail}?subject=${subject}&body=${body}`;
-    }
-  };
+
 
   const handleRejoin = async () => {
     const result = await rejoinEvent();
@@ -139,20 +129,7 @@ export function DeclineBanner({
               )}
             </button>
 
-            {hostEmail && (
-              <button
-                onClick={handleContactHost}
-                className={cn(
-                  'inline-flex items-center text-sm font-medium text-amber-800',
-                  'hover:text-amber-900 focus:outline-none focus:ring-2',
-                  'focus:ring-amber-500 focus:ring-offset-2 rounded-lg px-2 py-1',
-                  'transition-colors duration-200 underline underline-offset-2',
-                  'min-h-[44px]', // Ensure minimum touch target
-                )}
-              >
-                Contact host
-              </button>
-            )}
+
           </div>
         </div>
 

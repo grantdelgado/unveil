@@ -12,6 +12,7 @@
     "lint": "next lint",
     "lint:fix": "eslint --fix .",
     "check:flags": "npx tsx scripts/check-temp-flags.ts",
+    "check:email": "npx tsx scripts/check-email-optionality.ts",
     "format": "prettier --write .",
     "test": "vitest run --reporter=default",
     "test:watch": "vitest --watch",
@@ -44,7 +45,10 @@
     "test:user-id-trigger": "npx tsx scripts/test-user-id-trigger.ts",
     "validate:sms-schema": "npx tsx scripts/validate-sms-schema.ts",
     "typecheck": "tsc --noEmit",
-    "precommit": "pnpm typecheck && pnpm lint && pnpm test && pnpm build"
+    "precommit": "pnpm typecheck && pnpm lint --max-warnings=0 && pnpm test && pnpm check:email && pnpm build",
+    "e2e": "pnpm exec playwright test --project=chromium-mobile --project=webkit-mobile",
+    "ci:full": "pnpm typecheck && pnpm lint --max-warnings=0 && pnpm test && pnpm check:email && pnpm e2e",
+    "test:email-smoke": "pnpm exec playwright test tests/e2e/email-optional.smoke.spec.ts --project=chromium-mobile --project=webkit-mobile"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",

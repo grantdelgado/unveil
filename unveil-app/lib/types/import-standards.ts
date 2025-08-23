@@ -72,7 +72,7 @@ export const STANDARD_IMPORT_PATTERNS = {
   // Utilities
   LOGGER: "import { logAuth, logError, logDev } from '@/lib/logger'",
   VALIDATION:
-    "import { validatePhoneNumber, validateEmail } from '@/lib/validations'",
+    "import { validatePhoneNumber } from '@/lib/validations'", // Phone-first approach
   ERROR_HANDLING:
     "import { handleDatabaseError, withErrorHandling } from '@/lib/error-handling'",
 } as const;

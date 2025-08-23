@@ -66,7 +66,7 @@ export const GuestListItem = memo<GuestListItemProps>(
       guest.users?.full_name ||
       guest.guest_name ||
       'Unnamed Guest';
-    const displayEmail = guest.users?.email || guest.guest_email;
+
 
     // State analysis
     const hasDeclined = isDeclined(guest);
@@ -216,11 +216,7 @@ export const GuestListItem = memo<GuestListItemProps>(
               📱 {guest.phone}
             </p>
           )}
-          {displayEmail && (
-            <p className="text-sm text-gray-500 leading-tight truncate">
-              ✉️ {displayEmail}
-            </p>
-          )}
+
         </div>
 
         {/* Decline Details (only for declined guests) */}

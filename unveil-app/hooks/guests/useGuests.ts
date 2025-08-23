@@ -77,7 +77,6 @@ export function useGuests({
           event_id: guest.event_id,
           user_id: guest.user_id,
           guest_name: guest.guest_name,
-          guest_email: guest.guest_email,
           phone: guest.phone,
 
           notes: guest.notes,
@@ -99,7 +98,6 @@ export function useGuests({
                 id: guest.user_id,
                 full_name: guest.user_full_name,
                 phone: guest.user_phone || guest.phone,
-                email: guest.user_email || guest.guest_email,
                 avatar_url: guest.user_avatar_url,
                 created_at: guest.user_created_at,
                 updated_at: guest.user_updated_at,

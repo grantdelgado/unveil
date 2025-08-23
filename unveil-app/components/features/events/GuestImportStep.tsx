@@ -43,7 +43,7 @@ export function GuestImportStep({
     null,
   );
   const [manualGuests, setManualGuests] = useState<GuestImportInput[]>([
-    { guest_name: '', phone: '', guest_email: '', role: 'guest', notes: '' },
+    { guest_name: '', phone: '', role: 'guest', notes: '' },
   ]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -126,7 +126,7 @@ export function GuestImportStep({
   const addManualGuest = useCallback(() => {
     setManualGuests((prev) => [
       ...prev,
-      { guest_name: '', phone: '', guest_email: '', role: 'guest', notes: '' },
+      { guest_name: '', phone: '', role: 'guest', notes: '' },
     ]);
   }, []);
 
@@ -407,12 +407,6 @@ export function GuestImportStep({
                           </span>
                           <span>•</span>
                           <span>{guest.phone}</span>
-                          {guest.guest_email && (
-                            <>
-                              <span>•</span>
-                              <span>{guest.guest_email}</span>
-                            </>
-                          )}
                         </div>
                       ))}
                       {csvData.length > 5 && (
@@ -499,15 +493,7 @@ export function GuestImportStep({
                     disabled={disabled}
                     className="text-sm"
                   />
-                  <TextInput
-                    placeholder="Email (optional)"
-                    value={guest.guest_email || ''}
-                    onChange={(e) =>
-                      updateManualGuest(index, 'guest_email', e.target.value)
-                    }
-                    disabled={disabled}
-                    className="text-sm"
-                  />
+
                   <select
                     value={guest.role}
                     onChange={(e) =>

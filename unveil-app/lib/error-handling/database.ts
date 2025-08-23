@@ -76,7 +76,6 @@ export class DatabaseErrorHandler {
     auth: {
       '23505': {
         phone: 'A user with this phone number already exists',
-        email: 'A user with this email already exists',
         default: 'User already exists',
       },
       '23503': {
@@ -145,7 +144,6 @@ export class DatabaseErrorHandler {
     users: {
       '23505': {
         phone: 'A user with this phone number already exists',
-        email: 'A user with this email already exists',
         default: 'User already exists',
       },
       '23503': {

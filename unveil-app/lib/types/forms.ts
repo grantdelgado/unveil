@@ -75,7 +75,7 @@ export interface EventFormData {
 export interface GuestFormData {
   phone: StringFormField;
   guest_name?: StringFormField;
-  guest_email?: StringFormField;
+  // guest_email removed - no longer used in current implementation
   role: StringFormField;
   rsvp_status?: StringFormField;
   guest_tags?: ArrayFormField<string>;
@@ -97,7 +97,7 @@ export interface MediaUploadFormData {
 
 export interface ProfileFormData {
   full_name?: StringFormField;
-  email?: StringFormField;
+  email?: StringFormField | null; // Optional and nullable - phone-first approach
   phone: StringFormField;
   avatar?: FileFormField;
 }
@@ -135,7 +135,7 @@ export type EventFormSchema = z.ZodObject<{
 export type GuestFormSchema = z.ZodObject<{
   phone: z.ZodString;
   guest_name: z.ZodOptional<z.ZodString>;
-  guest_email: z.ZodOptional<z.ZodString>;
+  // guest_email removed - no longer used in current implementation
   role: z.ZodEnum<['host', 'guest']>;
   rsvp_status: z.ZodOptional<
     z.ZodEnum<['attending', 'declined', 'maybe', 'pending']>
@@ -387,7 +387,7 @@ export const createEventFormData = (): EventFormData => ({
 export const createGuestFormData = (): GuestFormData => ({
   phone: createStringField('', true),
   guest_name: createStringField('', false),
-  guest_email: createStringField('', false),
+  // guest_email removed - no longer used in current implementation
   role: createStringField('guest', true),
   rsvp_status: createStringField('pending', false),
   guest_tags: createArrayField<string>(),

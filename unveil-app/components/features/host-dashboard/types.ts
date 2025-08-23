@@ -14,7 +14,6 @@ export interface OptimizedGuest {
   event_id: string;
   user_id: string | null;
   guest_name: string | null;
-  guest_email: string | null;
   phone: string | null;
 
   notes: string | null;
@@ -40,7 +39,6 @@ export interface OptimizedGuest {
   users?: {
     id: string;
     full_name: string | null;
-    email: string | null;
     phone: string | null;
   } | null;
 }

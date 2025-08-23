@@ -39,7 +39,7 @@ export interface HostGuestProfile {
 export interface GuestImportInput {
   guest_name: string;
   phone: string;
-  guest_email?: string;
+  // guest_email removed - no longer used in current implementation
   role?: 'guest' | 'host' | 'admin';
   notes?: string;
   guest_tags?: string[];
@@ -777,7 +777,7 @@ export class EventCreationService {
           const guest: GuestImportInput = {
             guest_name: values[headers.indexOf('name')] || '',
             phone: values[headers.indexOf('phone')] || '',
-            guest_email: values[headers.indexOf('email')] || undefined,
+            // guest_email removed - no longer used in current implementation
             role:
               (values[headers.indexOf('role')] as 'guest' | 'host') || 'guest',
             notes: values[headers.indexOf('notes')] || undefined,
@@ -966,14 +966,7 @@ export class EventCreationService {
         return;
       }
 
-      // Validate email if provided
-      if (guest.guest_email) {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(guest.guest_email)) {
-          errors.push(`Row ${index + 1}: Invalid email format`);
-          return;
-        }
-      }
+      // Email validation removed - no longer used in current implementation
 
       // Validate role
       if (guest.role && !['guest', 'host', 'admin'].includes(guest.role)) {
@@ -993,7 +986,7 @@ export class EventCreationService {
         ...guest,
         guest_name: guest.guest_name.trim(),
         phone: cleanPhone,
-        guest_email: guest.guest_email?.trim() || undefined,
+        // guest_email removed - no longer used in current implementation
         role: guest.role || 'guest',
         notes: guest.notes?.trim() || undefined,
       });
@@ -1038,7 +1031,7 @@ export class EventCreationService {
             p_event_id: eventId,
             p_phone: guest.phone || '',
             p_name: guest.guest_name || undefined,
-            p_email: guest.guest_email || undefined,
+            // p_email removed - no longer used in current implementation
             p_role: guest.role || 'guest',
           },
         );

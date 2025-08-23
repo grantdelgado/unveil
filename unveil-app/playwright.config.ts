@@ -50,6 +50,16 @@ export default defineConfig({
     },
     /* Test against mobile viewports. */
     {
+      name: 'chromium-mobile',
+      use: { ...devices['Pixel 7'] },
+      dependencies: ['setup'],
+    },
+    {
+      name: 'webkit-mobile', 
+      use: { ...devices['iPhone 14 Pro'] },
+      dependencies: ['setup'],
+    },
+    {
       name: 'Mobile Chrome',
       use: { ...devices['Pixel 5'] },
       dependencies: ['setup'],
@@ -63,9 +73,9 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'npm run dev',
+    command: process.env.CI ? 'pnpm build && pnpm start' : 'pnpm dev',
     url: 'http://localhost:3000',
+    timeout: 120_000,
     reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
   },
 });

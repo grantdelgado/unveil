@@ -12,7 +12,6 @@ export type OptimizedGuest = {
   event_id: string;
   user_id: string | null;
   guest_name: string | null;
-  guest_email: string | null;
   phone: string | null;
 
   notes: string | null;
@@ -42,7 +41,6 @@ export type OptimizedGuest = {
     id: string;
     full_name: string | null;
     phone: string | null;
-    email: string | null;
     avatar_url: string | null;
     created_at: string | null;
     updated_at: string | null;
@@ -140,7 +138,6 @@ export function useGuestData({
           event_id: guest.event_id,
           user_id: guest.user_id,
           guest_name: guest.guest_name,
-          guest_email: guest.guest_email,
           phone: guest.phone,
 
           notes: guest.notes,
@@ -164,7 +161,6 @@ export function useGuestData({
                 id: guest.user_id,
                 full_name: guest.user_full_name,
                 phone: guest.user_phone || guest.phone,
-                email: guest.user_email || guest.guest_email,
                 avatar_url: guest.user_avatar_url,
                 created_at: guest.user_created_at,
                 updated_at: guest.user_updated_at,
