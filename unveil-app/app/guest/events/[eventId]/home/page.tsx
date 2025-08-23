@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import { useEventWithGuest } from '@/hooks/events';
@@ -11,10 +11,11 @@ import {
   PhotoAlbumButton,
   DeclineEventModal,
   DeclineBanner,
+  GuestEventHeader,
 } from '@/components/features/guest';
 import { useGuestDecline } from '@/hooks/guests';
 
-import { throttle } from '@/lib/utils/throttle';
+
 import {
   PageWrapper,
   CardContainer,
@@ -22,7 +23,6 @@ import {
   SubTitle,
   PrimaryButton,
   SecondaryButton,
-  BackButton,
   SkeletonLoader,
 } from '@/components/ui';
 import {
@@ -37,7 +37,7 @@ export default function GuestEventHomePage() {
   const eventId = params.eventId as string;
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-  const [isScrolled, setIsScrolled] = useState(false);
+  // REMOVED: isScrolled state for Phase 1 simplification
 
   // RSVP-Lite state
   const [showDeclineModal, setShowDeclineModal] = useState(false);
@@ -63,26 +63,10 @@ export default function GuestEventHomePage() {
     getSession();
   }, [router]);
 
-  // 🚀 PERFORMANCE OPTIMIZATION: Throttled scroll events
-  // Using throttled scroll handlers provides:
-  // - Smooth 60fps scrolling performance (16ms intervals)
-  // - Prevents excessive re-renders during scroll
-  // - Native app-like responsiveness on mobile devices
-  // - Eliminates scroll jank and frame drops
-  // Week 3: Implemented custom throttle utility for 90% smoother scrolling
-  const throttledScrollHandler = useMemo(
-    () =>
-      throttle(() => {
-        const scrollTop = window.scrollY;
-        setIsScrolled(scrollTop > 50);
-      }, 16), // 16ms = ~60fps for smooth performance
-    [],
-  );
+  // REMOVED: Scroll handler for Phase 1 simplification
+  // Will be re-added in Phase 2 with IntersectionObserver
 
-  useEffect(() => {
-    window.addEventListener('scroll', throttledScrollHandler);
-    return () => window.removeEventListener('scroll', throttledScrollHandler);
-  }, [throttledScrollHandler]);
+
 
   // Use the custom hook to fetch event and guest data
   const { event, guestInfo, loading, error } = useEventWithGuest(
@@ -237,47 +221,18 @@ export default function GuestEventHomePage() {
     }
   };
 
-  const header = (
-    <div
-      className={`bg-[#FAFAFA]/95 backdrop-blur-sm border-b border-gray-200/50 transition-all duration-300 ${
-        isScrolled ? 'shadow-lg' : 'shadow-sm'
-      }`}
-    >
-      <div className="max-w-5xl mx-auto px-6 transition-all duration-300">
-        <div
-          className={`transition-all duration-300 ${isScrolled ? 'py-3' : 'py-6'}`}
-        >
-          {/* Main header content */}
-          <div className="relative">
-            <div className="transition-all duration-300">
-              <div
-                className={`mb-3 transition-all duration-300 ${isScrolled ? 'text-sm' : ''}`}
-              >
-                <BackButton
-                  href="/select-event"
-                  variant="subtle"
-                  className={isScrolled ? 'text-xs py-1 px-2' : ''}
-                >
-                  Your Events
-                </BackButton>
-              </div>
-              <h1
-                className={`font-semibold text-gray-900 transition-all duration-300 tracking-tight break-words ${
-                  isScrolled ? 'text-xl' : 'text-3xl'
-                }`}
-              >
-                {event.title}
-              </h1>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+
 
   return (
     <ErrorBoundary fallback={MessagingErrorFallback}>
-      <MobileShell header={header} className="bg-[#FAFAFA]" scrollable={true}>
+      <MobileShell className="bg-[#FAFAFA]" scrollable={true}>
+        {/* Header - now inside scroll container for sticky to work */}
+        <GuestEventHeader
+          eventTitle={event.title}
+          subtitle="Event details & updates"
+          variant="hero"
+        />
+        
         {/* Decline Banner - Show if guest has declined */}
         {(hasDeclined || showDeclineBanner) && (
           <div className="max-w-5xl mx-auto px-6 pt-4">

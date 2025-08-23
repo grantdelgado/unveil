@@ -47,7 +47,7 @@ export default function MobileShell({
       )}
     >
       {/* Header Section */}
-      {header && <header className="safe-top flex-shrink-0">{header}</header>}
+      {header && <header className="flex-shrink-0">{header}</header>}
 
       {/* Main Content Section */}
       <main

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { cn } from '@/lib/utils';
 
 interface DeclineEventModalProps {
@@ -19,6 +20,19 @@ export function DeclineEventModal({
   const [reason, setReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Scroll lock effect
+  useEffect(() => {
+    if (isOpen) {
+      // Prevent body scroll
+      const originalStyle = window.getComputedStyle(document.body).overflow;
+      document.body.style.overflow = 'hidden';
+      
+      return () => {
+        document.body.style.overflow = originalStyle;
+      };
+    }
+  }, [isOpen]);
+
   const handleSubmit = async () => {
     if (isSubmitting) return;
 
@@ -33,36 +47,65 @@ export function DeclineEventModal({
     }
   };
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     if (isSubmitting) return;
     setReason('');
     onClose();
-  };
+  }, [isSubmitting, onClose]);
+
+  // Handle ESC key
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen && !isSubmitting) {
+        handleClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+  }, [isOpen, isSubmitting, handleClose]);
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
+  const modalContent = (
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center min-h-[100dvh]"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="decline-modal-title"
+      aria-describedby="decline-modal-description"
+    >
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/50 transition-opacity"
+        className="fixed inset-0 bg-black/50 transition-opacity duration-150"
         onClick={handleClose}
       />
 
       {/* Modal */}
       <div
         className={cn(
-          'relative w-full max-w-md mx-4 bg-white rounded-t-2xl sm:rounded-2xl shadow-xl',
-          'transform transition-transform duration-300',
-          'max-h-[85vh] flex flex-col',
+          'relative w-full max-w-[min(92vw,420px)] mx-4 bg-white rounded-2xl shadow-lg',
+          'transform transition-all duration-200 ease-out',
+          'max-h-[90dvh] flex flex-col',
+          'pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]',
+          // Animation: fade + slight scale
+          isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
         )}
       >
         {/* Header */}
         <div className="px-6 py-5 border-b border-stone-200">
-          <h2 className="text-xl font-semibold text-stone-900">
+          <h2 
+            id="decline-modal-title"
+            className="text-xl font-semibold text-stone-900"
+          >
             Can&apos;t make it to this event?
           </h2>
-          <p className="text-sm text-stone-600 mt-1">
+          <p 
+            id="decline-modal-description"
+            className="text-sm text-stone-600 mt-1"
+          >
             You&apos;ll stop receiving day-of logistics unless the host includes
             you.
           </p>
@@ -152,4 +195,9 @@ export function DeclineEventModal({
       </div>
     </div>
   );
+
+  // Render via portal to ensure proper stacking
+  return typeof window !== 'undefined' 
+    ? createPortal(modalContent, document.body)
+    : null;
 }
