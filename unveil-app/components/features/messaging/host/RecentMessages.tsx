@@ -2,18 +2,20 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { formatMessageTimestamp } from '@/lib/utils/date';
+import { formatMessageTimestamp, formatDateGroupHeader, groupMessagesByDate } from '@/lib/utils/date';
 import { useScheduledMessages } from '@/hooks/messaging/useScheduledMessages';
 import {
   fromUTCToEventZone,
   getTimezoneInfo,
   isValidTimezone,
+  formatScheduledDateTime,
 } from '@/lib/utils/timezone';
 import { supabase } from '@/lib/supabase/client';
 import type { Database } from '@/app/reference/supabase.types';
 
 // Use the direct database types
 type Message = Database['public']['Tables']['messages']['Row'];
+type ScheduledMessage = Database['public']['Tables']['scheduled_messages']['Row'];
 
 // Combined message type for unified display
 interface UnifiedMessage {
@@ -28,125 +30,105 @@ interface UnifiedMessage {
   recipient_count?: number;
   success_count?: number;
   failure_count?: number;
+  scheduled_message_id?: string | null; // For linking sent messages to their originating schedule
+}
+
+// Props for individual message row component
+interface MessageRowProps {
+  message: UnifiedMessage;
+  showMyTime: boolean;
+  eventTimezone: string | null;
+}
+
+// Props for upcoming message card
+interface UpcomingMessageCardProps {
+  message: UnifiedMessage;
+  showMyTime: boolean;
+  eventTimezone: string | null;
+  onCancel: () => void;
 }
 
 interface RecentMessagesProps {
   messages: Message[];
+  scheduledMessages?: ScheduledMessage[];
   eventId: string;
   isLoading?: boolean;
   className?: string;
 }
 
-export function RecentMessages({
-  messages,
-  eventId,
-  isLoading = false,
-  className,
-}: RecentMessagesProps) {
-  // State for timezone toggle
-  const [showMyTime, setShowMyTime] = React.useState(false);
-  const [eventTimezone, setEventTimezone] = React.useState<string | null>(null);
+/**
+ * Upcoming message card component with enhanced scheduling info
+ */
+function UpcomingMessageCard({ message, showMyTime, eventTimezone, onCancel }: UpcomingMessageCardProps) {
+  // Format scheduled time with timezone info
+  const getScheduledTimeDisplay = () => {
+    if (!message.send_at) return '';
 
-  // Two-phase loading: track initial boot vs live updates
-  const [hasInitiallyLoaded, setHasInitiallyLoaded] = React.useState(false);
-
-  // Fetch scheduled messages
-  const {
-    scheduledMessages,
-    loading: scheduledLoading,
-    cancelScheduledMessage,
-  } = useScheduledMessages({ eventId });
-
-  // Only show skeleton on initial load, not subsequent updates
-  const isBootLoading = (isLoading || scheduledLoading) && !hasInitiallyLoaded;
-  const isLiveUpdating = (isLoading || scheduledLoading) && hasInitiallyLoaded;
-
-  // Track when we've completed initial load
-  React.useEffect(() => {
-    if (!isLoading && !scheduledLoading && !hasInitiallyLoaded) {
-      setHasInitiallyLoaded(true);
+    if (eventTimezone && !showMyTime) {
+      // Use the formatScheduledDateTime utility for full context
+      return formatScheduledDateTime(message.send_at, eventTimezone) || 
+        `Scheduled for ${new Date(message.send_at).toLocaleString()}`;
+    } else {
+      // Show in user's local time
+      const date = new Date(message.send_at);
+      return `Scheduled for ${date.toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short', 
+        day: 'numeric'
+      })} at ${date.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      })}`;
     }
-  }, [isLoading, scheduledLoading, hasInitiallyLoaded]);
+  };
 
-  // Fetch event timezone
-  React.useEffect(() => {
-    const fetchEventTimezone = async () => {
-      try {
-        const { data } = await supabase
-          .from('events')
-          .select('time_zone')
-          .eq('id', eventId)
-          .single();
+  return (
+    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
+      <div className="flex items-start justify-between">
+        <div className="flex-1 min-w-0 pr-4">
+          {/* Message content */}
+          <p className="text-sm text-gray-900 mb-3 line-clamp-2">
+            {message.content}
+          </p>
 
-        setEventTimezone(data?.time_zone || null);
-      } catch (error) {
-        console.warn('Failed to fetch event timezone:', error);
-      }
-    };
+          {/* Scheduling info */}
+          <div className="text-sm text-blue-700 font-medium mb-2">
+            {getScheduledTimeDisplay()}
+          </div>
 
-    fetchEventTimezone();
-  }, [eventId]);
+          {/* Metadata */}
+          <div className="flex items-center gap-3 text-xs text-gray-600">
+            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+              ⏰ Scheduled
+            </span>
+            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+              {message.message_type}
+            </span>
+            {message.recipient_count && message.recipient_count > 0 && (
+              <span className="text-gray-600">
+                {message.recipient_count} {message.recipient_count === 1 ? 'person' : 'people'}
+              </span>
+            )}
+          </div>
+        </div>
 
-  // Combine and transform messages with stable dependencies
-  const unifiedMessages: UnifiedMessage[] = React.useMemo(() => {
-    const sentMessages: UnifiedMessage[] = messages.map((msg) => ({
-      id: msg.id,
-      content: msg.content,
-      created_at: msg.created_at || '',
-      message_type: msg.message_type || 'direct',
-      type: 'sent' as const,
-      status: 'sent',
-      sent_at: msg.delivered_at || msg.created_at || '',
-      recipient_count: (msg.delivered_count || 0) + (msg.failed_count || 0),
-      success_count: msg.delivered_count || 0,
-      failure_count: msg.failed_count || 0,
-    }));
+        {/* Cancel button */}
+        <button
+          onClick={onCancel}
+          className="text-xs text-red-600 hover:text-red-800 px-3 py-1 border border-red-300 rounded-md hover:bg-red-50 transition-colors flex-shrink-0"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
 
-    const scheduledMsgs: UnifiedMessage[] = scheduledMessages.map((msg) => ({
-      id: msg.id,
-      content: msg.content,
-      created_at: msg.created_at || '',
-      message_type: msg.message_type || 'announcement',
-      type: 'scheduled' as const,
-      status: msg.status || 'scheduled',
-      send_at: msg.send_at,
-      sent_at: msg.sent_at || undefined,
-      recipient_count: msg.recipient_count || 0,
-      success_count: msg.success_count || 0,
-      failure_count: msg.failure_count || 0,
-    }));
-
-    // Combine and sort: upcoming scheduled first, then by date (newest first)
-    const combined = [...sentMessages, ...scheduledMsgs];
-    return combined.sort((a, b) => {
-      // Upcoming scheduled messages first
-      if (a.type === 'scheduled' && a.status === 'scheduled' && a.send_at) {
-        const sendTime = new Date(a.send_at);
-        if (sendTime > new Date()) {
-          if (b.type === 'scheduled' && b.status === 'scheduled' && b.send_at) {
-            const bSendTime = new Date(b.send_at);
-            if (bSendTime > new Date()) {
-              return sendTime.getTime() - bSendTime.getTime(); // Earlier scheduled first
-            }
-          }
-          return -1; // Upcoming scheduled before everything else
-        }
-      }
-
-      if (b.type === 'scheduled' && b.status === 'scheduled' && b.send_at) {
-        const sendTime = new Date(b.send_at);
-        if (sendTime > new Date()) {
-          return 1; // Upcoming scheduled before everything else
-        }
-      }
-
-      // For everything else, sort by most recent first
-      const aTime = new Date(a.sent_at || a.created_at).getTime();
-      const bTime = new Date(b.sent_at || b.created_at).getTime();
-      return bTime - aTime;
-    });
-  }, [messages, scheduledMessages]); // Dependencies are stable arrays from hooks
-
+/**
+ * Individual message row component with cleaned up layout
+ */
+function MessageRow({ message, showMyTime, eventTimezone }: MessageRowProps) {
   // Helper function to get status badge
   const getStatusBadge = (message: UnifiedMessage) => {
     if (message.type === 'sent') {
@@ -202,45 +184,306 @@ export function RecentMessages({
     }
   };
 
-  // Helper function to format display time with timezone awareness
+  // Helper function to get display time (just time, not full timestamp)
   const getDisplayTime = (message: UnifiedMessage) => {
-    if (message.type === 'sent') {
-      return formatMessageTimestamp(message.sent_at || message.created_at);
-    }
+    const timestamp = message.sent_at || message.created_at;
+    if (!timestamp) return '';
 
-    if (message.status === 'scheduled' && message.send_at) {
-      const sendTime = new Date(message.send_at);
-      const now = new Date();
-
-      // Format time based on timezone preference
-      let timeDisplay: string;
-      if (eventTimezone && isValidTimezone(eventTimezone) && !showMyTime) {
-        // Show event timezone
-        const eventTime = fromUTCToEventZone(message.send_at, eventTimezone);
-        if (eventTime) {
-          const tzInfo = getTimezoneInfo(eventTimezone);
-          timeDisplay = `${eventTime.formatted} ${tzInfo?.abbreviation || ''}`;
-        } else {
-          timeDisplay = formatMessageTimestamp(message.send_at);
-        }
+    const messageDate = new Date(timestamp);
+    
+    if (eventTimezone && !showMyTime) {
+      // Show event timezone time
+      const eventTime = fromUTCToEventZone(timestamp, eventTimezone);
+      return eventTime?.formatted || messageDate.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+      });
       } else {
         // Show user's local time
-        timeDisplay = formatMessageTimestamp(message.send_at);
-      }
-
-      if (sendTime > now) {
-        return `Scheduled for ${timeDisplay}`;
-      } else {
-        return `Was scheduled for ${timeDisplay}`;
-      }
+      return messageDate.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+      });
     }
-
-    if (message.sent_at) {
-      return `Sent ${formatMessageTimestamp(message.sent_at)}`;
-    }
-
-    return formatMessageTimestamp(message.created_at);
   };
+
+  // Helper function to format delivery summary
+  const getDeliveryLabel = (message: UnifiedMessage) => {
+    // For sent messages (from messages table): show actual delivery counts
+    if (message.type === 'sent') {
+      const successCount = message.success_count || 0;
+      const failureCount = message.failure_count || 0;
+      const totalRecipients = message.recipient_count || 0;
+
+      // Don't show anything if no delivery info available
+      if (successCount === 0 && failureCount === 0 && totalRecipients === 0) {
+        return null;
+      }
+
+      // Show delivered/failed counts for sent messages
+      if (successCount > 0 || failureCount > 0) {
+        const parts = [];
+        
+        if (successCount > 0) {
+          // Show "X/Y delivered" if we have total, otherwise "X delivered"
+          if (totalRecipients > 0 && totalRecipients !== successCount) {
+            parts.push(`${successCount}/${totalRecipients} delivered`);
+        } else {
+            parts.push(`${successCount} delivered`);
+          }
+        }
+        
+        if (failureCount > 0) {
+          parts.push(`${failureCount} failed`);
+        }
+        
+        return (
+          <span className="text-gray-500">
+            {parts.join(' • ')}
+          </span>
+        );
+      }
+
+      // Fallback for sent messages without delivery stats
+      if (totalRecipients > 0) {
+        return (
+          <span className="text-gray-500">
+            {totalRecipients} {totalRecipients === 1 ? 'recipient' : 'recipients'}
+          </span>
+        );
+      }
+    }
+
+    // For scheduled messages: show intended audience size (not delivery counts)
+    if (message.type === 'scheduled') {
+      const recipientCount = message.recipient_count || 0;
+      
+      if (recipientCount > 0) {
+        return (
+          <span className="text-gray-500">
+            {recipientCount} {recipientCount === 1 ? 'person' : 'people'}
+          </span>
+        );
+      }
+    }
+
+    return null;
+  };
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors min-h-[44px]">
+      <div className="flex items-start justify-between">
+        <div className="flex-1 min-w-0 pr-4">
+          {/* Message content */}
+          <p className="text-sm text-gray-900 mb-2 line-clamp-2">
+            {message.content}
+          </p>
+
+          {/* Status and metadata row */}
+          <div className="flex items-center gap-3 text-xs">
+            {/* Left side: Status, Type, Delivery */}
+            <div className="flex items-center gap-2">
+              {getStatusBadge(message)}
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                {message.message_type}
+              </span>
+              {getDeliveryLabel(message)}
+            </div>
+          </div>
+        </div>
+
+        {/* Right side: Time */}
+        <div className="text-xs text-gray-500 text-right flex-shrink-0">
+          {getDisplayTime(message)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function RecentMessages({
+  messages,
+  scheduledMessages: propScheduledMessages,
+  eventId,
+  isLoading = false,
+  className,
+}: RecentMessagesProps) {
+  // State for timezone toggle
+  const [showMyTime, setShowMyTime] = React.useState(false);
+  const [eventTimezone, setEventTimezone] = React.useState<string | null>(null);
+
+  // Two-phase loading: track initial boot vs live updates
+  const [hasInitiallyLoaded, setHasInitiallyLoaded] = React.useState(false);
+
+  // Fetch scheduled messages - Hotfix: use prop if available, otherwise fetch
+  const {
+    scheduledMessages: hookScheduledMessages,
+    loading: scheduledLoading,
+    cancelScheduledMessage,
+  } = useScheduledMessages({ 
+    eventId,
+    autoRefresh: false, // Hotfix: disable auto-refresh, rely on realtime
+    realTimeUpdates: !propScheduledMessages // Disable if we have props
+  });
+  
+  // Use prop scheduled messages if available, otherwise use hook
+  const scheduledMessages = propScheduledMessages || hookScheduledMessages;
+  const effectiveScheduledLoading = propScheduledMessages ? false : scheduledLoading;
+
+  // Only show skeleton on initial load, not subsequent updates
+  const isBootLoading = (isLoading || effectiveScheduledLoading) && !hasInitiallyLoaded;
+  const isLiveUpdating = (isLoading || effectiveScheduledLoading) && hasInitiallyLoaded;
+
+  // Track when we've completed initial load
+  React.useEffect(() => {
+    if (!isLoading && !effectiveScheduledLoading && !hasInitiallyLoaded) {
+      setHasInitiallyLoaded(true);
+    }
+  }, [isLoading, effectiveScheduledLoading, hasInitiallyLoaded]);
+
+  // Hotfix: Dev observability - log query states (remove after verification)
+  React.useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[MessageHistory] Query states:', {
+        eventId,
+        messagesCount: messages?.length || 0,
+        scheduledCount: scheduledMessages?.length || 0,
+        isLoading,
+        scheduledLoading,
+        hasInitiallyLoaded,
+        isBootLoading,
+        isLiveUpdating
+      });
+    }
+  }, [eventId, messages?.length, scheduledMessages?.length, isLoading, effectiveScheduledLoading, hasInitiallyLoaded, isBootLoading, isLiveUpdating]);
+
+  // Fetch event timezone
+  React.useEffect(() => {
+    const fetchEventTimezone = async () => {
+      try {
+        const { data } = await supabase
+          .from('events')
+          .select('time_zone')
+          .eq('id', eventId)
+          .single();
+
+        setEventTimezone(data?.time_zone || null);
+      } catch (error) {
+        console.warn('Failed to fetch event timezone:', error);
+      }
+    };
+
+    fetchEventTimezone();
+  }, [eventId]);
+
+  // Combine and transform messages with stable dependencies
+  const unifiedMessages: UnifiedMessage[] = React.useMemo(() => {
+    // Hotfix: Add safety checks and logging
+    console.log('[RecentMessages] Processing messages:', {
+      messages: messages?.length || 0,
+      scheduledMessages: scheduledMessages?.length || 0,
+      scheduledSource: propScheduledMessages ? 'props' : 'hook',
+      messagesArray: messages,
+      scheduledArray: scheduledMessages
+    });
+
+    const sentMessages: UnifiedMessage[] = (messages || []).map((msg) => ({
+      id: msg.id,
+      content: msg.content,
+      created_at: msg.created_at || '',
+      message_type: msg.message_type || 'direct',
+      type: 'sent' as const,
+      status: 'sent',
+      sent_at: msg.delivered_at || msg.created_at || '',
+      recipient_count: (msg.delivered_count || 0) + (msg.failed_count || 0),
+      success_count: msg.delivered_count || 0,
+      failure_count: msg.failed_count || 0,
+      scheduled_message_id: msg.scheduled_message_id, // Track linkage for deduplication
+    }));
+
+    // Deduplication: Exclude sent scheduled messages when corresponding message exists
+    const scheduledMsgs: UnifiedMessage[] = (scheduledMessages || [])
+      .filter((msg) => {
+        // If this scheduled message was sent, check if we have the corresponding message
+        if (msg.status === 'sent') {
+          const hasCorrespondingMessage = sentMessages.some(
+            (sentMsg) => sentMsg.scheduled_message_id === msg.id
+          );
+          // Exclude sent scheduled messages that have corresponding message entries
+          return !hasCorrespondingMessage;
+        }
+        // Keep all non-sent scheduled messages (scheduled, cancelled, failed, etc.)
+        return true;
+      })
+      .map((msg) => ({
+        id: msg.id,
+        content: msg.content,
+        created_at: msg.created_at || '',
+        message_type: msg.message_type || 'announcement',
+        type: 'scheduled' as const,
+        status: msg.status || 'scheduled',
+        send_at: msg.send_at,
+        sent_at: msg.sent_at || undefined,
+        recipient_count: msg.recipient_count || 0,
+        success_count: msg.success_count || 0,
+        failure_count: msg.failure_count || 0,
+      }));
+
+    // Observability: Log merge statistics (dev-only, no PII)
+    if (process.env.NODE_ENV === 'development') {
+      const originalScheduledCount = scheduledMessages?.length || 0;
+      const dedupedCount = originalScheduledCount - scheduledMsgs.length;
+      console.log('[MessageHistory] Merge statistics:', {
+        scheduledShown: scheduledMsgs.length,
+        messagesShown: sentMessages.length,
+        deduped: dedupedCount,
+        originalScheduled: originalScheduledCount
+      });
+    }
+
+    // Combine and sort: upcoming scheduled first, then by date (newest first)
+    const combined = [...sentMessages, ...scheduledMsgs];
+    const sorted = combined.sort((a, b) => {
+      // Upcoming scheduled messages first
+      if (a.type === 'scheduled' && a.status === 'scheduled' && a.send_at) {
+        const sendTime = new Date(a.send_at);
+        if (sendTime > new Date()) {
+          if (b.type === 'scheduled' && b.status === 'scheduled' && b.send_at) {
+            const bSendTime = new Date(b.send_at);
+            if (bSendTime > new Date()) {
+              return sendTime.getTime() - bSendTime.getTime(); // Earlier scheduled first
+            }
+          }
+          return -1; // Upcoming scheduled before everything else
+        }
+      }
+
+      if (b.type === 'scheduled' && b.status === 'scheduled' && b.send_at) {
+        const sendTime = new Date(b.send_at);
+        if (sendTime > new Date()) {
+          return 1; // Upcoming scheduled before everything else
+        }
+      }
+
+      // For everything else, sort by most recent first
+      const aTime = new Date(a.sent_at || a.created_at).getTime();
+      const bTime = new Date(b.sent_at || b.created_at).getTime();
+      return bTime - aTime;
+    });
+    
+    console.log('[RecentMessages] Final unified messages:', {
+      totalCount: sorted.length,
+      sentCount: sentMessages.length,
+      scheduledCount: scheduledMsgs.length,
+      messages: sorted
+    });
+    
+    return sorted;
+  }, [messages, scheduledMessages]); // Dependencies are stable arrays from hooks
+
+
 
   // Handle cancel scheduled message
   const handleCancelScheduled = async (messageId: string) => {
@@ -250,6 +493,14 @@ export function RecentMessages({
   };
 
   if (isBootLoading) {
+    console.log('[RecentMessages] Showing loading state:', {
+      isBootLoading,
+      isLoading,
+      scheduledLoading,
+      effectiveScheduledLoading,
+      hasInitiallyLoaded,
+      hasPropScheduledMessages: !!propScheduledMessages
+    });
     return (
       <div className={cn('space-y-4', className)}>
         {Array.from({ length: 3 }, (_, i) => (
@@ -263,14 +514,24 @@ export function RecentMessages({
   }
 
   if (unifiedMessages.length === 0) {
+    console.log('[RecentMessages] Showing empty state:', {
+      unifiedMessagesLength: unifiedMessages.length,
+      messagesLength: messages?.length || 0,
+      scheduledMessagesLength: scheduledMessages?.length || 0,
+      isBootLoading,
+      isLiveUpdating
+    });
     return (
-      <div className={cn('text-center py-8', className)}>
+      <div className={cn('text-center py-12', className)}>
         <div className="text-gray-500">
-          <div className="text-4xl mb-2">💬</div>
-          <p className="text-sm">No messages sent yet</p>
-          <p className="text-xs text-gray-400 mt-1">
-            Use the compose tab to send your first message to guests
+          <div className="text-5xl mb-4">💬</div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No messages yet</h3>
+          <p className="text-sm text-gray-600 mb-4">
+            Send your first message to guests using the compose tab
           </p>
+          <div className="text-xs text-gray-400">
+            Messages and scheduled announcements will appear here
+          </div>
         </div>
       </div>
     );
@@ -294,6 +555,30 @@ export function RecentMessages({
       ),
   );
 
+  // Group past messages by date for headers
+  const groupedPastMessages = React.useMemo(() => {
+    return groupMessagesByDate(pastMessages);
+  }, [pastMessages]);
+
+  // Sort date groups (newest first)
+  const sortedDateGroups = React.useMemo(() => {
+    return Object.keys(groupedPastMessages).sort((a, b) => {
+      return new Date(b).getTime() - new Date(a).getTime();
+    });
+  }, [groupedPastMessages]);
+
+  // Dev observability logging
+  React.useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[MessageHistory] UI Debug:', {
+        tzMode: showMyTime ? 'local' : 'event',
+        groups: sortedDateGroups.length,
+        upcoming: upcomingMessages.length,
+        past: pastMessages.length
+      });
+    }
+  }, [showMyTime, sortedDateGroups.length, upcomingMessages.length, pastMessages.length]);
+
   return (
     <div className={cn('space-y-6', className)}>
       <div className="flex items-center justify-between">
@@ -306,124 +591,100 @@ export function RecentMessages({
           )}
         </h3>
 
-        {/* Timezone Toggle for Scheduled Messages */}
-        {eventTimezone && upcomingMessages.length > 0 && (
+        {/* Timezone Toggle - Show when we have any messages with times */}
+        {eventTimezone && (upcomingMessages.length > 0 || pastMessages.length > 0) && (
+          <div className="text-right">
           <button
             onClick={() => setShowMyTime(!showMyTime)}
-            className="text-sm text-gray-600 hover:text-gray-800 px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              className="text-sm text-gray-600 hover:text-gray-800 px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors mb-1"
           >
             {showMyTime ? '🌍 Show Event Time' : '🏠 Show My Time'}
           </button>
+            <div className="text-xs text-gray-500">
+              Times shown in <strong>{showMyTime ? 'Your time' : 'Event time'}</strong>
+              {!showMyTime && eventTimezone && (
+                <span className="ml-1">({getTimezoneInfo(eventTimezone)?.abbreviation || eventTimezone})</span>
+              )}
+            </div>
+          </div>
         )}
       </div>
 
       {/* Upcoming Scheduled Messages */}
-      {upcomingMessages.length > 0 && (
+      {upcomingMessages.length > 0 ? (
         <div>
           <h4 className="text-md font-medium text-gray-800 mb-3">
             Upcoming ({upcomingMessages.length})
           </h4>
           <div className="space-y-3">
             {upcomingMessages.map((message) => (
-              <div
+              <UpcomingMessageCard 
                 key={message.id}
-                className="bg-blue-50 border border-blue-200 rounded-lg p-4 hover:border-blue-300 transition-colors"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-gray-900 mb-2">
-                      {message.content}
-                    </p>
-
-                    <div className="flex items-center gap-4 text-xs text-gray-600 mb-2">
-                      <span>{getDisplayTime(message)}</span>
-                      {getStatusBadge(message)}
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                        {message.message_type}
-                      </span>
-                      {message.recipient_count &&
-                        message.recipient_count > 0 && (
-                          <span className="text-gray-500">
-                            {message.recipient_count}{' '}
-                            {message.recipient_count === 1
-                              ? 'person'
-                              : 'people'}
-                          </span>
-                        )}
-                    </div>
-                  </div>
-
-                  {/* Cancel button for scheduled messages */}
-                  {message.type === 'scheduled' &&
-                    message.status === 'scheduled' && (
-                      <button
-                        onClick={() => handleCancelScheduled(message.id)}
-                        className="ml-2 text-xs text-red-600 hover:text-red-800 px-2 py-1 border border-red-300 rounded hover:bg-red-50 transition-colors"
-                      >
-                        Cancel
-                      </button>
-                    )}
-                </div>
-              </div>
+                message={message} 
+                showMyTime={showMyTime} 
+                eventTimezone={eventTimezone}
+                onCancel={() => handleCancelScheduled(message.id)}
+              />
             ))}
           </div>
         </div>
+      ) : (
+        pastMessages.length === 0 && (
+          <div className="text-center py-8">
+            <div className="text-gray-500">
+              <div className="text-4xl mb-2">⏰</div>
+              <p className="text-sm">No upcoming messages</p>
+              <p className="text-xs text-gray-400 mt-1">
+                Schedule messages from the compose tab
+              </p>
+            </div>
+          </div>
+        )
       )}
 
-      {/* Past Messages (Sent + Past Scheduled) */}
+      {/* Past Messages (Sent + Past Scheduled) - Grouped by Date */}
       {pastMessages.length > 0 && (
         <div>
-          <h4 className="text-md font-medium text-gray-800 mb-3">
+          <h4 className="text-md font-medium text-gray-800 mb-4">
             {upcomingMessages.length > 0 ? 'Past Messages' : 'All Messages'} (
             {pastMessages.length})
           </h4>
-          <div className="space-y-3">
-            {pastMessages.map((message) => (
-              <div
-                key={message.id}
-                className="bg-white border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-gray-900 mb-2">
-                      {message.content}
-                    </p>
-
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
-                      <span>{getDisplayTime(message)}</span>
-                      {getStatusBadge(message)}
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                        {message.message_type}
-                      </span>
-
-                      {/* Delivery stats */}
-                      {message.success_count || message.failure_count ? (
-                        <span className="text-gray-500">
-                          {message.success_count || 0} delivered
-                          {message.failure_count &&
-                            message.failure_count > 0 && (
-                              <span className="text-red-600 ml-1">
-                                • {message.failure_count} failed
-                              </span>
-                            )}
-                        </span>
-                      ) : (
-                        message.recipient_count &&
-                        message.recipient_count > 0 && (
-                          <span className="text-gray-500">
-                            {message.recipient_count}{' '}
-                            {message.recipient_count === 1
-                              ? 'person'
-                              : 'people'}
-                          </span>
-                        )
-                      )}
+          
+          {/* Date Groups */}
+          {sortedDateGroups.length > 0 ? (
+            <div className="space-y-6">
+              {sortedDateGroups.map((dateKey) => {
+                const messagesInGroup = groupedPastMessages[dateKey];
+                const dateHeader = formatDateGroupHeader(dateKey);
+                
+                return (
+                  <div key={dateKey}>
+                    {/* Date Header */}
+                    <div className="sticky top-0 bg-white/80 backdrop-blur-sm border-b border-gray-100 pb-2 mb-3 z-10">
+                      <h5 className="text-sm font-medium text-gray-700">{dateHeader}</h5>
+                    </div>
+                    
+                    {/* Messages for this date */}
+                    <div className="space-y-3">
+                      {messagesInGroup.map((message) => (
+                        <MessageRow key={message.id} message={message} showMyTime={showMyTime} eventTimezone={eventTimezone} />
+                      ))}
                     </div>
                   </div>
+                );
+              })}
                 </div>
+          ) : (
+            <div className="text-center py-8">
+              <div className="text-gray-500">
+                <div className="text-4xl mb-2">💬</div>
+                <p className="text-sm">No past messages</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  Sent messages will appear here
+                </p>
               </div>
-            ))}
           </div>
+          )}
         </div>
       )}
     </div>
