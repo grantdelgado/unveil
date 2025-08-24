@@ -223,8 +223,25 @@ export async function composeSmsText(
           .eq('id', guestId)
           .maybeSingle();
         
-        guest = guestResult.data;
-        // Don't fail on guest fetch error - just proceed without A2P tracking
+        if (guestResult.error) {
+          logger.warn('Failed to fetch guest A2P status in pre-fetch path', {
+            eventId,
+            guestId,
+            error: guestResult.error.message
+          });
+          // Set guest to null but don't fail - this will skip A2P tracking
+          guest = null;
+        } else {
+          guest = guestResult.data;
+          // DEBUG: Log what we got for guest A2P status
+          logger.info('Guest A2P status fetched in pre-fetch path', {
+            eventId,
+            guestId,
+            hasGuest: !!guest,
+            a2pNoticeSentAt: guest?.a2p_notice_sent_at,
+            guestData: guest
+          });
+        }
       }
     } else {
       // Fetch event and guest data from DB (Send-Now path)
@@ -305,6 +322,23 @@ export async function composeSmsText(
       options.forceStopNotice ||
       (guestId && (!guest || !guest.a2p_notice_sent_at))
     );
+
+    // DEBUG: Log A2P decision logic
+    logger.info('A2P decision logic', {
+      eventId,
+      guestId,
+      hasGuestId: !!guestId,
+      hasGuest: !!guest,
+      a2pNoticeSentAt: guest?.a2p_notice_sent_at,
+      forceStopNotice: options.forceStopNotice,
+      needsStopNotice,
+      decision: {
+        forceStopNotice: !!options.forceStopNotice,
+        guestIdProvided: !!guestId,
+        guestNotFound: guestId && !guest,
+        noA2pNotice: guestId && guest && !guest.a2p_notice_sent_at
+      }
+    });
 
     // Normalize body to GSM-7
     const normalizedBody = normalizeToGsm7(body.trim());
