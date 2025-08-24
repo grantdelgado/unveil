@@ -4,7 +4,11 @@ import { supabase } from '@/lib/supabase/admin';
 import { sendBulkSMS } from '@/lib/sms';
 import type { RecipientFilter } from '@/lib/types/messaging';
 import type { Database } from '@/app/reference/supabase.types';
-import { incrementSkippedRemovedGuests, incrementIncludedRecipients } from '@/lib/metrics/messaging';
+import { 
+  incrementSkippedRemovedGuests, 
+  incrementIncludedRecipients,
+  incrementMessageTypeCoercion 
+} from '@/lib/metrics/messaging';
 
 // Types for processing results
 interface ProcessingResult {
@@ -206,6 +210,8 @@ async function processDueScheduledMessages(
               `Scheduled: Coerced announcement to direct: targeting ${resolvedRecipients.length}/${totalActiveGuests} guests`,
               { jobId, scheduledMessageId: message.id }
             );
+            // Enhanced monitoring: Track message type coercion
+            incrementMessageTypeCoercion('announcement', 'direct', 'scheduled_subset_targeting');
           } else if (
             finalMessageType === 'channel' &&
             (!message.target_guest_tags || message.target_guest_tags.length === 0)
@@ -215,6 +221,8 @@ async function processDueScheduledMessages(
             logger.api(`Scheduled: Coerced channel to direct: no tags specified`, {
               jobId, scheduledMessageId: message.id
             });
+            // Enhanced monitoring: Track message type coercion
+            incrementMessageTypeCoercion('channel', 'direct', 'scheduled_no_tags');
           } else if (
             finalMessageType === 'direct' &&
             resolvedRecipients.length === totalActiveGuests
@@ -225,6 +233,8 @@ async function processDueScheduledMessages(
               `Scheduled: Coerced direct to announcement: targeting all ${totalActiveGuests} guests`,
               { jobId, scheduledMessageId: message.id }
             );
+            // Enhanced monitoring: Track message type coercion
+            incrementMessageTypeCoercion('direct', 'announcement', 'scheduled_all_guests_targeting');
           }
         }
 

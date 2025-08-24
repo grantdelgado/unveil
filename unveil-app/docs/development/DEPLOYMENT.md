@@ -26,6 +26,11 @@ NEXT_PUBLIC_APP_URL=https://your-domain.com
 
 # Cron Job Security
 CRON_SECRET=your-secure-random-string
+
+# Messaging System Configuration (Optional)
+SMS_BRANDING_DISABLED=false              # Kill switch for SMS branding (default: false)
+SCHEDULED_MAX_PER_TICK=100              # Max scheduled messages per cron tick (default: 100)
+SCHEDULE_MIN_LEAD_SECONDS=180           # Minimum lead time for scheduling (default: 180)
 ```
 
 ### **Optional Monitoring & Analytics**
@@ -50,6 +55,26 @@ NEXT_PUBLIC_ENABLE_MEDIA_UPLOAD=true
 NEXT_PUBLIC_ENABLE_SMS_INVITES=true
 ```
 
+### **Messaging System Tuning (Optional)**
+
+```bash
+# SMS Branding Control
+SMS_BRANDING_DISABLED=false            # Emergency kill switch for SMS branding
+                                       # Set to 'true' to instantly disable event tags and A2P footers
+
+# Scheduled Message Processing
+SCHEDULED_MAX_PER_TICK=100             # Maximum messages processed per cron tick
+                                       # Increase for high-volume events, decrease for rate limiting
+
+# Schedule Validation
+SCHEDULE_MIN_LEAD_SECONDS=180          # Minimum seconds between scheduling and send time
+                                       # Default: 180 (3 minutes) - provides safety margin for cron processing
+
+# Development Simulation
+DEV_SIMULATE_INVITES=true              # Enable SMS simulation mode (development only)
+                                       # Logs SMS content without sending actual messages
+```
+
 ## Security Checklist
 
 ### **Before Production Deployment:**
@@ -60,7 +85,9 @@ NEXT_PUBLIC_ENABLE_SMS_INVITES=true
 - [ ] Twilio credentials verified and phone number active
 - [ ] Base URL matches production domain
 - [ ] CRON_SECRET is cryptographically secure (32+ characters)
-- [ ] No development-only flags enabled
+- [ ] SMS_BRANDING_DISABLED is set to false (or unset) for normal operation
+- [ ] SCHEDULED_MAX_PER_TICK is appropriate for expected message volume
+- [ ] No development-only flags enabled (DEV_SIMULATE_INVITES should be false/unset)
 - [ ] Service role key has appropriate permissions
 - [ ] All secrets secured in deployment platform (Vercel)
 

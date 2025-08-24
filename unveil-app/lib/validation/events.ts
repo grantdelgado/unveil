@@ -123,7 +123,7 @@ export const eventDetailsSchema = z.object({
   // SMS branding
   sms_tag: z
     .string()
-    .max(14, 'SMS tag must be 14 characters or less')
+    .max(20, 'SMS tag must be 20 characters or less')
     .regex(/^[a-zA-Z0-9+\s]*$/, 'SMS tag can only contain letters, numbers, spaces, and +')
     .trim()
     .optional()

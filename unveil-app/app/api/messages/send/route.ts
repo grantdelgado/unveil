@@ -4,7 +4,11 @@ import { sendBulkSMS } from '@/lib/sms';
 import { logger } from '@/lib/logger';
 import type { SendMessageRequest } from '@/lib/types/messaging';
 import type { Database } from '@/app/reference/supabase.types';
-import { incrementSkippedRemovedGuests, incrementIncludedRecipients } from '@/lib/metrics/messaging';
+import { 
+  incrementSkippedRemovedGuests, 
+  incrementIncludedRecipients,
+  incrementMessageTypeCoercion 
+} from '@/lib/metrics/messaging';
 
 export async function POST(request: NextRequest) {
   try {
@@ -224,6 +228,8 @@ export async function POST(request: NextRequest) {
       logger.api(
         `Coerced announcement to direct: targeting ${guestIds.length}/${totalActiveGuests} guests`,
       );
+      // Enhanced monitoring: Track message type coercion
+      incrementMessageTypeCoercion('announcement', 'direct', 'subset_targeting');
     } else if (
       finalMessageType === 'channel' &&
       (!recipientFilter.tags || recipientFilter.tags.length === 0)
@@ -231,6 +237,8 @@ export async function POST(request: NextRequest) {
       // Channel with no tags -> coerce to direct
       finalMessageType = 'direct';
       logger.api(`Coerced channel to direct: no tags specified`);
+      // Enhanced monitoring: Track message type coercion
+      incrementMessageTypeCoercion('channel', 'direct', 'no_tags');
     } else if (
       finalMessageType === 'direct' &&
       guestIds.length === totalActiveGuests
@@ -240,6 +248,8 @@ export async function POST(request: NextRequest) {
       logger.api(
         `Coerced direct to announcement: targeting all ${totalActiveGuests} guests`,
       );
+      // Enhanced monitoring: Track message type coercion
+      incrementMessageTypeCoercion('direct', 'announcement', 'all_guests_targeting');
     }
 
     // Create message record

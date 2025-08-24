@@ -10,6 +10,7 @@ export interface EventFormData {
   event_time: string;
   location: string;
   is_public: boolean;
+  sms_tag: string;
 }
 
 export interface EventFormErrors {
@@ -19,6 +20,7 @@ export interface EventFormErrors {
   location?: string;
   image?: string;
   general?: string;
+  sms_tag?: string;
 }
 
 export interface EventWizardStep {

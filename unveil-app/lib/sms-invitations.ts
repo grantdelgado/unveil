@@ -25,23 +25,24 @@ export interface SMSMessage {
 /**
  * Generate invitation message for new guests
  * Uses the standardized public URL helper for outbound SMS links
+ * Focuses on logistics and saving the number rather than RSVP
  */
 export const createInvitationMessage = (
   invitation: EventInvitation,
+  options: { isFirstContact?: boolean } = {}
 ): string => {
-  // Guest name handling: full name → first name → "there"
-  let guestGreeting = 'Hi there! ';
-  if (invitation.guestName) {
-    const firstName = invitation.guestName.split(' ')[0]?.trim();
-    guestGreeting = firstName
-      ? `Hi, ${firstName}! `
-      : `Hi, ${invitation.guestName}! `;
-  }
-
   // Use standardized public URL helper - this will throw if localhost or unconfigured
   const inviteUrl = buildInviteLink({ target: 'hub' });
 
-  return `${guestGreeting}You are invited to ${invitation.eventTitle} on ${invitation.eventDate}!\n\nView the wedding details here: ${inviteUrl}.\n\nHosted by ${invitation.hostName} via Unveil\n\nReply STOP to opt out.`;
+  // Ultra-optimized message for guaranteed single GSM-7 segment delivery
+  const baseMessage = `Get ready! Wedding updates will come from this number + you can find details on Unveil: ${inviteUrl}`;
+  
+  // Add STOP notice only for first contact
+  if (options.isFirstContact) {
+    return `${baseMessage} Reply STOP to opt out.`;
+  }
+  
+  return baseMessage;
 };
 
 /**
@@ -137,7 +138,7 @@ export const prepareBatchInvitations = (
 
     return {
       to: validation.normalizedPhone!,
-      message: createInvitationMessage(invitation),
+      message: createInvitationMessage(invitation, { isFirstContact: true }), // Batch invites are typically first contact
       type: 'invitation',
     };
   });
@@ -176,7 +177,7 @@ export const sendEventInvitation = async (
       return { success: false, error: validation.error };
     }
 
-    const message = createInvitationMessage(invitation);
+    const message = createInvitationMessage(invitation, { isFirstContact: true }); // Single invites are typically first contact
     const result = await sendSMS(validation.normalizedPhone!, message);
 
     return { success: result.success, error: result.error };
@@ -319,7 +320,7 @@ export const sendGuestInvitationSMS = async (
     };
 
     // Generate invitation message
-    const message = createInvitationMessage(invitation);
+    const message = createInvitationMessage(invitation, { isFirstContact: true }); // Guest invitations are typically first contact
 
     if (process.env.NODE_ENV === 'development') {
       console.log(

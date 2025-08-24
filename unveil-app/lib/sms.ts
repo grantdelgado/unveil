@@ -1,7 +1,7 @@
 import { getErrorMessage } from './utils';
 import { SMSRetry } from '@/lib/utils/retry';
 import { logger } from '@/lib/logger';
-import { composeSmsText, markA2pNoticeSent } from '@/lib/sms-formatter';
+import { composeSmsText, markA2pNoticeSent, formatInviteSms } from '@/lib/sms-formatter';
 
 // Twilio configuration - will be dynamically imported to avoid server-side issues
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -190,7 +190,9 @@ export async function sendSMS({
       process.env.DEV_SIMULATE_INVITES === 'true'
     ) {
       // Format SMS even in simulation mode for testing
-      const formattedSms = await composeSmsText(eventId, guestId, message);
+      const formattedSms = messageType === 'welcome' 
+        ? await formatInviteSms(eventId, guestId, message, { eventSmsTag, eventTitle })
+        : await composeSmsText(eventId, guestId, message, { eventSmsTag, eventTitle });
       
       logger.info('🔧 SMS SIMULATION MODE - No actual SMS sent', {
         phone: to.slice(0, 6) + '...',
@@ -256,11 +258,10 @@ export async function sendSMS({
 
 
 
-    // Format SMS with event tag branding and A2P footer
-    const formattedSms = await composeSmsText(eventId, guestId, message, {
-      eventSmsTag,
-      eventTitle,
-    });
+    // Format SMS with appropriate formatter based on message type
+    const formattedSms = messageType === 'welcome' 
+      ? await formatInviteSms(eventId, guestId, message, { eventSmsTag, eventTitle })
+      : await composeSmsText(eventId, guestId, message, { eventSmsTag, eventTitle });
     
     // Development-only assertions for branding compliance
     if (process.env.NODE_ENV !== 'production') {

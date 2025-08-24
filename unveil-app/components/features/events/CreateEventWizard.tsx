@@ -41,6 +41,7 @@ export default function CreateEventWizard() {
     event_time: '15:00',
     location: '',
     is_public: true,
+    sms_tag: '',
   });
 
   // Image state
@@ -94,6 +95,14 @@ export default function CreateEventWizard() {
 
         if (!formData.event_time) {
           newErrors.event_time = 'Event time is required';
+        }
+
+        if (!formData.sms_tag.trim()) {
+          newErrors.sms_tag = 'Event tag is required';
+        } else if (formData.sms_tag.length > 20) {
+          newErrors.sms_tag = 'Event tag must be 20 characters or less';
+        } else if (!/^[a-zA-Z0-9+\s]*$/.test(formData.sms_tag)) {
+          newErrors.sms_tag = 'Event tag can only contain letters, numbers, spaces, and +';
         }
         break;
 
@@ -183,6 +192,7 @@ export default function CreateEventWizard() {
         is_public: formData.is_public,
         header_image: headerImage || undefined,
         creation_key: creationKeyRef.current, // Include idempotency key
+        sms_tag: formData.sms_tag.trim(),
       };
 
       // Call centralized service

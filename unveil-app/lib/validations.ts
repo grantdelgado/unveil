@@ -43,6 +43,12 @@ export const eventCreateSchema = z.object({
     .optional()
     .or(z.literal('')),
   is_public: z.boolean().default(true),
+  sms_tag: z
+    .string()
+    .min(1, 'Event tag is required')
+    .max(20, 'Event tag must be 20 characters or less')
+    .regex(/^[a-zA-Z0-9+\s]*$/, 'Event tag can only contain letters, numbers, spaces, and +')
+    .trim(),
 });
 
 export const eventUpdateSchema = eventCreateSchema.partial();

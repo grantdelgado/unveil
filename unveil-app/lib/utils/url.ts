@@ -155,8 +155,8 @@ export function buildInviteLink(options: {
 
     case 'hub':
     default:
-      // Link to guest hub/event selector
-      return `${baseUrl}/select-event`;
+      // Link to root domain for guest access
+      return baseUrl;
   }
 }
 

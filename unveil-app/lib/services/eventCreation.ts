@@ -12,6 +12,7 @@ export interface EventCreationInput {
   is_public: boolean;
   header_image?: File;
   creation_key?: string; // Idempotency key to prevent duplicate events
+  sms_tag: string; // Required SMS tag for event identification
 }
 
 export interface EventCreationResult {
@@ -306,15 +307,16 @@ export class EventCreationService {
     creationKey: string,
   ): Promise<EventCreationResult> {
     // Prepare event data
-    const eventData = {
-      title: input.title.trim(),
-      event_date: input.event_date,
-      location: input.location?.trim() || null,
-      header_image_url: headerImageUrl,
-      host_user_id: userId,
-      is_public: input.is_public,
-      creation_key: creationKey,
-    };
+          const eventData = {
+        title: input.title.trim(),
+        event_date: input.event_date,
+        location: input.location?.trim() || null,
+        header_image_url: headerImageUrl,
+        host_user_id: userId,
+        is_public: input.is_public,
+        creation_key: creationKey,
+        sms_tag: input.sms_tag.trim(),
+      };
 
     // Try to call database function (if it exists)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -398,6 +400,7 @@ export class EventCreationService {
         header_image_url: headerImageUrl,
         host_user_id: userId,
         is_public: input.is_public,
+        sms_tag: input.sms_tag.trim(),
       };
 
       const { data: newEvent, error: insertError } = await supabase

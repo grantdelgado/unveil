@@ -388,18 +388,18 @@ export function EventDetailsEditor({
               <TextInput
                 id="sms_tag"
                 {...register('sms_tag')}
-                placeholder="e.g., Sarah+David, Wedding2025"
+                placeholder="e.g., Sarah + David, Wedding 2025"
                 error={errors.sms_tag?.message}
                 disabled={isSubmitting}
-                maxLength={14}
+                maxLength={24}
               />
               <MicroCopy>
-                Optional: This tag appears in [brackets] at the start of SMS messages to identify your event.
-                Max 14 characters. Leave empty to auto-generate from event title.
+                Optional: This tag appears at the start of SMS messages to identify your event.
+                Max 24 characters. Leave empty to auto-generate from event title.
                 {watchedValues.sms_tag && (
                   <>
                     <br />
-                    <span className="font-medium">Preview:</span> [{watchedValues.sms_tag}] Your message text here...
+                    <span className="font-medium">Preview:</span> {watchedValues.sms_tag}: Your message text here...
                   </>
                 )}
               </MicroCopy>

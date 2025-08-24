@@ -169,7 +169,7 @@ export async function POST(request: NextRequest) {
       hostName,
     };
 
-    const messageContent = createInvitationMessage(invitation);
+    const messageContent = createInvitationMessage(invitation, { isFirstContact: isFirstInvite });
 
     // Send SMS using existing infrastructure
     const smsResult = await sendSMS({

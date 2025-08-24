@@ -1,6 +1,11 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
 import { flags } from '@/config/flags';
+import { 
+  incrementFormatterFallback, 
+  incrementFormatterPrefetchUsed, 
+  incrementFormatterPrefetchMissed 
+} from '@/lib/metrics/messaging';
 
 /**
  * Telemetry functions for SMS formatter (no PII)
@@ -31,7 +36,7 @@ function emitFirstSmsIncludesStop(path: string, included: boolean) {
  * SMS Text Formatting Utility for Event Tag Branding + A2P Footer
  * 
  * Formats SMS messages with:
- * - [EventTag] prefix for immediate event recognition
+ * - EventTag: prefix for immediate event recognition
  * - One-time A2P "Reply STOP to opt out" footer per guest/event
  * - GSM-7 normalization and length management for single-segment preference
  */
@@ -62,7 +67,7 @@ export interface SmsFormatResult {
   truncatedBody: boolean;
   /** Explicit signals for what was included in the final SMS */
   included: {
-    /** Whether event header [EventTag] was included */
+    /** Whether event header EventTag: was included */
     header: boolean;
     /** Whether brand line "via Unveil" was included */
     brand: boolean;
@@ -120,18 +125,20 @@ export async function composeSmsText(
 
         if (eventError || !eventData) {
           // Complete fallback if can't get event data
-          emitFallbackUsed('kill_switch_event_fetch_failed');
-          emitHeaderMissing('kill_switch_event_fetch_failed');
-          return {
-            text: body,
-            includedStopNotice: false,
-            length: body.length,
-            segments: calculateSmsSegments(body),
-            droppedLink: false,
-            truncatedBody: false,
-            included: { header: false, brand: false, stop: false },
-            reason: 'fallback',
-          };
+                  emitFallbackUsed('kill_switch_event_fetch_failed');
+        emitHeaderMissing('kill_switch_event_fetch_failed');
+        // Enhanced monitoring: Track fallback usage
+        incrementFormatterFallback('kill_switch_event_fetch_failed');
+        return {
+          text: body,
+          includedStopNotice: false,
+          length: body.length,
+          segments: calculateSmsSegments(body),
+          droppedLink: false,
+          truncatedBody: false,
+          included: { header: false, brand: false, stop: false },
+          reason: 'fallback',
+        };
         }
 
         event = eventData;
@@ -139,7 +146,7 @@ export async function composeSmsText(
 
       // Generate event tag and format with header only
       const eventTag = generateEventTag(event?.sms_tag || null, event?.title || 'Event');
-      const headerOnlyText = `[${eventTag}]\n${normalizeToGsm7(body.trim())}`;
+      const headerOnlyText = `${eventTag}: ${normalizeToGsm7(body.trim())}`;
       
       const killSwitchResult = {
         text: headerOnlyText,
@@ -191,6 +198,9 @@ export async function composeSmsText(
         title: options.eventTitle || 'Event'
       };
       usedPrefetchedEvent = true;
+      
+      // Enhanced monitoring: Track prefetch usage
+      incrementFormatterPrefetchUsed();
 
       // No need to fetch guest A2P status since we don't use it anymore
       guest = null;
@@ -217,6 +227,8 @@ export async function composeSmsText(
         // Fallback to unformatted message
         emitFallbackUsed('event_fetch_failed');
         emitHeaderMissing('event_fetch_failed');
+        // Enhanced monitoring: Track fallback usage
+        incrementFormatterFallback('event_fetch_failed');
         return {
           text: body,
           includedStopNotice: false,
@@ -240,6 +252,8 @@ export async function composeSmsText(
         });
         emitFallbackUsed('event_not_found');
         emitHeaderMissing('event_not_found');
+        // Enhanced monitoring: Track fallback usage
+        incrementFormatterFallback('event_not_found');
         return {
           text: body,
           includedStopNotice: false,
@@ -254,6 +268,9 @@ export async function composeSmsText(
 
       event = eventResult.data;
       guest = null; // No longer needed since A2P logic is disabled
+      
+      // Enhanced monitoring: Track prefetch miss (had to fetch from DB)
+      incrementFormatterPrefetchMissed();
     }
 
     // Generate event tag
@@ -274,7 +291,7 @@ export async function composeSmsText(
     const STOP_TEXT = 'Reply STOP to opt out.';
     const BRAND_TEXT = 'via Unveil';
     const components = {
-      header: `[${eventTag}]`,
+      header: `${eventTag}:`,
       body: normalizedBody,
       link: options.link ? ` ${options.link}` : '',
       brand: needsStopNotice ? BRAND_TEXT : '', // Brand line only on first message
@@ -310,6 +327,8 @@ export async function composeSmsText(
     // Fallback to unformatted message on any error
     emitFallbackUsed('exception_caught');
     emitHeaderMissing('exception_caught');
+    // Enhanced monitoring: Track fallback usage
+    incrementFormatterFallback('exception_caught');
     return {
       text: body,
       includedStopNotice: false,
@@ -325,6 +344,7 @@ export async function composeSmsText(
 
 /**
  * Generate event tag from sms_tag or title fallback
+ * @deprecated Use generateEventTagExtended for new 24-char limit
  */
 export function generateEventTag(smsTag: string | null, eventTitle: string): string {
   if (smsTag && smsTag.trim()) {
@@ -348,6 +368,34 @@ export function generateEventTag(smsTag: string | null, eventTitle: string): str
 
   const combined = `${firstWord}+${remaining}`;
   return combined.slice(0, 14);
+}
+
+/**
+ * Generate event tag with extended 24-character limit for new invite format
+ * Returns tag without brackets, suitable for "EventTag: message" format
+ */
+export function generateEventTagExtended(smsTag: string | null, eventTitle: string, maxLength: number = 24): string {
+  if (smsTag && smsTag.trim()) {
+    return normalizeToAscii(smsTag.trim()).slice(0, maxLength);
+  }
+
+  // Generate from title with more space for longer tags
+  const words = normalizeToAscii(eventTitle)
+    .split(/\s+/)
+    .filter(w => w.length > 0);
+
+  if (words.length === 0) return 'Event';
+  if (words.length === 1) return words[0].slice(0, maxLength);
+
+  // For longer limit, use more descriptive abbreviation
+  const firstWord = words[0];
+  const remaining = words
+    .slice(1)
+    .map(w => w.slice(0, Math.max(3, Math.floor((maxLength - firstWord.length - words.length + 1) / (words.length - 1)))))
+    .join(' ');
+
+  const combined = `${firstWord} ${remaining}`;
+  return combined.slice(0, maxLength);
 }
 
 /**
@@ -415,11 +463,11 @@ function applyLengthBudget(components: {
   // Calculate multiline format lengths
   const headerNewlineLen = 1; // \n after header
 
-  // Try full message first with multiline format including brand
+  // Try full message first with colon format including brand
   const bodyWithLink = components.body + components.link;
   const fullText = components.stop
-    ? `${components.header}\n${bodyWithLink}\n\n${components.brand}\n${components.stop}`
-    : `${components.header}\n${bodyWithLink}`;
+    ? `${components.header} ${bodyWithLink}\n\n${components.brand}\n${components.stop}`
+    : `${components.header} ${bodyWithLink}`;
     
   if (fullText.length <= SMS_SINGLE_SEGMENT_LIMIT) {
     return {
@@ -434,8 +482,8 @@ function applyLengthBudget(components: {
   // Drop link first if over budget (keep brand line)
   const bodyWithoutLink = components.body;
   const withoutLinkText = components.stop
-    ? `${components.header}\n${bodyWithoutLink}\n\n${components.brand}\n${components.stop}`
-    : `${components.header}\n${bodyWithoutLink}`;
+    ? `${components.header} ${bodyWithoutLink}\n\n${components.brand}\n${components.stop}`
+    : `${components.header} ${bodyWithoutLink}`;
     
   if (withoutLinkText.length <= SMS_SINGLE_SEGMENT_LIMIT) {
     return {
@@ -449,8 +497,8 @@ function applyLengthBudget(components: {
 
   // Drop brand line next if still over budget (keep STOP)
   const withoutBrandText = components.stop
-    ? `${components.header}\n${bodyWithoutLink}\n\n${components.stop}`
-    : `${components.header}\n${bodyWithoutLink}`;
+    ? `${components.header} ${bodyWithoutLink}\n\n${components.stop}`
+    : `${components.header} ${bodyWithoutLink}`;
     
   if (withoutBrandText.length <= SMS_SINGLE_SEGMENT_LIMIT) {
     return {
@@ -463,14 +511,15 @@ function applyLengthBudget(components: {
   }
 
   // Truncate body if still over budget (no brand, keep STOP)
-  const fixedOverhead = headerLen + headerNewlineLen + stopLen + (stopLen > 0 ? 2 : 0) + TRUNCATION_SUFFIX.length;
+  const spaceAfterHeader = 1; // space after colon
+  const fixedOverhead = headerLen + spaceAfterHeader + stopLen + (stopLen > 0 ? 2 : 0) + TRUNCATION_SUFFIX.length;
   const availableBodySpace = SMS_SINGLE_SEGMENT_LIMIT - fixedOverhead;
   
   if (availableBodySpace > 10) { // Ensure minimum viable body
     const truncatedBody = components.body.slice(0, availableBodySpace) + TRUNCATION_SUFFIX;
     const finalText = components.stop
-      ? `${components.header}\n${truncatedBody}\n\n${components.stop}`
-      : `${components.header}\n${truncatedBody}`;
+      ? `${components.header} ${truncatedBody}\n\n${components.stop}`
+      : `${components.header} ${truncatedBody}`;
     
     return {
       finalText,
@@ -482,12 +531,12 @@ function applyLengthBudget(components: {
   }
 
   // Emergency fallback: header + minimal body only (no brand, no STOP)
-  const emergencyOverhead = headerLen + headerNewlineLen + TRUNCATION_SUFFIX.length;
+  const emergencyOverhead = headerLen + spaceAfterHeader + TRUNCATION_SUFFIX.length;
   const emergencyBodySpace = SMS_SINGLE_SEGMENT_LIMIT - emergencyOverhead;
   const emergencyBody = components.body.slice(0, Math.max(10, emergencyBodySpace)) + TRUNCATION_SUFFIX;
   
   return {
-    finalText: `${components.header}\n${emergencyBody}`,
+    finalText: `${components.header} ${emergencyBody}`,
     includedLink: false,
     includedBrand: false,
     includedStop: false,
@@ -503,6 +552,231 @@ function calculateSmsSegments(text: string): number {
   if (length <= 160) return 1;
   if (length <= 306) return 2; // 153 * 2 (multipart overhead)
   return Math.ceil(length / 153);
+}
+
+/**
+ * Format SMS invitation with single-segment length budgeting
+ * Uses new format: "EventTag: message" without brackets
+ */
+export async function formatInviteSms(
+  eventId: string,
+  guestId: string | undefined,
+  body: string,
+  options: SmsFormatOptions = {}
+): Promise<SmsFormatResult> {
+  try {
+    // Emergency kill-switch check
+    const killSwitchActive = flags.ops.smsBrandingDisabled;
+    
+    if (killSwitchActive) {
+      // Kill switch: return message without any formatting
+      return {
+        text: body,
+        includedStopNotice: false,
+        length: body.length,
+        segments: calculateSmsSegments(body),
+        droppedLink: false,
+        truncatedBody: false,
+        included: { header: false, brand: false, stop: false },
+        reason: 'kill_switch',
+      };
+    }
+
+    // Get Supabase client
+    let supabase: any;
+    try {
+      supabase = await createServerSupabaseClient();
+    } catch (error) {
+      const { supabase: adminClient } = await import('@/lib/supabase/admin');
+      supabase = adminClient;
+    }
+
+    // Use pre-fetched event data if available, otherwise fetch from DB
+    let event: { sms_tag: string | null; title: string } | null = null;
+    
+    if (options.eventSmsTag != null || options.eventTitle != null) {
+      event = {
+        sms_tag: options.eventSmsTag || null,
+        title: options.eventTitle || 'Event'
+      };
+      incrementFormatterPrefetchUsed();
+    } else {
+      const eventResult = await supabase
+        .from('events')
+        .select('sms_tag, title')
+        .eq('id', eventId)
+        .maybeSingle();
+
+      if (eventResult.error || !eventResult.data) {
+        // Fallback to unformatted message
+        incrementFormatterFallback('event_fetch_failed');
+        return {
+          text: body,
+          includedStopNotice: false,
+          length: body.length,
+          segments: calculateSmsSegments(body),
+          droppedLink: false,
+          truncatedBody: false,
+          included: { header: false, brand: false, stop: false },
+          reason: 'fallback',
+        };
+      }
+
+      event = eventResult.data;
+      incrementFormatterPrefetchMissed();
+    }
+
+    // Apply single-segment length budgeting for invites
+    const result = applyInviteLengthBudget(event?.sms_tag || null, event?.title || 'Event', body);
+
+    // Add observability logging
+    if (process.env.NODE_ENV === 'development') {
+      logger.info('Invite SMS formatted', {
+        eventId,
+        length: result.text.length,
+        encoding: detectSmsEncoding(result.text),
+        segments: result.segments,
+        includedStop: result.includedStopNotice,
+        truncated: result.truncatedBody,
+        droppedWedding: result.droppedWedding,
+      });
+    }
+
+    return result;
+  } catch (error) {
+    logger.error('Error in formatInviteSms', {
+      eventId,
+      guestId,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+
+    // Fallback to unformatted message
+    incrementFormatterFallback('exception_caught');
+    return {
+      text: body,
+      includedStopNotice: false,
+      length: body.length,
+      segments: calculateSmsSegments(body),
+      droppedLink: false,
+      truncatedBody: false,
+      included: { header: false, brand: false, stop: false },
+      reason: 'fallback',
+    };
+  }
+}
+
+/**
+ * Apply length budget constraints for invite SMS to ensure single segment
+ * Priority: 1. Trim EventTag if >24 chars, 2. Drop "wedding" if still too long
+ */
+function applyInviteLengthBudget(
+  smsTag: string | null,
+  eventTitle: string,
+  body: string
+): SmsFormatResult & { droppedWedding?: boolean } {
+  const SMS_SINGLE_SEGMENT_LIMIT = 160;
+  const TRUNCATION_SUFFIX = '…';
+
+  // Start with full event tag (24 char limit)
+  let eventTag = generateEventTagExtended(smsTag, eventTitle, 24);
+  let processedBody = normalizeToGsm7(body.trim());
+  let droppedWedding = false;
+
+  // Try full message with colon format: "EventTag: message"
+  let fullText = `${eventTag}: ${processedBody}`;
+  
+  if (fullText.length <= SMS_SINGLE_SEGMENT_LIMIT) {
+    return {
+      text: fullText,
+      includedStopNotice: processedBody.includes('Reply STOP'),
+      length: fullText.length,
+      segments: calculateSmsSegments(fullText),
+      droppedLink: false,
+      truncatedBody: false,
+      included: { header: true, brand: false, stop: processedBody.includes('Reply STOP') },
+      droppedWedding,
+    };
+  }
+
+  // If too long, try trimming event tag to make room
+  const maxTagLength = Math.max(8, SMS_SINGLE_SEGMENT_LIMIT - processedBody.length - 2); // -2 for ": "
+  if (eventTag.length > maxTagLength) {
+    eventTag = generateEventTagExtended(smsTag, eventTitle, maxTagLength);
+    fullText = `${eventTag}: ${processedBody}`;
+    
+    if (fullText.length <= SMS_SINGLE_SEGMENT_LIMIT) {
+      return {
+        text: fullText,
+        includedStopNotice: processedBody.includes('Reply STOP'),
+        length: fullText.length,
+        segments: calculateSmsSegments(fullText),
+        droppedLink: false,
+        truncatedBody: false,
+        included: { header: true, brand: false, stop: processedBody.includes('Reply STOP') },
+        droppedWedding,
+      };
+    }
+  }
+
+  // If still too long, drop "wedding" from the message
+  const weddingPattern = /\bwedding\b/gi;
+  if (weddingPattern.test(processedBody)) {
+    processedBody = processedBody.replace(weddingPattern, '').replace(/\s+/g, ' ').trim();
+    droppedWedding = true;
+    fullText = `${eventTag}: ${processedBody}`;
+    
+    if (fullText.length <= SMS_SINGLE_SEGMENT_LIMIT) {
+      return {
+        text: fullText,
+        includedStopNotice: processedBody.includes('Reply STOP'),
+        length: fullText.length,
+        segments: calculateSmsSegments(fullText),
+        droppedLink: false,
+        truncatedBody: false,
+        included: { header: true, brand: false, stop: processedBody.includes('Reply STOP') },
+        droppedWedding,
+      };
+    }
+  }
+
+  // Last resort: truncate the body
+  const availableBodySpace = SMS_SINGLE_SEGMENT_LIMIT - eventTag.length - 2 - TRUNCATION_SUFFIX.length; // -2 for ": "
+  if (availableBodySpace > 20) { // Ensure minimum viable message
+    const truncatedBody = processedBody.slice(0, availableBodySpace) + TRUNCATION_SUFFIX;
+    fullText = `${eventTag}: ${truncatedBody}`;
+    
+    return {
+      text: fullText,
+      includedStopNotice: false, // STOP likely truncated
+      length: fullText.length,
+      segments: 1,
+      droppedLink: false,
+      truncatedBody: true,
+      included: { header: true, brand: false, stop: false },
+      droppedWedding,
+    };
+  }
+
+  // Emergency fallback: just the message without tag
+  return {
+    text: processedBody,
+    includedStopNotice: processedBody.includes('Reply STOP'),
+    length: processedBody.length,
+    segments: calculateSmsSegments(processedBody),
+    droppedLink: false,
+    truncatedBody: false,
+    included: { header: false, brand: false, stop: processedBody.includes('Reply STOP') },
+    droppedWedding,
+  };
+}
+
+/**
+ * Detect SMS encoding (GSM-7 vs UCS-2)
+ */
+function detectSmsEncoding(text: string): 'GSM-7' | 'UCS-2' {
+  // Basic GSM-7 character set check
+  const gsm7Pattern = /^[\x20-\x7E\n\r\t\^{}\\\[\]~|€]*$/;
+  return gsm7Pattern.test(text) ? 'GSM-7' : 'UCS-2';
 }
 
 /**

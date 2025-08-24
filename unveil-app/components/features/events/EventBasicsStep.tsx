@@ -90,6 +90,37 @@ export function EventBasicsStep({
         </div>
       </div>
 
+      {/* Event Tag for SMS */}
+      <div className="space-y-2">
+        <label
+          htmlFor="sms_tag"
+          className="block text-sm font-medium text-gray-700"
+        >
+          Event Tag for SMS <span className="text-red-500">*</span>
+        </label>
+        <TextInput
+          id="sms_tag"
+          value={formData.sms_tag}
+          onChange={(e: ChangeEvent<HTMLInputElement>) =>
+            onUpdate('sms_tag', e.target.value)
+          }
+          placeholder="e.g., Sarah + David"
+          disabled={disabled}
+          error={errors.sms_tag}
+          maxLength={20}
+          className="text-[16px] min-h-[44px]"
+        />
+        <MicroCopy>
+          Short label shown at the start of each SMS so guests recognize your event. Max 20 characters. Example: Sarah + David.
+          {formData.sms_tag.trim() && (
+            <>
+              <br />
+              <span className="font-medium">Preview:</span> {formData.sms_tag.trim()}: Your message text…
+            </>
+          )}
+        </MicroCopy>
+      </div>
+
       {/* Event Location */}
       <div className="space-y-2">
         <label
