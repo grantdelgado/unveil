@@ -3,6 +3,31 @@ import { logger } from '@/lib/logger';
 import { flags } from '@/config/flags';
 
 /**
+ * Telemetry functions for SMS formatter (no PII)
+ */
+function emitFormatterTelemetry(metric: string, path: string, value: number = 1) {
+  // For now, use structured logging. In future, can integrate with metrics service
+  logger.info(`SMS formatter telemetry: ${metric}`, {
+    metric,
+    path,
+    value,
+    timestamp: new Date().toISOString(),
+  });
+}
+
+function emitFallbackUsed(path: string) {
+  emitFormatterTelemetry('messaging.formatter.fallback_used', path);
+}
+
+function emitHeaderMissing(path: string) {
+  emitFormatterTelemetry('messaging.formatter.header_missing', path);
+}
+
+function emitFirstSmsIncludesStop(path: string, included: boolean) {
+  emitFormatterTelemetry('messaging.formatter.first_sms_includes_stop', path, included ? 1 : 0);
+}
+
+/**
  * SMS Text Formatting Utility for Event Tag Branding + A2P Footer
  * 
  * Formats SMS messages with:
@@ -16,6 +41,10 @@ export interface SmsFormatOptions {
   link?: string;
   /** Force include STOP notice even if already sent */
   forceStopNotice?: boolean;
+  /** Pre-fetched event SMS tag (avoids DB query) */
+  eventSmsTag?: string | null;
+  /** Pre-fetched event title (avoids DB query) */
+  eventTitle?: string | null;
 }
 
 export interface SmsFormatResult {
@@ -31,10 +60,26 @@ export interface SmsFormatResult {
   droppedLink: boolean;
   /** Whether body was truncated */
   truncatedBody: boolean;
+  /** Explicit signals for what was included in the final SMS */
+  included: {
+    /** Whether event header [EventTag] was included */
+    header: boolean;
+    /** Whether brand line "via Unveil" was included */
+    brand: boolean;
+    /** Whether STOP notice was included */
+    stop: boolean;
+  };
+  /** Reason for fallback behavior, if any */
+  reason?: 'fallback' | 'kill_switch' | 'first_sms=false';
 }
 
 /**
  * Core SMS text formatter with event tag branding and A2P compliance
+ * 
+ * @param eventId - Event UUID
+ * @param guestId - Guest UUID (optional, for A2P tracking)
+ * @param body - Raw message content
+ * @param options - Formatting options including pre-fetched event data
  */
 export async function composeSmsText(
   eventId: string,
@@ -43,57 +88,217 @@ export async function composeSmsText(
   options: SmsFormatOptions = {}
 ): Promise<SmsFormatResult> {
   try {
+    // DEBUG: Log what options were passed to composeSmsText
+    logger.info('composeSmsText Debug - Received options', {
+      eventId,
+      guestId,
+      bodyLength: body.length,
+      options: {
+        eventSmsTag: options.eventSmsTag,
+        eventTitle: options.eventTitle,
+        eventSmsTagType: typeof options.eventSmsTag,
+        eventTitleType: typeof options.eventTitle,
+        link: options.link,
+        forceStopNotice: options.forceStopNotice
+      }
+    });
+
     // Emergency kill-switch check (defaults to branding ON)
-    if (flags.ops.smsBrandingDisabled) {
-      return {
-        text: body,
+    // Kill switch should preserve event header but remove brand/STOP
+    const killSwitchActive = flags.ops.smsBrandingDisabled;
+    
+    if (killSwitchActive) {
+      // Use pre-fetched event data if available, otherwise fetch for header
+      let event: { sms_tag: string | null; title: string } | null = null;
+
+      if (options.eventSmsTag != null || options.eventTitle != null) {
+        // Use pre-fetched event data
+        event = {
+          sms_tag: options.eventSmsTag || null,
+          title: options.eventTitle || 'Event'
+        };
+      } else {
+        // Fetch event data for header (kill switch still needs header)
+        let supabase: any;
+        try {
+          supabase = await createServerSupabaseClient();
+        } catch (error) {
+          const { supabase: adminClient } = await import('@/lib/supabase/admin');
+          supabase = adminClient;
+        }
+
+        const { data: eventData, error: eventError } = await supabase
+          .from('events')
+          .select('sms_tag, title')
+          .eq('id', eventId)
+          .maybeSingle();
+
+        if (eventError || !eventData) {
+          // Complete fallback if can't get event data
+          emitFallbackUsed('kill_switch_event_fetch_failed');
+          emitHeaderMissing('kill_switch_event_fetch_failed');
+          return {
+            text: body,
+            includedStopNotice: false,
+            length: body.length,
+            segments: calculateSmsSegments(body),
+            droppedLink: false,
+            truncatedBody: false,
+            included: { header: false, brand: false, stop: false },
+            reason: 'fallback',
+          };
+        }
+
+        event = eventData;
+      }
+
+      // Generate event tag and format with header only
+      const eventTag = generateEventTag(event?.sms_tag || null, event?.title || 'Event');
+      const headerOnlyText = `[${eventTag}]\n${normalizeToGsm7(body.trim())}`;
+      
+      const killSwitchResult = {
+        text: headerOnlyText,
         includedStopNotice: false,
-        length: body.length,
-        segments: calculateSmsSegments(body),
+        length: headerOnlyText.length,
+        segments: calculateSmsSegments(headerOnlyText),
         droppedLink: false,
         truncatedBody: false,
+        included: { header: true, brand: false, stop: false },
+        reason: 'kill_switch' as const,
       };
-    }
 
-    const supabase = await createServerSupabaseClient();
-
-    // Get event tag and guest A2P status in parallel
-    const [eventResult, guestResult] = await Promise.all([
-      supabase
-        .from('events')
-        .select('sms_tag, title')
-        .eq('id', eventId)
-        .single(),
-      guestId
-        ? supabase
-            .from('event_guests')
-            .select('a2p_notice_sent_at')
-            .eq('id', guestId)
-            .single()
-        : Promise.resolve({ data: null, error: null }),
-    ]);
-
-    if (eventResult.error) {
-      logger.warn('Failed to fetch event for SMS formatting', {
+      // Log kill switch result with prefetch status
+      logger.info('SMS formatter result', {
         eventId,
-        error: eventResult.error.message,
+        hasGuestId: !!guestId,
+        included: killSwitchResult.included,
+        reason: killSwitchResult.reason,
+        usedPrefetchedEvent: (options.eventSmsTag != null || options.eventTitle != null),
+        segments: killSwitchResult.segments,
+        timestamp: new Date().toISOString()
       });
-      // Fallback to unformatted message
-      return {
-        text: body,
-        includedStopNotice: false,
-        length: body.length,
-        segments: calculateSmsSegments(body),
-        droppedLink: false,
-        truncatedBody: false,
-      };
+
+      return killSwitchResult;
     }
 
-    const event = eventResult.data;
-    const guest = guestResult.data;
+    // Try to get Supabase client - fallback to admin client if server client fails
+    let supabase: any;
+    try {
+      supabase = await createServerSupabaseClient();
+    } catch (error) {
+      // Fallback to admin client for scheduled worker context
+      const { supabase: adminClient } = await import('@/lib/supabase/admin');
+      supabase = adminClient;
+      logger.info('SMS formatter using admin client fallback', { eventId });
+    }
+
+    // Use pre-fetched event data if available, otherwise fetch from DB
+    let event: { sms_tag: string | null; title: string } | null = null;
+    let guest: { a2p_notice_sent_at: string | null } | null = null;
+    let usedPrefetchedEvent = false;
+
+    if (options.eventSmsTag != null || options.eventTitle != null) {
+      // DEBUG: Log pre-fetch usage
+      logger.info('composeSmsText Debug - Using pre-fetched event data', {
+        eventId,
+        guestId,
+        eventSmsTag: options.eventSmsTag,
+        eventTitle: options.eventTitle,
+        hasEventSmsTag: options.eventSmsTag != null,
+        hasEventTitle: options.eventTitle != null
+      });
+
+      // Use pre-fetched event data (from scheduled worker)
+      event = {
+        sms_tag: options.eventSmsTag || null,
+        title: options.eventTitle || 'Event'
+      };
+      usedPrefetchedEvent = true;
+
+      // Still need to fetch guest A2P status if guestId provided
+      if (guestId) {
+        const guestResult = await supabase
+          .from('event_guests')
+          .select('a2p_notice_sent_at')
+          .eq('id', guestId)
+          .maybeSingle();
+        
+        guest = guestResult.data;
+        // Don't fail on guest fetch error - just proceed without A2P tracking
+      }
+    } else {
+      // Fetch event and guest data from DB (Send-Now path)
+      const [eventResult, guestResult] = await Promise.all([
+        supabase
+          .from('events')
+          .select('sms_tag, title')
+          .eq('id', eventId)
+          .maybeSingle(),
+        guestId
+          ? supabase
+              .from('event_guests')
+              .select('a2p_notice_sent_at')
+              .eq('id', guestId)
+              .maybeSingle()
+          : Promise.resolve({ data: null, error: null }),
+      ]);
+
+      if (eventResult.error) {
+        logger.warn('Failed to fetch event for SMS formatting', {
+          eventId,
+          error: eventResult.error.message,
+        });
+        // Emit counter metric for event fetch miss
+        logger.info('SMS formatter telemetry: messaging.formatter.event_fetch_miss', {
+          metric: 'messaging.formatter.event_fetch_miss',
+          path: 'db_query_failed',
+          value: 1,
+          timestamp: new Date().toISOString(),
+        });
+        // Fallback to unformatted message
+        emitFallbackUsed('event_fetch_failed');
+        emitHeaderMissing('event_fetch_failed');
+        return {
+          text: body,
+          includedStopNotice: false,
+          length: body.length,
+          segments: calculateSmsSegments(body),
+          droppedLink: false,
+          truncatedBody: false,
+          included: { header: false, brand: false, stop: false },
+          reason: 'fallback',
+        };
+      }
+
+      if (!eventResult.data) {
+        logger.warn('Event not found for SMS formatting', { eventId });
+        // Emit counter metric for event fetch miss
+        logger.info('SMS formatter telemetry: messaging.formatter.event_fetch_miss', {
+          metric: 'messaging.formatter.event_fetch_miss',
+          path: 'event_not_found',
+          value: 1,
+          timestamp: new Date().toISOString(),
+        });
+        emitFallbackUsed('event_not_found');
+        emitHeaderMissing('event_not_found');
+        return {
+          text: body,
+          includedStopNotice: false,
+          length: body.length,
+          segments: calculateSmsSegments(body),
+          droppedLink: false,
+          truncatedBody: false,
+          included: { header: false, brand: false, stop: false },
+          reason: 'fallback',
+        };
+      }
+
+      event = eventResult.data;
+      guest = guestResult.data;
+    }
 
     // Generate event tag
-    const eventTag = generateEventTag(event.sms_tag, event.title);
+    const eventTag = generateEventTag(event?.sms_tag || null, event?.title || 'Event');
 
     // Determine if STOP notice needed
     const needsStopNotice = Boolean(
@@ -118,14 +323,49 @@ export async function composeSmsText(
     // Calculate lengths and apply budget constraints
     const result = applyLengthBudget(components);
 
-    return {
+    const finalResult = {
       text: result.finalText,
       includedStopNotice: needsStopNotice && (result.includedStop ?? false),
       length: result.finalText.length,
       segments: calculateSmsSegments(result.finalText),
       droppedLink: options.link ? !result.includedLink : false,
       truncatedBody: result.truncatedBody,
+      included: {
+        header: true, // Header is always included in normal flow
+        brand: result.includedBrand ?? false,
+        stop: result.includedStop ?? false,
+      },
+      reason: (needsStopNotice && !result.includedStop ? 'first_sms=false' : undefined) as 'fallback' | 'kill_switch' | 'first_sms=false' | undefined,
     };
+
+    // Log formatter result with prefetch status
+    logger.info('SMS formatter result', {
+      eventId,
+      hasGuestId: !!guestId,
+      included: finalResult.included,
+      reason: finalResult.reason || 'normal',
+      usedPrefetchedEvent,
+      segments: finalResult.segments,
+      timestamp: new Date().toISOString()
+    });
+
+    // Emit telemetry for first SMS tracking
+    if (needsStopNotice) {
+      emitFirstSmsIncludesStop('normal_flow', finalResult.included.stop);
+    }
+
+    // Log branding inclusion for observability (count only, no PII)
+    if (needsStopNotice && finalResult.includedStopNotice) {
+      logger.info('SMS branding included', {
+        eventId,
+        hasGuestId: !!guestId,
+        segments: finalResult.segments,
+        droppedLink: finalResult.droppedLink,
+        truncatedBody: finalResult.truncatedBody
+      });
+    }
+
+    return finalResult;
   } catch (error) {
     logger.error('Error in composeSmsText', {
       eventId,
@@ -134,6 +374,8 @@ export async function composeSmsText(
     });
 
     // Fallback to unformatted message on any error
+    emitFallbackUsed('exception_caught');
+    emitHeaderMissing('exception_caught');
     return {
       text: body,
       includedStopNotice: false,
@@ -141,6 +383,8 @@ export async function composeSmsText(
       segments: calculateSmsSegments(body),
       droppedLink: false,
       truncatedBody: false,
+      included: { header: false, brand: false, stop: false },
+      reason: 'fallback',
     };
   }
 }
@@ -148,7 +392,7 @@ export async function composeSmsText(
 /**
  * Generate event tag from sms_tag or title fallback
  */
-function generateEventTag(smsTag: string | null, eventTitle: string): string {
+export function generateEventTag(smsTag: string | null, eventTitle: string): string {
   if (smsTag && smsTag.trim()) {
     return normalizeToAscii(smsTag.trim()).slice(0, 14);
   }
@@ -332,7 +576,14 @@ function calculateSmsSegments(text: string): number {
  */
 export async function markA2pNoticeSent(eventId: string, guestId: string): Promise<void> {
   try {
-    const supabase = await createServerSupabaseClient();
+    // Try server client first, fallback to admin client
+    let supabase: any;
+    try {
+      supabase = await createServerSupabaseClient();
+    } catch (error) {
+      const { supabase: adminClient } = await import('@/lib/supabase/admin');
+      supabase = adminClient;
+    }
     
     const { error } = await supabase.rpc('mark_a2p_notice_sent', {
       _event_id: eventId,

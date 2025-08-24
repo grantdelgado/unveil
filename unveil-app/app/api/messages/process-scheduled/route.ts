@@ -178,6 +178,72 @@ async function processDueScheduledMessages(
         let smsFailed = 0;
         let messageRecord: { id: string } | null = null;
 
+        // Apply same message type coercion logic as Send Now path
+        let finalMessageType = message.message_type;
+        const originalMessageType = message.message_type;
+        
+        // Get total active guests for validation
+        const { data: allActiveGuests, error: allGuestsError } = await supabase
+          .from('event_guests')
+          .select('id')
+          .eq('event_id', message.event_id)
+          .is('removed_at', null)
+          .eq('sms_opt_out', false);
+
+        if (allGuestsError) {
+          logger.apiError('Error fetching active guests for coercion', allGuestsError);
+        } else {
+          const totalActiveGuests = allActiveGuests?.length || 0;
+
+          // Apply validation/coercion rules (same as Send Now)
+          if (
+            finalMessageType === 'announcement' &&
+            resolvedRecipients.length !== totalActiveGuests
+          ) {
+            // Announcement targeting subset of guests -> coerce to direct
+            finalMessageType = 'direct';
+            logger.api(
+              `Scheduled: Coerced announcement to direct: targeting ${resolvedRecipients.length}/${totalActiveGuests} guests`,
+              { jobId, scheduledMessageId: message.id }
+            );
+          } else if (
+            finalMessageType === 'channel' &&
+            (!message.target_guest_tags || message.target_guest_tags.length === 0)
+          ) {
+            // Channel with no tags -> coerce to direct
+            finalMessageType = 'direct';
+            logger.api(`Scheduled: Coerced channel to direct: no tags specified`, {
+              jobId, scheduledMessageId: message.id
+            });
+          } else if (
+            finalMessageType === 'direct' &&
+            resolvedRecipients.length === totalActiveGuests
+          ) {
+            // Direct targeting all guests -> coerce to announcement
+            finalMessageType = 'announcement';
+            logger.api(
+              `Scheduled: Coerced direct to announcement: targeting all ${totalActiveGuests} guests`,
+              { jobId, scheduledMessageId: message.id }
+            );
+          }
+        }
+
+        // Track type mismatch metric (should stay at 0 in healthy system)
+        if (finalMessageType !== originalMessageType) {
+          logger.api(`Scheduled message type mismatch detected`, {
+            scheduledMessageId: message.id,
+            originalType: originalMessageType,
+            finalType: finalMessageType,
+            recipientCount: resolvedRecipients.length,
+            jobId
+          });
+          // TODO: Add proper metrics counter here when metrics system is available
+          // incrementCounter('messaging.scheduled.type_mismatch', 1, {
+          //   original_type: originalMessageType,
+          //   final_type: finalMessageType
+          // });
+        }
+
         // Create message record first (for delivery tracking)
         const { data: createdMessage, error: messageError } = await supabase
           .from('messages')
@@ -185,7 +251,7 @@ async function processDueScheduledMessages(
             event_id: message.event_id,
             content: message.content,
             message_type:
-              message.message_type as Database['public']['Enums']['message_type_enum'],
+              finalMessageType as Database['public']['Enums']['message_type_enum'],
             sender_user_id: message.sender_user_id,
             scheduled_message_id: message.id, // Link to the scheduled message
             created_at: new Date().toISOString(),
@@ -209,28 +275,120 @@ async function processDueScheduledMessages(
 
         // Send SMS if enabled
         if (message.send_via_sms && resolvedRecipients.length > 0) {
+          // Prepare SMS messages - pass raw content and event metadata to sendSMS
           const smsMessages = resolvedRecipients.map((guest) => ({
             to: guest.phone,
-            message: message.content,
+            message: message.content, // RAW CONTENT ONLY - formatting happens in sendSMS()
             eventId: message.event_id,
             guestId: guest.id,
-            messageType: [
-              'announcement',
-              'welcome',
-              'custom',
-              'rsvp_reminder',
-            ].includes(message.message_type || '')
-              ? (message.message_type as
-                  | 'announcement'
-                  | 'welcome'
-                  | 'custom'
-                  | 'rsvp_reminder')
-              : 'announcement',
+            messageType:
+              message.message_type === 'direct'
+                ? 'custom'
+                : (message.message_type as
+                    | 'announcement'
+                    | 'welcome'
+                    | 'custom'
+                    | 'rsvp_reminder'),
+            // Pass pre-fetched event metadata to avoid DB queries in formatter
+            eventSmsTag: (message as any).event_sms_tag,
+            eventTitle: (message as any).event_title,
           }));
+
+          // DEBUG: Log what we're passing to sendSMS
+          logger.api('Scheduled SMS Debug - Event metadata being passed', {
+            scheduledMessageId: message.id,
+            eventId: message.event_id,
+            eventSmsTag: (message as any).event_sms_tag,
+            eventTitle: (message as any).event_title,
+            eventSmsTagType: typeof (message as any).event_sms_tag,
+            eventTitleType: typeof (message as any).event_title,
+            messageKeys: Object.keys(message),
+            recipientCount: smsMessages.length,
+            jobId
+          });
+
+          // Enhanced debug logging for SMS formatting
+          if (process.env.NODE_ENV !== 'production') {
+            const { flags } = require('@/config/flags');
+            logger.api('Scheduled SMS Debug - Pre-Send', {
+              scheduledMessageId: message.id,
+              messageType: message.message_type,
+              recipientCount: smsMessages.length,
+              smsBrandingDisabled: flags.ops.smsBrandingDisabled,
+              envVar: process.env.SMS_BRANDING_DISABLED,
+              sampleRecipient: smsMessages[0] ? {
+                guestId: smsMessages[0].guestId,
+                messageType: smsMessages[0].messageType,
+                eventId: smsMessages[0].eventId,
+                messageContent: smsMessages[0].message.substring(0, 50) + '...'
+              } : null,
+              jobId
+            });
+          }
 
           const smsResult = await sendBulkSMS(smsMessages);
           smsDelivered = smsResult.sent;
           smsFailed = smsResult.failed;
+
+          // Worker parity hardening: Log SMS formatting results for scheduled messages
+          if (process.env.NODE_ENV !== 'production') {
+            logger.api('Scheduled SMS Debug - Post-Send', {
+              scheduledMessageId: message.id,
+              smsDelivered,
+              smsFailed,
+              totalRecipients: smsMessages.length,
+              jobId,
+              note: 'Check logs for "SMS formatting completed" entries with included.header values'
+            });
+            
+            // Additional diagnostic: Try to format one message directly to see result
+            if (smsMessages.length > 0) {
+              try {
+                const { composeSmsText } = require('@/lib/sms-formatter');
+                const testResult = await composeSmsText(
+                  smsMessages[0].eventId,
+                  smsMessages[0].guestId,
+                  smsMessages[0].message
+                );
+                
+                logger.api('Scheduled SMS Direct Format Test', {
+                  scheduledMessageId: message.id,
+                  testResult: {
+                    hasHeader: testResult.included.header,
+                    hasBrand: testResult.included.brand,
+                    hasStop: testResult.included.stop,
+                    reason: testResult.reason,
+                    textPreview: testResult.text.substring(0, 100) + '...'
+                  },
+                  jobId
+                });
+              } catch (formatError) {
+                logger.api('Scheduled SMS Format Test Error', {
+                  scheduledMessageId: message.id,
+                  error: formatError instanceof Error ? formatError.message : 'Unknown',
+                  jobId
+                });
+              }
+            }
+          }
+
+          // Observability: Track potential branding issues (development only)
+          if (process.env.NODE_ENV !== 'production') {
+            // Check if any recipients should have received branding
+            const firstTimeRecipients = resolvedRecipients.filter(guest => {
+              // This is a simplified check - actual logic is in composeSmsText
+              return !(guest as any).a2p_notice_sent_at;
+            });
+            
+            if (firstTimeRecipients.length > 0) {
+              logger.api('Scheduled SMS with potential first-time recipients', {
+                scheduledMessageId: message.id,
+                firstTimeCount: firstTimeRecipients.length,
+                totalCount: resolvedRecipients.length,
+                jobId
+              });
+            }
+          }
 
           // Create delivery tracking records with proper message_id
           if (resolvedRecipients.length > 0 && messageRecord) {
@@ -585,7 +743,7 @@ async function resolveScheduledMessageRecipients(
 
       const { data: guests, error } = await supabase
         .from('event_guests')
-        .select('id, phone, guest_name')
+        .select('id, phone, guest_name, a2p_notice_sent_at')
         .eq('event_id', eventId)
         .is('removed_at', null) // Use canonical scope - exclude removed guests
         .eq('sms_opt_out', false) // Exclude opted-out guests
@@ -616,7 +774,7 @@ async function resolveScheduledMessageRecipients(
     if (filter.type === 'explicit_selection' && filter.selectedGuestIds) {
       const { data: guests, error } = await supabase
         .from('event_guests')
-        .select('id, phone, guest_name')
+        .select('id, phone, guest_name, a2p_notice_sent_at')
         .eq('event_id', eventId)
         .in('id', filter.selectedGuestIds)
         .is('removed_at', null) // Use canonical scope - exclude removed guests
@@ -648,7 +806,7 @@ async function resolveScheduledMessageRecipients(
     if (filter.type === 'individual' && filter.guestIds) {
       const { data: guests, error } = await supabase
         .from('event_guests')
-        .select('id, phone, guest_name')
+        .select('id, phone, guest_name, a2p_notice_sent_at')
         .eq('event_id', eventId)
         .in('id', filter.guestIds)
         .is('removed_at', null) // Use canonical scope - exclude removed guests

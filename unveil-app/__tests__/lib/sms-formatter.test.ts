@@ -16,19 +16,35 @@ describe('SMS Formatter', () => {
   });
 
   describe('Kill Switch', () => {
-    it('should return unformatted message when kill switch is enabled', async () => {
+    it('should preserve header but remove brand/STOP when kill switch is enabled', async () => {
       process.env.SMS_BRANDING_DISABLED = 'true';
+      
+      // Mock event data for header generation
+      mockSupabaseClient.from.mockImplementation((table: string) => {
+        if (table === 'events') {
+          return {
+            select: () => ({
+              eq: () => ({
+                single: () => Promise.resolve({ 
+                  data: { sms_tag: 'TestEvent', title: 'Test Event' }, 
+                  error: null 
+                }),
+              }),
+            }),
+          };
+        }
+      });
       
       const result = await composeSmsText('event-123', 'guest-456', 'Hello world!');
       
-      expect(result).toEqual({
-        text: 'Hello world!',
-        includedStopNotice: false,
-        length: 12,
-        segments: 1,
-        droppedLink: false,
-        truncatedBody: false,
-      });
+      // Kill switch should preserve header but remove brand/STOP
+      expect(result.included.header).toBe(true);
+      expect(result.included.brand).toBe(false);
+      expect(result.included.stop).toBe(false);
+      expect(result.reason).toBe('kill_switch');
+      expect(result.text).toMatch(/^\[TestEvent\]/);
+      expect(result.text).toContain('Hello world!');
+      expect(result.includedStopNotice).toBe(false);
     });
   });
 
@@ -428,6 +444,8 @@ describe('SMS Formatter', () => {
         segments: 1,
         droppedLink: false,
         truncatedBody: false,
+        included: { header: false, brand: false, stop: false },
+        reason: 'fallback',
       });
     });
 

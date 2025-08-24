@@ -53,6 +53,10 @@ export interface SMSMessage {
   eventId: string;
   guestId?: string;
   messageType?: 'rsvp_reminder' | 'announcement' | 'welcome' | 'custom';
+  /** Pre-fetched event SMS tag (for scheduled messages) */
+  eventSmsTag?: string | null;
+  /** Pre-fetched event title (for scheduled messages) */
+  eventTitle?: string | null;
 }
 
 export interface SMSResult {
@@ -168,6 +172,8 @@ export async function sendSMS({
   eventId,
   guestId,
   messageType = 'custom',
+  eventSmsTag,
+  eventTitle,
 }: SMSMessage): Promise<SMSResult> {
   try {
     logger.info('Starting SMS send process', {
@@ -248,8 +254,51 @@ export async function sendSMS({
       formatted: formattedPhone.slice(0, 6) + '...',
     });
 
+    // DEBUG: Log what sendSMS received
+    logger.info('sendSMS Debug - Received parameters', {
+      eventId,
+      guestId,
+      hasEventSmsTag: eventSmsTag !== undefined,
+      hasEventTitle: eventTitle !== undefined,
+      eventSmsTag,
+      eventTitle,
+      messageLength: message.length
+    });
+
     // Format SMS with event tag branding and A2P footer
-    const formattedSms = await composeSmsText(eventId, guestId, message);
+    const formattedSms = await composeSmsText(eventId, guestId, message, {
+      eventSmsTag,
+      eventTitle,
+    });
+    
+    // Development-only assertions for branding compliance
+    if (process.env.NODE_ENV !== 'production') {
+      const { flags } = await import('@/config/flags');
+      
+      // Assert header inclusion when kill switch is off
+      if (!flags.ops.smsBrandingDisabled && !formattedSms.included.header) {
+        logger.error('ASSERTION FAILED: Header missing while kill switch is off', {
+          eventId,
+          guestId,
+          reason: formattedSms.reason,
+          killSwitchDisabled: flags.ops.smsBrandingDisabled,
+        });
+      }
+      
+      // Assert STOP notice for first SMS (when expected)
+      if (guestId && formattedSms.reason !== 'fallback' && formattedSms.reason !== 'kill_switch') {
+        // This is a simplified check - actual first-SMS logic is in composeSmsText
+        // We're just asserting that if it's not a fallback/kill-switch, STOP should be considered
+        if (!formattedSms.included.stop && !formattedSms.reason?.includes('first_sms=false')) {
+          logger.warn('First SMS assertion: STOP notice not included', {
+            eventId,
+            guestId,
+            reason: formattedSms.reason,
+            includedStop: formattedSms.included.stop,
+          });
+        }
+      }
+    }
     
     // Log SMS formatting metrics (no PII)
     logger.info('SMS formatting completed', {
@@ -260,6 +309,8 @@ export async function sendSMS({
       includedStopNotice: formattedSms.includedStopNotice,
       droppedLink: formattedSms.droppedLink,
       truncatedBody: formattedSms.truncatedBody,
+      included: formattedSms.included,
+      reason: formattedSms.reason,
     });
 
     // Redact phone number for logging (show first 3 and last 4 characters)

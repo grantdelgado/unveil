@@ -142,16 +142,33 @@ export function MessageComposer({
   const maxCharacters = 1000;
   const isValid = message.trim().length > 0 && characterCount <= maxCharacters;
 
-  // Calculate minimum date/time (now + 5 minutes)
+  // Calculate minimum date/time (now + buffer) in event timezone
   const minDateTime = React.useMemo(() => {
     const now = new Date();
-    const minTime = new Date(now.getTime() + 5 * 60000); // 5 minutes from now
+    const minTime = new Date(now.getTime() + MIN_SCHEDULE_BUFFER_MINUTES * 60000);
+    
+    // Use event timezone for date calculation if available, otherwise fall back to local time
+    let minDate: string;
+    if (eventDetails?.time_zone && isValidTimezone(eventDetails.time_zone)) {
+      // Get current date in event timezone
+      const eventTimeFormatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: eventDetails.time_zone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      });
+      minDate = eventTimeFormatter.format(now);
+    } else {
+      // Fallback to local timezone
+      minDate = minTime.toISOString().split('T')[0];
+    }
+    
     return {
-      date: minTime.toISOString().split('T')[0],
+      date: minDate,
       time: minTime.toTimeString().slice(0, 5),
       datetime: minTime.toISOString(),
     };
-  }, []);
+  }, [eventDetails?.time_zone]);
 
   // Get event timezone info for display and validation
   const eventTimezoneInfo = React.useMemo(() => {
@@ -498,6 +515,17 @@ export function MessageComposer({
         scheduledAtUTC = new Date(scheduledLocal).toISOString();
       }
 
+      // Debug log for observability (dev-only)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Schedule Debug Info:', {
+          eventTimezone: eventTimeZone,
+          localNow: new Date().toISOString(),
+          selectedDateTime: scheduledLocal,
+          selectedDateTimeUTC: scheduledAtUTC,
+          minAllowedUTC: minAllowedUtc.toISOString(),
+        });
+      }
+
       // Client-side Zod validation
       const validationResult = scheduledMessageSchema.safeParse({
         content: message.trim(),
@@ -529,14 +557,17 @@ export function MessageComposer({
         scheduledTz: eventTimeZone || undefined,
         scheduledLocal,
         idempotencyKey,
-        recipientFilter: {
-          type: 'explicit_selection',
-          selectedGuestIds: selectedGuestIds,
-        },
+        // Type-specific recipient handling (same as Send Now path)
+        recipientFilter:
+          messageType === 'announcement'
+            ? { type: 'all' }
+            : messageType === 'channel'
+              ? { type: 'tags', tags: selectedTags }
+              : { type: 'explicit_selection', selectedGuestIds: selectedGuestIds },
         messageType:
           preselectionPreset === 'not_invited'
             ? 'announcement'
-            : 'announcement',
+            : messageType,
         sendViaSms: options.sendViaSms,
         sendViaPush: options.sendViaPush,
       };
