@@ -2,12 +2,11 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { formatMessageTimestamp, formatDateGroupHeader, groupMessagesByDate } from '@/lib/utils/date';
+import { formatDateGroupHeader, groupMessagesByDate } from '@/lib/utils/date';
 import { useScheduledMessages } from '@/hooks/messaging/useScheduledMessages';
 import {
   fromUTCToEventZone,
   getTimezoneInfo,
-  isValidTimezone,
   formatScheduledDateTime,
 } from '@/lib/utils/timezone';
 import { supabase } from '@/lib/supabase/client';
@@ -357,7 +356,7 @@ export function RecentMessages({
         isLiveUpdating
       });
     }
-  }, [eventId, messages?.length, scheduledMessages?.length, isLoading, effectiveScheduledLoading, hasInitiallyLoaded, isBootLoading, isLiveUpdating]);
+  }, [eventId, messages?.length, scheduledMessages?.length, isLoading, scheduledLoading, effectiveScheduledLoading, hasInitiallyLoaded, isBootLoading, isLiveUpdating]);
 
   // Fetch event timezone
   React.useEffect(() => {
@@ -481,7 +480,7 @@ export function RecentMessages({
     });
     
     return sorted;
-  }, [messages, scheduledMessages]); // Dependencies are stable arrays from hooks
+  }, [messages, scheduledMessages, propScheduledMessages]); // Dependencies are stable arrays from hooks
 
 
 
@@ -491,6 +490,30 @@ export function RecentMessages({
       await cancelScheduledMessage(messageId);
     }
   };
+
+  // Group past messages by date for headers (must be before early returns)
+  const groupedPastMessages = React.useMemo(() => {
+    return groupMessagesByDate(pastMessages);
+  }, [pastMessages]);
+
+  // Sort date groups (newest first) (must be before early returns)
+  const sortedDateGroups = React.useMemo(() => {
+    return Object.keys(groupedPastMessages).sort((a, b) => {
+      return new Date(b).getTime() - new Date(a).getTime();
+    });
+  }, [groupedPastMessages]);
+
+  // Dev observability logging (must be before early returns)
+  React.useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[MessageHistory] UI Debug:', {
+        tzMode: showMyTime ? 'local' : 'event',
+        groups: sortedDateGroups.length,
+        upcoming: upcomingMessages.length,
+        past: pastMessages.length
+      });
+    }
+  }, [showMyTime, sortedDateGroups.length, upcomingMessages.length, pastMessages.length]);
 
   if (isBootLoading) {
     console.log('[RecentMessages] Showing loading state:', {
@@ -554,30 +577,6 @@ export function RecentMessages({
         new Date(msg.send_at) > new Date()
       ),
   );
-
-  // Group past messages by date for headers
-  const groupedPastMessages = React.useMemo(() => {
-    return groupMessagesByDate(pastMessages);
-  }, [pastMessages]);
-
-  // Sort date groups (newest first)
-  const sortedDateGroups = React.useMemo(() => {
-    return Object.keys(groupedPastMessages).sort((a, b) => {
-      return new Date(b).getTime() - new Date(a).getTime();
-    });
-  }, [groupedPastMessages]);
-
-  // Dev observability logging
-  React.useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[MessageHistory] UI Debug:', {
-        tzMode: showMyTime ? 'local' : 'event',
-        groups: sortedDateGroups.length,
-        upcoming: upcomingMessages.length,
-        past: pastMessages.length
-      });
-    }
-  }, [showMyTime, sortedDateGroups.length, upcomingMessages.length, pastMessages.length]);
 
   return (
     <div className={cn('space-y-6', className)}>
