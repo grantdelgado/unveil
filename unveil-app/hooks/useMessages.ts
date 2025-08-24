@@ -52,8 +52,12 @@ export function useMessages(eventId?: string): UseMessagesReturn {
   } = useQuery({
     queryKey: ['messages', eventId],
     queryFn: async () => {
-      if (!eventId) return [];
+      if (!eventId) {
+        console.log('[useMessages] No eventId provided');
+        return [];
+      }
 
+      console.log('[useMessages] Fetching messages for eventId:', eventId);
       const { data, error } = await supabase
         .from('messages')
         .select(
@@ -63,30 +67,54 @@ export function useMessages(eventId?: string): UseMessagesReturn {
         `,
         )
         .eq('event_id', eventId)
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: false });
 
-      if (error) throw new Error(error.message);
+      if (error) {
+        console.error('[useMessages] Query error:', error);
+        throw new Error(error.message);
+      }
+      console.log('[useMessages] Query result:', { count: data?.length || 0, data });
       return data;
     },
     enabled: !!eventId,
+    // Hotfix: Align React Query settings to prevent refetch loops
+    refetchOnWindowFocus: false,
+    refetchInterval: false,
+    refetchOnReconnect: false, // Disable reconnect refetch to prevent flicker
+    staleTime: 60000, // 1 minute
   });
 
   // Get scheduled messages
   const { data: scheduledMessages } = useQuery({
     queryKey: ['scheduled-messages', eventId],
     queryFn: async () => {
-      if (!eventId) return [];
+      if (!eventId) {
+        console.log('[useMessages] No eventId for scheduled messages');
+        return [];
+      }
 
+      console.log('[useMessages] Fetching scheduled messages for eventId:', eventId);
       const { data, error } = await supabase
         .from('scheduled_messages')
         .select('*')
         .eq('event_id', eventId)
-        .order('send_at', { ascending: true });
+        .order('send_at', { ascending: true })
+        .order('id', { ascending: true });
 
-      if (error) throw new Error(error.message);
+      if (error) {
+        console.error('[useMessages] Scheduled messages query error:', error);
+        throw new Error(error.message);
+      }
+      console.log('[useMessages] Scheduled messages result:', { count: data?.length || 0, data });
       return data;
     },
     enabled: !!eventId,
+    // Hotfix: Align React Query settings to prevent refetch loops
+    refetchOnWindowFocus: false,
+    refetchInterval: false,
+    refetchOnReconnect: false, // Disable reconnect refetch to prevent flicker
+    staleTime: 60000, // 1 minute
   });
 
   // Send message mutation

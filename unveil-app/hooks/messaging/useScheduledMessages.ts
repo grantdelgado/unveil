@@ -97,7 +97,9 @@ export function useScheduledMessages({
       setLoading(true);
       setError(null);
 
+      console.log('[useScheduledMessages] Fetching with filters:', completeFilters);
       const result = await getScheduledMessages(completeFilters);
+      console.log('[useScheduledMessages] Service result:', result);
 
       if (!isMountedRef.current) return; // Component unmounted during fetch
 
@@ -118,6 +120,7 @@ export function useScheduledMessages({
         );
       }
 
+      console.log('[useScheduledMessages] Setting messages:', result.data?.length || 0);
       setScheduledMessages(result.data || []);
     } catch (err) {
       if (!isMountedRef.current) return; // Component unmounted during error handling
@@ -134,8 +137,12 @@ export function useScheduledMessages({
         err instanceof Error
           ? err.message
           : 'Failed to fetch scheduled messages';
+      console.error('[useScheduledMessages] Error details:', {
+        error: err,
+        message: errorMessage,
+        filters: completeFilters
+      });
       setError(errorMessage);
-      console.error('Error fetching scheduled messages:', err);
     } finally {
       fetchInFlightRef.current = false;
       if (isMountedRef.current) {
@@ -303,6 +310,16 @@ export function useScheduledMessages({
     const subscriptionId = `scheduled_messages:${eventId}`;
     subscriptionIdRef.current = subscriptionId;
 
+    // Hotfix: Dev observability - log subscription creation
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[MessageHistory] Creating subscription:', {
+        subscriptionId,
+        eventId,
+        isReady,
+        hasManager: !!manager
+      });
+    }
+
     const unsubscribe = manager.subscribe(subscriptionId, {
       table: 'scheduled_messages',
       event: '*',
@@ -355,19 +372,26 @@ export function useScheduledMessages({
     });
 
     return () => {
+      // Hotfix: Dev observability - log subscription cleanup
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[MessageHistory] Cleaning up subscription:', {
+          subscriptionId,
+          eventId
+        });
+      }
       subscriptionIdRef.current = null;
       unsubscribe();
     };
   }, [eventId, realTimeUpdates, manager, version, isReady]);
 
-  // Auto-refresh interval (every 30 seconds for upcoming messages) - stabilized dependencies
+  // Auto-refresh interval (every 2 minutes for upcoming messages) - stabilized dependencies
   useEffect(() => {
     if (!autoRefresh) return;
 
     const interval = setInterval(() => {
       // Check current state inside interval to avoid dependency issues
       fetchMessages();
-    }, 30000); // 30 seconds
+    }, 120000); // 2 minutes (reduced from 30s to minimize flicker)
 
     return () => clearInterval(interval);
   }, [autoRefresh, fetchMessages]); // Simplified: always refresh on interval

@@ -315,6 +315,9 @@ export function RecentMessages({
 
   // Two-phase loading: track initial boot vs live updates
   const [hasInitiallyLoaded, setHasInitiallyLoaded] = React.useState(false);
+  
+  // Debounced updating indicator to prevent flicker
+  const [showUpdating, setShowUpdating] = React.useState(false);
 
   // Fetch scheduled messages - Hotfix: use prop if available, otherwise fetch
   const {
@@ -334,6 +337,20 @@ export function RecentMessages({
   // Only show skeleton on initial load, not subsequent updates
   const isBootLoading = (isLoading || effectiveScheduledLoading) && !hasInitiallyLoaded;
   const isLiveUpdating = (isLoading || effectiveScheduledLoading) && hasInitiallyLoaded;
+  
+  // Debounce the updating indicator to prevent flicker
+  React.useEffect(() => {
+    if (isLiveUpdating) {
+      // Show updating indicator after 500ms delay to avoid flicker on quick updates
+      const timer = setTimeout(() => {
+        setShowUpdating(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    } else {
+      // Hide immediately when not updating
+      setShowUpdating(false);
+    }
+  }, [isLiveUpdating]);
 
   // Track when we've completed initial load
   React.useEffect(() => {
@@ -565,7 +582,7 @@ export function RecentMessages({
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-gray-900">
           Message History ({unifiedMessages.length})
-          {isLiveUpdating && (
+          {showUpdating && (
             <span className="ml-2 text-xs text-blue-600 animate-pulse">
               Updating...
             </span>
