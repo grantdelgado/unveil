@@ -266,12 +266,20 @@ export const groupMessagesByDateWithTimezone = <T extends { created_at: string; 
       } catch {
         // Fallback to local time if timezone conversion fails
         const localDate = new Date(timestamp);
-        dateKey = localDate.toISOString().split('T')[0];
+        dateKey = localDate.toLocaleDateString('en-CA', { 
+          year: 'numeric',
+          month: '2-digit', 
+          day: '2-digit'
+        });
       }
     } else {
-      // Use local timezone
+      // Use local timezone - format date in local time, not UTC
       const localDate = new Date(timestamp);
-      dateKey = localDate.toISOString().split('T')[0];
+      dateKey = localDate.toLocaleDateString('en-CA', { 
+        year: 'numeric',
+        month: '2-digit', 
+        day: '2-digit'
+      });
     }
 
     if (!groups[dateKey]) {
@@ -363,16 +371,32 @@ export const formatMessageDateHeaderWithTimezone = (
     } catch {
       // Fallback to local timezone
       const today = new Date();
-      todayDateStr = today.toISOString().split('T')[0];
+      todayDateStr = today.toLocaleDateString('en-CA', { 
+        year: 'numeric',
+        month: '2-digit', 
+        day: '2-digit'
+      });
       const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
-      yesterdayDateStr = yesterday.toISOString().split('T')[0];
+      yesterdayDateStr = yesterday.toLocaleDateString('en-CA', { 
+        year: 'numeric',
+        month: '2-digit', 
+        day: '2-digit'
+      });
     }
   } else {
-    // Use local timezone
+    // Use local timezone - format dates in local time, not UTC
     const today = new Date();
-    todayDateStr = today.toISOString().split('T')[0];
+    todayDateStr = today.toLocaleDateString('en-CA', { 
+      year: 'numeric',
+      month: '2-digit', 
+      day: '2-digit'
+    });
     const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
-    yesterdayDateStr = yesterday.toISOString().split('T')[0];
+    yesterdayDateStr = yesterday.toLocaleDateString('en-CA', { 
+      year: 'numeric',
+      month: '2-digit', 
+      day: '2-digit'
+    });
   }
 
   // Compare date strings directly
