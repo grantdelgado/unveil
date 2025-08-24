@@ -72,10 +72,11 @@ export function useScheduledMessagesQuery({
       return result.data || [];
     },
     enabled: !!eventId && enabled,
-    staleTime: 30000, // 30 seconds - optimized for frequent updates
+    // Hotfix: Align React Query settings to prevent refetch loops
+    staleTime: 60000, // 1 minute - aligned with useMessages
     gcTime: 1000 * 60 * 10, // 10 minutes
-    refetchOnWindowFocus: true, // Refetch when user returns to window
-    refetchInterval: autoRefresh ? 60000 : false, // Background refresh every 60 seconds if enabled
+    refetchOnWindowFocus: false, // Disabled to prevent refetch loops
+    refetchInterval: false, // Disabled - let realtime handle freshness
     refetchIntervalInBackground: false, // Only when tab is active
     retry: (failureCount, error) => {
       // Only retry on network errors

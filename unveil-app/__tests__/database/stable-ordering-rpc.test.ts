@@ -17,7 +17,7 @@ describe('get_guest_event_messages - Stable Ordering', () => {
   let testEventId: string;
   let testUserId: string;
   let testGuestId: string;
-  let testMessageIds: string[] = [];
+  const testMessageIds: string[] = [];
 
   beforeAll(async () => {
     // Create test event

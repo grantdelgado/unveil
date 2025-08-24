@@ -62,6 +62,7 @@ interface SendFlowModalProps {
   scheduledDate?: string;
   scheduledTime?: string;
   eventTimezone?: string;
+  isEditMode?: boolean;
   // Callbacks for updating parent schedule state
   onScheduleUpdate?: (date: string, time: string) => void;
   onEditSchedule?: () => void;
@@ -83,6 +84,7 @@ export function SendFlowModal({
   scheduledDate,
   scheduledTime,
   eventTimezone,
+  isEditMode = false,
   onScheduleUpdate,
   onEditSchedule,
   className,
@@ -726,7 +728,11 @@ export function SendFlowModal({
                 className="flex-1"
               >
                 <span>
-                  {sendMode === 'schedule' ? 'Schedule Message' : 'Send Now'}
+                  {isEditMode
+                    ? 'Update Scheduled Message'
+                    : sendMode === 'schedule'
+                    ? 'Schedule Message'
+                    : 'Send Now'}
                 </span>
                 <span className="bg-white/20 px-1.5 py-0.5 rounded text-xs ml-2">
                   {validRecipientCount}
@@ -779,7 +785,9 @@ export function SendFlowModal({
                 {/* Success */}
                 <div className="text-5xl mb-4">✅</div>
                 <h2 className="text-xl font-semibold text-gray-900">
-                  {sendResult.scheduledData
+                  {isEditMode
+                    ? 'Schedule Updated'
+                    : sendResult.scheduledData
                     ? 'Message Scheduled'
                     : 'Message Sent Successfully'}
                 </h2>

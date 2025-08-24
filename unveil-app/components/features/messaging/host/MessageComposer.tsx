@@ -13,8 +13,13 @@ import {
   sendMessageToEvent,
   createScheduledMessage,
 } from '@/lib/services/messaging';
+import { updateScheduledMessage } from '@/lib/services/messaging-client';
+import type { Database } from '@/app/reference/supabase.types';
+
+type ScheduledMessage = Database['public']['Tables']['scheduled_messages']['Row'];
 import { supabase } from '@/lib/supabase/client';
 import { formatEventDate } from '@/lib/utils/date';
+import { logger } from '@/lib/logger';
 import {
   toUTCFromEventZone,
   getTimezoneInfo,
@@ -48,20 +53,24 @@ interface MessageComposerProps {
   eventId: string;
   onMessageSent?: () => void;
   onMessageScheduled?: () => void;
+  onMessageUpdated?: () => void;
   onClear?: () => void;
   className?: string;
   preselectionPreset?: string | null;
   preselectedGuestIds?: string[];
+  editingMessage?: ScheduledMessage | null;
 }
 
 export function MessageComposer({
   eventId,
   onMessageSent,
   onMessageScheduled,
+  onMessageUpdated,
   onClear,
   className,
   preselectionPreset,
   preselectedGuestIds,
+  editingMessage,
 }: MessageComposerProps) {
   const [message, setMessage] = useState('');
   const [eventDetails, setEventDetails] = useState<{
@@ -72,6 +81,12 @@ export function MessageComposer({
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showSendFlowModal, setShowSendFlowModal] = useState(false);
+  
+  // Track unsaved changes in edit mode (for future navigation guard)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showTypeChangeConfirm, setShowTypeChangeConfirm] = useState(false);
+  const [pendingMessageType, setPendingMessageType] = useState<'announcement' | 'channel' | 'direct' | null>(null);
 
   // Message type selector state
   const [messageType, setMessageType] = useState<
@@ -124,6 +139,7 @@ export function MessageComposer({
     toggleGuestSelection,
     selectAllEligible,
     clearAllSelection,
+    setSelectedGuestIds,
     setSearchQuery,
     loading: guestsLoading,
     error: guestsError,
@@ -257,27 +273,33 @@ export function MessageComposer({
 
   const canSchedule = scheduleValidation.canSchedule;
 
-  // Message type change handler with session storage
-  const handleMessageTypeChange = (
-    newType: 'announcement' | 'channel' | 'direct',
-  ) => {
-    setMessageType(newType);
-    // Clear selections when switching types
-    if (newType === 'announcement') {
-      // For announcements, select all guests
-      selectAllEligible();
-    } else if (newType === 'channel') {
-      // For channels, clear guest selection and reset tags
-      clearAllSelection();
-      setSelectedTags([]);
+  // Message type change handler with edit mode confirmation
+  const handleMessageTypeChange = (newType: 'announcement' | 'channel' | 'direct') => {
+    if (editingMessage && messageType !== newType) {
+      // Show confirmation for type change in edit mode
+      setPendingMessageType(newType);
+      setShowTypeChangeConfirm(true);
     } else {
-      // For direct, clear selections to force manual selection
-      clearAllSelection();
-    }
+      // Normal type change for new messages
+      setMessageType(newType);
+      
+      // Clear selections when switching types
+      if (newType === 'announcement') {
+        // For announcements, select all guests
+        selectAllEligible();
+      } else if (newType === 'channel') {
+        // For channels, clear guest selection and reset tags
+        clearAllSelection();
+        setSelectedTags([]);
+      } else {
+        // For direct, clear selections to force manual selection
+        clearAllSelection();
+      }
 
-    // Store in session for sticky behavior
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('unveil_last_message_type', newType);
+      // Store in session for sticky behavior
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('unveil_last_message_type', newType);
+      }
     }
   };
 
@@ -344,9 +366,52 @@ export function MessageComposer({
     fetchEventDetails();
   }, [eventId]);
 
+  // Prefill composer when editing a scheduled message
+  useEffect(() => {
+    if (editingMessage && eventDetails) {
+      setMessage(editingMessage.content);
+      setMessageType(editingMessage.message_type as 'announcement' | 'channel' | 'direct');
+      setSendMode('schedule');
+      
+      // Convert UTC send_at back to local timezone
+      const sendTime = new Date(editingMessage.send_at);
+      const eventTimezone = eventDetails.time_zone || 'UTC';
+      
+      // Format date and time for inputs
+      const localDateTime = sendTime.toLocaleString('sv-SE', { 
+        timeZone: eventTimezone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      
+      const [datePart, timePart] = localDateTime.split(' ');
+      setScheduledDate(datePart);
+      setScheduledTime(timePart);
+      
+      // Restore audience selection based on message targeting (idempotent)
+      if (editingMessage.target_all_guests) {
+        selectAllEligible();
+      } else if (editingMessage.target_guest_ids && editingMessage.target_guest_ids.length > 0) {
+        // For Direct messages, restore exact recipient selection (no async/toggle)
+        setSelectedGuestIds(editingMessage.target_guest_ids);
+      } else {
+        // Empty target_guest_ids means empty selection (no auto-expand to "all")
+        clearAllSelection();
+      }
+      
+      // Set tags for channel messages
+      if (editingMessage.message_type === 'channel' && editingMessage.target_guest_tags) {
+        setSelectedTags(editingMessage.target_guest_tags);
+      }
+    }
+  }, [editingMessage, eventDetails, selectAllEligible, setSelectedGuestIds, clearAllSelection]);
+
   // Set default invitation message based on preselection
   useEffect(() => {
-    if (preselectionPreset === 'not_invited' && eventDetails && !message) {
+    if (preselectionPreset === 'not_invited' && eventDetails && !message && !editingMessage) {
       const eventTitle = eventDetails.title || 'our event';
       const eventDate = eventDetails.event_date
         ? formatEventDate(eventDetails.event_date) // Use timezone-safe date formatting
@@ -359,7 +424,48 @@ export function MessageComposer({
       const defaultMessage = `Hi there! You are invited to ${eventTitle} on ${eventDate}!\n\nView the wedding details here: ${appUrl}/select-event.\n\nHosted by ${hostName} via Unveil\n\nReply STOP to opt out.`;
       setMessage(defaultMessage);
     }
-  }, [preselectionPreset, eventDetails, eventId, message]);
+  }, [preselectionPreset, eventDetails, eventId, message, editingMessage]);
+
+  // Track unsaved changes in edit mode
+  useEffect(() => {
+    if (editingMessage) {
+      const hasContentChanged = message.trim() !== editingMessage.content.trim();
+      const hasTypeChanged = messageType !== editingMessage.message_type;
+      const hasTimingChanged = scheduledDate !== '' || scheduledTime !== '';
+      const hasAudienceChanged = 
+        (messageType === 'direct' && JSON.stringify(selectedGuestIds.sort()) !== JSON.stringify(editingMessage.target_guest_ids?.sort() || [])) ||
+        (messageType === 'channel' && JSON.stringify(selectedTags.sort()) !== JSON.stringify(editingMessage.target_guest_tags?.sort() || [])) ||
+        (messageType === 'announcement' && !editingMessage.target_all_guests);
+      
+      setHasUnsavedChanges(hasContentChanged || hasTypeChanged || hasTimingChanged || hasAudienceChanged);
+    }
+  }, [editingMessage, message, messageType, scheduledDate, scheduledTime, selectedGuestIds, selectedTags]);
+
+
+
+  const confirmTypeChange = () => {
+    if (pendingMessageType) {
+      setMessageType(pendingMessageType);
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('unveil_last_message_type', pendingMessageType);
+      }
+      
+      // Reset audience selection based on new type
+      if (pendingMessageType === 'announcement') {
+        selectAllEligible();
+      } else {
+        clearAllSelection();
+      }
+      
+      setPendingMessageType(null);
+      setShowTypeChangeConfirm(false);
+    }
+  };
+
+  const cancelTypeChange = () => {
+    setPendingMessageType(null);
+    setShowTypeChangeConfirm(false);
+  };
 
   const getPlaceholderText = () => {
     return 'Write your message to guests...';
@@ -491,6 +597,11 @@ export function MessageComposer({
       // Defense in UI: early return if time is too soon
       if (scheduleValidation.isTooSoon) {
         throw new Error(`Cannot schedule messages less than ${MIN_SCHEDULE_BUFFER_MINUTES} minutes from now. Please select a later time.`);
+      }
+
+      // If editing an existing message, use update flow
+      if (editingMessage) {
+        return handleUpdateMessage(options);
       }
 
       const eventTimeZone = eventDetails?.time_zone;
@@ -625,6 +736,104 @@ export function MessageComposer({
     } finally {
       setIsScheduling(false);
     }
+  };
+
+  const handleUpdateMessage = async (options: {
+    sendViaPush: boolean;
+    sendViaSms: boolean;
+  }) => {
+    if (!editingMessage) {
+      throw new Error('No message to update');
+    }
+
+    const eventTimeZone = eventDetails?.time_zone;
+    let scheduledAtUTC: string;
+    const scheduledLocal = `${scheduledDate}T${scheduledTime}:00`;
+
+    // Convert to UTC using event timezone if available
+    if (eventTimeZone && isValidTimezone(eventTimeZone)) {
+      const utcTime = toUTCFromEventZone(
+        scheduledDate,
+        scheduledTime,
+        eventTimeZone,
+      );
+      if (!utcTime) {
+        throw new Error(
+          'Invalid scheduled time. Please check the date and time.',
+        );
+      }
+      scheduledAtUTC = utcTime;
+    } else {
+      // Fallback to treating input as local time
+      scheduledAtUTC = new Date(scheduledLocal).toISOString();
+    }
+
+    // Log audience counts before update (PII-safe)
+    const audienceCountBefore = editingMessage.target_all_guests 
+      ? -1 // Special marker for "all guests"
+      : (editingMessage.target_guest_ids?.length || 0);
+    const audienceCountAfter = messageType === 'announcement' 
+      ? -1 // Special marker for "all guests"
+      : (messageType === 'direct' ? selectedGuestIds.length : selectedTags.length);
+
+    const updateData = {
+      content: message.trim(),
+      sendAt: scheduledAtUTC,
+      messageType: messageType,
+      targetAllGuests: messageType === 'announcement',
+      targetGuestIds: messageType === 'direct' ? selectedGuestIds : undefined,
+      targetGuestTags: messageType === 'channel' ? selectedTags : undefined,
+      sendViaSms: options.sendViaSms,
+      sendViaPush: options.sendViaPush,
+    };
+
+    const result = await updateScheduledMessage(editingMessage.id, updateData);
+
+    if (!result.success) {
+      const errorMsg = typeof result.error === 'object' && result.error && 'message' in result.error 
+        ? (result.error as { message: string }).message 
+        : 'Failed to update message';
+      throw new Error(errorMsg);
+    }
+
+    // Log successful modify (PII-safe)
+    const now = new Date();
+    const newSendTime = new Date(scheduledAtUTC);
+    const sendAtDeltaSeconds = Math.floor((newSendTime.getTime() - now.getTime()) / 1000);
+    const originalSendTime = new Date(editingMessage.send_at);
+    const timingChanged = Math.abs(newSendTime.getTime() - originalSendTime.getTime()) > 60000; // 1 minute threshold
+    
+    logger.sms('Schedule modify succeeded', {
+      event_id: eventId,
+      scheduled_id: editingMessage.id,
+      composer_mode: 'editScheduled',
+      audience_selected_count_before: audienceCountBefore,
+      audience_selected_count_after: audienceCountAfter,
+      send_at_delta_seconds: sendAtDeltaSeconds,
+      content_length: message.trim().length,
+      content_changed: message.trim() !== editingMessage.content,
+      timing_changed: timingChanged,
+      audience_changed: JSON.stringify(updateData.targetGuestIds) !== JSON.stringify(editingMessage.target_guest_ids),
+      message_type: updateData.messageType,
+      action: 'updateSchedule',
+      qa_hardening_completed: true, // One-time breadcrumb for QA hardening
+    });
+
+    // Clear form and notify parent
+    setMessage('');
+    setSendMode('now');
+    setScheduledDate('');
+    setScheduledTime('');
+    clearAllSelection();
+    setError(null);
+    onMessageUpdated?.();
+
+    return {
+      success: true,
+      sentCount: willReceiveMessage,
+      failedCount: 0,
+      messageId: editingMessage.id,
+    };
   };
 
   const handleCloseSendFlowModal = () => {
@@ -784,6 +993,7 @@ export function MessageComposer({
                   totalSelected={totalSelected}
                   willReceiveMessage={willReceiveMessage}
                   loading={guestsLoading}
+                  isEditMode={!!editingMessage}
                 />
 
                 {selectedGuestIds.length > 50 && (
@@ -808,33 +1018,47 @@ export function MessageComposer({
             Delivery Options
           </FieldLabel>
 
-          {/* Send Mode Toggle */}
-          <div className="flex bg-gray-100 rounded-lg p-1 mb-4">
-            <button
-              type="button"
-              onClick={() => setSendMode('now')}
-              className={cn(
-                'flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors',
-                sendMode === 'now'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900',
-              )}
-            >
-              Send Now
-            </button>
-            <button
-              type="button"
-              onClick={() => setSendMode('schedule')}
-              className={cn(
-                'flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors',
-                sendMode === 'schedule'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900',
-              )}
-            >
-              Schedule for Later
-            </button>
-          </div>
+          {/* Send Mode Toggle - Hidden in edit mode */}
+          {!editingMessage && (
+            <div className="flex bg-gray-100 rounded-lg p-1 mb-4">
+              <button
+                type="button"
+                onClick={() => setSendMode('now')}
+                className={cn(
+                  'flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors',
+                  sendMode === 'now'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900',
+                )}
+              >
+                Send Now
+              </button>
+              <button
+                type="button"
+                onClick={() => setSendMode('schedule')}
+                className={cn(
+                  'flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors',
+                  sendMode === 'schedule'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900',
+                )}
+              >
+                Schedule for Later
+              </button>
+            </div>
+          )}
+
+          {/* Edit mode indicator */}
+          {editingMessage && (
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="text-sm text-blue-800 font-medium">
+                📝 Editing scheduled message
+              </div>
+              <div className="text-xs text-blue-600 mt-1">
+                Delivery mode is locked to scheduled time
+              </div>
+            </div>
+          )}
 
           {/* Schedule Date/Time Picker */}
           {sendMode === 'schedule' && (
@@ -1105,7 +1329,11 @@ export function MessageComposer({
               ) : (
                 <>
                   <span>
-                    {sendMode === 'now' ? 'Send Now' : 'Schedule Message'}
+                    {editingMessage
+                      ? 'Update Scheduled Message'
+                      : sendMode === 'now'
+                      ? 'Send Now'
+                      : 'Schedule Message'}
                   </span>
                   {willReceiveMessage > 0 && (
                     <span className="bg-white/20 px-2 py-1 rounded text-sm">
@@ -1147,6 +1375,7 @@ export function MessageComposer({
           scheduledDate={scheduledDate}
           scheduledTime={scheduledTime}
           eventTimezone={eventDetails?.time_zone}
+          isEditMode={!!editingMessage}
           onScheduleUpdate={(date: string, time: string) => {
             setScheduledDate(date);
             setScheduledTime(time);
@@ -1160,6 +1389,35 @@ export function MessageComposer({
             }
           }}
         />
+
+        {/* Type Change Confirmation Modal */}
+        {showTypeChangeConfirm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                Change Message Type?
+              </h3>
+              <p className="text-sm text-gray-600 mb-6">
+                Switching from <strong>{messageType}</strong> to <strong>{pendingMessageType}</strong> will change how your audience is selected. Your current selection will be reset.
+              </p>
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={cancelTypeChange}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={confirmTypeChange}
+                  className="flex-1"
+                >
+                  Change Type
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

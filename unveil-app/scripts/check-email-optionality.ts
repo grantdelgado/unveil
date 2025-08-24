@@ -198,7 +198,7 @@ function main() {
   
   // Only scan production code directories
   const productionDirs = ['app', 'components', 'hooks', 'lib', 'pages'];
-  let violations: Violation[] = [];
+  const violations: Violation[] = [];
   
   for (const dir of productionDirs) {
     const dirPath = join(projectRoot, dir);

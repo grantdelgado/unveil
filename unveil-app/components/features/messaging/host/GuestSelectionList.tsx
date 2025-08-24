@@ -18,6 +18,7 @@ interface GuestSelectionListProps {
   willReceiveMessage: number;
   loading?: boolean;
   className?: string;
+  isEditMode?: boolean;
 }
 
 /**
@@ -35,6 +36,7 @@ export function GuestSelectionList({
   willReceiveMessage,
   loading = false,
   className,
+  isEditMode = false,
 }: GuestSelectionListProps) {
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -49,7 +51,7 @@ export function GuestSelectionList({
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-medium text-gray-900">
-            Select Recipients
+            {isEditMode ? 'Selected Recipients' : 'Select Recipients'}
           </h3>
           <div className="flex items-center gap-2">
             <Button
@@ -74,13 +76,31 @@ export function GuestSelectionList({
         </div>
 
         {/* Count summary */}
-        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+        <div className={cn(
+          "border rounded-lg p-4",
+          isEditMode 
+            ? "bg-blue-50 border-blue-200" 
+            : "bg-purple-50 border-purple-200"
+        )}>
+          {isEditMode && (
+            <div className="text-xs text-blue-700 mb-3 font-medium">
+              📝 Selected recipients only — {totalSelected} selected
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-4 text-center">
             <div>
-              <div className="text-lg font-bold text-purple-700">
+              <div className={cn(
+                "text-lg font-bold",
+                isEditMode ? "text-blue-700" : "text-purple-700"
+              )}>
                 {totalSelected}
               </div>
-              <div className="text-xs text-purple-600">Total Selected</div>
+              <div className={cn(
+                "text-xs",
+                isEditMode ? "text-blue-600" : "text-purple-600"
+              )}>
+                Total Selected
+              </div>
             </div>
             <div>
               <div className="text-lg font-bold text-green-700">

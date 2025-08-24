@@ -14,6 +14,9 @@ import {
 } from '@/lib/utils/timezone';
 import { supabase } from '@/lib/supabase/client';
 import type { Database } from '@/app/reference/supabase.types';
+// cancelScheduledMessage imported via useScheduledMessages hook
+import { CancelMessageDialog } from '@/components/ui/CancelMessageDialog';
+import { logger } from '@/lib/logger';
 
 // Use the direct database types
 type Message = Database['public']['Tables']['messages']['Row'];
@@ -32,6 +35,7 @@ interface UnifiedMessage {
   recipient_count?: number;
   success_count?: number;
   failure_count?: number;
+  modification_count?: number;
   scheduled_message_id?: string | null; // For linking sent messages to their originating schedule
 }
 
@@ -48,6 +52,7 @@ interface UpcomingMessageCardProps {
   showMyTime: boolean;
   eventTimezone: string | null;
   onCancel: () => void;
+  onModify?: () => void;
 }
 
 interface RecentMessagesProps {
@@ -56,12 +61,13 @@ interface RecentMessagesProps {
   eventId: string;
   isLoading?: boolean;
   className?: string;
+  onModifyMessage?: (message: ScheduledMessage) => void;
 }
 
 /**
  * Upcoming message card component with enhanced scheduling info
  */
-function UpcomingMessageCard({ message, showMyTime, eventTimezone, onCancel }: UpcomingMessageCardProps) {
+function UpcomingMessageCard({ message, showMyTime, eventTimezone, onCancel, onModify }: UpcomingMessageCardProps) {
   // Format scheduled time with timezone info
   const getScheduledTimeDisplay = () => {
     if (!message.send_at) return '';
@@ -107,6 +113,11 @@ function UpcomingMessageCard({ message, showMyTime, eventTimezone, onCancel }: U
             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
               {message.message_type}
             </span>
+            {message.modification_count && message.modification_count > 0 && (
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
+                ✏️ Modified {message.modification_count}x
+              </span>
+            )}
             {message.recipient_count && message.recipient_count > 0 && (
               <span className="text-gray-600">
                 {message.recipient_count} {message.recipient_count === 1 ? 'person' : 'people'}
@@ -115,13 +126,23 @@ function UpcomingMessageCard({ message, showMyTime, eventTimezone, onCancel }: U
           </div>
         </div>
 
-        {/* Cancel button */}
-        <button
-          onClick={onCancel}
-          className="text-xs text-red-600 hover:text-red-800 px-3 py-1 border border-red-300 rounded-md hover:bg-red-50 transition-colors flex-shrink-0"
-        >
-          Cancel
-        </button>
+        {/* Action buttons */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {onModify && (
+            <button
+              onClick={onModify}
+              className="text-xs text-blue-600 hover:text-blue-800 px-3 py-1 border border-blue-300 rounded-md hover:bg-blue-50 transition-colors"
+            >
+              Modify
+            </button>
+          )}
+          <button
+            onClick={onCancel}
+            className="text-xs text-red-600 hover:text-red-800 px-3 py-1 border border-red-300 rounded-md hover:bg-red-50 transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -311,10 +332,17 @@ export function RecentMessages({
   eventId,
   isLoading = false,
   className,
+  onModifyMessage,
 }: RecentMessagesProps) {
   // State for timezone toggle
   const [showMyTime, setShowMyTime] = React.useState(false);
   const [eventTimezone, setEventTimezone] = React.useState<string | null>(null);
+  
+  // State for cancel dialog
+  const [cancelDialogOpen, setCancelDialogOpen] = React.useState(false);
+  const [messageToCancel, setMessageToCancel] = React.useState<ScheduledMessage | null>(null);
+  const [isCancelling, setIsCancelling] = React.useState(false);
+  const [cancelError, setCancelError] = React.useState<string | null>(null);
 
   // Two-phase loading: track initial boot vs live updates
   const [hasInitiallyLoaded, setHasInitiallyLoaded] = React.useState(false);
@@ -504,14 +532,120 @@ export function RecentMessages({
 
 
 
-  // Handle cancel scheduled message
-  const handleCancelScheduled = async (messageId: string) => {
-    if (confirm('Are you sure you want to cancel this scheduled message?')) {
-      await cancelScheduledMessage(messageId);
+  // Handle cancel scheduled message - enhanced with dialog
+  const handleCancelScheduled = (messageId: string) => {
+    const message = scheduledMessages.find(m => m.id === messageId);
+    if (message) {
+      // Log cancel request (PII-safe)
+      const now = new Date();
+      const sendTime = new Date(message.send_at);
+      const sendAtDeltaSeconds = Math.floor((sendTime.getTime() - now.getTime()) / 1000);
+      
+      logger.sms('Schedule cancel requested', {
+        event_id: eventId,
+        scheduled_id: messageId,
+        status_before: message.status,
+        send_at_delta_seconds: sendAtDeltaSeconds,
+        content_length: message.content.length,
+      });
+
+      setMessageToCancel(message);
+      setCancelDialogOpen(true);
+      setCancelError(null);
     }
   };
 
+  const handleConfirmCancel = async () => {
+    if (!messageToCancel) return;
 
+    setIsCancelling(true);
+    setCancelError(null);
+
+    try {
+      const result = await cancelScheduledMessage(messageToCancel.id);
+      
+      if (!result.success) {
+        const errorMsg = typeof result.error === 'object' && result.error && 'message' in result.error 
+          ? (result.error as { message: string }).message 
+          : 'Failed to cancel message';
+        setCancelError(errorMsg);
+        return;
+      }
+
+      // Log successful cancel (PII-safe)
+      logger.sms('Schedule cancel succeeded', {
+        event_id: eventId,
+        scheduled_id: messageToCancel.id,
+        status_after: 'cancelled',
+      });
+
+      // Success - close dialog
+      setCancelDialogOpen(false);
+      setMessageToCancel(null);
+    } catch (error) {
+      setCancelError(error instanceof Error ? error.message : 'Network error occurred');
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
+  const handleCloseCancelDialog = () => {
+    if (!isCancelling) {
+      setCancelDialogOpen(false);
+      setMessageToCancel(null);
+      setCancelError(null);
+    }
+  };
+
+  // One-time rollout telemetry for always-on modify feature
+  React.useEffect(() => {
+    // Log once per session that modify is always-on (no PII)
+    const hasLoggedRollout = sessionStorage.getItem('modify_always_on_logged');
+    if (!hasLoggedRollout && scheduledMessages.length > 0) {
+      logger.sms('Feature rollout: modify always on', {
+        event_id: eventId,
+        feature: 'modify_scheduled',
+        always_on: true,
+        flag_removed: true,
+      });
+      sessionStorage.setItem('modify_always_on_logged', 'true');
+    }
+  }, [eventId, scheduledMessages.length]);
+
+  // Handle modify scheduled message
+  const handleModifyScheduled = (messageId: string) => {
+    const message = scheduledMessages.find(m => m.id === messageId);
+    if (message && onModifyMessage) {
+      // Log modify request (PII-safe)
+      const now = new Date();
+      const sendTime = new Date(message.send_at);
+      const sendAtDeltaSeconds = Math.floor((sendTime.getTime() - now.getTime()) / 1000);
+      
+      logger.sms('Schedule modify requested', {
+        event_id: eventId,
+        scheduled_id: messageId,
+        status_before: message.status,
+        send_at_delta_seconds: sendAtDeltaSeconds,
+        content_length: message.content.length,
+        modification_count: (message as ScheduledMessage & { modification_count?: number }).modification_count || 0,
+      });
+
+      onModifyMessage(message);
+    }
+  };
+
+  // Check if message can be modified (not too close to send time)
+  const canModifyMessage = (message: ScheduledMessage): boolean => {
+    const now = new Date();
+    const sendTime = new Date(message.send_at);
+    const minLeadMs = 180 * 1000; // 3 minutes minimum lead time
+    const freezeWindowMs = 60 * 1000; // 1 minute freeze window
+    
+    return (
+      message.status === 'scheduled' &&
+      sendTime > new Date(now.getTime() + minLeadMs + freezeWindowMs)
+    );
+  };
 
   // Separate upcoming and past messages
   const upcomingMessages = unifiedMessages.filter(
@@ -635,6 +769,11 @@ export function RecentMessages({
                 showMyTime={showMyTime} 
                 eventTimezone={eventTimezone}
                 onCancel={() => handleCancelScheduled(message.id)}
+                onModify={
+                  message.type === 'scheduled' && canModifyMessage(message as unknown as ScheduledMessage)
+                    ? () => handleModifyScheduled(message.id)
+                    : undefined
+                }
               />
             ))}
           </div>
@@ -707,6 +846,30 @@ export function RecentMessages({
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Cancel Message Dialog */}
+      <CancelMessageDialog
+        isOpen={cancelDialogOpen}
+        onClose={handleCloseCancelDialog}
+        onConfirm={handleConfirmCancel}
+        message={messageToCancel}
+        isLoading={isCancelling}
+      />
+
+      {/* Show cancel error if any */}
+      {cancelError && (
+        <div className="fixed bottom-4 right-4 bg-red-50 border border-red-200 rounded-lg p-4 shadow-lg max-w-sm">
+          <div className="text-sm text-red-800">
+            <span className="font-medium">Cancel failed:</span> {cancelError}
+          </div>
+          <button
+            onClick={() => setCancelError(null)}
+            className="mt-2 text-xs text-red-600 hover:text-red-800"
+          >
+            Dismiss
+          </button>
         </div>
       )}
     </div>

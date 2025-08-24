@@ -493,6 +493,68 @@ export async function cancelScheduledMessage(messageId: string): Promise<{
 }
 
 /**
+ * Update a scheduled message
+ */
+export async function updateScheduledMessage(
+  messageId: string,
+  updateData: {
+    content: string;
+    sendAt: string;
+    messageType: 'announcement' | 'channel' | 'direct';
+    targetAllGuests?: boolean;
+    targetGuestIds?: string[];
+    targetGuestTags?: string[];
+    sendViaSms?: boolean;
+    sendViaPush?: boolean;
+  }
+): Promise<{
+  success: boolean;
+  error?: Record<string, unknown>;
+}> {
+  try {
+    // Use a direct query since the RPC function might not be in the generated types yet
+    const { data, error } = await supabase.rpc('update_scheduled_message' as any, {
+      p_message_id: messageId,
+      p_content: updateData.content,
+      p_send_at: updateData.sendAt,
+      p_message_type: updateData.messageType,
+      p_target_all_guests: updateData.targetAllGuests,
+      p_target_guest_ids: updateData.targetGuestIds,
+      p_target_guest_tags: updateData.targetGuestTags,
+      p_send_via_sms: updateData.sendViaSms,
+      p_send_via_push: updateData.sendViaPush,
+    });
+
+    if (error) throw error;
+    
+    // Type assertion for the RPC response
+    const result = data as { success: boolean; error?: string };
+    if (result && !result.success) {
+      return {
+        success: false,
+        error: {
+          message: result.error || 'Failed to update scheduled message',
+        },
+      };
+    }
+
+    console.log(`Scheduled message updated: ${messageId}`);
+    return { success: true };
+  } catch (error: unknown) {
+    console.error('Error updating scheduled message:', error);
+    return {
+      success: false,
+      error: {
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Failed to update scheduled message',
+      },
+    };
+  }
+}
+
+/**
  * Delete a scheduled message permanently
  */
 export async function deleteScheduledMessage(messageId: string): Promise<{

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useMessages } from '@/hooks/useMessages';
 import { useGuests } from '@/hooks/guests';
@@ -8,6 +8,9 @@ import { useSubscriptionManager } from '@/lib/realtime/SubscriptionProvider';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { MessageComposer } from './MessageComposer';
 import { RecentMessages } from './RecentMessages';
+import type { Database } from '@/app/reference/supabase.types';
+
+type ScheduledMessage = Database['public']['Tables']['scheduled_messages']['Row'];
 
 interface MessageCenterProps {
   eventId: string;
@@ -25,6 +28,7 @@ export function MessageCenter({
   const [activeView, setActiveView] = useState<'compose' | 'history'>(
     'compose',
   );
+  const [editingMessage, setEditingMessage] = useState<ScheduledMessage | null>(null);
 
   // Check subscription manager readiness for realtime features
   const { isReady: subscriptionReady } = useSubscriptionManager();
@@ -32,6 +36,7 @@ export function MessageCenter({
   // Domain hooks - direct data access
   const {
     messages,
+    scheduledMessages,
     loading: messagesLoading,
     error: messagesError,
     refreshMessages,
@@ -41,6 +46,22 @@ export function MessageCenter({
   // Combined loading state including subscription readiness
   const loading = messagesLoading || guestsLoading || !subscriptionReady;
   const error = messagesError || guestsError;
+
+  // Hotfix: Dev observability - log hook registration and data state
+  React.useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[MessageCenter] Hook state:', {
+        eventId,
+        messagesData: messages,
+        messagesCount: messages?.length || 0,
+        messagesLoading,
+        messagesError: messagesError?.message,
+        subscriptionReady,
+        loading,
+        error: error?.message
+      });
+    }
+  }, [eventId, messages, messagesLoading, messagesError, subscriptionReady, loading, error]);
 
   const handleMessageSent = async () => {
     // Refresh messages after sending
@@ -53,6 +74,17 @@ export function MessageCenter({
 
   const handleMessageScheduled = async () => {
     // Refresh messages after scheduling
+    await refreshMessages(eventId);
+  };
+
+  const handleModifyMessage = (message: ScheduledMessage) => {
+    setEditingMessage(message);
+    setActiveView('compose'); // Switch to composer tab
+  };
+
+  const handleMessageUpdated = async () => {
+    setEditingMessage(null);
+    setActiveView('history'); // Return to history view
     await refreshMessages(eventId);
   };
 
@@ -114,13 +146,20 @@ export function MessageCenter({
           eventId={eventId}
           onMessageSent={handleMessageSent}
           onMessageScheduled={handleMessageScheduled}
+          onMessageUpdated={handleMessageUpdated}
           onClear={handleClear}
           preselectionPreset={preselectionPreset}
           preselectedGuestIds={preselectedGuestIds}
+          editingMessage={editingMessage}
         />
       </div>
       <div style={{ display: activeView === 'history' ? 'block' : 'none' }}>
-        <RecentMessages messages={messages || []} eventId={eventId} />
+        <RecentMessages 
+          messages={messages || []} 
+          scheduledMessages={scheduledMessages || []} 
+          eventId={eventId}
+          onModifyMessage={handleModifyMessage}
+        />
       </div>
     </div>
   );

@@ -29,6 +29,7 @@ export interface UseGuestSelectionReturn {
   toggleGuestSelection: (guestId: string) => void;
   selectAllEligible: () => void;
   clearAllSelection: () => void;
+  setSelectedGuestIds: (guestIds: string[]) => void;
   setSearchQuery: (query: string) => void;
 
   // Loading/error states
@@ -207,6 +208,28 @@ export function useGuestSelection({
   }, [eventId]);
 
   /**
+   * Set selected guest IDs directly (idempotent)
+   * Used for prefilling edit mode without toggle semantics
+   */
+  const setSelectedGuestIdsDirectly = useCallback((guestIds: string[]) => {
+    // Validate that all provided IDs exist in eligible guests
+    const validGuestIds = guestIds.filter(id => 
+      eligibleGuests.some(guest => guest.id === id)
+    );
+    
+    setHasUserInteracted(true);
+    setSelectedGuestIds(validGuestIds);
+
+    // Analytics: Track direct selection (PII-safe)
+    console.log('composer_selection_set_direct', {
+      event_id: eventId,
+      requested_count: guestIds.length,
+      valid_count: validGuestIds.length,
+      filtered_count: guestIds.length - validGuestIds.length,
+    });
+  }, [eventId, eligibleGuests]);
+
+  /**
    * Update search query with debouncing
    */
   const setSearchQuery = useCallback((query: string) => {
@@ -292,6 +315,7 @@ export function useGuestSelection({
     toggleGuestSelection,
     selectAllEligible,
     clearAllSelection,
+    setSelectedGuestIds: setSelectedGuestIdsDirectly,
     setSearchQuery,
     loading,
     error,
