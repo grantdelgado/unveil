@@ -294,18 +294,7 @@ async function processDueScheduledMessages(
             eventTitle: (message as any).event_title,
           }));
 
-          // DEBUG: Log what we're passing to sendSMS
-          logger.api('Scheduled SMS Debug - Event metadata being passed', {
-            scheduledMessageId: message.id,
-            eventId: message.event_id,
-            eventSmsTag: (message as any).event_sms_tag,
-            eventTitle: (message as any).event_title,
-            eventSmsTagType: typeof (message as any).event_sms_tag,
-            eventTitleType: typeof (message as any).event_title,
-            messageKeys: Object.keys(message),
-            recipientCount: smsMessages.length,
-            jobId
-          });
+
 
           // Enhanced debug logging for SMS formatting
           if (process.env.NODE_ENV !== 'production') {

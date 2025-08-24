@@ -88,21 +88,6 @@ export async function composeSmsText(
   options: SmsFormatOptions = {}
 ): Promise<SmsFormatResult> {
   try {
-    // DEBUG: Log what options were passed to composeSmsText
-    logger.info('composeSmsText Debug - Received options', {
-      eventId,
-      guestId,
-      bodyLength: body.length,
-      options: {
-        eventSmsTag: options.eventSmsTag,
-        eventTitle: options.eventTitle,
-        eventSmsTagType: typeof options.eventSmsTag,
-        eventTitleType: typeof options.eventTitle,
-        link: options.link,
-        forceStopNotice: options.forceStopNotice
-      }
-    });
-
     // Emergency kill-switch check (defaults to branding ON)
     // Kill switch should preserve event header but remove brand/STOP
     const killSwitchActive = flags.ops.smsBrandingDisabled;
@@ -198,15 +183,7 @@ export async function composeSmsText(
     let usedPrefetchedEvent = false;
 
     if (options.eventSmsTag != null || options.eventTitle != null) {
-      // DEBUG: Log pre-fetch usage
-      logger.info('composeSmsText Debug - Using pre-fetched event data', {
-        eventId,
-        guestId,
-        eventSmsTag: options.eventSmsTag,
-        eventTitle: options.eventTitle,
-        hasEventSmsTag: options.eventSmsTag != null,
-        hasEventTitle: options.eventTitle != null
-      });
+
 
       // Use pre-fetched event data (from scheduled worker)
       event = {
@@ -215,50 +192,15 @@ export async function composeSmsText(
       };
       usedPrefetchedEvent = true;
 
-      // Still need to fetch guest A2P status if guestId provided
-      if (guestId) {
-        const guestResult = await supabase
-          .from('event_guests')
-          .select('a2p_notice_sent_at')
-          .eq('id', guestId)
-          .maybeSingle();
-        
-        if (guestResult.error) {
-          logger.warn('Failed to fetch guest A2P status in pre-fetch path', {
-            eventId,
-            guestId,
-            error: guestResult.error.message
-          });
-          // Set guest to null but don't fail - this will skip A2P tracking
-          guest = null;
-        } else {
-          guest = guestResult.data;
-          // DEBUG: Log what we got for guest A2P status
-          logger.info('Guest A2P status fetched in pre-fetch path', {
-            eventId,
-            guestId,
-            hasGuest: !!guest,
-            a2pNoticeSentAt: guest?.a2p_notice_sent_at,
-            guestData: guest
-          });
-        }
-      }
+      // No need to fetch guest A2P status since we don't use it anymore
+      guest = null;
     } else {
-      // Fetch event and guest data from DB (Send-Now path)
-      const [eventResult, guestResult] = await Promise.all([
-        supabase
-          .from('events')
-          .select('sms_tag, title')
-          .eq('id', eventId)
-          .maybeSingle(),
-        guestId
-          ? supabase
-              .from('event_guests')
-              .select('a2p_notice_sent_at')
-              .eq('id', guestId)
-              .maybeSingle()
-          : Promise.resolve({ data: null, error: null }),
-      ]);
+      // Fetch event data from DB (Send-Now path)
+      const eventResult = await supabase
+        .from('events')
+        .select('sms_tag, title')
+        .eq('id', eventId)
+        .maybeSingle();
 
       if (eventResult.error) {
         logger.warn('Failed to fetch event for SMS formatting', {
@@ -311,7 +253,7 @@ export async function composeSmsText(
       }
 
       event = eventResult.data;
-      guest = guestResult.data;
+      guest = null; // No longer needed since A2P logic is disabled
     }
 
     // Generate event tag
@@ -323,21 +265,7 @@ export async function composeSmsText(
     // as it's already included in the initial invite/welcome message
     const needsStopNotice = Boolean(options.forceStopNotice);
 
-    // DEBUG: Log A2P decision logic
-    logger.info('A2P decision logic - NEW POLICY: STOP notice only when forced', {
-      eventId,
-      guestId,
-      hasGuestId: !!guestId,
-      hasGuest: !!guest,
-      a2pNoticeSentAt: guest?.a2p_notice_sent_at,
-      forceStopNotice: options.forceStopNotice,
-      needsStopNotice,
-      policy: 'A2P STOP notice disabled for Send Now and Scheduled messages',
-      decision: {
-        forceStopNotice: !!options.forceStopNotice,
-        willIncludeStop: needsStopNotice
-      }
-    });
+
 
     // Normalize body to GSM-7
     const normalizedBody = normalizeToGsm7(body.trim());
@@ -370,33 +298,6 @@ export async function composeSmsText(
       },
       reason: (needsStopNotice && !result.includedStop ? 'first_sms=false' : undefined) as 'fallback' | 'kill_switch' | 'first_sms=false' | undefined,
     };
-
-    // Log formatter result with prefetch status
-    logger.info('SMS formatter result', {
-      eventId,
-      hasGuestId: !!guestId,
-      included: finalResult.included,
-      reason: finalResult.reason || 'normal',
-      usedPrefetchedEvent,
-      segments: finalResult.segments,
-      timestamp: new Date().toISOString()
-    });
-
-    // Emit telemetry for first SMS tracking
-    if (needsStopNotice) {
-      emitFirstSmsIncludesStop('normal_flow', finalResult.included.stop);
-    }
-
-    // Log branding inclusion for observability (count only, no PII)
-    if (needsStopNotice && finalResult.includedStopNotice) {
-      logger.info('SMS branding included', {
-        eventId,
-        hasGuestId: !!guestId,
-        segments: finalResult.segments,
-        droppedLink: finalResult.droppedLink,
-        truncatedBody: finalResult.truncatedBody
-      });
-    }
 
     return finalResult;
   } catch (error) {

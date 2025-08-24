@@ -254,16 +254,7 @@ export async function sendSMS({
       formatted: formattedPhone.slice(0, 6) + '...',
     });
 
-    // DEBUG: Log what sendSMS received
-    logger.info('sendSMS Debug - Received parameters', {
-      eventId,
-      guestId,
-      hasEventSmsTag: eventSmsTag !== undefined,
-      hasEventTitle: eventTitle !== undefined,
-      eventSmsTag,
-      eventTitle,
-      messageLength: message.length
-    });
+
 
     // Format SMS with event tag branding and A2P footer
     const formattedSms = await composeSmsText(eventId, guestId, message, {
