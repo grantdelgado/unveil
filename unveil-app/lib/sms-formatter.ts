@@ -318,13 +318,13 @@ export async function composeSmsText(
     const eventTag = generateEventTag(event?.sms_tag || null, event?.title || 'Event');
 
     // Determine if STOP notice needed
-    const needsStopNotice = Boolean(
-      options.forceStopNotice ||
-      (guestId && (!guest || !guest.a2p_notice_sent_at))
-    );
+    // POLICY: Only include A2P STOP notice when explicitly forced
+    // Regular Send Now and Scheduled messages should NOT include STOP notice
+    // as it's already included in the initial invite/welcome message
+    const needsStopNotice = Boolean(options.forceStopNotice);
 
     // DEBUG: Log A2P decision logic
-    logger.info('A2P decision logic', {
+    logger.info('A2P decision logic - NEW POLICY: STOP notice only when forced', {
       eventId,
       guestId,
       hasGuestId: !!guestId,
@@ -332,11 +332,10 @@ export async function composeSmsText(
       a2pNoticeSentAt: guest?.a2p_notice_sent_at,
       forceStopNotice: options.forceStopNotice,
       needsStopNotice,
+      policy: 'A2P STOP notice disabled for Send Now and Scheduled messages',
       decision: {
         forceStopNotice: !!options.forceStopNotice,
-        guestIdProvided: !!guestId,
-        guestNotFound: guestId && !guest,
-        noA2pNotice: guestId && guest && !guest.a2p_notice_sent_at
+        willIncludeStop: needsStopNotice
       }
     });
 
