@@ -249,31 +249,30 @@ export const groupMessagesByDateWithTimezone = <T extends { created_at: string; 
 
   messages.forEach((message) => {
     const timestamp = message.sent_at || message.created_at;
-    let date: Date;
+    let dateKey: string;
 
     if (!showMyTime && eventTimezone) {
-      // Convert to event timezone
+      // Get the date in the event timezone
       try {
-        // Create date in event timezone
         const utcDate = new Date(timestamp);
-        const eventTimeString = utcDate.toLocaleString('en-CA', { 
+        // Format the date in the event timezone to get YYYY-MM-DD
+        const eventDateString = utcDate.toLocaleDateString('en-CA', { 
           timeZone: eventTimezone,
           year: 'numeric',
           month: '2-digit', 
           day: '2-digit'
         });
-        date = new Date(eventTimeString + 'T00:00:00'); // Use date only for grouping
+        dateKey = eventDateString; // Already in YYYY-MM-DD format
       } catch {
         // Fallback to local time if timezone conversion fails
-        date = new Date(timestamp);
+        const localDate = new Date(timestamp);
+        dateKey = localDate.toISOString().split('T')[0];
       }
     } else {
       // Use local timezone
-      date = new Date(timestamp);
+      const localDate = new Date(timestamp);
+      dateKey = localDate.toISOString().split('T')[0];
     }
-
-    // Use ISO date string for stable keys (YYYY-MM-DD format)
-    const dateKey = date.toISOString().split('T')[0];
 
     if (!groups[dateKey]) {
       groups[dateKey] = [];
@@ -338,54 +337,53 @@ export const formatMessageDateHeaderWithTimezone = (
 ): string => {
   if (!isoDateKey) return '';
 
-  // Parse the ISO date key (YYYY-MM-DD)
-  const messageDate = new Date(isoDateKey + 'T00:00:00');
-  
-  // Get current date in the appropriate timezone
-  let today: Date;
-  let yesterday: Date;
+  // Get current date string in the appropriate timezone
+  let todayDateStr: string;
+  let yesterdayDateStr: string;
   
   if (!showMyTime && eventTimezone) {
     try {
       // Get current date in event timezone
       const now = new Date();
-      const todayInEventTz = new Date(now.toLocaleString('en-CA', { 
+      todayDateStr = now.toLocaleDateString('en-CA', { 
         timeZone: eventTimezone,
         year: 'numeric',
         month: '2-digit',
         day: '2-digit'
-      }) + 'T00:00:00');
+      });
       
-      today = todayInEventTz;
-      yesterday = new Date(todayInEventTz);
-      yesterday.setDate(yesterday.getDate() - 1);
+      // Calculate yesterday in event timezone
+      const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      yesterdayDateStr = yesterday.toLocaleDateString('en-CA', { 
+        timeZone: eventTimezone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
     } catch {
       // Fallback to local timezone
-      today = new Date();
-      today.setHours(0, 0, 0, 0);
-      yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
+      const today = new Date();
+      todayDateStr = today.toISOString().split('T')[0];
+      const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+      yesterdayDateStr = yesterday.toISOString().split('T')[0];
     }
   } else {
     // Use local timezone
-    today = new Date();
-    today.setHours(0, 0, 0, 0);
-    yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
+    const today = new Date();
+    todayDateStr = today.toISOString().split('T')[0];
+    const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+    yesterdayDateStr = yesterday.toISOString().split('T')[0];
   }
 
-  // Compare dates
-  const messageDateStr = messageDate.toISOString().split('T')[0];
-  const todayStr = today.toISOString().split('T')[0];
-  const yesterdayStr = yesterday.toISOString().split('T')[0];
-
-  if (messageDateStr === todayStr) {
+  // Compare date strings directly
+  if (isoDateKey === todayDateStr) {
     return 'Today';
-  } else if (messageDateStr === yesterdayStr) {
+  } else if (isoDateKey === yesterdayDateStr) {
     return 'Yesterday';
   } else {
-    // Format as "EEE, MMM d, yyyy" (e.g., "Mon, Jan 6, 2025")
-    const currentYear = today.getFullYear();
+    // Format the date for display
+    const messageDate = new Date(isoDateKey + 'T00:00:00');
+    const currentYear = new Date().getFullYear();
     const messageYear = messageDate.getFullYear();
 
     if (messageYear === currentYear) {
