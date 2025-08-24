@@ -164,6 +164,125 @@ export const formatMessageTimestamp = (timestamp: string): string => {
  * @param dateString - Date string (typically from toDateString())
  * @returns Formatted string for date group headers
  */
+export const formatDateGroupHeader = (dateString: string): string => {
+  if (!dateString) return '';
+
+  const messageDate = new Date(dateString);
+  const now = new Date();
+
+  // Get dates in user's local timezone for proper day comparison
+  const messageDateLocal = new Date(messageDate.getTime());
+  const todayLocal = new Date(now.getTime());
+  const yesterdayLocal = new Date(todayLocal);
+  yesterdayLocal.setDate(yesterdayLocal.getDate() - 1);
+
+  // Compare dates by converting to date strings (removes time component)
+  const messageDateStr = messageDateLocal.toDateString();
+  const todayStr = todayLocal.toDateString();
+  const yesterdayStr = yesterdayLocal.toDateString();
+
+  if (messageDateStr === todayStr) {
+    return 'Today';
+  } else if (messageDateStr === yesterdayStr) {
+    return 'Yesterday';
+  } else {
+    // Older messages: show weekday and date
+    const currentYear = todayLocal.getFullYear();
+    const messageYear = messageDateLocal.getFullYear();
+
+    if (messageYear === currentYear) {
+      // Same year: "Mon, Aug 24"
+      return messageDateLocal.toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+      });
+    } else {
+      // Different year: "Mon, Aug 24, 2024"
+      return messageDateLocal.toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      });
+    }
+  }
+};
+
+/**
+ * Groups messages by date for display with headers
+ *
+ * @param messages - Array of messages with created_at or sent_at timestamps
+ * @returns Object with date keys and message arrays
+ */
+export const groupMessagesByDate = (messages: Array<{ created_at: string; sent_at?: string; id: string }>): Record<string, typeof messages> => {
+  const groups: Record<string, typeof messages> = {};
+
+  messages.forEach((message) => {
+    const timestamp = message.sent_at || message.created_at;
+    const date = new Date(timestamp);
+    const dateKey = date.toDateString(); // Use consistent date key
+
+    if (!groups[dateKey]) {
+      groups[dateKey] = [];
+    }
+    groups[dateKey].push(message);
+  });
+
+  return groups;
+};
+
+/**
+ * Groups messages by date with timezone awareness for display headers
+ *
+ * @param messages - Array of messages with created_at or sent_at timestamps
+ * @param showMyTime - Whether to use local time (true) or event time (false)
+ * @param eventTimezone - Event timezone (IANA identifier)
+ * @returns Object with ISO date keys and message arrays, sorted newest first
+ */
+export const groupMessagesByDateWithTimezone = <T extends { created_at: string; sent_at?: string; id: string }>(
+  messages: T[],
+  showMyTime: boolean = true,
+  eventTimezone?: string | null
+): Record<string, T[]> => {
+  const groups: Record<string, T[]> = {};
+
+  messages.forEach((message) => {
+    const timestamp = message.sent_at || message.created_at;
+    let date: Date;
+
+    if (!showMyTime && eventTimezone) {
+      // Convert to event timezone
+      try {
+        // Create date in event timezone
+        const utcDate = new Date(timestamp);
+        const eventTimeString = utcDate.toLocaleString('en-CA', { 
+          timeZone: eventTimezone,
+          year: 'numeric',
+          month: '2-digit', 
+          day: '2-digit'
+        });
+        date = new Date(eventTimeString + 'T00:00:00'); // Use date only for grouping
+      } catch {
+        // Fallback to local time if timezone conversion fails
+        date = new Date(timestamp);
+      }
+    } else {
+      // Use local timezone
+      date = new Date(timestamp);
+    }
+
+    // Use ISO date string for stable keys (YYYY-MM-DD format)
+    const dateKey = date.toISOString().split('T')[0];
+
+    if (!groups[dateKey]) {
+      groups[dateKey] = [];
+    }
+    groups[dateKey].push(message);
+  });
+
+  return groups;
+};
 export const formatMessageDateHeader = (dateString: string): string => {
   if (!dateString) return '';
 
@@ -197,6 +316,90 @@ export const formatMessageDateHeader = (dateString: string): string => {
       return date.toLocaleDateString('en-US', {
         weekday: 'long',
         month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      });
+    }
+  }
+};
+
+/**
+ * Formats date headers with timezone awareness for message grouping
+ *
+ * @param isoDateKey - ISO date string (YYYY-MM-DD)
+ * @param showMyTime - Whether to use local time (true) or event time (false)
+ * @param eventTimezone - Event timezone (IANA identifier)
+ * @returns Formatted header: "Today", "Yesterday", or "EEE, MMM d, yyyy"
+ */
+export const formatMessageDateHeaderWithTimezone = (
+  isoDateKey: string,
+  showMyTime: boolean = true,
+  eventTimezone?: string | null
+): string => {
+  if (!isoDateKey) return '';
+
+  // Parse the ISO date key (YYYY-MM-DD)
+  const messageDate = new Date(isoDateKey + 'T00:00:00');
+  
+  // Get current date in the appropriate timezone
+  let today: Date;
+  let yesterday: Date;
+  
+  if (!showMyTime && eventTimezone) {
+    try {
+      // Get current date in event timezone
+      const now = new Date();
+      const todayInEventTz = new Date(now.toLocaleString('en-CA', { 
+        timeZone: eventTimezone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }) + 'T00:00:00');
+      
+      today = todayInEventTz;
+      yesterday = new Date(todayInEventTz);
+      yesterday.setDate(yesterday.getDate() - 1);
+    } catch {
+      // Fallback to local timezone
+      today = new Date();
+      today.setHours(0, 0, 0, 0);
+      yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+    }
+  } else {
+    // Use local timezone
+    today = new Date();
+    today.setHours(0, 0, 0, 0);
+    yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+  }
+
+  // Compare dates
+  const messageDateStr = messageDate.toISOString().split('T')[0];
+  const todayStr = today.toISOString().split('T')[0];
+  const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+  if (messageDateStr === todayStr) {
+    return 'Today';
+  } else if (messageDateStr === yesterdayStr) {
+    return 'Yesterday';
+  } else {
+    // Format as "EEE, MMM d, yyyy" (e.g., "Mon, Jan 6, 2025")
+    const currentYear = today.getFullYear();
+    const messageYear = messageDate.getFullYear();
+
+    if (messageYear === currentYear) {
+      // Same year: "Mon, Jan 6"
+      return messageDate.toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+      });
+    } else {
+      // Different year: "Mon, Jan 6, 2023"
+      return messageDate.toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
         day: 'numeric',
         year: 'numeric',
       });

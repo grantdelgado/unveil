@@ -2,7 +2,10 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-// Date grouping functionality removed to fix build issues - keeping simple list approach
+import { 
+  groupMessagesByDateWithTimezone, 
+  formatMessageDateHeaderWithTimezone 
+} from '@/lib/utils/date';
 import { useScheduledMessages } from '@/hooks/messaging/useScheduledMessages';
 import {
   fromUTCToEventZone,
@@ -508,10 +511,40 @@ export function RecentMessages({
     }
   };
 
-  // Simple approach: just use pastMessages directly (no date grouping to avoid build issues)
 
 
+  // Separate upcoming and past messages
+  const upcomingMessages = unifiedMessages.filter(
+    (msg) =>
+      msg.type === 'scheduled' &&
+      msg.status === 'scheduled' &&
+      msg.send_at &&
+      new Date(msg.send_at) > new Date(),
+  );
+  const pastMessages = unifiedMessages.filter(
+    (msg) =>
+      !(
+        msg.type === 'scheduled' &&
+        msg.status === 'scheduled' &&
+        msg.send_at &&
+        new Date(msg.send_at) > new Date()
+      ),
+  );
 
+  // Group past messages by date with timezone awareness (before early returns)
+  const groupedPastMessages = React.useMemo(() => {
+    return groupMessagesByDateWithTimezone(pastMessages, showMyTime, eventTimezone);
+  }, [pastMessages, showMyTime, eventTimezone]);
+
+  // Sort date groups (newest first) (before early returns)
+  const sortedDateGroups = React.useMemo(() => {
+    return Object.keys(groupedPastMessages).sort((a, b) => {
+      // Sort by ISO date strings (YYYY-MM-DD) in descending order
+      return b.localeCompare(a);
+    });
+  }, [groupedPastMessages]);
+
+  // Early returns must come AFTER all hooks
   if (isBootLoading) {
     console.log('[RecentMessages] Showing loading state:', {
       isBootLoading,
@@ -556,26 +589,6 @@ export function RecentMessages({
       </div>
     );
   }
-
-  // Separate upcoming and past messages
-  const upcomingMessages = unifiedMessages.filter(
-    (msg) =>
-      msg.type === 'scheduled' &&
-      msg.status === 'scheduled' &&
-      msg.send_at &&
-      new Date(msg.send_at) > new Date(),
-  );
-  const pastMessages = unifiedMessages.filter(
-    (msg) =>
-      !(
-        msg.type === 'scheduled' &&
-        msg.status === 'scheduled' &&
-        msg.send_at &&
-        new Date(msg.send_at) > new Date()
-      ),
-  );
-
-
 
   return (
     <div className={cn('space-y-6', className)}>
@@ -648,12 +661,40 @@ export function RecentMessages({
             {pastMessages.length})
           </h4>
           
-                    {/* Simple Message List */}
-          {pastMessages.length > 0 ? (
-            <div className="space-y-3">
-              {pastMessages.map((message) => (
-                <MessageRow key={message.id} message={message} showMyTime={showMyTime} eventTimezone={eventTimezone} />
-              ))}
+          {/* Date-Grouped Message List */}
+          {sortedDateGroups.length > 0 ? (
+            <div className="space-y-6">
+              {sortedDateGroups.map((dateKey) => {
+                const messagesInGroup = groupedPastMessages[dateKey];
+                const dateHeader = formatMessageDateHeaderWithTimezone(dateKey, showMyTime, eventTimezone);
+                
+                return (
+                  <div key={dateKey}>
+                    {/* Date Header */}
+                    <div className="sticky top-0 bg-white/80 backdrop-blur-sm border-b border-gray-100 pb-2 mb-3 z-10">
+                      <h5 
+                        className="text-sm font-medium text-gray-700"
+                        role="heading"
+                        aria-level={5}
+                      >
+                        {dateHeader}
+                      </h5>
+                    </div>
+                    
+                    {/* Messages for this date */}
+                    <div className="space-y-3">
+                      {messagesInGroup.map((message) => (
+                        <MessageRow 
+                          key={message.id} 
+                          message={message} 
+                          showMyTime={showMyTime} 
+                          eventTimezone={eventTimezone} 
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           ) : (
             <div className="text-center py-8">
