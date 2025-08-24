@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { formatDateGroupHeader, groupMessagesByDate } from '@/lib/utils/date';
+// Date grouping functionality removed to fix build issues - keeping simple list approach
 import { useScheduledMessages } from '@/hooks/messaging/useScheduledMessages';
 import {
   fromUTCToEventZone,
@@ -491,29 +491,9 @@ export function RecentMessages({
     }
   };
 
-  // Group past messages by date for headers (must be before early returns)
-  const groupedPastMessages = React.useMemo(() => {
-    return groupMessagesByDate(pastMessages);
-  }, [pastMessages]);
+  // Simple approach: just use pastMessages directly (no date grouping to avoid build issues)
 
-  // Sort date groups (newest first) (must be before early returns)
-  const sortedDateGroups = React.useMemo(() => {
-    return Object.keys(groupedPastMessages).sort((a, b) => {
-      return new Date(b).getTime() - new Date(a).getTime();
-    });
-  }, [groupedPastMessages]);
 
-  // Dev observability logging (must be before early returns)
-  React.useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[MessageHistory] UI Debug:', {
-        tzMode: showMyTime ? 'local' : 'event',
-        groups: sortedDateGroups.length,
-        upcoming: upcomingMessages.length,
-        past: pastMessages.length
-      });
-    }
-  }, [showMyTime, sortedDateGroups.length, upcomingMessages.length, pastMessages.length]);
 
   if (isBootLoading) {
     console.log('[RecentMessages] Showing loading state:', {
@@ -577,6 +557,8 @@ export function RecentMessages({
         new Date(msg.send_at) > new Date()
       ),
   );
+
+
 
   return (
     <div className={cn('space-y-6', className)}>
@@ -649,30 +631,13 @@ export function RecentMessages({
             {pastMessages.length})
           </h4>
           
-          {/* Date Groups */}
-          {sortedDateGroups.length > 0 ? (
-            <div className="space-y-6">
-              {sortedDateGroups.map((dateKey) => {
-                const messagesInGroup = groupedPastMessages[dateKey];
-                const dateHeader = formatDateGroupHeader(dateKey);
-                
-                return (
-                  <div key={dateKey}>
-                    {/* Date Header */}
-                    <div className="sticky top-0 bg-white/80 backdrop-blur-sm border-b border-gray-100 pb-2 mb-3 z-10">
-                      <h5 className="text-sm font-medium text-gray-700">{dateHeader}</h5>
-                    </div>
-                    
-                    {/* Messages for this date */}
-                    <div className="space-y-3">
-                      {messagesInGroup.map((message) => (
-                        <MessageRow key={message.id} message={message} showMyTime={showMyTime} eventTimezone={eventTimezone} />
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-                </div>
+                    {/* Simple Message List */}
+          {pastMessages.length > 0 ? (
+            <div className="space-y-3">
+              {pastMessages.map((message) => (
+                <MessageRow key={message.id} message={message} showMyTime={showMyTime} eventTimezone={eventTimezone} />
+              ))}
+            </div>
           ) : (
             <div className="text-center py-8">
               <div className="text-gray-500">
@@ -682,7 +647,7 @@ export function RecentMessages({
                   Sent messages will appear here
                 </p>
               </div>
-          </div>
+            </div>
           )}
         </div>
       )}
