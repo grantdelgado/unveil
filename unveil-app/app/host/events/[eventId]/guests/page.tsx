@@ -36,6 +36,7 @@ export default function EventGuestsPage() {
   const [error, setError] = useState<string | null>(null);
   const [showGuestImport, setShowGuestImport] = useState(false);
   const [showAddIndividualGuest, setShowAddIndividualGuest] = useState(false);
+  const [showCSVImport, setShowCSVImport] = useState(false);
   const [, setGuestCount] = useState(0);
 
   // Fetch event data and guest count
@@ -158,7 +159,7 @@ export default function EventGuestsPage() {
 
   return (
     <PageWrapper centered={false}>
-      {/* Guest Import Modal (CSV) */}
+      {/* Guest Import Modal (Manual) */}
       {showGuestImport && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="max-w-4xl w-full max-h-[90vh] overflow-y-auto">
@@ -176,11 +177,42 @@ export default function EventGuestsPage() {
             >
               <LazyGuestImportWizard
                 eventId={eventId}
+                startInManualMode={true}
                 onImportComplete={() => {
                   setShowGuestImport(false);
                   handleDataRefresh();
                 }}
                 onClose={() => setShowGuestImport(false)}
+              />
+            </Suspense>
+          </div>
+        </div>
+      )}
+
+      {/* CSV Import Modal (Direct) */}
+      {showCSVImport && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <Suspense
+              fallback={
+                <CardContainer>
+                  <div className="flex items-center justify-center py-8">
+                    <LoadingSpinner size="lg" />
+                    <span className="ml-3 text-gray-600">
+                      Loading CSV import...
+                    </span>
+                  </div>
+                </CardContainer>
+              }
+            >
+              <LazyGuestImportWizard
+                eventId={eventId}
+                startInCSVMode={true}
+                onImportComplete={() => {
+                  setShowCSVImport(false);
+                  handleDataRefresh();
+                }}
+                onClose={() => setShowCSVImport(false)}
               />
             </Suspense>
           </div>
@@ -253,7 +285,7 @@ export default function EventGuestsPage() {
           <LazyGuestManagement
             eventId={eventId}
             onGuestUpdated={handleDataRefresh}
-            onImportGuests={() => setShowGuestImport(true)}
+            onImportGuests={() => setShowCSVImport(true)}
             onAddIndividualGuest={() => setShowAddIndividualGuest(true)}
             onSendMessage={(messageType) => {
               // Navigate to messages page with pre-selected type

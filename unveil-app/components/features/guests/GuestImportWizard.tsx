@@ -19,6 +19,7 @@ import {
 } from '@/lib/utils/guestHelpers';
 import { normalizePhoneNumberSimple as normalizePhoneNumber } from '@/lib/utils/phone';
 import { cn } from '@/lib/utils';
+import { CSVImportModal } from './CSVImportModal';
 // Note: Guest functionality handled via domain hooks
 
 interface GuestImportWizardProps {
@@ -26,6 +27,7 @@ interface GuestImportWizardProps {
   onClose: () => void;
   onImportComplete: () => void;
   startInManualMode?: boolean;
+  startInCSVMode?: boolean;
 }
 
 // Using GuestImportData from guest import service
@@ -72,9 +74,10 @@ export function GuestImportWizard({
   onClose,
   onImportComplete,
   startInManualMode = false,
+  startInCSVMode = false,
 }: GuestImportWizardProps) {
   const [step, setStep] = useState<'method' | 'manual' | 'csv' | 'processing'>(
-    startInManualMode ? 'manual' : 'method',
+    startInManualMode ? 'manual' : startInCSVMode ? 'csv' : 'method',
   );
   const [guests, setGuests] = useState<EnhancedGuestEntry[]>(
     startInManualMode ? [createEmptyGuest()] : [],
@@ -642,37 +645,11 @@ export function GuestImportWizard({
       )}
 
       {step === 'csv' && (
-        <div className="space-y-6">
-          <div>
-            <h3 className="font-medium text-gray-800 mb-2">CSV Import</h3>
-            <MicroCopy className="mb-4">
-              This feature is coming soon. For now, please use the manual import
-              option.
-            </MicroCopy>
-
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-              <MicroCopy>
-                When available, your CSV should include these columns:
-              </MicroCopy>
-              <ul className="list-disc ml-5 space-y-1">
-                <li>Full Name (required)</li>
-                <li>Phone Number (required)</li>
-                <li>Email (optional)</li>
-
-                <li>Notes (optional)</li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="flex justify-between">
-            <Button onClick={() => setStep('method')} variant="outline">
-              Back to Options
-            </Button>
-            <Button onClick={onClose} variant="outline">
-              Cancel
-            </Button>
-          </div>
-        </div>
+        <CSVImportModal
+          eventId={eventId}
+          onClose={onClose}
+          onImportComplete={onImportComplete}
+        />
       )}
     </CardContainer>
   );

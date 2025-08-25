@@ -298,9 +298,21 @@ export function validatePhoneNumber(phone: string): {
     };
   }
 
+  // International numbers (already have + prefix)
+  if (phone.startsWith('+')) {
+    const cleanPhone = phone.replace(/\D/g, '');
+    if (cleanPhone.length >= 7 && cleanPhone.length <= 15) {
+      return {
+        isValid: true,
+        normalized: `+${cleanPhone}`,
+        error: undefined,
+      };
+    }
+  }
+
   return {
     isValid: false,
-    error: 'Please enter a valid US phone number (10 digits)',
+    error: 'Please enter a valid phone number (US: 10 digits, International: +CC...)',
   };
 }
 
