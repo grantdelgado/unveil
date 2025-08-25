@@ -28,9 +28,7 @@ function emitHeaderMissing(path: string) {
   emitFormatterTelemetry('messaging.formatter.header_missing', path);
 }
 
-function emitFirstSmsIncludesStop(path: string, included: boolean) {
-  emitFormatterTelemetry('messaging.formatter.first_sms_includes_stop', path, included ? 1 : 0);
-}
+// Removed unused function emitFirstSmsIncludesStop
 
 /**
  * SMS Text Formatting Utility for Event Tag Branding + A2P Footer
@@ -109,10 +107,11 @@ export async function composeSmsText(
         };
       } else {
         // Fetch event data for header (kill switch still needs header)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let supabase: any;
         try {
           supabase = await createServerSupabaseClient();
-        } catch (error) {
+        } catch {
           const { supabase: adminClient } = await import('@/lib/supabase/admin');
           supabase = adminClient;
         }
@@ -174,10 +173,11 @@ export async function composeSmsText(
     }
 
     // Try to get Supabase client - fallback to admin client if server client fails
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let supabase: any;
     try {
       supabase = await createServerSupabaseClient();
-    } catch (error) {
+    } catch {
       // Fallback to admin client for scheduled worker context
       const { supabase: adminClient } = await import('@/lib/supabase/admin');
       supabase = adminClient;
@@ -186,8 +186,6 @@ export async function composeSmsText(
 
     // Use pre-fetched event data if available, otherwise fetch from DB
     let event: { sms_tag: string | null; title: string } | null = null;
-    let guest: { a2p_notice_sent_at: string | null } | null = null;
-    let usedPrefetchedEvent = false;
 
     if (options.eventSmsTag != null || options.eventTitle != null) {
 
@@ -197,13 +195,13 @@ export async function composeSmsText(
         sms_tag: options.eventSmsTag || null,
         title: options.eventTitle || 'Event'
       };
-      usedPrefetchedEvent = true;
+      // usedPrefetchedEvent = true; // Removed unused variable
       
       // Enhanced monitoring: Track prefetch usage
       incrementFormatterPrefetchUsed();
 
       // No need to fetch guest A2P status since we don't use it anymore
-      guest = null;
+      // guest = null; // Removed unused variable
     } else {
       // Fetch event data from DB (Send-Now path)
       const eventResult = await supabase
@@ -267,7 +265,7 @@ export async function composeSmsText(
       }
 
       event = eventResult.data;
-      guest = null; // No longer needed since A2P logic is disabled
+      // guest = null; // Removed unused variable
       
       // Enhanced monitoring: Track prefetch miss (had to fetch from DB)
       incrementFormatterPrefetchMissed();
@@ -461,7 +459,7 @@ function applyLengthBudget(components: {
   const stopLen = components.stop.length;
   
   // Calculate multiline format lengths
-  const headerNewlineLen = 1; // \n after header
+  // const headerNewlineLen = 1; // Removed unused variable
 
   // Try full message first with colon format including brand
   const bodyWithLink = components.body + components.link;
@@ -583,10 +581,11 @@ export async function formatInviteSms(
     }
 
     // Get Supabase client
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let supabase: any;
     try {
       supabase = await createServerSupabaseClient();
-    } catch (error) {
+    } catch {
       const { supabase: adminClient } = await import('@/lib/supabase/admin');
       supabase = adminClient;
     }
@@ -785,10 +784,11 @@ function detectSmsEncoding(text: string): 'GSM-7' | 'UCS-2' {
 export async function markA2pNoticeSent(eventId: string, guestId: string): Promise<void> {
   try {
     // Try server client first, fallback to admin client
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let supabase: any;
     try {
       supabase = await createServerSupabaseClient();
-    } catch (error) {
+    } catch {
       const { supabase: adminClient } = await import('@/lib/supabase/admin');
       supabase = adminClient;
     }

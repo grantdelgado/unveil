@@ -271,6 +271,40 @@ export function formatScheduledDateTime(
 }
 
 /**
+ * Formats time without timezone abbreviation (no date)
+ * Example: "7:30 PM"
+ */
+export function formatTimeWithAbbreviation(
+  utcDateTime: string,
+  eventTimeZone: string,
+): string | null {
+  if (!utcDateTime || !isValidTimezone(eventTimeZone)) {
+    return null;
+  }
+
+  try {
+    const utcDate = new Date(utcDateTime);
+
+    // Format time without timezone abbreviation (guests are in same timezone)
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: eventTimeZone,
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+
+    return formatter.format(utcDate);
+  } catch (error) {
+    console.warn('Failed to format time:', {
+      utcDateTime,
+      eventTimeZone,
+      error,
+    });
+    return null;
+  }
+}
+
+/**
  * Gets timezone label for schedule display
  */
 export function getTimezoneLabel(timeZone: string | null): string {

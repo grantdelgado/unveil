@@ -300,15 +300,15 @@ async function processDueScheduledMessages(
                     | 'custom'
                     | 'rsvp_reminder'),
             // Pass pre-fetched event metadata to avoid DB queries in formatter
-            eventSmsTag: (message as any).event_sms_tag,
-            eventTitle: (message as any).event_title,
+            eventSmsTag: (message as unknown as { event_sms_tag?: string }).event_sms_tag,
+            eventTitle: (message as unknown as { event_title?: string }).event_title,
           }));
 
 
 
           // Enhanced debug logging for SMS formatting
           if (process.env.NODE_ENV !== 'production') {
-            const { flags } = require('@/config/flags');
+            const { flags } = await import('@/config/flags');
             logger.api('Scheduled SMS Debug - Pre-Send', {
               scheduledMessageId: message.id,
               messageType: message.message_type,
@@ -343,7 +343,7 @@ async function processDueScheduledMessages(
             // Additional diagnostic: Try to format one message directly to see result
             if (smsMessages.length > 0) {
               try {
-                const { composeSmsText } = require('@/lib/sms-formatter');
+                const { composeSmsText } = await import('@/lib/sms-formatter');
                 const testResult = await composeSmsText(
                   smsMessages[0].eventId,
                   smsMessages[0].guestId,
@@ -376,7 +376,7 @@ async function processDueScheduledMessages(
             // Check if any recipients should have received branding
             const firstTimeRecipients = resolvedRecipients.filter(guest => {
               // This is a simplified check - actual logic is in composeSmsText
-              return !(guest as any).a2p_notice_sent_at;
+              return !(guest as unknown as { a2p_notice_sent_at?: string }).a2p_notice_sent_at;
             });
             
             if (firstTimeRecipients.length > 0) {

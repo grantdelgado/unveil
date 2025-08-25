@@ -11,6 +11,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { syncEventReminderOnTimeChange, upsertEventReminder } from '@/lib/services/messaging-client';
 import {
   CardContainer,
   PrimaryButton,
@@ -18,6 +19,7 @@ import {
   LoadingSpinner,
 } from '@/components/ui';
 import { ScheduleItemModal } from './ScheduleItemModal';
+import { ReminderToggle } from './ReminderToggle';
 import { formatEventDate } from '@/lib/utils/date';
 import { fromUTCToEventZone, getTimezoneLabel } from '@/lib/utils/timezone';
 import type { Database } from '@/app/reference/supabase.types';
@@ -80,7 +82,17 @@ export function ScheduleManagement({
   }, [eventId, loadScheduleItems]);
 
   // Handle item creation/update
-  const handleItemSaved = () => {
+  const handleItemSaved = async () => {
+    // If we were editing an existing item, sync any reminder timing
+    if (editingItem) {
+      try {
+        await syncEventReminderOnTimeChange(eventId, editingItem.id);
+      } catch (error) {
+        console.error('Failed to sync reminder after schedule update:', error);
+        // Don't block the UI update for reminder sync failures
+      }
+    }
+    
     setShowModal(false);
     setEditingItem(null);
     loadScheduleItems();
@@ -93,6 +105,15 @@ export function ScheduleManagement({
     }
 
     try {
+      // First, cancel any existing reminder for this item
+      try {
+        await upsertEventReminder(eventId, item.id, false);
+      } catch (reminderError) {
+        console.error('Failed to cancel reminder before deletion:', reminderError);
+        // Continue with deletion even if reminder cancellation fails
+      }
+
+      // Then delete the schedule item
       const { error: deleteError } = await supabase
         .from('event_schedule_items')
         .delete()
@@ -284,6 +305,16 @@ export function ScheduleManagement({
                                     <span>{item.attire}</span>
                                   </div>
                                 )}
+                              </div>
+
+                              {/* Reminder Toggle */}
+                              <div className="mt-3 pt-3 border-t border-gray-200">
+                                <ReminderToggle
+                                  eventId={eventId}
+                                  timelineId={item.id}
+                                  startAtUtc={item.start_at}
+                                  eventTimeZone={event.time_zone || undefined}
+                                />
                               </div>
                             </div>
 

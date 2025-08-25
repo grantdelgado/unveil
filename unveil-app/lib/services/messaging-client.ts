@@ -513,6 +513,7 @@ export async function updateScheduledMessage(
 }> {
   try {
     // Use a direct query since the RPC function might not be in the generated types yet
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await supabase.rpc('update_scheduled_message' as any, {
       p_message_id: messageId,
       p_content: updateData.content,
@@ -582,6 +583,165 @@ export async function deleteScheduledMessage(messageId: string): Promise<{
             ? error.message
             : 'Failed to delete scheduled message',
       },
+    };
+  }
+}
+
+/**
+ * Event Reminder Management Functions
+ */
+
+export interface ReminderStatus {
+  enabled: boolean;
+  reminderId?: string;
+  sendAt?: string;
+  status?: string;
+  createdAt?: string;
+  modifiedAt?: string;
+}
+
+/**
+ * Upsert (create/update/cancel) an event reminder
+ */
+export async function upsertEventReminder(
+  eventId: string,
+  timelineId: string,
+  enabled: boolean
+): Promise<{
+  success: boolean;
+  sendAt?: string;
+  action?: string;
+  error?: string;
+}> {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await supabase.rpc('upsert_event_reminder' as any, {
+      p_event_id: eventId,
+      p_timeline_id: timelineId,
+      p_enabled: enabled,
+    });
+
+    if (error) throw error;
+
+    const result = data as { 
+      success: boolean; 
+      error?: string; 
+      send_at?: string;
+      action?: string;
+    };
+    
+    if (!result.success) {
+      return { success: false, error: result.error };
+    }
+
+    return { 
+      success: true, 
+      sendAt: result.send_at,
+      action: result.action,
+    };
+  } catch (error) {
+    console.error('Error managing event reminder:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to manage reminder',
+    };
+  }
+}
+
+/**
+ * Get the current reminder status for a schedule item
+ */
+export async function getEventReminderStatus(
+  eventId: string,
+  timelineId: string
+): Promise<{
+  success: boolean;
+  status?: ReminderStatus;
+  error?: string;
+}> {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await supabase.rpc('get_event_reminder_status' as any, {
+      p_event_id: eventId,
+      p_timeline_id: timelineId,
+    });
+
+    if (error) throw error;
+
+    const result = data as { 
+      success: boolean; 
+      error?: string;
+      enabled?: boolean;
+      reminder_id?: string;
+      send_at?: string;
+      status?: string;
+      created_at?: string;
+      modified_at?: string;
+    };
+    
+    if (!result.success) {
+      return { success: false, error: result.error };
+    }
+
+    return { 
+      success: true, 
+      status: {
+        enabled: result.enabled || false,
+        reminderId: result.reminder_id,
+        sendAt: result.send_at,
+        status: result.status,
+        createdAt: result.created_at,
+        modifiedAt: result.modified_at,
+      },
+    };
+  } catch (error) {
+    console.error('Error getting reminder status:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to get reminder status',
+    };
+  }
+}
+
+/**
+ * Sync reminder timing when schedule item time changes
+ */
+export async function syncEventReminderOnTimeChange(
+  eventId: string,
+  timelineId: string
+): Promise<{
+  success: boolean;
+  action?: string;
+  error?: string;
+}> {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await supabase.rpc('sync_event_reminder_on_time_change' as any, {
+      p_event_id: eventId,
+      p_timeline_id: timelineId,
+    });
+
+    if (error) throw error;
+
+    const result = data as { 
+      success: boolean; 
+      error?: string;
+      action?: string;
+    };
+    
+    if (!result.success) {
+      return { success: false, error: result.error };
+    }
+
+    return { 
+      success: true, 
+      action: result.action,
+    };
+  } catch (error) {
+    console.error('Error syncing reminder:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to sync reminder',
     };
   }
 }
