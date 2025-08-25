@@ -1,15 +1,14 @@
 'use client';
 
-import React, { useEffect, useState, useCallback, memo } from 'react';
-import { supabase } from '@/lib/supabase/client';
+import React, { memo, useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
-// Remove unused imports - only keep what's needed
-import { useRealtimeSubscription } from '@/hooks/realtime';
+import { useUnifiedGuestCounts } from '@/hooks/guests/useUnifiedGuestCounts';
 
 import { StatusPill } from './StatusPill';
 
 import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
+import { useRealtimeSubscription } from '@/hooks/realtime';
 
 interface GuestStatusSummaryProps {
   eventId: string;
@@ -74,14 +73,17 @@ function RecentActivityFeed({ activities }: { activities: RSVPActivity[] }) {
 
 export const GuestStatusSummary = memo<GuestStatusSummaryProps>(
   ({ eventId, activeFilter, onFilterChange, className }) => {
-    const [statusCounts, setStatusCounts] = useState<StatusCount>({
-      attending: 0,
-      pending: 0,
-      declined: 0,
-      maybe: 0,
-      total: 0,
-    });
-    const [loading, setLoading] = useState(true);
+    // Use unified guest counts for consistency
+    const { counts, loading } = useUnifiedGuestCounts(eventId);
+    
+    // Map unified counts to the expected format
+    const statusCounts: StatusCount = {
+      attending: counts.attending,
+      pending: 0, // Always 0 in RSVP-Lite
+      declined: counts.declined,
+      maybe: 0, // Always 0 in RSVP-Lite
+      total: counts.total_guests,
+    };
     const [recentActivity, setRecentActivity] = useState<RSVPActivity[]>([]);
     const [showActivity, setShowActivity] = useState(false);
     const [realtimeConnected, setRealtimeConnected] = useState(true);
@@ -117,47 +119,7 @@ export const GuestStatusSummary = memo<GuestStatusSummaryProps>(
       },
     ] as const;
 
-    const fetchStatusCounts = useCallback(async () => {
-      try {
-        const { data, error } = await supabase
-          .from('event_guests')
-          .select(
-            `
-          declined_at,
-          users:user_id(full_name)
-        `,
-          )
-          .eq('event_id', eventId);
-
-        if (error) {
-          logger.databaseError('Error fetching RSVP status counts', error);
-          return;
-        }
-
-        const counts = {
-          attending: 0,
-          pending: 0,
-          declined: 0,
-          maybe: 0,
-          total: data?.length || 0,
-        };
-
-        data?.forEach((guest) => {
-          // RSVP-Lite logic: attending = not declined
-          if (guest.declined_at) {
-            counts.declined++;
-          } else {
-            counts.attending++;
-          }
-        });
-
-        setStatusCounts(counts);
-      } catch (error) {
-        logger.databaseError('Unexpected error fetching status counts', error);
-      } finally {
-        setLoading(false);
-      }
-    }, [eventId]);
+    // Note: Status counts now come from useUnifiedGuestCounts hook
 
     // Set up real-time subscription using centralized hook with enhanced stability
     const {} = useRealtimeSubscription({
@@ -202,10 +164,9 @@ export const GuestStatusSummary = memo<GuestStatusSummaryProps>(
             }
           }
 
-          // Refresh the main data
-          await fetchStatusCounts();
+          // Note: Status counts automatically refresh via useUnifiedGuestCounts
         },
-        [fetchStatusCounts],
+        [],
       ),
       onError: useCallback((error: Error) => {
         // Only log non-connection errors to reduce noise
@@ -231,27 +192,8 @@ export const GuestStatusSummary = memo<GuestStatusSummaryProps>(
       }, []),
     });
 
-    useEffect(() => {
-      fetchStatusCounts();
-    }, [fetchStatusCounts]);
-
-    // Conservative polling fallback when realtime is not connected
-    useEffect(() => {
-      if (!realtimeConnected) {
-        logger.realtime('Starting polling fallback for guest status updates');
-        const pollInterval = setInterval(() => {
-          // Only poll if tab is visible to reduce load
-          if (document.visibilityState === 'visible') {
-            fetchStatusCounts();
-          }
-        }, 60000); // Poll every 60 seconds instead of 10 seconds when realtime is down
-
-        return () => {
-          logger.realtime('Stopping polling fallback for guest status updates');
-          clearInterval(pollInterval);
-        };
-      }
-    }, [realtimeConnected, fetchStatusCounts]);
+    // Note: Status counts are automatically managed by useUnifiedGuestCounts hook
+    // No manual fetching needed as the hook handles initial load and real-time updates
 
     const getCountForStatus = (key: string): number => {
       if (key === 'all') return statusCounts.total;

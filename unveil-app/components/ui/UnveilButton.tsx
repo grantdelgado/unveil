@@ -1,12 +1,16 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 
-interface BaseButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface BaseButtonProps {
   children: React.ReactNode;
   className?: string;
   loading?: boolean;
   fullWidth?: boolean;
+  disabled?: boolean;
+  onClick?: React.MouseEventHandler<HTMLButtonElement>;
+  type?: 'button' | 'submit' | 'reset';
+  id?: string;
+  'data-testid'?: string;
 }
 
 // Primary Button Component
@@ -16,7 +20,10 @@ export const PrimaryButton: React.FC<BaseButtonProps> = ({
   loading = false,
   fullWidth = true,
   disabled,
-  ...props
+  onClick,
+  type = 'button',
+  id,
+  'data-testid': dataTestId,
 }) => {
   return (
     <button
@@ -29,7 +36,10 @@ export const PrimaryButton: React.FC<BaseButtonProps> = ({
         className,
       )}
       disabled={disabled || loading}
-      {...props}
+      onClick={onClick}
+      type={type}
+      id={id}
+      data-testid={dataTestId}
     >
       {loading ? (
         <div className="flex items-center justify-center">
@@ -50,7 +60,10 @@ export const SecondaryButton: React.FC<BaseButtonProps> = ({
   loading = false,
   fullWidth = true,
   disabled,
-  ...props
+  onClick,
+  type = 'button',
+  id,
+  'data-testid': dataTestId,
 }) => {
   return (
     <button
@@ -63,7 +76,10 @@ export const SecondaryButton: React.FC<BaseButtonProps> = ({
         className,
       )}
       disabled={disabled || loading}
-      {...props}
+      onClick={onClick}
+      type={type}
+      id={id}
+      data-testid={dataTestId}
     >
       {loading ? (
         <div className="flex items-center justify-center">
@@ -78,18 +94,26 @@ export const SecondaryButton: React.FC<BaseButtonProps> = ({
 };
 
 // Icon Button Component (for profile buttons, etc.)
-interface IconButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface IconButtonProps {
   children: React.ReactNode;
   className?: string;
   size?: 'sm' | 'md' | 'lg';
+  disabled?: boolean;
+  onClick?: React.MouseEventHandler<HTMLButtonElement>;
+  type?: 'button' | 'submit' | 'reset';
+  id?: string;
+  'data-testid'?: string;
 }
 
 export const IconButton: React.FC<IconButtonProps> = ({
   children,
   className,
   size = 'md',
-  ...props
+  disabled,
+  onClick,
+  type = 'button',
+  id,
+  'data-testid': dataTestId,
 }) => {
   const sizeClasses = {
     sm: 'w-8 h-8',
@@ -103,10 +127,15 @@ export const IconButton: React.FC<IconButtonProps> = ({
         'bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors duration-200',
         'flex items-center justify-center',
         'focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2',
+        'disabled:opacity-50 disabled:cursor-not-allowed',
         sizeClasses[size],
         className,
       )}
-      {...props}
+      disabled={disabled}
+      onClick={onClick}
+      type={type}
+      id={id}
+      data-testid={dataTestId}
     >
       {children}
     </button>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+// useRouter import removed as it's no longer needed
 // Core dependencies
 import { useHostGuestDecline } from '@/hooks/guests';
 import { supabase } from '@/lib/supabase/client';
@@ -14,6 +14,7 @@ import { useUnifiedGuestCounts } from '@/hooks/guests';
 import { SecondaryButton, PrimaryButton } from '@/components/ui';
 import { GuestListItem } from './GuestListItem';
 import { GuestControlPanel } from './GuestControlPanel';
+import { ConfirmBulkInviteModal } from './ConfirmBulkInviteModal';
 import { GuestManagementErrorBoundary } from './ErrorBoundary';
 import { FeedbackProvider, useFeedback } from './UserFeedback';
 
@@ -32,7 +33,7 @@ function GuestManagementContent({
   onAddIndividualGuest,
 }: GuestManagementProps) {
   const { showError, showSuccess } = useFeedback();
-  const router = useRouter();
+  // Router removed as it's no longer used after bulk invite modal integration
 
   // Enhanced state management with invitation status filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -40,6 +41,7 @@ function GuestManagementContent({
     'all' | 'attending' | 'declined' | 'not_invited' | 'invited'
   >('all');
   const [invitingGuestId, setInvitingGuestId] = useState<string | null>(null);
+  const [showBulkInviteModal, setShowBulkInviteModal] = useState(false);
 
   // Data hooks
   const { guests, loading, refreshGuests } = useSimpleGuestStore(eventId);
@@ -61,14 +63,17 @@ function GuestManagementContent({
     },
   });
 
-  // Handler for Send Invitations button
+  // Handler for Send Invitations button - now opens confirmation modal
   const handleSendInvitations = useCallback(() => {
-    // Route to composer with not_invited guests preselected
-    const searchParams = new URLSearchParams({
-      preset: 'not_invited',
-    });
-    router.push(`/host/events/${eventId}/messages?${searchParams.toString()}`);
-  }, [eventId, router]);
+    setShowBulkInviteModal(true);
+  }, []);
+
+  // Handler for bulk invite success
+  const handleBulkInviteSuccess = useCallback(() => {
+    refreshGuests(); // Refresh to get updated invitation status
+    refreshCounts(); // Refresh unified counts
+    onGuestUpdated?.();
+  }, [refreshGuests, refreshCounts, onGuestUpdated]);
 
   // Handler for one-tap invite action
   const handleInviteGuest = useCallback(
@@ -434,6 +439,21 @@ function GuestManagementContent({
           ))}
         </div>
       )}
+
+      {/* Bulk Invite Confirmation Modal */}
+      <ConfirmBulkInviteModal
+        isOpen={showBulkInviteModal}
+        onClose={() => setShowBulkInviteModal(false)}
+        onSuccess={handleBulkInviteSuccess}
+        eventId={eventId}
+        eligibleCount={simplifiedCounts.not_invited}
+        excludedReasons={[
+          'Guests without valid phone numbers',
+          'Guests who opted out of SMS',
+          'Guests already invited',
+          'Hosts (cannot be invited)',
+        ]}
+      />
     </div>
   );
 }

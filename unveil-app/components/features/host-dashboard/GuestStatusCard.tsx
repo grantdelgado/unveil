@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { CardContainer } from '@/components/ui';
-import { supabase } from '@/lib/supabase';
+import { useUnifiedGuestCounts } from '@/hooks/guests/useUnifiedGuestCounts';
 import { cn } from '@/lib/utils';
 
 interface GuestStatusData {
@@ -22,56 +22,19 @@ export function GuestStatusCard({
   eventId,
   onManageClick,
 }: GuestStatusCardProps) {
-  const [statusData, setStatusData] = useState<GuestStatusData>({
-    attending: 0,
-    declined: 0,
-    pending: 0,
-    maybe: 0,
-    total: 0,
-  });
-  const [loading, setLoading] = useState(true);
   const [showDetails, setShowDetails] = useState(false);
-
-  useEffect(() => {
-    const fetchGuestStatus = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('event_guests')
-          .select('declined_at')
-          .eq('event_id', eventId);
-
-        if (error) throw error;
-
-        const counts = data?.reduce(
-          (acc, guest) => {
-            // RSVP-Lite logic: attending = not declined
-            if (guest.declined_at) {
-              acc.declined += 1;
-            } else {
-              acc.attending += 1;
-            }
-            acc.total += 1;
-            return acc;
-          },
-          {
-            attending: 0,
-            declined: 0,
-            pending: 0, // Always 0 in RSVP-Lite
-            maybe: 0, // Always 0 in RSVP-Lite
-            total: 0,
-          },
-        ) || { attending: 0, declined: 0, pending: 0, maybe: 0, total: 0 };
-
-        setStatusData(counts);
-      } catch (error) {
-        console.error('Error fetching guest status:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchGuestStatus();
-  }, [eventId]);
+  
+  // Use unified guest counts for consistency
+  const { counts, loading } = useUnifiedGuestCounts(eventId);
+  
+  // Map unified counts to the expected format
+  const statusData: GuestStatusData = {
+    attending: counts.attending,
+    declined: counts.declined,
+    pending: 0, // Always 0 in RSVP-Lite
+    maybe: 0, // Always 0 in RSVP-Lite
+    total: counts.total_guests,
+  };
 
   if (loading) {
     return (
