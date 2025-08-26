@@ -10,7 +10,7 @@ import { MessageCircle, ChevronDown } from 'lucide-react';
 // MVP: Logger removed - no error handling needed for read-only component
 import { useGuestMessagesRPC } from '@/hooks/messaging/useGuestMessagesRPC';
 import { useGuestSMSStatus } from '@/hooks/messaging/useGuestSMSStatus';
-import { groupMessagesByDateWithTimezone, formatMessageDateHeaderWithTimezone } from '@/lib/utils/date';
+import { groupMessagesByDateWithTimezone, formatEventDateHeader } from '@/lib/utils/date';
 
 // Types - using hook's MessageWithDelivery type directly
 
@@ -134,11 +134,23 @@ export function GuestMessaging({
       id: msg.message_id, // Map message_id to id for the date utility
     }));
     // Use event timezone if available, otherwise fall back to local time
-    return groupMessagesByDateWithTimezone(
+    const groups = groupMessagesByDateWithTimezone(
       messagesForGrouping, 
       !eventTimezone, // showMyTime: false if we have event timezone, true otherwise
       eventTimezone
     );
+
+    // Development observability (PII-safe)
+    if (process.env.NODE_ENV === 'development') {
+      console.log('GuestMessaging render:', {
+        phase: 'render',
+        items: messages.length,
+        groups: Object.keys(groups).length,
+        eventTimezone: eventTimezone || 'local'
+      });
+    }
+
+    return groups;
   }, [messages, eventTimezone]);
 
   /**
@@ -382,36 +394,41 @@ export function GuestMessaging({
           )}
 
           {/* Render messages with date chunking */}
-          {Object.entries(messageGroups)
-            .sort(([a], [b]) => a.localeCompare(b)) // Sort dates chronologically (oldest first)
-            .map(([dateKey, dayMessages]) => (
-              <div key={dateKey}>
-                {/* Date header */}
-                <div className="text-center py-3 text-sm text-stone-500 font-medium">
-                  <div className="inline-block px-3 py-1 bg-stone-100 rounded-full">
-                    {formatMessageDateHeaderWithTimezone(
-                      dateKey,
-                      !eventTimezone, // showMyTime: false if we have event timezone, true otherwise
-                      eventTimezone
-                    )}
+          <div className="flex flex-col gap-4 md:gap-5">
+            {Object.entries(messageGroups)
+              .sort(([a], [b]) => a.localeCompare(b)) // Sort dates chronologically (oldest first)
+              .map(([dateKey, dayMessages]) => (
+                <div key={dateKey}>
+                  {/* Date header */}
+                  <div className="text-center my-4 md:my-5">
+                    <div 
+                      className="inline-block px-3 py-1 bg-stone-100 rounded-full text-sm text-stone-500 font-medium"
+                      role="separator"
+                      aria-label={`Messages from ${formatEventDateHeader(dateKey, eventTimezone)}`}
+                    >
+                      {formatEventDateHeader(dateKey, eventTimezone)}
+                    </div>
+                  </div>
+                  {/* Messages for this date */}
+                  <div className="space-y-3 md:space-y-4">
+                    {dayMessages.map((message) => {
+                      // Find the original message object from the messages array
+                      const originalMessage = messages.find(m => m.message_id === message.id);
+                      if (!originalMessage) return null;
+                      
+                      return (
+                        <GuestMessageBubble
+                          key={originalMessage.message_id}
+                          message={originalMessage}
+                          eventTimezone={eventTimezone}
+                          className="animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
+                        />
+                      );
+                    })}
                   </div>
                 </div>
-                {/* Messages for this date */}
-                {dayMessages.map((message) => {
-                  // Find the original message object from the messages array
-                  const originalMessage = messages.find(m => m.message_id === message.id);
-                  if (!originalMessage) return null;
-                  
-                  return (
-                    <GuestMessageBubble
-                      key={originalMessage.message_id}
-                      message={originalMessage}
-                      className="animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
-                    />
-                  );
-                })}
-              </div>
-            ))}
+              ))}
+          </div>
 
           {/* Auto-scroll anchor */}
           <div ref={messagesEndRef} />
@@ -419,7 +436,7 @@ export function GuestMessaging({
 
         {/* Jump to Latest Button */}
         {showJumpToLatest && (
-          <div className="absolute bottom-4 right-4 z-10">
+          <div className="absolute bottom-3 right-3 md:bottom-4 md:right-4 z-10">
             <button
               onClick={handleJumpToLatest}
               className={`

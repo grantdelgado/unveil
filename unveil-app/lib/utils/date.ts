@@ -338,6 +338,143 @@ export const formatMessageDateHeader = (dateString: string): string => {
  * @param eventTimezone - Event timezone (IANA identifier)
  * @returns Formatted header: "Today", "Yesterday", or "EEE, MMM d, yyyy"
  */
+/**
+ * Formats time-only timestamp for message bubbles in user's local timezone
+ * 
+ * @param timestamp - ISO timestamp string from database
+ * @returns Time string in format "h:mm AM/PM" (e.g., "2:30 PM")
+ */
+export const formatBubbleTimeOnly = (timestamp: string): string => {
+  if (!timestamp) return '';
+  
+  const messageDate = new Date(timestamp);
+  
+  return new Intl.DateTimeFormat(undefined, {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  }).format(messageDate);
+};
+
+/**
+ * Checks if the local date differs from the event timezone date for a message
+ * 
+ * @param timestamp - ISO timestamp string from database
+ * @param eventTimezone - Event timezone (IANA identifier)
+ * @returns true if local date differs from event date
+ */
+export const hasDateMismatch = (timestamp: string, eventTimezone?: string | null): boolean => {
+  if (!timestamp || !eventTimezone) return false;
+  
+  try {
+    const messageDate = new Date(timestamp);
+    
+    // Get date in local timezone
+    const localDateStr = messageDate.toLocaleDateString('en-CA', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+    
+    // Get date in event timezone
+    const eventDateStr = messageDate.toLocaleDateString('en-CA', {
+      timeZone: eventTimezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+    
+    return localDateStr !== eventDateStr;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Formats date headers with Today/Yesterday/Date format based on event timezone
+ * 
+ * @param isoDateKey - ISO date string (YYYY-MM-DD) 
+ * @param eventTimezone - Event timezone (IANA identifier)
+ * @returns "Today", "Yesterday", or "EEE, MMM d" format
+ */
+export const formatEventDateHeader = (
+  isoDateKey: string,
+  eventTimezone?: string | null
+): string => {
+  if (!isoDateKey) return '';
+  
+  try {
+    // Get current date in the appropriate timezone
+    const now = new Date();
+    let todayDateStr: string;
+    let yesterdayDateStr: string;
+    
+    if (eventTimezone) {
+      // Get today and yesterday in event timezone
+      todayDateStr = now.toLocaleDateString('en-CA', { 
+        timeZone: eventTimezone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+      
+      const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      yesterdayDateStr = yesterday.toLocaleDateString('en-CA', { 
+        timeZone: eventTimezone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+    } else {
+      // Use local timezone
+      todayDateStr = now.toLocaleDateString('en-CA', { 
+        year: 'numeric',
+        month: '2-digit', 
+        day: '2-digit'
+      });
+      
+      const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      yesterdayDateStr = yesterday.toLocaleDateString('en-CA', { 
+        year: 'numeric',
+        month: '2-digit', 
+        day: '2-digit'
+      });
+    }
+    
+    // Check if the date is today or yesterday
+    if (isoDateKey === todayDateStr) {
+      return 'Today';
+    } else if (isoDateKey === yesterdayDateStr) {
+      return 'Yesterday';
+    } else {
+      // For other dates, format as "EEE, MMM d"
+      const [year, month, day] = isoDateKey.split('-').map(Number);
+      const date = new Date(year, month - 1, day, 12, 0, 0); // Noon to avoid timezone issues
+      
+      if (eventTimezone) {
+        // Format in event timezone
+        return new Intl.DateTimeFormat('en-US', {
+          timeZone: eventTimezone,
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+        }).format(date);
+      } else {
+        // Format in local timezone
+        return new Intl.DateTimeFormat('en-US', {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+        }).format(date);
+      }
+    }
+  } catch (error) {
+    // Fallback to original format
+    console.warn('Error formatting date header:', error);
+    return formatMessageDateHeaderWithTimezone(isoDateKey, !eventTimezone, eventTimezone);
+  }
+};
+
 export const formatMessageDateHeaderWithTimezone = (
   isoDateKey: string,
   showMyTime: boolean = true,

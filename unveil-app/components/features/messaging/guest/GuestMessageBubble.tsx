@@ -2,17 +2,19 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { formatMessageTimestamp } from '@/lib/utils/date';
+import { formatBubbleTimeOnly, hasDateMismatch } from '@/lib/utils/date';
 import type { GuestMessage } from '@/lib/utils/messageUtils';
 
 interface GuestMessageBubbleProps {
   message: GuestMessage;
   className?: string;
+  eventTimezone?: string | null;
 }
 
 export function GuestMessageBubble({
   message,
   className,
+  eventTimezone,
 }: GuestMessageBubbleProps) {
   const isOwnMessage = message.is_own_message;
   const isCatchup = message.is_catchup || false;
@@ -60,8 +62,16 @@ export function GuestMessageBubble({
     }
   };
 
+  // Create accessibility label
+  const timeLabel = formatBubbleTimeOnly(message.created_at);
+  const ariaLabel = `${message.sender_name}. ${getMessageTypeLabel()}. ${timeLabel}. ${message.content}`;
+
   return (
-    <div className={cn('flex flex-col gap-1', className)}>
+    <div 
+      className={cn('flex flex-col gap-1', className)}
+      role="article"
+      aria-label={ariaLabel}
+    >
       {/* Sender info with message type badge */}
       <div
         className={cn(
@@ -106,24 +116,34 @@ export function GuestMessageBubble({
       >
         <div
           className={cn(
-            'max-w-[80%] rounded-2xl px-4 py-3 transition-all duration-200',
+            'max-w-[82%] md:max-w-[70%] rounded-2xl p-3 md:p-4 shadow-sm transition-all duration-200',
             getMessageTypeStyle(),
             isOwnMessage ? 'rounded-br-md' : 'rounded-bl-md',
           )}
         >
           {/* Message content */}
-          <div className="text-sm leading-relaxed whitespace-pre-wrap">
+          <div className="text-sm leading-relaxed whitespace-pre-wrap [overflow-wrap:anywhere]">
             {message.content}
           </div>
 
-          {/* Timestamp and source info */}
+          {/* Timestamp row */}
           <div
             className={cn(
-              'text-xs mt-2 opacity-70 flex items-center gap-2',
+              'mt-1 text-xs text-muted-foreground flex items-center gap-1',
               isOwnMessage ? 'justify-end' : 'justify-start',
             )}
           >
-            <span>{formatMessageTimestamp(message.created_at)}</span>
+            <>
+              <span>{formatBubbleTimeOnly(message.created_at)}</span>
+              {hasDateMismatch(message.created_at, eventTimezone) && (
+                <span 
+                  className="text-amber-600"
+                  title="Local date differs from event timezone"
+                >
+                  *
+                </span>
+              )}
+            </>
 
             {/* Development: Show source info */}
             {process.env.NODE_ENV === 'development' && message.source && (
