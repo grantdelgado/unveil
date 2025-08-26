@@ -32,11 +32,10 @@ class SubscriptionPool {
   // TODO: FUTURE REFACTOR - This class should be updated to use SubscriptionProvider
   // Currently uses legacy singleton for backward compatibility
   private getManagerInstance() {
-    // Import here to avoid circular dependencies
-    const {
-      getSubscriptionManager,
-    } = require('@/lib/realtime/SubscriptionManager');
-    return getSubscriptionManager();
+    // This method is deprecated and should not be used
+    // The pool system should be refactored to use the hook-based approach
+    logger.warn('SubscriptionPool.getManagerInstance() is deprecated - refactor needed');
+    return null;
   }
 
   private getPoolKey(table: string, eventId?: string, filter?: string): string {
@@ -105,11 +104,10 @@ class SubscriptionPool {
       this.pools.set(poolKey, pool);
 
       // Create the shared subscription - this needs to be handled differently since it's in a class
-      // For now, we'll use the legacy method but this should be refactored
-      const unsubscribe = this.getManagerInstance().subscribe(
-        sharedSubscriptionId,
-        pool.config,
-      );
+      // For now, we'll skip the pooled subscription and let individual subscriptions handle it
+      // TODO: Refactor this to use the hook-based approach properly
+      logger.warn('Pooled subscriptions temporarily disabled - using individual subscriptions');
+      const unsubscribe = () => {}; // No-op cleanup
 
       // Store unsubscribe function for cleanup
       (pool as any).unsubscribe = unsubscribe;
@@ -444,7 +442,6 @@ export function useRealtimeSubscription({
     if (!enabled || !subscriptionId) return;
 
     // Check if we're already reconnecting
-    const { manager } = useSubscriptionManager();
     if (!manager) return;
     const stats = manager.getStats();
     if (stats.connectionState === 'connecting') {
