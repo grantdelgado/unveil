@@ -119,6 +119,14 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
       );
 
       if (rpcError) {
+        // Log the full error for debugging (no PII)
+        logger.error('RPC error details', {
+          code: rpcError.code,
+          message: rpcError.message,
+          details: rpcError.details,
+          hint: rpcError.hint,
+        });
+
         // Handle specific error cases with user-friendly messages
         if (
           rpcError.message?.includes('User has been removed from this event')
@@ -128,6 +136,17 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
           rpcError.message?.includes('User is not a guest of this event')
         ) {
           throw new Error('Access denied: You are not a guest of this event');
+        } else if (
+          rpcError.message?.includes('structure of query does not match') ||
+          rpcError.code === 'PGRST116'
+        ) {
+          // Handle RPC schema mismatch errors gracefully
+          logger.error('RPC schema mismatch detected', {
+            eventId,
+            userId,
+            errorCode: rpcError.code,
+          });
+          throw new Error('Unable to load messages — Please try refreshing the page');
         } else {
           throw new Error(`Failed to fetch messages: ${rpcError.message}`);
         }
