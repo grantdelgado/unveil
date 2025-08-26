@@ -78,11 +78,12 @@ export function useMessages(eventId?: string): UseMessagesReturn {
       return data;
     },
     enabled: !!eventId,
-    // Hotfix: Align React Query settings to prevent refetch loops
-    refetchOnWindowFocus: false,
-    refetchInterval: false,
-    refetchOnReconnect: false, // Disable reconnect refetch to prevent flicker
-    staleTime: 60000, // 1 minute
+    // Instant freshness settings for messages
+    staleTime: 0, // Always consider stale for immediate updates
+    refetchOnWindowFocus: true, // Enable for immediate freshness
+    refetchOnMount: 'always', // Always refetch on mount
+    refetchOnReconnect: true, // Refetch when reconnecting
+    refetchInterval: typeof window !== 'undefined' && document.visibilityState === 'visible' ? 15000 : false, // 15s when focused
   });
 
   // Get scheduled messages
@@ -110,11 +111,12 @@ export function useMessages(eventId?: string): UseMessagesReturn {
       return data;
     },
     enabled: !!eventId,
-    // Hotfix: Align React Query settings to prevent refetch loops
-    refetchOnWindowFocus: false,
-    refetchInterval: false,
-    refetchOnReconnect: false, // Disable reconnect refetch to prevent flicker
-    staleTime: 60000, // 1 minute
+    // Instant freshness settings for scheduled messages
+    staleTime: 0, // Always consider stale for immediate updates
+    refetchOnWindowFocus: true, // Enable for immediate freshness
+    refetchOnMount: 'always', // Always refetch on mount
+    refetchOnReconnect: true, // Refetch when reconnecting
+    refetchInterval: typeof window !== 'undefined' && document.visibilityState === 'visible' ? 15000 : false, // 15s when focused
   });
 
   // Send message mutation
@@ -227,9 +229,18 @@ export function useMessages(eventId?: string): UseMessagesReturn {
 
   const refreshMessages = useCallback(
     async (eventId: string): Promise<void> => {
+      // Invalidate all message-related queries with consistent keys
       await queryClient.invalidateQueries({ queryKey: ['messages', eventId] });
       await queryClient.invalidateQueries({
         queryKey: ['scheduled-messages', eventId],
+      });
+      // Also invalidate queries with filters (from useScheduledMessagesQuery)
+      await queryClient.invalidateQueries({
+        queryKey: ['scheduled-messages'],
+        predicate: (query) => {
+          const [table, id] = query.queryKey;
+          return table === 'scheduled-messages' && id === eventId;
+        }
       });
     },
     [queryClient],

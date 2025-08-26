@@ -60,7 +60,10 @@ export function useScheduledMessagesQuery({
         ...filters,
       };
 
+      const fetchStart = performance.now();
       const result = await getScheduledMessages(messageFilters);
+      const fetchEnd = performance.now();
+      
       if (!result.success) {
         throw new Error(
           result.error instanceof Error
@@ -69,15 +72,27 @@ export function useScheduledMessagesQuery({
         );
       }
 
+      // Dev observability - log fetch performance
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[useScheduledMessagesQuery] Fetch completed:', {
+          phase: 'fetch',
+          freshMs: Math.round(fetchEnd - fetchStart),
+          from: 'query',
+          count: result.data?.length || 0,
+          eventId
+        });
+      }
+
       return result.data || [];
     },
     enabled: !!eventId && enabled,
-    // Hotfix: Align React Query settings to prevent refetch loops
-    staleTime: 60000, // 1 minute - aligned with useMessages
+    // Instant freshness settings for scheduled messages
+    staleTime: 0, // Always consider stale for immediate updates
     gcTime: 1000 * 60 * 10, // 10 minutes
-    refetchOnWindowFocus: false, // Disabled to prevent refetch loops
-    refetchInterval: false, // Disabled - let realtime handle freshness
-    refetchIntervalInBackground: false, // Only when tab is active
+    refetchOnWindowFocus: true, // Enable for immediate freshness
+    refetchOnMount: 'always', // Always refetch on mount
+    refetchOnReconnect: true, // Refetch when reconnecting
+    refetchInterval: typeof window !== 'undefined' && document.visibilityState === 'visible' ? 15000 : false, // 15s when focused
     retry: (failureCount, error) => {
       // Only retry on network errors
       if (error instanceof Error && error.message.includes('permission')) {

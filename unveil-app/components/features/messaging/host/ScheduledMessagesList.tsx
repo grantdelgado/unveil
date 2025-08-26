@@ -301,7 +301,7 @@ export function ScheduledMessagesList({
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-gray-500">
                         <div>
                           <span className="font-medium">Recipients:</span>{' '}
-                          {message.recipient_count || 0}
+                          {message.recipient_count && message.recipient_count > 0 ? message.recipient_count : 'TBD'}
                         </div>
                         <div>
                           <span className="font-medium">Delivery:</span>{' '}
@@ -407,9 +407,12 @@ export function ScheduledMessagesList({
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-gray-500">
                         <div>
                           <span className="font-medium">Recipients:</span>{' '}
-                          {message.recipient_count || 0}
+                          {message.status === 'scheduled' 
+                            ? (message.recipient_count && message.recipient_count > 0 ? message.recipient_count : 'TBD')
+                            : (message.recipient_count || 0)
+                          }
                           {message.status === 'sent' &&
-                            message.success_count !== undefined && (
+                            message.success_count !== undefined && message.success_count !== null && message.success_count > 0 && (
                               <span className="text-green-600 ml-1">
                                 ({message.success_count} delivered)
                               </span>

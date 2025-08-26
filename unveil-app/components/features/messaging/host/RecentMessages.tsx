@@ -123,6 +123,11 @@ function UpcomingMessageCard({ message, showMyTime, eventTimezone, onCancel, onM
                 {message.recipient_count} {message.recipient_count === 1 ? 'person' : 'people'}
               </span>
             )}
+            {message.type === 'scheduled' && (!message.recipient_count || message.recipient_count === 0) && (
+              <span className="text-gray-500">
+                Recipients TBD
+              </span>
+            )}
           </div>
         </div>
 

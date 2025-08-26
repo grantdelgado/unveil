@@ -73,8 +73,17 @@ export function MessageCenter({
   };
 
   const handleMessageScheduled = async () => {
-    // Refresh messages after scheduling
+    // Refresh messages after scheduling with proper invalidation
     await refreshMessages(eventId);
+    
+    // Dev observability - log invalidation success
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[MessageCenter] Schedule success invalidation:', {
+        phase: 'schedule:success',
+        invalidateKeys: ['messages', 'scheduled-messages'],
+        eventId
+      });
+    }
   };
 
   const handleModifyMessage = (message: ScheduledMessage) => {

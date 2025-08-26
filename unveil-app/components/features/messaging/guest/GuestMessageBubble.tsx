@@ -129,33 +129,17 @@ export function GuestMessageBubble({
           {/* Timestamp row */}
           <div
             className={cn(
-              'mt-1 text-xs text-muted-foreground flex items-center gap-1',
-              isOwnMessage ? 'justify-end' : 'justify-start',
+              'mt-1 text-xs text-muted-foreground',
+              isOwnMessage ? 'text-right' : 'text-left',
             )}
           >
-            <>
-              <span>{formatBubbleTimeOnly(message.created_at)}</span>
-              {hasDateMismatch(message.created_at, eventTimezone) && (
-                <span 
-                  className="text-amber-600"
-                  title="Local date differs from event timezone"
-                >
-                  *
-                </span>
-              )}
-            </>
-
-            {/* Development: Show source info */}
-            {process.env.NODE_ENV === 'development' && message.source && (
-              <span
-                className={cn(
-                  'px-1.5 py-0.5 rounded text-xs font-mono',
-                  message.source === 'delivery'
-                    ? 'bg-green-200 text-green-800'
-                    : 'bg-blue-200 text-blue-800',
-                )}
+            <span>{formatBubbleTimeOnly(message.created_at)}</span>
+            {hasDateMismatch(message.created_at, eventTimezone) && (
+              <span 
+                className="text-amber-600 ml-1"
+                title="Local date differs from event timezone"
               >
-                {message.source}
+                *
               </span>
             )}
           </div>
