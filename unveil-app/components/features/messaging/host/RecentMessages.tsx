@@ -360,6 +360,8 @@ export function RecentMessages({
     autoRefresh: false, // Hotfix: disable auto-refresh, rely on realtime
     realTimeUpdates: !propScheduledMessages // Disable if we have props
   });
+
+
   
   // Use prop scheduled messages if available, otherwise use hook
   const scheduledMessages = propScheduledMessages || hookScheduledMessages;
