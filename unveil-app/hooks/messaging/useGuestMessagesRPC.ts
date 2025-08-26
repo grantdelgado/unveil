@@ -63,7 +63,7 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
   // Enhanced de-duplication with Map keyed by eventId:userId:version
   const fetchInProgressMap = useRef<Map<string, boolean>>(new Map());
   const { user } = useAuth();
-  const { version } = useSubscriptionManager();
+  const { version, manager } = useSubscriptionManager();
 
   /**
    * Fetch initial window of recent messages using RPC (with deduplication)
@@ -161,8 +161,13 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
       // Map RPC response to GuestMessage type with safe type adapter
       const adaptedMessages = messagesToShow.map(mapRpcMessageToGuestMessage);
       
+      // Deduplicate messages by message_id (in case RPC returns duplicates from multiple UNION branches)
+      const deduplicatedMessages = adaptedMessages.filter((message, index, array) => 
+        array.findIndex(m => m.message_id === message.message_id) === index
+      );
+      
       // Reverse to show chronological order (oldest first)
-      const sortedMessages = adaptedMessages.reverse();
+      const sortedMessages = deduplicatedMessages.reverse();
 
       setMessages(sortedMessages);
       setHasMore(hasMoreMessages);
@@ -497,11 +502,12 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
           return;
         }
 
-        // Import the subscription manager
-        const { getSubscriptionManager } = await import(
-          '@/lib/realtime/SubscriptionManager'
-        );
-        const subscriptionManager = getSubscriptionManager();
+        // Use the subscription manager from the hook
+        if (!manager) {
+          logger.warn('Subscription manager not available, skipping realtime setup');
+          return;
+        }
+        const subscriptionManager = manager;
 
         // 🚀 PRIMARY SUBSCRIPTION: All messages for this event (instant broadcast delivery)
         messagesEventUnsubscribe = subscriptionManager.subscribe(
@@ -511,7 +517,7 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
             event: 'INSERT',
             schema: 'public',
             filter: `event_id=eq.${eventId}`,
-            callback: async (payload) => {
+            callback: async (payload: any) => {
               if (!isCleanedUp && payload.new) {
                 // 🔍 DIAGNOSTIC: Message created timestamp
                 const messageCreatedAt = (payload.new as any).created_at;
@@ -551,7 +557,7 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
                 });
               }
             },
-            onError: (error) => {
+            onError: (error: any) => {
               if (!isCleanedUp) {
                 logger.error('Guest messages event subscription error', {
                   error,
@@ -577,7 +583,7 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
             schema: 'public',
             filter: `user_id=eq.${user.id}`,
             callback: handleRealtimeUpdate,
-            onError: (error) => {
+            onError: (error: any) => {
               if (!isCleanedUp) {
                 logger.error('Guest message deliveries subscription error', {
                   error,
@@ -602,7 +608,7 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
             event: 'INSERT',
             schema: 'public',
             filter: `sender_user_id=eq.${user.id}`,
-            callback: (payload) => {
+            callback: (payload: any) => {
               // Only trigger update if the message is for this event
               if (
                 payload.new &&
@@ -612,7 +618,7 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
                 handleRealtimeUpdate(payload);
               }
             },
-            onError: (error) => {
+            onError: (error: any) => {
               if (!isCleanedUp) {
                 logger.error('Guest sent messages subscription error', {
                   error,
