@@ -105,61 +105,33 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
         throw new Error('Authentication required');
       }
 
-      // Verify user is a guest of this event
-      const { data: guestCheck, error: guestError } = await supabase
-        .from('event_guests')
-        .select('id, removed_at, guest_name')
-        .eq('event_id', eventId)
-        .eq('user_id', user.id)
-        .single();
+      // Guest verification is handled by the RPC function
 
-      if (guestError || !guestCheck) {
-        throw new Error('Access denied: You are not a guest of this event');
-      }
-
-      if (guestCheck.removed_at) {
-        throw new Error('You are no longer a guest of this event');
-      }
-
-      // Get messages delivered to this user
-      // Note: Removed .eq('user_id', user.id) filter to let RLS handle access control
-      // RLS policy uses can_access_event() which handles both user_id and phone-based access
-      const { data: deliveries, error: deliveryError } = await supabase
-        .from('message_deliveries')
-        .select(
-          `
-          sms_status,
-          message:messages!message_deliveries_message_id_fkey (
-            id,
-            content,
-            created_at,
-            message_type,
-            event_id,
-            sender_user_id,
-            sender:users!messages_sender_user_id_fkey(full_name, avatar_url)
-          )
-        `,
-        )
-        .order('created_at', { ascending: false })
-        .limit(INITIAL_WINDOW_SIZE + 1);
-
-      if (deliveryError) throw deliveryError;
-
-      // Filter to only this event and transform to expected format
-      const eventDeliveries = (deliveries || []).filter(
-        (d) => d.message?.event_id === eventId,
+      // Use RPC function to get all messages (announcements + deliveries + own messages)
+      // This ensures new guests see historical announcements
+      const { data, error: rpcError } = await supabase.rpc(
+        'get_guest_event_messages',
+        {
+          p_event_id: eventId,
+          p_limit: INITIAL_WINDOW_SIZE + 1,
+          p_before: undefined,
+        },
       );
 
-      const data = eventDeliveries.map((delivery) => ({
-        message_id: delivery.message!.id,
-        content: delivery.message!.content,
-        created_at: delivery.message!.created_at || new Date().toISOString(),
-        delivery_status: delivery.sms_status || 'delivered',
-        sender_name: delivery.message!.sender?.full_name || 'Host',
-        sender_avatar_url: delivery.message!.sender?.avatar_url || '',
-        message_type: delivery.message!.message_type || 'direct',
-        is_own_message: false,
-      }));
+      if (rpcError) {
+        // Handle specific error cases with user-friendly messages
+        if (
+          rpcError.message?.includes('User has been removed from this event')
+        ) {
+          throw new Error('You are no longer a guest of this event');
+        } else if (
+          rpcError.message?.includes('User is not a guest of this event')
+        ) {
+          throw new Error('Access denied: You are not a guest of this event');
+        } else {
+          throw new Error(`Failed to fetch messages: ${rpcError.message}`);
+        }
+      }
 
       const messagesArray = Array.isArray(data) ? data : [];
       const hasMoreMessages = messagesArray.length > INITIAL_WINDOW_SIZE;
