@@ -24,11 +24,13 @@ export interface GuestMessage {
  *
  * @param existingMessages Current messages array (chronological order - oldest first)
  * @param newMessages New messages to merge in
+ * @param trustRpcOrder If true, don't re-sort - trust that RPC provides stable order
  * @returns Merged and deduplicated array maintaining chronological order
  */
 export function mergeMessages(
   existingMessages: GuestMessage[],
   newMessages: GuestMessage[],
+  trustRpcOrder: boolean = false,
 ): GuestMessage[] {
   if (newMessages.length === 0) {
     return existingMessages;
@@ -46,6 +48,13 @@ export function mergeMessages(
     return existingMessages;
   }
 
+  if (trustRpcOrder) {
+    // V2: Trust RPC stable ordering - just prepend/append without re-sorting
+    // For pagination: prepend older messages, append newer messages
+    return [...uniqueNewMessages, ...existingMessages];
+  }
+
+  // V1: Legacy client-side sorting
   // Combine all messages and sort by created_at (stable sort)
   const allMessages = [...existingMessages, ...uniqueNewMessages];
 

@@ -429,6 +429,7 @@ export default function GuestEventHomePage() {
                   eventId={eventId}
                   currentUserId={currentUserId}
                   guestId={guestInfo?.id || currentUserId || ''}
+                  eventTimezone={event?.time_zone || null}
                 />
               </CardContainer>
             </div>

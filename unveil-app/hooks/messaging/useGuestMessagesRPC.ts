@@ -109,8 +109,13 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
 
       // Use RPC function to get all messages (announcements + deliveries + own messages)
       // This ensures new guests see historical announcements
+      logger.info('Fetching guest messages via RPC v2', {
+        eventId,
+        windowSize: INITIAL_WINDOW_SIZE,
+      });
+
       const { data, error: rpcError } = await supabase.rpc(
-        'get_guest_event_messages',
+        'get_guest_event_messages_v2',
         {
           p_event_id: eventId,
           p_limit: INITIAL_WINDOW_SIZE + 1,
@@ -166,8 +171,15 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
         array.findIndex(m => m.message_id === message.message_id) === index
       );
       
-      // Reverse to show chronological order (oldest first)
+      // V2: Trust RPC stable ordering (created_at DESC, id DESC) - reverse to oldest first for UI
       const sortedMessages = deduplicatedMessages.reverse();
+      
+      logger.info('Using stable RPC ordering (v2)', {
+        eventId,
+        count: deduplicatedMessages.length,
+        firstMessage: deduplicatedMessages[0]?.created_at,
+        lastMessage: deduplicatedMessages[deduplicatedMessages.length - 1]?.created_at,
+      });
 
       setMessages(sortedMessages);
       setHasMore(hasMoreMessages);
@@ -196,10 +208,12 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
           .length,
       };
 
-      logger.info('Successfully fetched guest messages via V2', {
+      logger.info('Successfully fetched guest messages', {
         eventId,
         count: sortedMessages.length,
         hasMore: hasMoreMessages,
+        firstMessageCreatedAt: sortedMessages[0]?.created_at,
+        lastMessageCreatedAt: sortedMessages[sortedMessages.length - 1]?.created_at,
         sourceBreakdown,
       });
     } catch (err) {
@@ -289,14 +303,14 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
       setIsFetchingOlder(true);
       setError(null);
 
-      logger.info('Fetching older guest messages via RPC', {
+      logger.info('Fetching older guest messages via RPC v2', {
         eventId,
         before: oldestMessageCursor,
         paginationKey,
       });
 
       const { data, error: rpcError } = await supabase.rpc(
-        'get_guest_event_messages',
+        'get_guest_event_messages_v2',
         {
           p_event_id: eventId,
           p_limit: OLDER_MESSAGES_BATCH_SIZE + 1,
@@ -335,14 +349,10 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
         // Reverse to chronological order and prepend to existing messages
         const sortedOlderMessages = adaptedMessages.reverse();
 
-        // Deduplicate by ID to prevent duplicates during realtime updates
-        setMessages((prevMessages) => {
-          const existingIds = new Set(prevMessages.map((m) => m.message_id));
-          const newMessages = sortedOlderMessages.filter(
-            (m) => !existingIds.has(m.message_id),
-          );
-          return [...newMessages, ...prevMessages];
-        });
+        // Use merge function with stable ordering (always true for v2)
+        setMessages((prevMessages) => 
+          mergeMessages(prevMessages, sortedOlderMessages, true)
+        );
 
         // Update cursor for next batch
         const newOldestMessage = sortedOlderMessages[0];
@@ -443,7 +453,7 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
 
           // Use intelligent merge (may be duplicate if fast-path already handled it)
           setMessages((prevMessages) =>
-            mergeMessages(prevMessages, [newMessage]),
+            mergeMessages(prevMessages, [newMessage], true),
           );
 
           const mergeEndTime = performance.now();
@@ -548,7 +558,7 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
 
                 // Merge immediately for instant rendering
                 setMessages((prevMessages) =>
-                  mergeMessages(prevMessages, [fastMessage]),
+                  mergeMessages(prevMessages, [fastMessage], true),
                 );
 
                 logger.info('✅ Fast-path message rendered', {

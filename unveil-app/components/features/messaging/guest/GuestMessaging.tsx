@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { EmptyState, LoadingSpinner } from '@/components/ui';
 import { GuestMessageBubble } from './GuestMessageBubble';
 // Note: Guest messaging functionality simplified - using useMessages hook instead
@@ -10,6 +10,7 @@ import { MessageCircle, ChevronDown } from 'lucide-react';
 // MVP: Logger removed - no error handling needed for read-only component
 import { useGuestMessagesRPC } from '@/hooks/messaging/useGuestMessagesRPC';
 import { useGuestSMSStatus } from '@/hooks/messaging/useGuestSMSStatus';
+import { groupMessagesByDateWithTimezone, formatMessageDateHeaderWithTimezone } from '@/lib/utils/date';
 
 // Types - using hook's MessageWithDelivery type directly
 
@@ -17,12 +18,14 @@ interface GuestMessagingProps {
   eventId: string;
   currentUserId: string | null;
   guestId: string;
+  eventTimezone?: string | null;
 }
 
 export function GuestMessaging({
   eventId,
   currentUserId,
   guestId,
+  eventTimezone,
 }: GuestMessagingProps) {
   // Use enhanced guest messaging hook with pagination
   const {
@@ -122,6 +125,21 @@ export function GuestMessaging({
 
   // Accessibility state
   const [ariaLiveMessage, setAriaLiveMessage] = useState<string>('');
+
+  // Date grouping for messages (always enabled in v2)
+  const messageGroups = useMemo(() => {
+    // Transform messages to match the expected interface for date grouping
+    const messagesForGrouping = messages.map(msg => ({
+      ...msg,
+      id: msg.message_id, // Map message_id to id for the date utility
+    }));
+    // Use event timezone if available, otherwise fall back to local time
+    return groupMessagesByDateWithTimezone(
+      messagesForGrouping, 
+      !eventTimezone, // showMyTime: false if we have event timezone, true otherwise
+      eventTimezone
+    );
+  }, [messages, eventTimezone]);
 
   /**
    * Check if user is at the bottom of the scroll container
@@ -363,13 +381,37 @@ export function GuestMessaging({
             </div>
           )}
 
-          {messages.map((message) => (
-            <GuestMessageBubble
-              key={message.message_id}
-              message={message}
-              className="animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
-            />
-          ))}
+          {/* Render messages with date chunking */}
+          {Object.entries(messageGroups)
+            .sort(([a], [b]) => a.localeCompare(b)) // Sort dates chronologically (oldest first)
+            .map(([dateKey, dayMessages]) => (
+              <div key={dateKey}>
+                {/* Date header */}
+                <div className="text-center py-3 text-sm text-stone-500 font-medium">
+                  <div className="inline-block px-3 py-1 bg-stone-100 rounded-full">
+                    {formatMessageDateHeaderWithTimezone(
+                      dateKey,
+                      !eventTimezone, // showMyTime: false if we have event timezone, true otherwise
+                      eventTimezone
+                    )}
+                  </div>
+                </div>
+                {/* Messages for this date */}
+                {dayMessages.map((message) => {
+                  // Find the original message object from the messages array
+                  const originalMessage = messages.find(m => m.message_id === message.id);
+                  if (!originalMessage) return null;
+                  
+                  return (
+                    <GuestMessageBubble
+                      key={originalMessage.message_id}
+                      message={originalMessage}
+                      className="animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
+                    />
+                  );
+                })}
+              </div>
+            ))}
 
           {/* Auto-scroll anchor */}
           <div ref={messagesEndRef} />

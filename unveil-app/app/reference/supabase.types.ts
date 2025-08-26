@@ -445,6 +445,8 @@ export type Database = {
           target_guest_ids: string[] | null
           target_guest_tags: string[] | null
           target_sub_event_ids: string[] | null
+          trigger_ref_id: string | null
+          trigger_source: string | null
           updated_at: string | null
           version: number | null
         }
@@ -474,6 +476,8 @@ export type Database = {
           target_guest_ids?: string[] | null
           target_guest_tags?: string[] | null
           target_sub_event_ids?: string[] | null
+          trigger_ref_id?: string | null
+          trigger_source?: string | null
           updated_at?: string | null
           version?: number | null
         }
@@ -503,6 +507,8 @@ export type Database = {
           target_guest_ids?: string[] | null
           target_guest_tags?: string[] | null
           target_sub_event_ids?: string[] | null
+          trigger_ref_id?: string | null
+          trigger_source?: string | null
           updated_at?: string | null
           version?: number | null
         }
@@ -655,6 +661,15 @@ export type Database = {
           skipped_count: number
         }[]
       }
+      build_event_reminder_content: {
+        Args: {
+          p_event_id: string
+          p_event_timezone: string
+          p_start_at_utc: string
+          p_sub_event_title: string
+        }
+        Returns: string
+      }
       bulk_guest_auto_join: {
         Args: { p_phone?: string }
         Returns: Json
@@ -743,6 +758,10 @@ export type Database = {
           user_updated_at: string
         }[]
       }
+      get_event_reminder_status: {
+        Args: { p_event_id: string; p_timeline_id: string }
+        Returns: Json
+      }
       get_feature_flag: {
         Args: { flag_name: string }
         Returns: boolean
@@ -751,7 +770,20 @@ export type Database = {
         Args: { p_guest_name: string; p_user_full_name: string }
         Returns: string
       }
-      get_guest_event_messages: {
+      get_guest_event_messages_legacy: {
+        Args: { p_before?: string; p_event_id: string; p_limit?: number }
+        Returns: {
+          content: string
+          created_at: string
+          delivery_status: string
+          is_own_message: boolean
+          message_id: string
+          message_type: string
+          sender_avatar_url: string
+          sender_name: string
+        }[]
+      }
+      get_guest_event_messages_v1: {
         Args: { p_before?: string; p_event_id: string; p_limit?: number }
         Returns: {
           channel_tags: string[]
@@ -767,12 +799,13 @@ export type Database = {
           source: string
         }[]
       }
-      get_guest_event_messages_legacy: {
+      get_guest_event_messages_v2: {
         Args: { p_before?: string; p_event_id: string; p_limit?: number }
         Returns: {
           content: string
           created_at: string
           delivery_status: string
+          is_catchup: boolean
           is_own_message: boolean
           message_id: string
           message_type: string
@@ -878,7 +911,9 @@ export type Database = {
         Returns: boolean
       }
       guest_has_any_tags: {
-        Args: { guest_id: string; target_tags: string[] }
+        Args:
+          | { guest_id: string; target_tags: string[] }
+          | { p_event_id: string; p_user_id: string; target_tags: string[] }
         Returns: boolean
       }
       guest_rejoin_event: {
@@ -911,7 +946,7 @@ export type Database = {
         Returns: string
       }
       is_event_guest: {
-        Args: { p_event_id: string }
+        Args: { p_event_id: string } | { p_event_id: string; p_user_id: string }
         Returns: boolean
       }
       is_event_host: {
@@ -998,6 +1033,10 @@ export type Database = {
         Args: { p_guest_id: string }
         Returns: Json
       }
+      sync_event_reminder_on_time_change: {
+        Args: { p_event_id: string; p_timeline_id: string }
+        Returns: Json
+      }
       update_guest_invitation_tracking: {
         Args: { p_event_id: string; p_guest_ids: string[] }
         Returns: Json
@@ -1022,6 +1061,10 @@ export type Database = {
           p_target_guest_ids?: string[]
           p_target_guest_tags?: string[]
         }
+        Returns: Json
+      }
+      upsert_event_reminder: {
+        Args: { p_enabled: boolean; p_event_id: string; p_timeline_id: string }
         Returns: Json
       }
       upsert_message_delivery: {
