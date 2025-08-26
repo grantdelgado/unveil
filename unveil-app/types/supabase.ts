@@ -897,7 +897,9 @@ export type Database = {
         Returns: boolean
       }
       guest_has_any_tags: {
-        Args: { guest_id: string; target_tags: string[] }
+        Args:
+          | { guest_id: string; target_tags: string[] }
+          | { p_event_id: string; p_user_id: string; target_tags: string[] }
         Returns: boolean
       }
       guest_rejoin_event: {
@@ -930,7 +932,7 @@ export type Database = {
         Returns: string
       }
       is_event_guest: {
-        Args: { p_event_id: string }
+        Args: { p_event_id: string } | { p_event_id: string; p_user_id: string }
         Returns: boolean
       }
       is_event_host: {
