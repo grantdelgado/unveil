@@ -78,12 +78,12 @@ export function useMessages(eventId?: string): UseMessagesReturn {
       return data;
     },
     enabled: !!eventId,
-    // Instant freshness settings for messages
-    staleTime: 0, // Always consider stale for immediate updates
+    // Balanced freshness settings - rely on realtime for updates
+    staleTime: 30000, // 30s fresh window to reduce API calls
     refetchOnWindowFocus: true, // Enable for immediate freshness
-    refetchOnMount: 'always', // Always refetch on mount
+    refetchOnMount: true, // Refetch on mount but not 'always'
     refetchOnReconnect: true, // Refetch when reconnecting
-    refetchInterval: typeof window !== 'undefined' && document.visibilityState === 'visible' ? 15000 : false, // 15s when focused
+    refetchInterval: false, // Rely on realtime updates instead of polling
   });
 
   // Get scheduled messages
@@ -111,12 +111,12 @@ export function useMessages(eventId?: string): UseMessagesReturn {
       return data;
     },
     enabled: !!eventId,
-    // Instant freshness settings for scheduled messages
-    staleTime: 0, // Always consider stale for immediate updates
+    // Balanced freshness settings for scheduled messages
+    staleTime: 30000, // 30s fresh window to reduce API calls
     refetchOnWindowFocus: true, // Enable for immediate freshness
-    refetchOnMount: 'always', // Always refetch on mount
+    refetchOnMount: true, // Refetch on mount but not 'always'
     refetchOnReconnect: true, // Refetch when reconnecting
-    refetchInterval: typeof window !== 'undefined' && document.visibilityState === 'visible' ? 15000 : false, // 15s when focused
+    refetchInterval: false, // Rely on realtime updates instead of polling
   });
 
   // Send message mutation

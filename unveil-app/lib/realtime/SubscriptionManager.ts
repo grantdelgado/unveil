@@ -465,11 +465,18 @@ export class SubscriptionManager {
     const existing = this.subscriptions.get(subscriptionId);
     if (existing?.channel) {
       try {
-        existing.channel.unsubscribe();
-        logger.realtime(`🔌 Unsubscribing: ${subscriptionId}`);
+        // Add state check before cleanup to prevent race conditions
+        if (existing.channel.state === 'joined') {
+          existing.channel.unsubscribe();
+          logger.realtime(`🔌 Unsubscribing: ${subscriptionId}`);
+        } else {
+          logger.realtime(`🔌 Skipping unsubscribe for ${subscriptionId} (state: ${existing.channel.state})`);
+        }
       } catch (error) {
         logger.warn(`⚠️ Error during cleanup: ${subscriptionId}`, error);
       }
+      // Always remove from subscriptions map
+      this.subscriptions.delete(subscriptionId);
     }
   }
 

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { extractAuthToken, classifyRoute, logAuthDecision, createRedirectUrl } from '@/lib/middleware/auth-matcher';
 
 // Rate limiting configuration
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
@@ -104,6 +105,27 @@ export function middleware(request: NextRequest) {
   if (Math.random() < 0.01) {
     // 1% chance per request
     cleanupRateLimitStore();
+  }
+
+  // Auth protection for non-API routes
+  if (!pathname.startsWith('/api/')) {
+    const route = classifyRoute(pathname);
+    
+    if (route.requiresAuth) {
+      const token = extractAuthToken(request);
+      
+      if (!token) {
+        const redirectUrl = createRedirectUrl(request, '/login', true);
+        
+        // Debug logging (no PII)
+        logAuthDecision(pathname, route, false, 'redirect');
+        
+        return NextResponse.redirect(redirectUrl);
+      }
+      
+      // Log successful auth check
+      logAuthDecision(pathname, route, true, 'allow');
+    }
   }
 
   // Apply rate limiting to API routes

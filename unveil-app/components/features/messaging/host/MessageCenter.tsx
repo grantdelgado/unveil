@@ -25,9 +25,14 @@ export function MessageCenter({
   preselectionPreset,
   preselectedGuestIds,
 }: MessageCenterProps) {
-  const [activeView, setActiveView] = useState<'compose' | 'history'>(
-    'compose',
-  );
+  // Initialize tab state from URL parameter
+  const [activeView, setActiveView] = useState<'compose' | 'history'>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('tab') === 'history' ? 'history' : 'compose';
+    }
+    return 'compose';
+  });
   const [editingMessage, setEditingMessage] = useState<ScheduledMessage | null>(null);
 
   // Check subscription manager readiness for realtime features
@@ -70,6 +75,18 @@ export function MessageCenter({
 
   const handleClear = () => {
     // Reset any form state if needed
+  };
+
+  // Handle tab change with URL persistence
+  const handleTabChange = (tab: 'compose' | 'history') => {
+    setActiveView(tab);
+    
+    // Update URL to persist tab state
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.set('tab', tab);
+      window.history.replaceState({}, '', url.toString());
+    }
   };
 
   const handleMessageScheduled = async () => {
@@ -126,7 +143,7 @@ export function MessageCenter({
       {/* Navigation Tabs */}
       <div className="flex bg-gray-100 rounded-lg p-1">
         <button
-          onClick={() => setActiveView('compose')}
+          onClick={() => handleTabChange('compose')}
           className={cn(
             'flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors',
             activeView === 'compose'
@@ -137,7 +154,7 @@ export function MessageCenter({
           Compose Message
         </button>
         <button
-          onClick={() => setActiveView('history')}
+          onClick={() => handleTabChange('history')}
           className={cn(
             'flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors',
             activeView === 'history'
