@@ -52,12 +52,11 @@ export function MessageCenter({
   const loading = messagesLoading || guestsLoading || !subscriptionReady;
   const error = messagesError || guestsError;
 
-  // Hotfix: Dev observability - log hook registration and data state
+  // Hotfix: Dev observability - log hook registration and data state (reduced frequency)
   React.useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
       console.log('[MessageCenter] Hook state:', {
         eventId,
-        messagesData: messages,
         messagesCount: messages?.length || 0,
         messagesLoading,
         messagesError: messagesError?.message,
@@ -66,7 +65,7 @@ export function MessageCenter({
         error: error?.message
       });
     }
-  }, [eventId, messages, messagesLoading, messagesError, subscriptionReady, loading, error]);
+  }, [eventId, messages?.length, messagesLoading, messagesError?.message, subscriptionReady, loading, error?.message]); // Only log when counts/status change, not full data
 
   const handleMessageSent = async () => {
     // Refresh messages after sending

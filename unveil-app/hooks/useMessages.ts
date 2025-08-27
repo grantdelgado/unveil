@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase/client';
 import type { Database } from '@/app/reference/supabase.types';
@@ -44,6 +44,16 @@ interface UseMessagesReturn {
 export function useMessages(eventId?: string): UseMessagesReturn {
   const queryClient = useQueryClient();
 
+  // Dev telemetry: Log hook mount/unmount
+  React.useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[useMessages] Hook mounted for eventId:', eventId, 'at', new Date().toISOString());
+      return () => {
+        console.log('[useMessages] Hook unmounting for eventId:', eventId, 'at', new Date().toISOString());
+      };
+    }
+  }, [eventId]);
+
   // Get messages for event
   const {
     data: messages,
@@ -57,7 +67,7 @@ export function useMessages(eventId?: string): UseMessagesReturn {
         return [];
       }
 
-      console.log('[useMessages] Fetching messages for eventId:', eventId);
+      console.log('[useMessages] Fetching messages for eventId:', eventId, 'at', new Date().toISOString());
       const { data, error } = await supabase
         .from('messages')
         .select(
@@ -78,10 +88,10 @@ export function useMessages(eventId?: string): UseMessagesReturn {
       return data;
     },
     enabled: !!eventId,
-    // Balanced freshness settings - rely on realtime for updates
-    staleTime: 30000, // 30s fresh window to reduce API calls
-    refetchOnWindowFocus: true, // Enable for immediate freshness
-    refetchOnMount: true, // Refetch on mount but not 'always'
+    // Optimized freshness settings - reduce unnecessary refetches
+    staleTime: 60000, // 1 minute fresh window to reduce API calls
+    refetchOnWindowFocus: false, // Disable to prevent excessive refetches
+    refetchOnMount: true, // Refetch on mount but respect staleTime
     refetchOnReconnect: true, // Refetch when reconnecting
     refetchInterval: false, // Rely on realtime updates instead of polling
   });
@@ -95,7 +105,7 @@ export function useMessages(eventId?: string): UseMessagesReturn {
         return [];
       }
 
-      console.log('[useMessages] Fetching scheduled messages for eventId:', eventId);
+      console.log('[useMessages] Fetching scheduled messages for eventId:', eventId, 'at', new Date().toISOString());
       const { data, error } = await supabase
         .from('scheduled_messages')
         .select('*')
@@ -111,10 +121,10 @@ export function useMessages(eventId?: string): UseMessagesReturn {
       return data;
     },
     enabled: !!eventId,
-    // Balanced freshness settings for scheduled messages
-    staleTime: 30000, // 30s fresh window to reduce API calls
-    refetchOnWindowFocus: true, // Enable for immediate freshness
-    refetchOnMount: true, // Refetch on mount but not 'always'
+    // Optimized freshness settings for scheduled messages
+    staleTime: 60000, // 1 minute fresh window to reduce API calls
+    refetchOnWindowFocus: false, // Disable to prevent excessive refetches
+    refetchOnMount: true, // Refetch on mount but respect staleTime
     refetchOnReconnect: true, // Refetch when reconnecting
     refetchInterval: false, // Rely on realtime updates instead of polling
   });

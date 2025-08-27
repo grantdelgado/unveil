@@ -1,0 +1,317 @@
+{
+  "audit_metadata": {
+    "date": "2025-01-27",
+    "purpose": "Comprehensive audit of versioned/duplicated functions across the Unveil app and database",
+    "status": "complete",
+    "guardrails_followed": [
+      "No code modifications made",
+      "No Twilio paths touched", 
+      "No DB schema/RLS changes",
+      "No delivery semantics modified"
+    ]
+  },
+  "summary": {
+    "total_functions_analyzed": 990,
+    "versioned_functions_found": 12,
+    "db_rpcs_with_versions": 3,
+    "high_confidence_removals": 2,
+    "deprecation_candidates": 4,
+    "active_keep_functions": 6
+  },
+  "functions": [
+    {
+      "name": "get_guest_event_messages_v2",
+      "layer": "DB",
+      "file_or_schema": "public schema",
+      "current": true,
+      "version_tag": "v2",
+      "call_sites": {
+        "count": "15+",
+        "top_locations": [
+          "hooks/messaging/useGuestMessagesRPC.ts",
+          "components/features/messaging/guest/GuestMessaging.tsx",
+          "__tests__/integration/guest-messages-rpc.integration.test.ts",
+          "docs/messages-readmodel-v2/shadow-verification.ts",
+          "V2_DEFAULT_IMPLEMENTATION_COMPLETE.md"
+        ]
+      },
+      "db_dependents": {
+        "policies": 0,
+        "triggers": 0,
+        "views": 0,
+        "other_functions": 0
+      },
+      "notes": "Primary RPC function with union read model, stable ordering, tag filtering, catchup detection. Fixed deduplication logic Jan 30 2025. Optimized with dedicated indexes. SECURITY DEFINER function.",
+      "proposed_action": "Keep",
+      "confidence": "high"
+    },
+    {
+      "name": "get_guest_event_messages_v1", 
+      "layer": "DB",
+      "file_or_schema": "public schema",
+      "current": false,
+      "version_tag": "v1",
+      "call_sites": {
+        "count": 0,
+        "top_locations": []
+      },
+      "db_dependents": {
+        "policies": 0,
+        "triggers": 0,
+        "views": 0,
+        "other_functions": 0
+      },
+      "notes": "Emergency rollback function only. Kept for operational safety but not actively used. Should be removed after v2 proves stable for 6+ months.",
+      "proposed_action": "Deprecate",
+      "confidence": "high"
+    },
+    {
+      "name": "get_guest_event_messages_legacy",
+      "layer": "DB", 
+      "file_or_schema": "public schema",
+      "current": false,
+      "version_tag": "legacy",
+      "call_sites": {
+        "count": 0,
+        "top_locations": []
+      },
+      "db_dependents": {
+        "policies": 0,
+        "triggers": 0,
+        "views": 0,
+        "other_functions": 0
+      },
+      "notes": "Completely superseded by v2. Original implementation from pre-Dec 2024. No references in current codebase.",
+      "proposed_action": "Remove",
+      "confidence": "high"
+    },
+    {
+      "name": "message_delivery_rollups_v1",
+      "layer": "DB",
+      "file_or_schema": "public schema", 
+      "current": false,
+      "version_tag": "v1",
+      "call_sites": {
+        "count": 0,
+        "top_locations": []
+      },
+      "db_dependents": {
+        "policies": 0,
+        "triggers": 0,
+        "views": 0,
+        "other_functions": 1,
+        "details": ["get_message_rollups(uuid) RPC function"]
+      },
+      "notes": "View marked as unused in migration comments. Created for analytics but never adopted. Safe to remove with dependent RPC.",
+      "proposed_action": "Remove",
+      "confidence": "high"
+    },
+    {
+      "name": "useGuestMessagesRPC",
+      "layer": "FE",
+      "file_or_schema": "hooks/messaging/useGuestMessagesRPC.ts",
+      "current": true,
+      "version_tag": "current",
+      "call_sites": {
+        "count": 8,
+        "top_locations": [
+          "components/features/messaging/guest/GuestMessaging.tsx",
+          "components/features/messaging/guest/MessageBubble.tsx", 
+          "__tests__/hooks/messaging/useGuestMessagesRPC-pagination.test.ts",
+          "components/features/messaging/common/MessageThread.tsx"
+        ]
+      },
+      "db_dependents": "N/A",
+      "notes": "Current hook implementation. Always calls get_guest_event_messages_v2. Includes realtime subscriptions, pagination, error handling.",
+      "proposed_action": "Keep",
+      "confidence": "high"
+    },
+    {
+      "name": "fetchOlderMessages",
+      "layer": "FE",
+      "file_or_schema": "components/features/messaging/",
+      "current": true,
+      "version_tag": "current",
+      "call_sites": {
+        "count": 3,
+        "top_locations": [
+          "components/features/messaging/guest/GuestMessaging.tsx",
+          "components/features/messaging/common/MessageThread.tsx",
+          "hooks/messaging/useGuestMessagesRPC.ts"
+        ]
+      },
+      "db_dependents": "N/A",
+      "notes": "Current pagination implementation. Works with V2 RPC stable ordering. Proper error handling and scroll preservation.",
+      "proposed_action": "Keep", 
+      "confidence": "medium"
+    },
+    {
+      "name": "isFetchingOlder",
+      "layer": "FE",
+      "file_or_schema": "hooks/messaging/useGuestMessagesRPC.ts",
+      "current": true,
+      "version_tag": "current",
+      "call_sites": {
+        "count": 4,
+        "top_locations": [
+          "components/features/messaging/guest/GuestMessaging.tsx",
+          "hooks/messaging/useGuestMessagesRPC.ts",
+          "components/features/messaging/common/MessageThread.tsx"
+        ]
+      },
+      "db_dependents": "N/A",
+      "notes": "Loading state for pagination. Part of current useGuestMessagesRPC implementation. Essential for UX.",
+      "proposed_action": "Keep",
+      "confidence": "high"
+    },
+    {
+      "name": "handleFetchOlderMessages",
+      "layer": "FE",
+      "file_or_schema": "components/features/messaging/guest/",
+      "current": true,
+      "version_tag": "current", 
+      "call_sites": {
+        "count": 2,
+        "top_locations": [
+          "components/features/messaging/guest/GuestMessaging.tsx",
+          "components/features/messaging/common/MessageThread.tsx"
+        ]
+      },
+      "db_dependents": "N/A",
+      "notes": "Event handler for pagination with scroll preservation. Enhanced implementation with proper error handling.",
+      "proposed_action": "Keep",
+      "confidence": "high"
+    },
+    {
+      "name": "delivered_count",
+      "layer": "DB",
+      "file_or_schema": "messages table",
+      "current": false,
+      "version_tag": "legacy",
+      "call_sites": {
+        "count": 0,
+        "top_locations": []
+      },
+      "db_dependents": {
+        "policies": 0,
+        "triggers": 0,
+        "views": 0,
+        "constraints": 0
+      },
+      "notes": "Legacy analytics field marked as 'currently unused but kept for UI compatibility' in schema comments. May be safe to remove.",
+      "proposed_action": "Deprecate",
+      "confidence": "medium"
+    },
+    {
+      "name": "failed_count",
+      "layer": "DB", 
+      "file_or_schema": "messages table",
+      "current": false,
+      "version_tag": "legacy",
+      "call_sites": {
+        "count": 0,
+        "top_locations": []
+      },
+      "db_dependents": {
+        "policies": 0,
+        "triggers": 0,
+        "views": 0,
+        "constraints": 0
+      },
+      "notes": "Legacy analytics field marked as 'currently unused but kept for UI compatibility' in schema comments. May be safe to remove.",
+      "proposed_action": "Deprecate", 
+      "confidence": "medium"
+    },
+    {
+      "name": "V2_messaging_patterns",
+      "layer": "FE",
+      "file_or_schema": "Multiple files",
+      "current": true,
+      "version_tag": "v2",
+      "call_sites": {
+        "count": "20+",
+        "top_locations": [
+          "hooks/messaging/useGuestMessagesRPC.ts",
+          "components/features/messaging/guest/GuestMessaging.tsx",
+          "lib/utils/messageUtils.ts",
+          "components/features/messaging/common/MessageBubble.tsx",
+          "V2_DEFAULT_IMPLEMENTATION_COMPLETE.md"
+        ]
+      },
+      "db_dependents": "N/A",
+      "notes": "Current V2 messaging read-model patterns. Includes stable ordering, union queries, realtime integration. Well-established.",
+      "proposed_action": "Keep",
+      "confidence": "high"
+    },
+    {
+      "name": "old_test_patterns",
+      "layer": "FE",
+      "file_or_schema": "__tests__/ directory",
+      "current": false,
+      "version_tag": "v1",
+      "call_sites": {
+        "count": 3,
+        "top_locations": [
+          "__tests__/integration/guest-messages-rpc.integration.test.ts",
+          "__tests__/hooks/messaging/useGuestMessagesRPC-pagination.test.ts",
+          "__tests__/unit/message-history-cache.test.ts"
+        ]
+      },
+      "db_dependents": "N/A",
+      "notes": "Some test files reference old v1 patterns or legacy function names. Tests still pass but should be updated for consistency.",
+      "proposed_action": "Deprecate",
+      "confidence": "low"
+    }
+  ],
+  "recommendations": {
+    "immediate_removals": [
+      {
+        "name": "get_guest_event_messages_legacy",
+        "reason": "Zero active callers, completely superseded",
+        "sql": "DROP FUNCTION IF EXISTS public.get_guest_event_messages_legacy(uuid, int, timestamptz);"
+      },
+      {
+        "name": "message_delivery_rollups_v1",
+        "reason": "Marked as unused, zero callers",
+        "sql": "DROP VIEW IF EXISTS public.message_delivery_rollups_v1 CASCADE; DROP FUNCTION IF EXISTS public.get_message_rollups(uuid);"
+      }
+    ],
+    "deprecation_candidates": [
+      {
+        "name": "get_guest_event_messages_v1",
+        "timeline": "Remove after 6 months of v2 stability",
+        "reason": "Emergency rollback only, not actively used"
+      },
+      {
+        "name": "legacy_counter_fields",
+        "timeline": "Next major release",
+        "reason": "Marked as unused in schema, verify UI compatibility"
+      },
+      {
+        "name": "old_test_patterns", 
+        "timeline": "Next sprint",
+        "reason": "Update for consistency, low impact"
+      }
+    ],
+    "canonical_functions": [
+      "get_guest_event_messages_v2",
+      "useGuestMessagesRPC",
+      "V2_messaging_patterns"
+    ]
+  },
+  "risk_assessment": {
+    "low_risk": [
+      "get_guest_event_messages_legacy removal",
+      "message_delivery_rollups_v1 removal", 
+      "test pattern updates"
+    ],
+    "medium_risk": [
+      "get_guest_event_messages_v1 removal",
+      "legacy counter field cleanup"
+    ],
+    "high_risk": [
+      "get_guest_event_messages_v2 modifications",
+      "useGuestMessagesRPC interface changes"
+    ]
+  }
+}

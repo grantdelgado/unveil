@@ -106,7 +106,7 @@ describe('useGuestMessagesRPC - Pagination De-duplication', () => {
     });
 
     // Should have called RPC for older messages
-    expect(mockRpc).toHaveBeenCalledWith('get_guest_event_messages', {
+    expect(mockRpc).toHaveBeenCalledWith('get_guest_event_messages_v2', {
       p_event_id: mockEventId,
       p_limit: 21, // OLDER_MESSAGES_BATCH_SIZE + 1
       p_before: '2025-01-29T10:00:00Z',

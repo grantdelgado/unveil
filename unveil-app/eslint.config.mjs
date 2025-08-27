@@ -14,6 +14,50 @@ const eslintConfig = [
   ...compat.extends('next/core-web-vitals', 'next/typescript'),
   eslintConfigPrettier,
   {
+    // Global rules to prevent usage of deprecated patterns
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/*get_guest_event_messages_v1*'],
+              message: 'get_guest_event_messages_v1 is deprecated. Use get_guest_event_messages_v2 instead.'
+            },
+            {
+              group: ['**/*get_guest_event_messages_legacy*'],
+              message: 'get_guest_event_messages_legacy is deprecated and removed. Use get_guest_event_messages_v2 instead.'
+            },
+            {
+              group: ['**/*message_delivery_rollups_v1*'],
+              message: 'message_delivery_rollups_v1 is deprecated and removed. Use current analytics methods instead.'
+            }
+          ]
+        }
+      ],
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'CallExpression[callee.property.name="rpc"][arguments.0.value=/get_guest_event_messages_(v1|legacy)/]',
+          message: 'Direct RPC calls to deprecated get_guest_event_messages_v1 or legacy versions are not allowed. Use get_guest_event_messages_v2 instead.'
+        }
+      ]
+    }
+  },
+  {
+    // Warn about legacy analytics fields usage (existing code allowed, but discouraged)
+    files: ['**/*.ts', '**/*.tsx'],
+    rules: {
+      'no-restricted-syntax': [
+        'warn',
+        {
+          selector: 'MemberExpression[property.name=/^(delivered_count|failed_count)$/]',
+          message: 'DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.'
+        }
+      ]
+    }
+  },
+  {
     files: [
       '**/components/features/messaging/host/**/*.tsx',
       '**/lib/services/messageAnalytics.ts',

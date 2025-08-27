@@ -47,7 +47,7 @@ describe('Guest Announcements Visibility', () => {
     // Note: This test would need a valid authenticated user context
     // For now, we'll test the RPC function exists and has the right signature
     const { data: rpcResult, error: rpcError } = await supabase.rpc(
-      'get_guest_event_messages',
+      'get_guest_event_messages_v2',
       {
         p_event_id: testEventId,
         p_limit: 10,
@@ -76,7 +76,7 @@ describe('Guest Announcements Visibility', () => {
   it('should verify RPC function includes announcement source types', async () => {
     // Test that the RPC function returns the expected structure
     const { data: rpcResult, error: rpcError } = await supabase.rpc(
-      'get_guest_event_messages',
+      'get_guest_event_messages_v2',
       {
         p_event_id: testEventId,
         p_limit: 5,

@@ -80,7 +80,7 @@ export function useScheduledMessages({
       eventId,
       ...filters,
     }),
-    [eventId, filters],
+    [eventId, JSON.stringify(filters)], // Use JSON.stringify for deep comparison
   );
 
   /**
@@ -384,17 +384,19 @@ export function useScheduledMessages({
     };
   }, [eventId, realTimeUpdates, manager, version, isReady]);
 
-  // Auto-refresh interval (every 2 minutes for upcoming messages) - stabilized dependencies
+  // Auto-refresh interval (every 5 minutes for upcoming messages) - reduced frequency
   useEffect(() => {
     if (!autoRefresh) return;
 
     const interval = setInterval(() => {
-      // Check current state inside interval to avoid dependency issues
-      fetchMessages();
-    }, 120000); // 2 minutes (reduced from 30s to minimize flicker)
+      // Only refresh if there are upcoming messages to avoid unnecessary calls
+      if (scheduledMessages.some(msg => msg.status === 'scheduled' && new Date(msg.send_at) > new Date())) {
+        fetchMessages();
+      }
+    }, 300000); // 5 minutes (increased from 2 minutes to reduce API calls)
 
     return () => clearInterval(interval);
-  }, [autoRefresh, fetchMessages]); // Simplified: always refresh on interval
+  }, [autoRefresh, fetchMessages, scheduledMessages]); // Include scheduledMessages to check for upcoming
 
   // TODO(grant): Cleanup effect to mark component as unmounted for StrictMode safety
   useEffect(() => {

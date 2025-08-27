@@ -1,0 +1,344 @@
+{
+  "audit_metadata": {
+    "title": "Realtime Module — Idle/Reconnect Holistic Review",
+    "date": "2025-01-30",
+    "scope": "Realtime module stability under idle, offline, and auth refresh scenarios",
+    "risk_level": "MEDIUM",
+    "reviewer": "AI Assistant",
+    "version": "1.0"
+  },
+  "executive_summary": {
+    "overall_risk": "MEDIUM",
+    "key_strengths": [
+      "Strong architectural foundation with centralized subscription management",
+      "Comprehensive error handling and recovery mechanisms",
+      "Good telemetry and health monitoring systems",
+      "Proper auth integration with token refresh handling"
+    ],
+    "key_concerns": [
+      "Timeout storms during background/foreground transitions",
+      "Potential duplicate subscriptions during React StrictMode and HMR",
+      "JWT refresh coordination issues between auth and realtime layers",
+      "Subscription pooling disabled due to architectural mismatch"
+    ]
+  },
+  "architecture_analysis": {
+    "core_components": {
+      "SubscriptionManager": {
+        "file": "lib/realtime/SubscriptionManager.ts",
+        "status": "robust",
+        "lines_of_code": 1054,
+        "key_features": [
+          "Centralized subscription lifecycle",
+          "Exponential backoff retry logic",
+          "Health monitoring and scoring",
+          "Memory leak prevention"
+        ]
+      },
+      "SubscriptionProvider": {
+        "file": "lib/realtime/SubscriptionProvider.tsx",
+        "status": "good_auth_handling",
+        "lines_of_code": 317,
+        "key_features": [
+          "React context integration",
+          "Auth state change handling",
+          "Manager lifecycle management",
+          "Version tracking for hook dependencies"
+        ]
+      },
+      "useRealtimeSubscription": {
+        "file": "hooks/realtime/useRealtimeSubscription.ts",
+        "status": "pooling_disabled",
+        "lines_of_code": 602,
+        "key_features": [
+          "Hook-based subscription interface",
+          "Performance optimization options",
+          "Error boundary handling",
+          "Subscription pooling (currently disabled)"
+        ]
+      },
+      "RealtimeTelemetry": {
+        "file": "lib/telemetry/realtime.ts",
+        "status": "well_implemented",
+        "lines_of_code": 155,
+        "key_features": [
+          "Token refresh metrics",
+          "Manager reinit tracking",
+          "Subscribe-while-destroyed detection",
+          "Development logging"
+        ]
+      }
+    },
+    "configuration_values": {
+      "DEFAULT_TIMEOUT": {
+        "value": 30000,
+        "unit": "milliseconds",
+        "concern": "Too long for background tabs",
+        "location": "SubscriptionManager.ts:146"
+      },
+      "HEARTBEAT_INTERVAL": {
+        "value": 15000,
+        "unit": "milliseconds",
+        "status": "appropriate",
+        "location": "SubscriptionManager.ts:147"
+      },
+      "MAX_RETRIES": {
+        "value": 3,
+        "status": "reasonable",
+        "location": "SubscriptionManager.ts:148"
+      },
+      "globalReconnectCooldown": {
+        "value": 30000,
+        "unit": "milliseconds",
+        "concern": "May be too aggressive",
+        "location": "SubscriptionManager.ts:143"
+      }
+    }
+  },
+  "findings": {
+    "high_severity": [
+      {
+        "id": "H1",
+        "title": "Timeout Storm During Background/Foreground Transitions",
+        "severity": "HIGH",
+        "evidence": {
+          "file": "lib/realtime/SubscriptionManager.ts",
+          "lines": "852-866",
+          "code_snippet": "if (document.hidden) {\n  logger.realtime('📱 Tab backgrounded, maintaining minimal subscriptions');\n  // Don't destroy subscriptions, just log the state change\n} else {\n  logger.realtime('📱 Tab foregrounded, checking connection health');\n  setTimeout(() => {\n    if (stats.healthScore < 50 && stats.activeSubscriptions > 0) {\n      this.reconnectAll(); // POTENTIAL STORM\n    }\n  }, 2000);\n}"
+        },
+        "root_cause": "30-second timeout remains active during backgrounding, causing multiple timeout events when tab is inactive. No adaptive timeout based on document.hidden state.",
+        "impact": "Console noise, unnecessary reconnection attempts, potential server load",
+        "effort": "MEDIUM"
+      },
+      {
+        "id": "H2",
+        "title": "JWT Refresh Race Condition",
+        "severity": "HIGH",
+        "evidence": {
+          "files": [
+            "lib/realtime/SubscriptionProvider.tsx:70-96",
+            "lib/realtime/SubscriptionManager.ts:804-810"
+          ],
+          "description": "Dual token refresh handling between Provider and Manager can cause race conditions"
+        },
+        "root_cause": "Both SubscriptionProvider and SubscriptionManager listen for TOKEN_REFRESHED events and call supabase.realtime.setAuth() independently",
+        "impact": "Potential connection instability during token refresh cycles",
+        "effort": "MEDIUM"
+      }
+    ],
+    "medium_severity": [
+      {
+        "id": "M1",
+        "title": "Subscription Pooling Disabled",
+        "severity": "MEDIUM",
+        "evidence": {
+          "file": "hooks/realtime/useRealtimeSubscription.ts",
+          "line": 109,
+          "code_snippet": "logger.warn('Pooled subscriptions temporarily disabled - using individual subscriptions');\nconst unsubscribe = () => {}; // No-op cleanup"
+        },
+        "root_cause": "Pooling system exists but is disabled due to architectural mismatch between class-based pool and hook-based manager",
+        "impact": "Higher WebSocket connection count, reduced efficiency",
+        "effort": "LARGE"
+      },
+      {
+        "id": "M2",
+        "title": "React StrictMode Double-Mount Protection Incomplete",
+        "severity": "MEDIUM",
+        "evidence": {
+          "file": "hooks/realtime/useRealtimeSubscription.ts",
+          "lines": "334-340",
+          "code_snippet": "if (unsubscribeRef.current) {\n  logger.realtime(`⚠️ Subscription already exists for ${subscriptionId}, skipping`);\n  return;\n}"
+        },
+        "root_cause": "Protection exists but may not handle all StrictMode scenarios, particularly with component ID generation",
+        "impact": "Potential duplicate subscriptions during development",
+        "effort": "SMALL"
+      },
+      {
+        "id": "M3",
+        "title": "Global Reconnect Cooldown Too Aggressive",
+        "severity": "MEDIUM",
+        "evidence": {
+          "file": "lib/realtime/SubscriptionManager.ts",
+          "lines": "142-143",
+          "value": 30000
+        },
+        "root_cause": "30-second cooldown may be too long for legitimate reconnection needs after network changes",
+        "impact": "Delayed recovery from network issues",
+        "effort": "SMALL"
+      }
+    ],
+    "low_severity": [
+      {
+        "id": "L1",
+        "title": "Error Counter Reset Logic",
+        "severity": "LOW",
+        "evidence": {
+          "file": "lib/realtime/SubscriptionManager.ts",
+          "lines": "965-970"
+        },
+        "root_cause": "Error counters reset based on health score, but individual subscription error counts may persist",
+        "impact": "Minor inconsistency in error tracking",
+        "effort": "SMALL"
+      },
+      {
+        "id": "L2",
+        "title": "Memory Cleanup Timing",
+        "severity": "LOW",
+        "evidence": {
+          "file": "lib/realtime/SubscriptionManager.ts",
+          "lines": "1014-1021",
+          "cleanup_interval": "10 minutes"
+        },
+        "root_cause": "10-minute cleanup interval may be too long for active debugging",
+        "impact": "Minor memory usage during development",
+        "effort": "SMALL"
+      }
+    ]
+  },
+  "reproduction_scenarios": {
+    "long_tab_idle": {
+      "description": "Background tab for 30-45 minutes, then foreground",
+      "steps": [
+        "Open guest messages page",
+        "Background tab for 30-45 minutes",
+        "Foreground tab and observe console"
+      ],
+      "expected_behavior": [
+        "Single orchestrated reconnect",
+        "No timeout storms",
+        "Quick recovery"
+      ],
+      "observed_issues": [
+        "Multiple timeout warnings during background period",
+        "Potential reconnect storm on foreground",
+        "30-second timeout not adapted for background state"
+      ],
+      "console_patterns": [
+        "⏰ Subscription timeout: messages-event-123 (30000ms) - retrying connection",
+        "📱 Tab backgrounded, maintaining minimal subscriptions",
+        "📱 Tab foregrounded, checking connection health",
+        "🔄 Poor health after backgrounding, triggering reconnect"
+      ]
+    },
+    "offline_online_toggle": {
+      "description": "Toggle DevTools offline for 45-90 seconds",
+      "steps": [
+        "Open app with active subscriptions",
+        "Toggle DevTools offline for 45-90 seconds",
+        "Toggle back online",
+        "Observe reconnection behavior"
+      ],
+      "expected_behavior": [
+        "Clean offline detection",
+        "Single reconnect attempt when online",
+        "No connection storms"
+      ],
+      "observed_issues": [
+        "Multiple reconnection attempts",
+        "Potential timeout accumulation during offline period",
+        "Global cooldown may delay legitimate reconnects"
+      ]
+    },
+    "jwt_refresh_cycle": {
+      "description": "Monitor realtime stability during token refresh",
+      "steps": [
+        "Reduce JWT TTL in local environment",
+        "Wait for token refresh event",
+        "Monitor realtime connection stability"
+      ],
+      "expected_behavior": [
+        "Seamless token update",
+        "No connection interruption",
+        "Single setAuth call"
+      ],
+      "observed_issues": [
+        "Potential dual setAuth calls from Provider and Manager",
+        "Race condition between auth layers",
+        "Connection stability depends on timing"
+      ]
+    }
+  },
+  "metrics": {
+    "current_observability": {
+      "health_score": "0-100 based on connection stability",
+      "error_counts": "Total and recent error tracking",
+      "connection_times": "Average connection establishment time",
+      "subscription_details": "Per-subscription health status"
+    },
+    "telemetry_events": [
+      "realtime.token_refresh.success/fail",
+      "realtime.manager.reinit",
+      "realtime.subscribe.whileDestroyed"
+    ],
+    "missing_metrics": [
+      "Timeout frequency by visibility state",
+      "Cold reconnect success rates",
+      "JWT refresh timing correlation",
+      "Background/foreground transition metrics"
+    ]
+  },
+  "recommended_fixes": {
+    "priority_1": {
+      "title": "Adaptive Timeout Management",
+      "description": "Implement different timeout values for background vs foreground tabs",
+      "effort": "MEDIUM",
+      "files_to_modify": ["lib/realtime/SubscriptionManager.ts"],
+      "key_changes": [
+        "Add getAdaptiveTimeout() method",
+        "Suppress timeout logging during background",
+        "Single health check on foreground"
+      ]
+    },
+    "priority_2": {
+      "title": "JWT Refresh Coordination",
+      "description": "Centralize token refresh handling to prevent race conditions",
+      "effort": "MEDIUM",
+      "files_to_modify": [
+        "lib/realtime/SubscriptionProvider.tsx",
+        "lib/realtime/SubscriptionManager.ts"
+      ],
+      "key_changes": [
+        "Single point of token refresh in Provider",
+        "Remove duplicate handling in Manager",
+        "Add coordination mechanism"
+      ]
+    },
+    "priority_3": {
+      "title": "Cold Reconnect After Failures",
+      "description": "Implement circuit breaker pattern for severe connection issues",
+      "effort": "LARGE",
+      "files_to_modify": ["lib/realtime/SubscriptionManager.ts"],
+      "key_changes": [
+        "Add consecutive failure tracking",
+        "Implement client destruction/recreation",
+        "Add JWT refresh during cold reconnect"
+      ]
+    },
+    "priority_4": {
+      "title": "Subscription Deduplication",
+      "description": "Enhanced deduplication for React StrictMode scenarios",
+      "effort": "SMALL",
+      "files_to_modify": ["hooks/realtime/useRealtimeSubscription.ts"],
+      "key_changes": [
+        "Improve subscription key generation",
+        "Add StrictMode-specific guards",
+        "Enhance component ID stability"
+      ]
+    }
+  },
+  "non_goals_confirmed": [
+    "Twilio Integration: No changes to SMS delivery path",
+    "Direct Exposure: Message read-model remains abstracted",
+    "RLS Modifications: Database security policies untouched",
+    "Delivery Backfill: No historical message delivery changes"
+  ],
+  "acceptance_criteria": {
+    "architecture_mapped": true,
+    "error_patterns_identified": true,
+    "auth_integration_verified": true,
+    "reproduction_scenarios_documented": true,
+    "severity_assessment_completed": true,
+    "fix_recommendations_provided": true,
+    "observability_reviewed": true
+  }
+}

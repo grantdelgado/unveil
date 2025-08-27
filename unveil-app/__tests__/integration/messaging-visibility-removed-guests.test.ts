@@ -156,8 +156,8 @@ describe('Messaging Visibility - Removed Guests', () => {
     });
 
     it('should allow active guest to access messages via RPC if available', async () => {
-      // Test get_guest_event_messages RPC if it exists
-      const { data, error } = await supabase.rpc('get_guest_event_messages', {
+      // Test get_guest_event_messages_v2 RPC
+      const { data, error } = await supabase.rpc('get_guest_event_messages_v2', {
         p_event_id: testEventId,
         p_limit: 10,
       });

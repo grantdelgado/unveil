@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { 
   groupMessagesByDateWithTimezone, 
@@ -360,11 +360,11 @@ export function RecentMessages({
     scheduledMessages: hookScheduledMessages,
     loading: scheduledLoading,
     cancelScheduledMessage,
-  } = useScheduledMessages({ 
+  } = useScheduledMessages(useMemo(() => ({ 
     eventId,
     autoRefresh: false, // Hotfix: disable auto-refresh, rely on realtime
     realTimeUpdates: !propScheduledMessages // Disable if we have props
-  });
+  }), [eventId, propScheduledMessages]));
 
 
   

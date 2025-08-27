@@ -1,5 +1,6 @@
 /**
- * Database test for stable ordering in get_guest_event_messages RPC
+ * Database test for stable ordering in get_guest_event_messages_v2 RPC
+ * Updated: 2025-08-27 - Aligned with V2 patterns per versioned functions cleanup
  *
  * Tests that messages with identical created_at timestamps maintain
  * stable order across page boundaries using id DESC as tie-breaker
@@ -13,7 +14,7 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 const supabase = createClient<Database>(supabaseUrl, supabaseServiceKey);
 
-describe('get_guest_event_messages - Stable Ordering', () => {
+describe('get_guest_event_messages_v2 - Stable Ordering', () => {
   let testEventId: string;
   let testUserId: string;
   let testGuestId: string;
@@ -147,7 +148,7 @@ describe('get_guest_event_messages - Stable Ordering', () => {
 
     // Test 1: Fetch all messages (page 1)
     const { data: page1Results, error: page1Error } = await supabase.rpc(
-      'get_guest_event_messages',
+      'get_guest_event_messages_v2',
       {
         p_event_id: testEventId,
         p_limit: 10,
@@ -160,7 +161,7 @@ describe('get_guest_event_messages - Stable Ordering', () => {
     // Test 2: Fetch with pagination (using first message as cursor)
     const firstMessageTimestamp = page1Results[0]?.created_at;
     const { data: page2Results, error: page2Error } = await supabase.rpc(
-      'get_guest_event_messages',
+      'get_guest_event_messages_v2',
       {
         p_event_id: testEventId,
         p_limit: 10,
@@ -191,7 +192,7 @@ describe('get_guest_event_messages - Stable Ordering', () => {
 
     // Test 3: Multiple fetches should return identical order
     const { data: repeatResults, error: repeatError } = await supabase.rpc(
-      'get_guest_event_messages',
+      'get_guest_event_messages_v2',
       {
         p_event_id: testEventId,
         p_limit: 10,
@@ -253,7 +254,7 @@ describe('get_guest_event_messages - Stable Ordering', () => {
 
     // Fetch first 3 messages
     const { data: firstBatch, error: firstError } = await supabase.rpc(
-      'get_guest_event_messages',
+      'get_guest_event_messages_v2',
       {
         p_event_id: testEventId,
         p_limit: 3,
@@ -265,7 +266,7 @@ describe('get_guest_event_messages - Stable Ordering', () => {
 
     // Fetch remaining messages using pagination
     const { data: secondBatch, error: secondError } = await supabase.rpc(
-      'get_guest_event_messages',
+      'get_guest_event_messages_v2',
       {
         p_event_id: testEventId,
         p_limit: 3,

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { cn } from '@/lib/utils';
@@ -46,7 +46,7 @@ export function ScheduledMessagesList({
     sentCount,
     cancelledCount,
     refreshMessages,
-  } = useScheduledMessages({ eventId });
+  } = useScheduledMessages(useMemo(() => ({ eventId }), [eventId]));
 
   const getMessageTypeEmoji = (messageType: string) => {
     switch (messageType) {

@@ -1,13 +1,14 @@
 /**
- * Integration test for get_guest_event_messages RPC function
- * Tests the fix for the "structure of query does not match function result type" error
+ * Integration test for get_guest_event_messages_v2 RPC function
+ * Tests the current V2 implementation with union read model
+ * Updated: 2025-08-27 - Aligned with V2 patterns per versioned functions cleanup
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { supabase } from '@/lib/supabase/client';
 import { createTestEvent, createTestGuest, createTestUser, cleanupTestData } from '../helpers/testHelpers';
 
-describe('get_guest_event_messages RPC Integration', () => {
+describe('get_guest_event_messages_v2 RPC Integration', () => {
   let testEventId: string;
   let testUserId: string;
   let testGuestId: string;
@@ -39,8 +40,8 @@ describe('get_guest_event_messages RPC Integration', () => {
 
     expect(authData.user).toBeTruthy();
 
-    // Call the RPC function that was previously failing
-    const { data, error } = await supabase.rpc('get_guest_event_messages', {
+    // Call the current V2 RPC function
+    const { data, error } = await supabase.rpc('get_guest_event_messages_v2', {
       p_event_id: testEventId,
       p_limit: 10,
       p_before: undefined
@@ -93,7 +94,7 @@ describe('get_guest_event_messages RPC Integration', () => {
     expect(authData.user).toBeTruthy();
 
     // Call with a very old timestamp to get empty results
-    const { data, error } = await supabase.rpc('get_guest_event_messages', {
+    const { data, error } = await supabase.rpc('get_guest_event_messages_v2', {
       p_event_id: testEventId,
       p_limit: 10,
       p_before: '2020-01-01T00:00:00Z'
@@ -113,7 +114,7 @@ describe('get_guest_event_messages RPC Integration', () => {
     await supabase.auth.signOut();
 
     // Call without authentication
-    const { data, error } = await supabase.rpc('get_guest_event_messages', {
+    const { data, error } = await supabase.rpc('get_guest_event_messages_v2', {
       p_event_id: testEventId,
       p_limit: 10,
       p_before: undefined
@@ -137,7 +138,7 @@ describe('get_guest_event_messages RPC Integration', () => {
     expect(authData.user).toBeTruthy();
 
     // Call with unauthorized user
-    const { data, error } = await supabase.rpc('get_guest_event_messages', {
+    const { data, error } = await supabase.rpc('get_guest_event_messages_v2', {
       p_event_id: testEventId,
       p_limit: 10,
       p_before: undefined

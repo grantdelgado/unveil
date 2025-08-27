@@ -85,7 +85,7 @@ describe('Announcement Backfill Safety Tests', () => {
   it('should verify RPC function includes announcements without deliveries', async () => {
     // Verify our main fix works: RPC shows announcements without delivery records
     const { data: rpcResult, error: rpcError } = await supabase.rpc(
-      'get_guest_event_messages',
+      'get_guest_event_messages_v2',
       {
         p_event_id: TEST_EVENT_ID,
         p_limit: 20,
