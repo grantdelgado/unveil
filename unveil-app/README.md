@@ -65,6 +65,10 @@ Unveil is a production-ready wedding event management application that enables h
 **Deployment**: Vercel  
 **Package Manager**: pnpm
 
+### Architecture / Hooks
+
+> **Note**: Messaging hook consolidation is deferred. All live code continues to use the existing hooks (`useMessages`, `useScheduledMessages`, etc.). Experimental work has been archived in the `feature/messaging-consolidation-experiments` branch.
+
 **👉 [Complete Technical Documentation](./docs/ARCHITECTURE.md)**
 
 ---

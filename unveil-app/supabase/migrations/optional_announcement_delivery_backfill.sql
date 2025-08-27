@@ -17,6 +17,7 @@
 -- ============================================================================
 
 -- Preview function: Count missing deliveries (read-only)
+-- DIAGNOSTIC ONLY: This function is for analysis purposes only and does not modify data
 CREATE OR REPLACE FUNCTION preview_missing_announcement_deliveries(
     p_event_id UUID DEFAULT NULL
 )
@@ -73,6 +74,7 @@ END;
 $$;
 
 -- Backfill function: Create missing delivery records (write operation)
+-- PRODUCTION SAFETY: This function is disabled in production environments
 CREATE OR REPLACE FUNCTION backfill_announcement_deliveries(
     p_event_id UUID,
     p_limit INT DEFAULT 200,
@@ -96,6 +98,11 @@ DECLARE
     insert_count INT := 0;
     total_processed INT := 0;
 BEGIN
+    -- PRODUCTION SAFETY CHECK: Prevent execution in production
+    IF current_setting('app.environment', true) = 'production' THEN
+        RAISE EXCEPTION 'backfill_announcement_deliveries is disabled in production for data integrity. Use only in development/staging environments.';
+    END IF;
+
     -- Validate event exists and user has access
     IF NOT EXISTS (
         SELECT 1 FROM events e 

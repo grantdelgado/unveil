@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useGuestRejoin } from '@/hooks/guests';
+import { useErrorHandler } from '@/hooks/common';
 
 interface DeclineBannerProps {
   eventId: string;
@@ -20,6 +21,7 @@ export function DeclineBanner({
   className,
 }: DeclineBannerProps) {
   const [isDismissed, setIsDismissed] = useState(false);
+  const { handleError } = useErrorHandler();
 
   // Atomic rejoin functionality
   const {
@@ -44,8 +46,10 @@ export function DeclineBanner({
   const handleRejoin = async () => {
     const result = await rejoinEvent();
     if (!result.success) {
-      // Show error - could use a toast library here
-      alert(result.error || 'Something went wrong. Please try again.');
+      // Show error using centralized handler
+      handleError(result.error || 'Something went wrong. Please try again.', {
+        context: 'Rejoin event'
+      });
     }
   };
 

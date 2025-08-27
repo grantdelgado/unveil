@@ -3,6 +3,7 @@
 import React, { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/Button';
 import { CardContainer } from '@/components/ui';
+import { useErrorHandler } from '@/hooks/common';
 
 import { useDropzone } from 'react-dropzone';
 import { cn } from '@/lib/utils';
@@ -56,6 +57,7 @@ export function CSVImportModal({ eventId, onClose, onImportComplete }: CSVImport
   const [importProgress, setImportProgress] = useState(0);
   const [importResult, setImportResult] = useState<ImportSummary | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const { handleError } = useErrorHandler();
 
   const { importGuests } = useGuests(eventId);
 
@@ -178,7 +180,7 @@ export function CSVImportModal({ eventId, onClose, onImportComplete }: CSVImport
       setStep('preview');
     } catch (error) {
       console.error('CSV parsing error:', error);
-      alert(error instanceof Error ? error.message : 'Failed to parse CSV file');
+      handleError(error, { context: 'Parse CSV file' });
     }
   }, []);
 
@@ -300,7 +302,7 @@ export function CSVImportModal({ eventId, onClose, onImportComplete }: CSVImport
 
     } catch (error) {
       console.error('Import error:', error);
-      alert(error instanceof Error ? error.message : 'Import failed');
+      handleError(error, { context: 'Import guests' });
       setStep('preview');
     }
   }, [validGuests, errorGuests, parsedGuests.length, eventId, importGuests, onImportComplete]);

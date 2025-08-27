@@ -12,3 +12,8 @@ export { useSimpleGuestStore } from './useSimpleGuestStore';
 
 // Unified guest counts for dashboard consistency
 export { useUnifiedGuestCounts } from './useUnifiedGuestCounts';
+
+// Phase 3: Unified guest actions hook (feature flag controlled)
+// TODO: Complete API alignment before enabling
+// export { useGuestActions } from './useGuestActions';
+// export type { UseGuestActionsOptions, GuestActionResult, UnifiedGuestActionsReturn } from './useGuestActions';

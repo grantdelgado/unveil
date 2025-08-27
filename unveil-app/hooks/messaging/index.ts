@@ -16,3 +16,8 @@ export {
 // Note: Guest tagging removed - simplified in useMessages domain hook
 
 // Note: Analytics hooks removed - simplified in useMessages domain hook
+
+// Phase 3: Unified messaging hook (feature flag controlled)
+// TODO: Complete API alignment before enabling
+// export { useMessaging } from './useMessaging';
+// export type { UseMessagingOptions, UnifiedMessagingReturn } from './useMessaging';

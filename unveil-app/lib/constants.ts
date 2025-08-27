@@ -19,7 +19,7 @@ export const ROUTES = {
     EVENT_DASHBOARD: (eventId: string) => `/host/events/${eventId}/dashboard`,
   },
   GUEST: {
-    HOME: '/guest/home',
+    // HOME: '/guest/home', // REMOVED: Obsolete route, use EVENT_HOME instead
     EVENTS: '/guest/events',
     EVENT_HOME: (eventId: string) => `/guest/events/${eventId}/home`,
   },

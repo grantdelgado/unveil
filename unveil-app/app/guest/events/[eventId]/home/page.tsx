@@ -14,7 +14,7 @@ import {
   GuestEventHeader,
 } from '@/components/features/guest';
 import { useGuestDecline } from '@/hooks/guests';
-
+import { useErrorHandler } from '@/hooks/common';
 
 import {
   PageWrapper,
@@ -79,6 +79,7 @@ export default function GuestEventHomePage() {
     ?.declined_at;
 
   // RSVP-Lite decline functionality
+  const { handleError } = useErrorHandler();
   const { declineEvent } = useGuestDecline({
     eventId,
     onDeclineSuccess: () => {
@@ -100,8 +101,10 @@ export default function GuestEventHomePage() {
       // Show success toast - could use a toast library here
       console.log('✅ Marked as not attending');
     } else {
-      // Show error - could use a toast library here
-      alert(result.error || 'Something went wrong. Please try again.');
+      // Show error using centralized handler
+      handleError(result.error || 'Something went wrong. Please try again.', { 
+        context: 'Decline event' 
+      });
     }
   };
 

@@ -101,6 +101,15 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Handle obsolete route redirects (Phase 1 cleanup)
+  if (pathname === '/dashboard') {
+    return NextResponse.redirect(new URL('/select-event', request.url));
+  }
+  
+  if (pathname === '/guest/home') {
+    return NextResponse.redirect(new URL('/select-event', request.url));
+  }
+
   // Clean up rate limit store occasionally
   if (Math.random() < 0.01) {
     // 1% chance per request

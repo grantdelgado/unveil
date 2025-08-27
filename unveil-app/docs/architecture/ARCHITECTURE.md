@@ -52,6 +52,8 @@ As of January 2025, the codebase has undergone a comprehensive 5-phase refactor 
 - Migrated from direct Supabase usage to service layer abstraction
 - Applied Container-Hook-View pattern for better separation of concerns
 
+> **Hook Consolidation Status**: Messaging hook consolidation is deferred. All live code continues to use the existing hooks (`useMessages`, `useScheduledMessages`, etc.). Experimental work has been archived in the `feature/messaging-consolidation-experiments` branch.
+
 **Phase 3 - Type System Enhancement:**
 
 - Eliminated all `any` types with strong TypeScript constraints

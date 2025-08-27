@@ -1,5 +1,6 @@
 // Common utility hooks
 export { useDebounce } from './useDebounce';
+export { useErrorHandler, getErrorMessage, getUserFriendlyErrorMessage } from './useErrorHandler';
 export { useHapticFeedback } from './useHapticFeedback';
 export { usePagination } from './usePagination';
 export { usePullToRefresh } from './usePullToRefresh';

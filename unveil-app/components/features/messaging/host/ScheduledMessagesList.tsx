@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { cn } from '@/lib/utils';
 import { useScheduledMessages } from '@/hooks/messaging/useScheduledMessages';
+import { useErrorHandler } from '@/hooks/common';
 // Analytics temporarily removed
 import type { Database } from '@/app/reference/supabase.types';
 
@@ -35,6 +36,7 @@ export function ScheduledMessagesList({
   const [cancellingMessageId, setCancellingMessageId] = useState<string | null>(
     null,
   );
+  const { handleError, handleSuccess } = useErrorHandler();
 
   const {
     scheduledMessages,
@@ -144,10 +146,12 @@ export function ScheduledMessagesList({
     try {
       const result = await deleteScheduledMessage(messageId);
       if (!result.success) {
-        alert(`Failed to delete message: ${result.error}`);
+        handleError(result.error, { context: 'Delete message' });
+      } else {
+        handleSuccess('Message deleted successfully', { context: 'Delete message' });
       }
-    } catch {
-      alert('Failed to delete message');
+    } catch (error) {
+      handleError(error, { context: 'Delete message' });
     } finally {
       setDeletingMessageId(null);
     }
@@ -162,10 +166,12 @@ export function ScheduledMessagesList({
     try {
       const result = await cancelScheduledMessage(messageId);
       if (!result.success) {
-        alert(`Failed to cancel message: ${result.error}`);
+        handleError(result.error, { context: 'Cancel message' });
+      } else {
+        handleSuccess('Message cancelled successfully', { context: 'Cancel message' });
       }
-    } catch {
-      alert('Failed to cancel message');
+    } catch (error) {
+      handleError(error, { context: 'Cancel message' });
     } finally {
       setCancellingMessageId(null);
     }

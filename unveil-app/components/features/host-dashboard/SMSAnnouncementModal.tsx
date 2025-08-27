@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { supabase } from '@/lib/supabase';
+import { useErrorHandler } from '@/hooks/common';
 
 interface SMSAnnouncementModalProps {
   isOpen: boolean;
@@ -21,18 +22,21 @@ export function SMSAnnouncementModal({
 }: SMSAnnouncementModalProps) {
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { handleError, handleSuccess } = useErrorHandler();
   const [targetType, setTargetType] = useState<'all' | 'attending' | 'pending'>(
     'all',
   );
 
   const handleSend = async () => {
     if (!message.trim()) {
-      alert('Please enter a message');
+      handleError('Please enter a message', { context: 'Send announcement' });
       return;
     }
 
     if (message.length > 1500) {
-      alert('Message is too long. Please keep it under 1500 characters.');
+      handleError('Message is too long. Please keep it under 1500 characters.', { 
+        context: 'Send announcement' 
+      });
       return;
     }
 
@@ -72,7 +76,7 @@ export function SMSAnnouncementModal({
           ? `📱 Successfully sent announcement to ${result.sent} guests!${result.failed > 0 ? ` (${result.failed} failed)` : ''}`
           : '📱 No eligible guests found for SMS. Make sure guests have phone numbers and haven&apos;t opted out.';
 
-      alert(successMessage);
+      handleSuccess(successMessage, { context: 'Send announcement' });
 
       // Reset form and close modal
       setMessage('');
@@ -80,9 +84,7 @@ export function SMSAnnouncementModal({
       onSuccess?.();
     } catch (error) {
       console.error('Error sending announcement:', error);
-      alert(
-        `Failed to send announcement: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      );
+      handleError(error, { context: 'Send announcement' });
     } finally {
       setIsLoading(false);
     }

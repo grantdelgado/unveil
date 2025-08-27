@@ -121,6 +121,7 @@ export function ScheduleManagement({
 
       if (deleteError) {
         console.error('Error deleting schedule item:', deleteError);
+        // TODO: Replace with proper error handling in Phase 2
         alert('Failed to delete schedule item. Please try again.');
         return;
       }
@@ -129,6 +130,7 @@ export function ScheduleManagement({
       loadScheduleItems();
     } catch (error) {
       console.error('Unexpected error deleting item:', error);
+      // TODO: Replace with proper error handling in Phase 2
       alert('An unexpected error occurred. Please try again.');
     }
   };

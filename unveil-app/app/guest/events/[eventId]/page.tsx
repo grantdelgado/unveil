@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import { normalizePhoneNumber } from '@/lib/utils/phone';
+import { useErrorHandler } from '@/hooks/common';
 import { autoJoinEventByPhone } from '@/lib/services/guestAutoJoin';
 import {
   PageWrapper,
@@ -43,6 +44,7 @@ export default function GuestEventJoinPage() {
   const [joinState, setJoinState] = useState<JoinState>('loading');
   const [eventInfo, setEventInfo] = useState<EventInfo | null>(null);
   const [error, setError] = useState<string>('');
+  const { handleError } = useErrorHandler();
   const [, setCurrentUser] = useState<{ id: string; phone?: string } | null>(
     null,
   );
@@ -218,8 +220,11 @@ export default function GuestEventJoinPage() {
   };
 
   const handleContactHost = () => {
-    // For now, just show an alert. In the future, this could open a contact form
-    alert('Please contact the event host for assistance with your invitation.');
+    // For now, use error handler. In the future, this could open a contact form
+    handleError('Please contact the event host for assistance with your invitation.', {
+      context: 'Contact host',
+      showToast: true
+    });
   };
 
   const formatEventDate = (dateStr: string) => {
