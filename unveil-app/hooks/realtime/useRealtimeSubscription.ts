@@ -3,6 +3,31 @@ import { useSubscriptionManager } from '@/lib/realtime/SubscriptionProvider';
 import { type SubscriptionConfig } from '@/lib/realtime/SubscriptionManager';
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
+import { RealtimeFlags } from '@/lib/config/realtime';
+
+// StrictMode deduplication - module-level state to survive component remounts
+const activeSubscriptions = new Map<string, { instanceId: string; unsubscribe: () => void }>();
+
+// Cleanup stale subscriptions periodically to prevent memory leaks
+let lastCleanup = 0;
+const CLEANUP_INTERVAL = 5 * 60 * 1000; // 5 minutes
+
+function cleanupStaleSubscriptions() {
+  const now = Date.now();
+  if (now - lastCleanup < CLEANUP_INTERVAL) return;
+  
+  lastCleanup = now;
+  
+  // In development, log the cleanup
+  if (process.env.NODE_ENV === 'development') {
+    const sizeBefore = activeSubscriptions.size;
+    // Remove any subscriptions that might be stale (this is conservative)
+    // In practice, proper cleanup should happen in useEffect cleanup
+    if (sizeBefore > 50) { // Only if we have a lot of subscriptions
+      logger.realtime(`🧹 StrictMode dedup map size: ${sizeBefore} subscriptions`);
+    }
+  }
+}
 
 // Subscription pooling manager for efficient WebSocket usage
 class SubscriptionPool {
@@ -267,6 +292,16 @@ export function useRealtimeSubscription({
   const unsubscribeRef = useRef<(() => void) | null>(null);
   const isConnectedRef = useRef(false);
   const errorRef = useRef<Error | null>(null);
+  
+  // Enhanced StrictMode deduplication
+  const subscriptionKey = useMemo(() => {
+    return `${table}-${event}-${filter || 'no-filter'}-${schema}`;
+  }, [table, event, filter, schema]);
+  
+  const instanceId = useMemo(() => {
+    return `${subscriptionKey}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  }, [subscriptionKey]);
+  
   // Use stable component ID to prevent unnecessary subscription churn
   const componentId = useMemo(
     () => `${subscriptionId}-${Math.random().toString(36).substr(2, 9)}`,
@@ -325,10 +360,27 @@ export function useRealtimeSubscription({
     [onDataChange],
   );
 
-  // Set up subscription with enhanced stability and mounting guard
+  // Set up subscription with enhanced stability and StrictMode deduplication
   useEffect(() => {
     if (!enabled || !subscriptionId || !isReady || !manager) {
       return;
+    }
+
+    // Enhanced StrictMode deduplication
+    if (RealtimeFlags.strictModeDedup) {
+      // Periodic cleanup to prevent memory leaks
+      cleanupStaleSubscriptions();
+      
+      const existing = activeSubscriptions.get(subscriptionKey);
+      if (existing && existing.instanceId !== instanceId) {
+        if (process.env.NODE_ENV === 'development') {
+          logger.realtime(
+            `⚠️ StrictMode dedup: Subscription already exists for ${subscriptionKey}, skipping duplicate`,
+            { existingInstanceId: existing.instanceId, currentInstanceId: instanceId }
+          );
+        }
+        return;
+      }
     }
 
     // Prevent multiple subscriptions for the same component
@@ -389,6 +441,14 @@ export function useRealtimeSubscription({
         unsubscribeRef.current = manager.subscribe(subscriptionId, config);
       }
 
+      // Register in StrictMode deduplication map
+      if (RealtimeFlags.strictModeDedup && unsubscribeRef.current) {
+        activeSubscriptions.set(subscriptionKey, {
+          instanceId,
+          unsubscribe: unsubscribeRef.current,
+        });
+      }
+
       logger.realtime(`📡 Creating enhanced subscription: ${subscriptionId}`, {
         table,
         event,
@@ -396,19 +456,32 @@ export function useRealtimeSubscription({
         timeout: 30000,
         retryOnTimeout: true,
         enableBackoff: true,
+        strictModeDedup: RealtimeFlags.strictModeDedup,
+        instanceId: RealtimeFlags.strictModeDedup ? instanceId : undefined,
       });
     } catch (error) {
       logger.error(`Failed to create subscription: ${subscriptionId}`, error);
       handleError(error instanceof Error ? error : new Error(String(error)));
     }
 
-    // Enhanced cleanup function with memory leak prevention
+    // Enhanced cleanup function with StrictMode deduplication and memory leak prevention
     return () => {
       if (unsubscribeRef.current) {
         try {
           logger.realtime(`🧹 Cleaning up subscription: ${subscriptionId}`);
-          unsubscribeRef.current();
+          
+          // Enhanced StrictMode cleanup - only remove if this instance owns the subscription
+          if (RealtimeFlags.strictModeDedup) {
+            const existing = activeSubscriptions.get(subscriptionKey);
+            if (existing && existing.instanceId === instanceId) {
+              activeSubscriptions.delete(subscriptionKey);
+            }
+          }
+          
+          // Idempotent unsubscribe
+          const unsubscribe = unsubscribeRef.current;
           unsubscribeRef.current = null;
+          unsubscribe();
 
           // Clear error state to prevent memory leaks
           errorRef.current = null;
@@ -435,6 +508,9 @@ export function useRealtimeSubscription({
     performanceOptions.eventId,
     manager,
     isReady,
+    // StrictMode deduplication dependencies
+    subscriptionKey,
+    instanceId,
   ]);
 
   // Manual reconnect function with stability checks

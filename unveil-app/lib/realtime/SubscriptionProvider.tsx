@@ -6,16 +6,19 @@ import React, {
   useEffect,
   useState,
   useRef,
+  useCallback,
   ReactNode,
 } from 'react';
 import { SubscriptionManager } from './SubscriptionManager';
 import { logger } from '@/lib/logger';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { supabase } from '@/lib/supabase';
+import { RealtimeFlags } from '@/lib/config/realtime';
 import {
   emitTokenRefreshSuccess,
   emitTokenRefreshFailure,
   emitManagerReinit,
+  emitSetAuth,
 } from '@/lib/telemetry/realtime';
 
 interface SubscriptionContextType {
@@ -49,6 +52,66 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
   const { isAuthenticated, session } = useAuth();
   const previousAuthState = useRef<boolean | null>(null);
   const managerRef = useRef<SubscriptionManager | null>(null);
+  
+  // Single token authority state
+  const tokenUpdateInFlight = useRef(false);
+  
+  // Prevent duplicate manager operations
+  const managerOperationInFlight = useRef(false);
+  const operationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Centralized token refresh handler with mutex
+  const applyToken = useCallback(async (newToken: string): Promise<void> => {
+    if (tokenUpdateInFlight.current) {
+      logger.realtime('🔄 Token update already in flight, skipping duplicate');
+      // Emit deduplication telemetry
+      emitSetAuth({
+        source: 'provider',
+        deduped: true,
+        duration: 0,
+      });
+      return;
+    }
+    
+    tokenUpdateInFlight.current = true;
+    const startTime = Date.now();
+    
+    try {
+      supabase.realtime.setAuth(newToken);
+      const duration = Date.now() - startTime;
+      
+      logger.realtime(`🔄 Realtime auth token updated (single authority) v${version}`, {
+        duration,
+        singleAuthority: RealtimeFlags.singleTokenAuthority,
+      });
+      
+      // Emit telemetry for successful token refresh
+      emitTokenRefreshSuccess({
+        duration,
+        userId: session?.user?.id,
+      });
+      
+      // Emit setAuth telemetry
+      emitSetAuth({
+        source: 'provider',
+        deduped: false,
+        duration,
+      });
+      
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      logger.error('❌ Failed to update realtime auth token:', error);
+      
+      // Emit telemetry for failed token refresh
+      emitTokenRefreshFailure({
+        duration,
+        userId: session?.user?.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    } finally {
+      tokenUpdateInFlight.current = false;
+    }
+  }, [version, session?.user?.id]);
 
   // Separate effect for comprehensive auth state monitoring including token refresh
   useEffect(() => {
@@ -65,58 +128,62 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
         userId: session?.user?.id,
         hasManager: !!managerRef.current,
         version,
+        singleTokenAuthority: RealtimeFlags.singleTokenAuthority,
       });
 
       if (event === 'TOKEN_REFRESHED' && session) {
-        // Critical: Update realtime connection with new token
-        const startTime = Date.now();
-        try {
-          supabase.realtime.setAuth(session.access_token);
-          const duration = Date.now() - startTime;
+        // Use centralized token authority when flag is enabled
+        if (RealtimeFlags.singleTokenAuthority) {
+          await applyToken(session.access_token);
+        } else {
+          // Legacy behavior - direct setAuth call
+          const startTime = Date.now();
+          try {
+            supabase.realtime.setAuth(session.access_token);
+            const duration = Date.now() - startTime;
 
-          logger.realtime(
-            `🔄 Realtime auth token updated (provider) v${version}`,
-            {
-              userId: session.user?.id,
-              hasManager: !!managerRef.current,
+            logger.realtime(
+              `🔄 Realtime auth token updated (legacy) v${version}`,
+              {
+                userId: session.user?.id,
+                hasManager: !!managerRef.current,
+                duration,
+              },
+            );
+
+            // Emit telemetry for successful token refresh
+            emitTokenRefreshSuccess({
               duration,
-            },
-          );
+              userId: session.user?.id,
+            });
+          } catch (error) {
+            const duration = Date.now() - startTime;
+            logger.error(
+              '❌ Failed to update realtime auth token in provider:',
+              error,
+            );
 
-          // Emit telemetry for successful token refresh
-          emitTokenRefreshSuccess({
-            duration,
-            userId: session.user?.id,
-          });
-
-          // Notify manager if it exists
-          if (managerRef.current && !managerRef.current.destroyed) {
-            // The manager will handle its own token refresh via its auth listener
-            logger.realtime('✅ Manager notified of token refresh');
+            // Emit telemetry for failed token refresh
+            emitTokenRefreshFailure({
+              duration,
+              userId: session.user?.id,
+              error: error instanceof Error ? error.message : String(error),
+            });
           }
-        } catch (error) {
-          const duration = Date.now() - startTime;
-          logger.error(
-            '❌ Failed to update realtime auth token in provider:',
-            error,
-          );
-
-          // Emit telemetry for failed token refresh
-          emitTokenRefreshFailure({
-            duration,
-            userId: session.user?.id,
-            error: error instanceof Error ? error.message : String(error),
-          });
         }
       } else if (event === 'SIGNED_IN' && session) {
         // Ensure realtime auth is set on sign-in
-        try {
-          supabase.realtime.setAuth(session.access_token);
-          logger.realtime(
-            `🔑 Realtime auth set on sign-in (provider) v${version}`,
-          );
-        } catch (error) {
-          logger.error('❌ Failed to set realtime auth on sign-in:', error);
+        if (RealtimeFlags.singleTokenAuthority) {
+          await applyToken(session.access_token);
+        } else {
+          try {
+            supabase.realtime.setAuth(session.access_token);
+            logger.realtime(
+              `🔑 Realtime auth set on sign-in (provider) v${version}`,
+            );
+          } catch (error) {
+            logger.error('❌ Failed to set realtime auth on sign-in:', error);
+          }
         }
       }
     });
@@ -125,14 +192,21 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
       isMounted = false;
       subscription.unsubscribe();
     };
-  }, [version]);
+  }, [version, applyToken]);
 
   useEffect(() => {
     const wasAuthenticated = previousAuthState.current;
     const isNowAuthenticated = isAuthenticated;
 
+    // Prevent duplicate operations
+    if (managerOperationInFlight.current) {
+      logger.realtime('🔄 Manager operation already in flight, skipping duplicate');
+      return;
+    }
+
     // Track auth state changes with detailed logging
     if (wasAuthenticated !== isNowAuthenticated) {
+      managerOperationInFlight.current = true;
       logger.realtime(
         `🔄 Auth transition detected: ${wasAuthenticated} → ${isNowAuthenticated}`,
         {
@@ -244,11 +318,29 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
     }
 
     previousAuthState.current = isNowAuthenticated;
-  }, [isAuthenticated, session, version]);
+    
+    // Clear any existing timeout and set a new one
+    if (operationTimeoutRef.current) {
+      clearTimeout(operationTimeoutRef.current);
+    }
+    
+    operationTimeoutRef.current = setTimeout(() => {
+      managerOperationInFlight.current = false;
+      operationTimeoutRef.current = null;
+    }, 100);
+    // Note: `version` intentionally excluded from deps to prevent excessive re-runs
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, session]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      // Clear any pending timeouts
+      if (operationTimeoutRef.current) {
+        clearTimeout(operationTimeoutRef.current);
+        operationTimeoutRef.current = null;
+      }
+      
       if (managerRef.current) {
         logger.realtime(
           '🧹 Cleaning up SubscriptionManager on provider unmount',

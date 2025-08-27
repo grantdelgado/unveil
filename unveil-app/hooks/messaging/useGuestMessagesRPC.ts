@@ -4,10 +4,59 @@ import { logger } from '@/lib/logger';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { useSubscriptionManager } from '@/lib/realtime/SubscriptionProvider';
 import { mergeMessages, type GuestMessage } from '@/lib/utils/messageUtils';
+import { RealtimeFlags, RealtimeTunables } from '@/lib/config/realtime';
+import { normalizeRealtimeError, type RTErrorContext } from '@/lib/realtime/error-normalize';
+import { shouldLog } from '@/lib/realtime/log-sampler';
 
 // Configuration constants
 const INITIAL_WINDOW_SIZE = 30;
 const OLDER_MESSAGES_BATCH_SIZE = 20;
+
+/**
+ * Log realtime error with normalization and sampling for guest messaging
+ */
+function logGuestMessagingError(
+  error: unknown,
+  subscriptionType: string,
+  eventId: string,
+  additionalContext?: Record<string, unknown>
+): void {
+  const ctx: RTErrorContext = {
+    phase: 'message',
+    channelKey: `${subscriptionType}:${eventId}`,
+  };
+
+  if (!RealtimeFlags.quietConnectionErrors) {
+    // Original behavior - always log as error
+    logger.error(`Guest ${subscriptionType} subscription error`, { error, eventId, ...additionalContext });
+    return;
+  }
+
+  // New behavior - normalize and sample
+  const normalized = normalizeRealtimeError(error, ctx, { 
+    max: RealtimeTunables.maxRawErrorLength 
+  });
+
+  const okToLog = shouldLog(
+    normalized.key,
+    Date.now(),
+    RealtimeTunables.logSampleWindowMs,
+    RealtimeTunables.logMaxPerWindow
+  );
+
+  if (okToLog) {
+    const logFn = normalized.ignorable ? logger.warn : logger.error;
+    const prefix = normalized.ignorable ? '⚠️' : '❌';
+    
+    logFn(`${prefix} Guest ${subscriptionType} ${normalized.summary}`, {
+      kind: normalized.kind,
+      ctx: normalized.ctx,
+      raw: normalized.raw,
+      eventId,
+      ...additionalContext,
+    });
+  }
+}
 
 /**
  * Type adapter to safely map RPC response to GuestMessage
@@ -569,10 +618,7 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
             },
             onError: (error: any) => {
               if (!isCleanedUp) {
-                logger.error('Guest messages event subscription error', {
-                  error,
-                  eventId,
-                });
+                logGuestMessagingError(error, 'messages event', eventId);
               }
             },
             enableBackoff: true,
@@ -595,10 +641,7 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
             callback: handleRealtimeUpdate,
             onError: (error: any) => {
               if (!isCleanedUp) {
-                logger.error('Guest message deliveries subscription error', {
-                  error,
-                  eventId,
-                });
+                logGuestMessagingError(error, 'message deliveries', eventId);
               }
             },
             enableBackoff: true,
@@ -630,10 +673,7 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
             },
             onError: (error: any) => {
               if (!isCleanedUp) {
-                logger.error('Guest sent messages subscription error', {
-                  error,
-                  eventId,
-                });
+                logGuestMessagingError(error, 'sent messages', eventId);
               }
             },
             enableBackoff: true,

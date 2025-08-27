@@ -33,6 +33,26 @@ interface SubscribeWhileDestroyedMetric {
   stackTrace?: string;
 }
 
+interface TimeoutMetric {
+  subscriptionId: string;
+  timeoutMs: number;
+  isBackground: boolean;
+  consecutiveTimeouts: number;
+}
+
+interface ColdReconnectMetric {
+  reason: string;
+  subscriptionCount: number;
+  duration: number;
+  success: boolean;
+}
+
+interface SetAuthMetric {
+  source: 'provider' | 'manager';
+  deduped: boolean;
+  duration: number;
+}
+
 /**
  * Emit telemetry events for realtime operations
  */
@@ -110,6 +130,81 @@ class RealtimeTelemetry {
   }
 
   /**
+   * Emit timeout metrics with background/foreground distinction
+   */
+  timeout(metric: TimeoutMetric): void {
+    const event = metric.isBackground 
+      ? 'realtime.timeout.bg' 
+      : 'realtime.timeout.fg';
+
+    this.emit({
+      event,
+      data: {
+        subscriptionId: metric.subscriptionId,
+        timeoutMs: metric.timeoutMs,
+        consecutiveTimeouts: metric.consecutiveTimeouts,
+      },
+    });
+
+    if (this.isDevelopment) {
+      logger.info(`⏰ Timeout (${metric.isBackground ? 'bg' : 'fg'})`, {
+        id: metric.subscriptionId,
+        timeout: metric.timeoutMs,
+        consecutive: metric.consecutiveTimeouts,
+      });
+    }
+  }
+
+  /**
+   * Emit cold reconnect metrics
+   */
+  coldReconnect(metric: ColdReconnectMetric): void {
+    this.emit({
+      event: 'realtime.cold_reconnect.invoked',
+      data: {
+        reason: metric.reason,
+        subscriptionCount: metric.subscriptionCount,
+        duration: metric.duration,
+        success: metric.success,
+      },
+    });
+
+    if (this.isDevelopment) {
+      const status = metric.success ? '✅' : '❌';
+      logger.info(`${status} Cold reconnect`, {
+        reason: metric.reason,
+        subscriptions: metric.subscriptionCount,
+        duration: metric.duration,
+      });
+    }
+  }
+
+  /**
+   * Emit setAuth call metrics for single authority validation
+   */
+  setAuth(metric: SetAuthMetric): void {
+    const event = metric.deduped 
+      ? 'realtime.setAuth.deduped' 
+      : 'realtime.setAuth.calls';
+
+    this.emit({
+      event,
+      data: {
+        source: metric.source,
+        duration: metric.duration,
+      },
+    });
+
+    if (this.isDevelopment) {
+      const status = metric.deduped ? '🔄' : '✅';
+      logger.info(`${status} SetAuth (${metric.source})`, {
+        deduped: metric.deduped,
+        duration: metric.duration,
+      });
+    }
+  }
+
+  /**
    * Generic telemetry emission
    */
   private emit(telemetryEvent: TelemetryEvent): void {
@@ -152,3 +247,12 @@ export const emitManagerReinit = (data: ManagerReinitMetric) =>
 export const emitSubscribeWhileDestroyed = (
   data: SubscribeWhileDestroyedMetric,
 ) => realtimeTelemetry.subscribeWhileDestroyed(data);
+
+export const emitTimeout = (data: TimeoutMetric) => 
+  realtimeTelemetry.timeout(data);
+
+export const emitColdReconnect = (data: ColdReconnectMetric) => 
+  realtimeTelemetry.coldReconnect(data);
+
+export const emitSetAuth = (data: SetAuthMetric) => 
+  realtimeTelemetry.setAuth(data);
