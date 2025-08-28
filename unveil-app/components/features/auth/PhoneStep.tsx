@@ -2,6 +2,7 @@ import React from 'react';
 import { PrimaryButton } from '@/components/ui';
 import { PhoneNumberInput } from '@/components/ui/UnveilInput';
 import { FieldLabel, MicroCopy } from '@/components/ui/Typography';
+import { SmsDisclosure } from '@/components/common/SmsDisclosure';
 
 interface PhoneStepProps {
   phone: string;
@@ -45,11 +46,12 @@ export const PhoneStep: React.FC<PhoneStepProps> = ({
         </PrimaryButton>
       </form>
 
-      <div className="mt-6">
+      <div className="mt-6 space-y-3">
         <MicroCopy>
           First time here? Just enter your phone &mdash; we&apos;ll set
           everything up for you automatically.
         </MicroCopy>
+        <SmsDisclosure />
       </div>
     </>
   );

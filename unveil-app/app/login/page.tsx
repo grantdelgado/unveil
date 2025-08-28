@@ -22,6 +22,7 @@ import { UnveilHeader, AuthCard } from '@/components/shared';
 import { ModernOTPInput } from '@/components/features/auth/ModernOTPInput';
 import { ResendOTPButton } from '@/components/features/auth/ResendOTPButton';
 import { MobileShell } from '@/components/layout';
+import { SmsDisclosure } from '@/components/common/SmsDisclosure';
 
 // Login flow steps
 type LoginStep = 'phone' | 'otp';
@@ -358,6 +359,9 @@ export default function LoginPage() {
                   ? "First time here? Just enter your phone — we'll set everything up for you automatically."
                   : 'Code will verify automatically when entered. Use the resend button if you need a new code.'}
               </MicroCopy>
+
+              {/* SMS Disclaimer - only show on phone step */}
+              {step === 'phone' && <SmsDisclosure />}
             </div>
           </AuthCard>
         </div>
