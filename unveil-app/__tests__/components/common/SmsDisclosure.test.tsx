@@ -6,7 +6,7 @@ describe('SmsDisclosure', () => {
     render(<SmsDisclosure />);
     
     // Check for key text elements
-    expect(screen.getByText(/By continuing, you agree to receive SMS passcodes/)).toBeInTheDocument();
+    expect(screen.getByText(/By continuing, you agree to receive SMS passcodes from Unveil for authentication purposes/)).toBeInTheDocument();
     expect(screen.getByText(/Msg&Data rates may apply/)).toBeInTheDocument();
     expect(screen.getByText(/Reply STOP to unsubscribe or HELP for help/)).toBeInTheDocument();
   });

@@ -16,9 +16,9 @@ export function SmsDisclosure({ className }: SmsDisclosureProps) {
         className,
       )}
     >
-      By continuing, you agree to receive SMS passcodes and event notifications
-      (RSVPs, reminders, updates) from Unveil. Msg&Data rates may apply. Reply
-      STOP to unsubscribe or HELP for help. See our{' '}
+      By continuing, you agree to receive SMS passcodes from Unveil for
+      authentication purposes. Msg&Data rates may apply. Reply STOP to
+      unsubscribe or HELP for help. See our{' '}
       <a
         href="https://www.sendunveil.com/policies"
         target="_blank"
