@@ -89,7 +89,7 @@ export default function PoliciesPage() {
               
               <div className="text-gray-700 leading-relaxed space-y-8">
                 <p className="text-lg text-center">
-                  When signing up for Unveil, users are prompted to enter their phone number and agree to receive SMS messages. This screen includes a disclosure stating: <strong>&quot;By continuing, you agree to receive SMS messages from Unveil, including one-time passcodes for account verification and event-related notifications (such as RSVP confirmations, schedule updates, and reminders). Message &amp; data rates may apply.&quot;</strong>
+                  When signing up for Unveil, users are prompted to enter their phone number and agree to receive SMS messages. This screen includes a disclosure stating: <strong>&quot;I consent to receive event notifications via SMS (RSVPs, reminders, updates). Msg &amp; Data rates may apply. Reply STOP to opt out.&quot;</strong>
                 </p>
                 
                 <div className="flex justify-center">
