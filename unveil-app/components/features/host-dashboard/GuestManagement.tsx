@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 // useRouter import removed as it's no longer needed
 // Core dependencies
 import { useHostGuestDecline } from '@/hooks/guests';
@@ -9,6 +9,7 @@ import { sendSingleGuestInvite } from '@/lib/services/singleInvite';
 
 import { useSimpleGuestStore } from '@/hooks/guests/useSimpleGuestStore';
 import { useUnifiedGuestCounts } from '@/hooks/guests';
+import { GuestsFlags } from '@/lib/config/guests';
 
 // Local components
 import { SecondaryButton, PrimaryButton } from '@/components/ui';
@@ -42,9 +43,19 @@ function GuestManagementContent({
   >('all');
   const [invitingGuestId, setInvitingGuestId] = useState<string | null>(null);
   const [showBulkInviteModal, setShowBulkInviteModal] = useState(false);
+  
+  // Infinite scroll ref
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
-  // Data hooks
-  const { guests, loading, refreshGuests } = useSimpleGuestStore(eventId);
+  // Data hooks with pagination support
+  const { 
+    guests, 
+    loading, 
+    refreshGuests, 
+    hasMore, 
+    isPaging, 
+    loadNextPage 
+  } = useSimpleGuestStore(eventId);
 
   // Use unified counts for consistency with dashboard
   const { counts: unifiedCounts, refresh: refreshCounts } =
@@ -173,17 +184,45 @@ function GuestManagementContent({
     };
   }, [eventId, refreshGuests, refreshCounts]);
 
-  // Helper function to extract first name from display name
-  const getFirstName = useCallback((guest: (typeof guests)[0]) => {
-    const displayName =
-      guest.guest_display_name ||
-      guest.users?.full_name ||
-      guest.guest_name ||
-      '';
-    return displayName.split(' ')[0]?.trim() || '';
-  }, []);
+  // Infinite scroll intersection observer
+  useEffect(() => {
+    if (!GuestsFlags.paginationEnabled || !loadMoreRef.current) {
+      return;
+    }
 
-  // Simplified filtering and sorting (removed complex multi-filter logic)
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry.isIntersecting && hasMore && !isPaging && !loading) {
+          // Debounce the load next page call
+          const timeoutId = setTimeout(() => {
+            loadNextPage();
+          }, GuestsFlags.scrollDebounceMs);
+          
+          return () => clearTimeout(timeoutId);
+        }
+      },
+      {
+        threshold: 0.1,
+        rootMargin: '100px', // Trigger 100px before the element is visible
+      }
+    );
+
+    observer.observe(loadMoreRef.current);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [hasMore, isPaging, loading, loadNextPage]);
+
+  // Reset pagination when filter or search changes
+  useEffect(() => {
+    if (GuestsFlags.paginationEnabled) {
+      refreshGuests(); // This will reset to page 1
+    }
+  }, [filterByRSVP, searchTerm, refreshGuests]); // Reset when filter or search changes
+
+  // Simplified filtering (server now handles alphabetical ordering)
   const filteredGuests = useMemo(() => {
     if (!guests || !Array.isArray(guests)) return [];
 
@@ -229,20 +268,10 @@ function GuestManagementContent({
       });
     }
 
-    // Sort alphabetically by first name (case-insensitive, null names last)
-    return filtered.sort((a, b) => {
-      const firstNameA = getFirstName(a);
-      const firstNameB = getFirstName(b);
-
-      // Handle null/empty names - sort them last
-      if (!firstNameA && !firstNameB) return 0;
-      if (!firstNameA) return 1;
-      if (!firstNameB) return -1;
-
-      // Case-insensitive alphabetical sort
-      return firstNameA.toLowerCase().localeCompare(firstNameB.toLowerCase());
-    });
-  }, [guests, searchTerm, filterByRSVP, getFirstName]);
+    // No client-side sorting needed - server returns guests in alphabetical order
+    // Hosts appear first, then guests alphabetically by display name
+    return filtered;
+  }, [guests, searchTerm, filterByRSVP]);
 
   // Note: RSVP updates now handled through decline/clear decline actions only
   // Legacy RSVP dropdown removed as part of RSVP-Lite hard cutover
@@ -437,6 +466,24 @@ function GuestManagementContent({
               inviteLoading={invitingGuestId === guest.id}
             />
           ))}
+          
+          {/* Infinite scroll loading sentinel */}
+          {GuestsFlags.paginationEnabled && hasMore && (
+            <div 
+              ref={loadMoreRef}
+              className="flex items-center justify-center py-6"
+              aria-label="Loading more guests"
+            >
+              {isPaging ? (
+                <div className="flex items-center gap-3 text-gray-500">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-pink-500"></div>
+                  <span className="text-sm font-medium">Loading more guests...</span>
+                </div>
+              ) : (
+                <div className="h-4" /> // Invisible trigger area
+              )}
+            </div>
+          )}
         </div>
       )}
 

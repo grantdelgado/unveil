@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabase/client';
 import { logger } from '@/lib/logger';
 import { createEventRequestManager } from '@/lib/utils/requestThrottling';
 import { calculateAttendanceCounts } from '@/lib/guests/attendance';
+import { GuestsFlags } from '@/lib/config/guests';
 
 // Simplified guest type that matches the get_event_guests_with_display_names RPC function
 interface SimpleGuest {
@@ -75,6 +76,11 @@ interface SimpleGuestStoreReturn {
     updates: Partial<SimpleGuest>,
   ) => void;
   rollbackOptimisticUpdate: (guestId: string) => void;
+  // Pagination state and controls
+  currentPage: number;
+  hasMore: boolean;
+  isPaging: boolean;
+  loadNextPage: () => Promise<void>;
 }
 
 /**
@@ -91,6 +97,11 @@ export function useSimpleGuestStore(eventId: string): SimpleGuestStoreReturn {
   const [guestSnapshots, setGuestSnapshots] = useState<
     Map<string, SimpleGuest>
   >(new Map());
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isPaging, setIsPaging] = useState(false);
 
   // Calculate status counts from guests array
   const statusCounts = useCallback(
@@ -108,8 +119,8 @@ export function useSimpleGuestStore(eventId: string): SimpleGuestStoreReturn {
     [],
   );
 
-  // Fetch guests from database (core function without throttling)
-  const fetchGuestsCore = useCallback(async () => {
+  // Fetch guests from database with pagination support
+  const fetchGuestsCore = useCallback(async (page: number = 1, isAppending: boolean = false) => {
     if (!eventId) {
       logger.warn('useSimpleGuestStore: No eventId provided');
       setGuests([]);
@@ -119,19 +130,33 @@ export function useSimpleGuestStore(eventId: string): SimpleGuestStoreReturn {
     }
 
     try {
-      setLoading(true);
+      if (!isAppending) {
+        setLoading(true);
+      } else {
+        setIsPaging(true);
+      }
       setError(null);
       setConnectionStatus('connecting');
 
-      logger.info('Fetching guests for event', { eventId });
+      // Compute pagination parameters based on feature flag
+      const limit = GuestsFlags.paginationEnabled ? GuestsFlags.pageSize : null;
+      const offset = GuestsFlags.paginationEnabled ? (page - 1) * GuestsFlags.pageSize : 0;
+
+      logger.info('Fetching guests for event', { 
+        eventId, 
+        page, 
+        limit, 
+        offset, 
+        paginationEnabled: GuestsFlags.paginationEnabled 
+      });
 
       // Use RPC function to get guests with computed display names
       const { data: guestData, error: guestError } = await supabase.rpc(
         'get_event_guests_with_display_names',
         {
           p_event_id: eventId,
-          p_limit: undefined,
-          p_offset: 0,
+          p_limit: limit ?? undefined,
+          p_offset: offset,
         },
       );
 
@@ -188,24 +213,70 @@ export function useSimpleGuestStore(eventId: string): SimpleGuestStoreReturn {
           : null,
       })) as SimpleGuest[];
 
-      setGuests(processedGuests);
+      // Handle pagination state and guest list management
+      if (isAppending && page > 1) {
+        // Append new guests, deduplicating by ID
+        setGuests(prevGuests => {
+          const existingIds = new Set(prevGuests.map(g => g.id));
+          const newGuests = processedGuests.filter(g => !existingIds.has(g.id));
+          return [...prevGuests, ...newGuests];
+        });
+      } else {
+        // Replace guests (first page or refresh)
+        setGuests(processedGuests);
+        setCurrentPage(1);
+      }
+
+      // Update pagination state based on feature flag
+      if (GuestsFlags.paginationEnabled) {
+        const receivedCount = processedGuests.length;
+        setHasMore(receivedCount === GuestsFlags.pageSize);
+        setCurrentPage(page);
+        
+        // Debug logging for pagination (dev only)
+        if (process.env.NODE_ENV === 'development') {
+          logger.debug('guests.pagination', {
+            page,
+            pageSize: GuestsFlags.pageSize,
+            received: receivedCount,
+            hasMore: receivedCount === GuestsFlags.pageSize,
+          });
+        }
+      } else {
+        // Non-paginated mode: no more pages
+        setHasMore(false);
+        setCurrentPage(1);
+      }
+
       setConnectionStatus('connected');
       setError(null);
 
       logger.info('Successfully fetched guests', {
         eventId,
+        page,
         count: processedGuests.length,
+        totalInStore: isAppending ? 'appending' : processedGuests.length,
       });
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Unknown error occurred';
-      logger.error('Error fetching guests', { eventId, error: errorMessage });
+      logger.error('Error fetching guests', { eventId, page, error: errorMessage });
 
       setError(errorMessage);
       setConnectionStatus('error');
-      setGuests([]); // Set to empty array to prevent undefined issues
+      
+      // Don't clear guests on pagination errors, only on initial load errors
+      if (!isAppending) {
+        setGuests([]);
+        setCurrentPage(1);
+        setHasMore(false);
+      }
     } finally {
-      setLoading(false);
+      if (!isAppending) {
+        setLoading(false);
+      } else {
+        setIsPaging(false);
+      }
     }
   }, [eventId]);
 
@@ -215,11 +286,27 @@ export function useSimpleGuestStore(eventId: string): SimpleGuestStoreReturn {
     [eventId],
   );
 
-  // Throttled version of fetchGuests
+  // Throttled version of fetchGuests for initial load
   const fetchGuests = useMemo(
-    () => requestManager.throttledFetch(fetchGuestsCore),
+    () => requestManager.throttledFetch((page = 1, isAppending = false) => fetchGuestsCore(page, isAppending)),
     [requestManager, fetchGuestsCore],
   );
+
+  // Load next page function for infinite scroll
+  const loadNextPage = useCallback(async () => {
+    if (!GuestsFlags.paginationEnabled || !hasMore || isPaging || loading) {
+      return;
+    }
+
+    const nextPage = currentPage + 1;
+    logger.info('Loading next page', { eventId, currentPage, nextPage });
+    
+    try {
+      await fetchGuestsCore(nextPage, true);
+    } catch (error) {
+      logger.error('Failed to load next page', { eventId, nextPage, error });
+    }
+  }, [eventId, currentPage, hasMore, isPaging, loading, fetchGuestsCore]);
 
   // Initial fetch on mount and when eventId changes
   useEffect(() => {
@@ -227,7 +314,11 @@ export function useSimpleGuestStore(eventId: string): SimpleGuestStoreReturn {
 
     const loadGuests = async () => {
       if (isMounted) {
-        await fetchGuestsCore();
+        // Reset pagination state on eventId change
+        setCurrentPage(1);
+        setHasMore(true);
+        setIsPaging(false);
+        await fetchGuestsCore(1, false);
       }
     };
 
@@ -299,15 +390,28 @@ export function useSimpleGuestStore(eventId: string): SimpleGuestStoreReturn {
     });
   }, []);
 
+  // Refresh function that resets pagination
+  const refreshGuests = useCallback(async () => {
+    setCurrentPage(1);
+    setHasMore(true);
+    setIsPaging(false);
+    await fetchGuestsCore(1, false);
+  }, [fetchGuestsCore]);
+
   return {
     guests: guests || [], // Ensure never undefined
     statusCounts: statusCounts(guests),
     loading,
     error,
     connectionStatus,
-    refreshGuests: fetchGuestsCore,
+    refreshGuests,
     updateGuestOptimistically,
     rollbackOptimisticUpdate,
+    // Pagination state and controls
+    currentPage,
+    hasMore,
+    isPaging,
+    loadNextPage,
   };
 }
 
