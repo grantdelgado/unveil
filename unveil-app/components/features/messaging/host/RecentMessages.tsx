@@ -16,6 +16,7 @@ import { supabase } from '@/lib/supabase/client';
 import type { Database } from '@/app/reference/supabase.types';
 // cancelScheduledMessage imported via useScheduledMessages hook
 import { CancelMessageDialog } from '@/components/ui/CancelMessageDialog';
+import { RecipientCountPill } from './RecipientCountPill';
 import { logger } from '@/lib/logger';
 
 // Use the direct database types
@@ -118,16 +119,13 @@ function UpcomingMessageCard({ message, showMyTime, eventTimezone, onCancel, onM
                 ✏️ Modified {message.modification_count}x
               </span>
             )}
-            {message.recipient_count && message.recipient_count > 0 && (
-              <span className="text-gray-600">
-                {message.recipient_count} {message.recipient_count === 1 ? 'person' : 'people'}
-              </span>
-            )}
-            {message.type === 'scheduled' && (!message.recipient_count || message.recipient_count === 0) && (
-              <span className="text-gray-500">
-                Recipients TBD
-              </span>
-            )}
+            <RecipientCountPill
+              scheduledMessageId={message.id}
+              messageType={message.message_type as 'announcement' | 'channel' | 'direct'}
+              status={message.status as 'scheduled' | 'sent' | 'cancelled' | 'failed'}
+              snapshotCount={message.recipient_count}
+              successCount={message.success_count}
+            />
           </div>
         </div>
 
@@ -237,7 +235,8 @@ function MessageRow({ message, showMyTime, eventTimezone }: MessageRowProps) {
     }
   };
 
-  // Helper function to format delivery summary
+  // Helper function to format delivery summary (legacy - now handled by RecipientCountPill)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const getDeliveryLabel = (message: UnifiedMessage) => {
     // For sent messages (from messages table): show actual delivery counts
     if (message.type === 'sent') {
@@ -317,7 +316,13 @@ function MessageRow({ message, showMyTime, eventTimezone }: MessageRowProps) {
               <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
                 {message.message_type}
               </span>
-              {getDeliveryLabel(message)}
+              <RecipientCountPill
+                scheduledMessageId={message.id}
+                messageType={message.message_type as 'announcement' | 'channel' | 'direct'}
+                status={message.status as 'scheduled' | 'sent' | 'cancelled' | 'failed'}
+                snapshotCount={message.recipient_count}
+                successCount={message.success_count}
+              />
             </div>
           </div>
         </div>

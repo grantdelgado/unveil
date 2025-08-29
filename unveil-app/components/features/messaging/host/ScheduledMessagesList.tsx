@@ -6,6 +6,7 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { cn } from '@/lib/utils';
 import { useScheduledMessages } from '@/hooks/messaging/useScheduledMessages';
 import { useErrorHandler } from '@/hooks/common';
+import { RecipientCountPill } from './RecipientCountPill';
 // Analytics temporarily removed
 import type { Database } from '@/app/reference/supabase.types';
 
@@ -413,16 +414,13 @@ export function ScheduledMessagesList({
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-gray-500">
                         <div>
                           <span className="font-medium">Recipients:</span>{' '}
-                          {message.status === 'scheduled' 
-                            ? (message.recipient_count && message.recipient_count > 0 ? message.recipient_count : 'TBD')
-                            : (message.recipient_count || 0)
-                          }
-                          {message.status === 'sent' &&
-                            message.success_count !== undefined && message.success_count !== null && message.success_count > 0 && (
-                              <span className="text-green-600 ml-1">
-                                ({message.success_count} delivered)
-                              </span>
-                            )}
+                          <RecipientCountPill
+                            scheduledMessageId={message.id}
+                            messageType={message.message_type as 'announcement' | 'channel' | 'direct'}
+                            status={message.status as 'scheduled' | 'sent' | 'cancelled' | 'failed'}
+                            snapshotCount={message.recipient_count}
+                            successCount={message.success_count}
+                          />
                         </div>
                         <div>
                           <span className="font-medium">Delivery:</span>{' '}
