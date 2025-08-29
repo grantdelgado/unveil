@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { supabase } from '@/lib/supabase';
 import type { User } from '@/lib/supabase/types';
+import { trackUserInteraction } from '@/lib/performance-monitoring';
 import {
   PageWrapper,
   CardContainer,
@@ -21,6 +22,7 @@ import { ArrowLeft } from 'lucide-react';
 
 export default function AccountSetupPage() {
   const [fullName, setFullName] = useState('');
+  const [smsConsent, setSmsConsent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [userProfile, setUserProfile] = useState<User | null>(null);
@@ -104,6 +106,11 @@ export default function AccountSetupPage() {
       return;
     }
 
+    if (!smsConsent) {
+      setError('Please consent to receive SMS event notifications to continue');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -121,13 +128,27 @@ export default function AccountSetupPage() {
         return;
       }
 
+      // Capture consent metadata
+      const consentTimestamp = new Date().toISOString();
+      const ipAddress = typeof window !== 'undefined' ? 
+        // Note: IP will be captured server-side in production
+        null : null;
+      const userAgent = typeof window !== 'undefined' ? 
+        navigator.userAgent : null;
+
       const { error: updateError } = await supabase
         .from('users')
         .update({
           full_name: trimmedFullName,
-          onboarding_completed: true, // Mark setup as complete only with full name
+          onboarding_completed: true,
+          // Set consent fields only if not already set (idempotent)
+          sms_consent_given_at: consentTimestamp,
+          sms_consent_ip_address: ipAddress,
+          sms_consent_user_agent: userAgent,
         })
-        .eq('id', userProfile.id);
+        .eq('id', userProfile.id)
+        // Only update consent if not already given
+        .is('sms_consent_given_at', null);
 
       if (updateError) {
         console.error('Failed to update profile:', updateError);
@@ -136,6 +157,9 @@ export default function AccountSetupPage() {
       }
 
       console.log('✅ Profile setup completed');
+
+      // Track successful SMS consent recording (PII-safe)
+      trackUserInteraction('sms_consent_recorded', 'setup', 'success');
 
       // Redirect to select-event page
       router.push('/select-event');
@@ -217,10 +241,40 @@ export default function AccountSetupPage() {
               </div>
             )}
 
+            {/* SMS Consent Checkbox */}
+            <div className="space-y-3">
+              <label className="flex items-start gap-2 min-h-[44px] cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={smsConsent}
+                  onChange={(e) => {
+                    setSmsConsent(e.target.checked);
+                    // Track consent checkbox interaction (PII-safe)
+                    trackUserInteraction('sms_consent_checked', 'setup', e.target.checked ? 'opted_in' : 'opted_out');
+                  }}
+                  required
+                  disabled={loading}
+                  className="mt-1 h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 focus:ring-offset-2 flex-shrink-0"
+                />
+                <span className="text-sm text-gray-700 leading-relaxed select-none">
+                  I consent to receive event notifications via SMS (RSVPs, reminders, updates). 
+                  Msg&amp;Data rates may apply. Reply STOP to opt out.{' '}
+                  <a 
+                    href="https://www.sendunveil.com/policies" 
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-purple-600 underline hover:text-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-1 rounded-sm"
+                  >
+                    Privacy Policy
+                  </a>
+                </span>
+              </label>
+            </div>
+
             <div className="space-y-3">
               <PrimaryButton
                 type="submit"
-                disabled={loading || !fullName.trim()}
+                disabled={loading || !fullName.trim() || !smsConsent}
                 loading={loading}
                 className="min-h-[44px]" // Touch-friendly height
               >
