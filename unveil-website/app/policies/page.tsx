@@ -29,46 +29,59 @@ export default function PoliciesPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="space-y-12">
             
-            {/* 1. Phone Authentication & SMS Verification */}
+            {/* 1. Phone Number Collection & Initial Consent */}
             <div className="bg-white rounded-2xl border border-gray-100 p-8 lg:p-12 shadow-lg">
               <div className="text-center mb-8">
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-2xl mb-6">
                   <span className="text-blue-600 text-2xl">📱</span>
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-semibold text-gray-900 mb-4">
-                  Phone Authentication & <span className="bg-gradient-to-r from-rose-500 to-purple-600 bg-clip-text text-transparent">SMS Verification</span>
+                  Phone Number Collection & <span className="bg-gradient-to-r from-rose-500 to-purple-600 bg-clip-text text-transparent">Initial Consent</span>
                 </h2>
               </div>
               
               <div className="text-gray-700 leading-relaxed space-y-6">
-                <p className="text-lg text-center">
-                  <strong>By providing your phone number during signup, you consent to receive SMS verification codes and event-related communications.</strong> 
-                  Your phone number is required for secure account access via two-factor authentication.
-                </p>
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                    <span className="text-blue-600 mr-3">🔐</span>
+                    Step 1: Account Creation
+                  </h3>
+                  <p className="text-gray-700 mb-4">
+                    When users create an Unveil account, they must provide their phone number for secure authentication. By entering their phone number, users consent to receive:
+                  </p>
+                  <ul className="space-y-2 text-gray-700">
+                    <li>• SMS verification codes for account security</li>
+                    <li>• Two-factor authentication messages</li>
+                    <li>• Account-related security notifications</li>
+                  </ul>
+                  <p className="text-gray-700 mt-4 font-medium">
+                    This initial consent enables secure phone-based authentication via SMS verification codes.
+                  </p>
+                </div>
                 
                 <div className="grid md:grid-cols-2 gap-8">
                   <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border border-green-100">
                     <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
                       <span className="text-green-600 mr-3">⚡</span>
-                      How It Works
+                      Authentication Process
                     </h3>
                     <ul className="space-y-2 text-gray-700">
-                      <li>• Express consent obtained during account creation</li>
-                      <li>• SMS verification codes for secure account access</li>
-                      <li>• Event updates and RSVP confirmations from wedding hosts</li>
-                      <li>• No separate marketing opt-in required</li>
+                      <li>• Phone number required for account creation</li>
+                      <li>• Immediate SMS verification code sent</li>
+                      <li>• Secure two-factor authentication enabled</li>
+                      <li>• Essential for account security and access</li>
                     </ul>
                   </div>
                   
-                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
+                  <div className="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-xl p-6 border border-amber-100">
                     <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                      <span className="text-blue-600 mr-3">📋</span>
-                      Message Details
+                      <span className="text-amber-600 mr-3">📋</span>
+                      Security Messages
                     </h3>
                     <ul className="space-y-2 text-gray-700">
-                      <li>• Transactional and account notification messages only</li>
-                      <li>• Message frequency varies based on account activity</li>
-                      <li>• Reply <strong>STOP</strong> to opt-out at any time</li>
+                      <li>• Verification codes for login</li>
+                      <li>• Account security alerts</li>
+                      <li>• Password reset confirmations</li>
                       <li>• Standard message and data rates may apply</li>
                     </ul>
                   </div>
@@ -88,9 +101,48 @@ export default function PoliciesPage() {
               </div>
               
               <div className="text-gray-700 leading-relaxed space-y-8">
-                <p className="text-lg text-center">
-                  When signing up for Unveil, users are prompted to enter their phone number and agree to receive SMS messages. This screen includes a disclosure stating: <strong>&quot;I consent to receive event notifications via SMS (RSVPs, reminders, updates). Msg &amp; Data rates may apply. Reply STOP to opt out.&quot;</strong>
-                </p>
+                <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-6 border border-purple-100">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                    <span className="text-purple-600 mr-3">✅</span>
+                    Step 2: Account Setup & Event Notifications
+                  </h3>
+                  <p className="text-gray-700 mb-4">
+                    After phone verification, users complete account setup where they must check a required consent checkbox with this exact language:
+                  </p>
+                  <div className="bg-white rounded-lg p-4 border border-purple-200">
+                    <p className="text-gray-900 font-medium text-center">
+                      &quot;I consent to receive event notifications via SMS (RSVPs, reminders, updates). Msg&amp;Data rates may apply. Reply STOP to opt out.&quot;
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-8">
+                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border border-green-100">
+                    <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                      <span className="text-green-600 mr-3">🔒</span>
+                      Checkbox Requirements
+                    </h3>
+                    <ul className="space-y-2 text-gray-700">
+                      <li>• <strong>Required for registration</strong> - Users cannot complete setup without checking it</li>
+                      <li>• <strong>Links to this privacy policy</strong> for full SMS terms</li>
+                      <li>• <strong>Cannot be bypassed</strong> - Registration fails without consent</li>
+                      <li>• <strong>Logged with timestamp</strong> for compliance auditing</li>
+                    </ul>
+                  </div>
+                  
+                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
+                    <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                      <span className="text-blue-600 mr-3">🔄</span>
+                      Two-Step Process
+                    </h3>
+                    <ul className="space-y-2 text-gray-700">
+                      <li>• <strong>Step 1:</strong> Phone entry (authentication)</li>
+                      <li>• <strong>Step 2:</strong> Setup checkbox (notifications)</li>
+                      <li>• <strong>Clear disclosure:</strong> Exact message types and opt-out instructions</li>
+                      <li>• <strong>Required interaction:</strong> Cannot skip or bypass consent</li>
+                    </ul>
+                  </div>
+                </div>
                 
                 <div className="flex justify-center">
                   <div className="bg-gradient-to-br from-gray-50 to-slate-50 rounded-xl p-6 border border-gray-200 max-w-sm">
@@ -111,19 +163,115 @@ export default function PoliciesPage() {
                 <div className="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-xl p-6 border border-amber-100">
                   <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
                     <span className="text-amber-600 mr-3">📋</span>
-                    Key Privacy Protections
+                    Key Features of Our Consent Process
                   </h3>
                   <ul className="space-y-2 text-gray-700">
-                    <li>• <strong>No third-party sharing:</strong> Phone numbers are never shared with third parties for marketing purposes</li>
-                    <li>• <strong>Transactional only:</strong> Messages are strictly for identity verification and account login</li>
-                    <li>• <strong>Clear opt-out:</strong> Users can reply STOP at any time to unsubscribe from SMS</li>
-                    <li>• <strong>Transparent disclosure:</strong> All consent language is clearly presented during sign-up</li>
+                    <li>• <strong>Two-step consent:</strong> Phone entry (authentication) + Setup checkbox (notifications)</li>
+                    <li>• <strong>Clear disclosure:</strong> Exact message types and opt-out instructions</li>
+                    <li>• <strong>Required interaction:</strong> Cannot skip or bypass consent</li>
+                    <li>• <strong>Audit trail:</strong> All consent actions logged with timestamps</li>
+                    <li>• <strong>No third-party sharing:</strong> Phone numbers never shared for marketing purposes</li>
+                    <li>• <strong>Transparent disclosure:</strong> All consent language clearly presented during sign-up</li>
                   </ul>
                 </div>
               </div>
             </div>
 
-            {/* 3. Data Usage & Retention */}
+            {/* 3. Message Types & Examples */}
+            <div className="bg-white rounded-2xl border border-gray-100 p-8 lg:p-12 shadow-lg">
+              <div className="text-center mb-8">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-100 to-emerald-100 rounded-2xl mb-6">
+                  <span className="text-green-600 text-2xl">📨</span>
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-semibold text-gray-900 mb-4">
+                  Message Types & <span className="bg-gradient-to-r from-rose-500 to-purple-600 bg-clip-text text-transparent">Examples</span>
+                </h2>
+              </div>
+              
+              <div className="text-gray-700 leading-relaxed space-y-8">
+                <p className="text-lg text-center">
+                  Users who complete our consent process receive these types of SMS messages:
+                </p>
+                
+                <div className="space-y-6">
+                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
+                    <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                      <span className="text-blue-600 mr-3">💌</span>
+                      Event Invitations
+                    </h3>
+                    <div className="bg-white rounded-lg p-4 border border-blue-200">
+                      <p className="text-gray-900 font-mono text-sm">
+                        Unveil: You&apos;re invited to Sarah & David&apos;s Wedding! View details & RSVP: https://app.sendunveil.com/select-event Reply HELP for help or STOP to unsubscribe.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-100">
+                    <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                      <span className="text-purple-600 mr-3">⏰</span>
+                      Event Reminders
+                    </h3>
+                    <div className="bg-white rounded-lg p-4 border border-purple-200">
+                      <p className="text-gray-900 font-mono text-sm">
+                        Unveil Reminder: Wedding ceremony starts at 4:00 PM at Rose Garden. View details: https://app.sendunveil.com/select-event Reply HELP for help or STOP to unsubscribe.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-6 border border-amber-100">
+                    <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                      <span className="text-amber-600 mr-3">📢</span>
+                      Host Announcements
+                    </h3>
+                    <div className="bg-white rounded-lg p-4 border border-amber-200">
+                      <p className="text-gray-900 font-mono text-sm">
+                        Unveil: Update from Sarah - Ceremony moved indoors due to weather. New location in main ballroom. Reply HELP for help or STOP to unsubscribe.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border border-green-100">
+                    <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                      <span className="text-green-600 mr-3">✅</span>
+                      RSVP Confirmations
+                    </h3>
+                    <div className="bg-white rounded-lg p-4 border border-green-200">
+                      <p className="text-gray-900 font-mono text-sm">
+                        Unveil: Thanks for RSVPing! Your response has been recorded. View event details: https://app.sendunveil.com/select-event Reply HELP for help or STOP to unsubscribe.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-rose-50 to-pink-50 rounded-xl p-6 border border-rose-100">
+                    <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                      <span className="text-rose-600 mr-3">🔔</span>
+                      RSVP Reminders
+                    </h3>
+                    <div className="bg-white rounded-lg p-4 border border-rose-200">
+                      <p className="text-gray-900 font-mono text-sm">
+                        Unveil: RSVP reminder for Sarah & David&apos;s Wedding. Please respond by March 1st. Details: https://app.sendunveil.com/select-event Reply HELP for help or STOP to unsubscribe.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-gray-50 to-slate-50 rounded-xl p-6 border border-gray-100">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                    <span className="text-gray-600 mr-3">📋</span>
+                    Message Characteristics
+                  </h3>
+                  <ul className="space-y-2 text-gray-700">
+                    <li>• <strong>Clear sender identification</strong> - All messages start with &quot;Unveil&quot;</li>
+                    <li>• <strong>Event context</strong> - Messages relate to specific wedding events</li>
+                    <li>• <strong>Consistent opt-out</strong> - Every message includes STOP/HELP instructions</li>
+                    <li>• <strong>Single-segment preferred</strong> - Optimized for 160-character SMS limits</li>
+                    <li>• <strong>No marketing content</strong> - Strictly transactional and event-related</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            {/* 4. Data Usage & Retention */}
             <div className="bg-white rounded-2xl border border-gray-100 p-8 lg:p-12 shadow-lg">
               <div className="text-center mb-8">
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-100 to-pink-100 rounded-2xl mb-6">
@@ -195,10 +343,12 @@ export default function PoliciesPage() {
                         Your Rights
                       </h3>
                       <ul className="space-y-2 text-gray-700">
-                        <li>• Withdraw SMS consent by replying <strong>STOP</strong></li>
-                        <li>• Request phone number and data deletion</li>
-                        <li>• Access your consent and communication history</li>
-                        <li>• Control communication preferences</li>
+                        <li>• <strong>Withdraw SMS consent by replying STOP</strong> - Immediate processing within minutes</li>
+                        <li>• <strong>Confirmation message</strong> - Users receive confirmation of opt-out</li>
+                        <li>• <strong>Account settings</strong> - Can also manage SMS preferences in app settings</li>
+                        <li>• <strong>Granular control</strong> - Can opt out of notifications while keeping authentication SMS</li>
+                        <li>• <strong>Request phone number and data deletion</strong> - Full data removal available</li>
+                        <li>• <strong>Access your consent and communication history</strong> - Complete audit trail</li>
                       </ul>
                     </div>
                     
