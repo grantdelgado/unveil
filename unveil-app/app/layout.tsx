@@ -4,7 +4,7 @@ import './globals.css';
 
 import { APP_CONFIG } from '@/lib/constants';
 import { Suspense } from 'react';
-import { MinimalProvider } from '@/lib/providers/MinimalProvider';
+import { GuestProvider } from '@/lib/providers/GuestProvider';
 
 // Load auth debug utilities in development
 if (process.env.NODE_ENV === 'development') {
@@ -141,7 +141,7 @@ export default function RootLayout({
       <body
         className={`${inter.variable} antialiased font-sans touch-manipulation`}
       >
-        <MinimalProvider>
+        <GuestProvider>
           <Suspense
             fallback={
               <div className="flex items-center justify-center min-h-screen">
@@ -151,7 +151,7 @@ export default function RootLayout({
           >
 {children}
           </Suspense>
-        </MinimalProvider>
+        </GuestProvider>
       </body>
     </html>
   );
