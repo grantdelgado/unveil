@@ -6,10 +6,37 @@ import { supabase } from '@/lib/supabase/client';
 import { useEventWithGuest } from '@/hooks/events';
 import { formatEventDate } from '@/lib/utils/date';
 
-import { GuestMessaging } from '@/components/features/messaging';
+import dynamic from 'next/dynamic';
+
+// Lazy load GuestMessaging component to reduce initial bundle size
+const GuestMessaging = dynamic(
+  () => import('@/components/features/messaging/guest/GuestMessaging').then((mod) => ({ default: mod.GuestMessaging })),
+  {
+    loading: () => (
+      <div className="flex items-center justify-center py-8">
+        <div className="animate-pulse space-y-4 w-full">
+          <div className="h-6 bg-gray-200 rounded w-1/4"></div>
+          <div className="space-y-2">
+            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+          </div>
+        </div>
+      </div>
+    ),
+    ssr: false, // Messages are dynamic content, no need for SSR
+  }
+);
+// Lazy load heavy modal components
+const DeclineEventModal = dynamic(
+  () => import('@/components/features/guest/DeclineEventModal').then((mod) => ({ default: mod.DeclineEventModal })),
+  {
+    loading: () => null, // Modal loading state handled internally
+    ssr: false,
+  }
+);
+
 import {
   PhotoAlbumButton,
-  DeclineEventModal,
   DeclineBanner,
   GuestEventHeader,
 } from '@/components/features/guest';

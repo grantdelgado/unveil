@@ -20,8 +20,23 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
-  // Prevent cross-imports from other workspace packages
-  webpack: (config) => {
+  // Bundle size budgets for performance optimization
+  experimental: {
+    optimizePackageImports: ['lucide-react', '@tanstack/react-query'],
+    clientTraceMetadata: ['appDir', 'turbopack'],
+  },
+  // Modular imports for better tree-shaking
+  modularizeImports: {
+    'lucide-react': {
+      transform: 'lucide-react/dist/esm/icons/{{member}}',
+      skipDefaultConversion: true,
+    },
+    'lodash': {
+      transform: 'lodash/{{member}}',
+    },
+  },
+  // Consolidated webpack configuration
+  webpack: (config, { isServer }) => {
     config.resolve.alias = {
       ...config.resolve.alias,
       // Prevent importing from the website package
@@ -37,6 +52,18 @@ const nextConfig: NextConfig = {
       },
     ];
 
+    // Add bundle size warnings for client-side bundles in production
+    if (process.env.NODE_ENV === 'production' && !isServer) {
+      config.performance = {
+        ...config.performance,
+        maxAssetSize: 220000, // 220KB warning threshold
+        maxEntrypointSize: 250000, // 250KB error threshold
+        hints: 'warning',
+      };
+
+      // Keep default Next.js chunk splitting - it's already optimized
+    }
+
     return config;
   },
   // PWA and mobile optimizations
@@ -47,9 +74,6 @@ const nextConfig: NextConfig = {
         as: '*.js',
       },
     },
-  },
-  experimental: {
-    clientTraceMetadata: ['appDir', 'turbopack'],
   },
 
   // Mobile-first performance

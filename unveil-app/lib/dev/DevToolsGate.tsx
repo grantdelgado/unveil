@@ -2,9 +2,19 @@
 
 import { useState, useEffect, ReactNode } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { MessageDebugOverlay } from '@/components/dev/MessageDebugOverlay';
+import dynamic from 'next/dynamic';
 import { useAuth } from '@/lib/auth/AuthProvider';
+
+// Dynamically import dev tools to prevent them from being bundled in production
+const ReactQueryDevtools = dynamic(
+  () => import('@tanstack/react-query-devtools').then((mod) => ({ default: mod.ReactQueryDevtools })),
+  { ssr: false }
+);
+
+const MessageDebugOverlay = dynamic(
+  () => import('@/components/dev/MessageDebugOverlay').then((mod) => ({ default: mod.MessageDebugOverlay })),
+  { ssr: false }
+);
 
 interface DevToolsGateProps {
   children?: ReactNode;

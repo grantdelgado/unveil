@@ -1,15 +1,10 @@
 import type { Metadata, Viewport } from 'next';
 import localFont from 'next/font/local';
 import './globals.css';
-import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 
-import { ReactQueryProvider } from '@/lib/react-query-client';
 import { APP_CONFIG } from '@/lib/constants';
 import { Suspense } from 'react';
-import { PerformanceMonitor } from '@/components/monitoring/PerformanceMonitor';
-import { AuthProvider } from '@/lib/auth/AuthProvider';
-import { SubscriptionProvider } from '@/lib/realtime/SubscriptionProvider';
-import { DevToolsGate } from '@/lib/dev/DevToolsGate';
+import { MinimalProvider } from '@/lib/providers/MinimalProvider';
 
 // Load auth debug utilities in development
 if (process.env.NODE_ENV === 'development') {
@@ -146,25 +141,17 @@ export default function RootLayout({
       <body
         className={`${inter.variable} antialiased font-sans touch-manipulation`}
       >
-        <ReactQueryProvider>
-          <AuthProvider>
-            <SubscriptionProvider>
-              <ErrorBoundary>
-                <PerformanceMonitor>
-                  <Suspense
-                    fallback={
-                      <div className="flex items-center justify-center min-h-screen">
-                        Loading...
-                      </div>
-                    }
-                  >
-                    <DevToolsGate>{children}</DevToolsGate>
-                  </Suspense>
-                </PerformanceMonitor>
-              </ErrorBoundary>
-            </SubscriptionProvider>
-          </AuthProvider>
-        </ReactQueryProvider>
+        <MinimalProvider>
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center min-h-screen">
+                Loading...
+              </div>
+            }
+          >
+{children}
+          </Suspense>
+        </MinimalProvider>
       </body>
     </html>
   );
