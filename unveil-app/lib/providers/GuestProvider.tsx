@@ -30,13 +30,26 @@ const AuthProvider = dynamic(
   }
 );
 
+// Lazy load SubscriptionProvider for realtime functionality needed by guest pages
+const SubscriptionProvider = dynamic(
+  () => import('@/lib/realtime/SubscriptionProvider').then((mod) => ({ default: mod.SubscriptionProvider })),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    )
+  }
+);
+
 interface GuestProviderProps {
   children: ReactNode;
 }
 
 /**
- * Lightweight provider for guest routes
- * Only includes essential providers needed for guest functionality
+ * Provider for guest routes with essential functionality
+ * Includes realtime subscriptions for guest event updates
  * All heavy providers are lazy loaded to reduce shared chunk
  */
 export function GuestProvider({ children }: GuestProviderProps) {
@@ -44,7 +57,9 @@ export function GuestProvider({ children }: GuestProviderProps) {
     <ErrorBoundary>
       <ReactQueryProvider>
         <AuthProvider>
-          {children}
+          <SubscriptionProvider>
+            {children}
+          </SubscriptionProvider>
         </AuthProvider>
       </ReactQueryProvider>
     </ErrorBoundary>
