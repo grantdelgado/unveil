@@ -49,7 +49,7 @@ docs/
 | ------------------------------------------------------------ | -------------------------------------------- | ------------ |
 | [`MVP_FEATURES.md`](./project/MVP_FEATURES.md)               | Core feature requirements and specifications | Current      |
 | [`SYSTEM_OVERVIEW.md`](./project/SYSTEM_OVERVIEW.md)         | High-level system architecture overview      | Current      |
-| [`REFACTORING_SUMMARY.md`](./project/REFACTORING_SUMMARY.md) | Major code improvements and migrations       | Current      |
+| `REFACTORING_SUMMARY.md` | Major code improvements and migrations       | Current      |
 | [`RELEASE_CHECKLIST.md`](./project/RELEASE_CHECKLIST.md)     | Production deployment procedures             | Current      |
 
 **📋 [View Project Documentation Index](./project/index.md)**
@@ -86,7 +86,7 @@ docs/
 | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------ | ------------ |
 | [`MAINTAINABILITY_AUDIT_REPORT.md`](./audits/MAINTAINABILITY_AUDIT_REPORT.md)           | Comprehensive maintainability analysis and cleanup recommendations | Current      |
 | [`event-access-visibility.md`](./audits/event-access-visibility.md)                     | Event access patterns and security vulnerability analysis          | Current      |
-| [`GUEST_MESSAGES_ACCESS_CONTROL_FIX.md`](./audits/GUEST_MESSAGES_ACCESS_CONTROL_FIX.md) | Guest message access security fixes                                | Current      |
+| `GUEST_MESSAGES_ACCESS_CONTROL_FIX.md` | Guest message access security fixes                                | Current      |
 
 **🔍 [View Audits Documentation Index](./audits/index.md)**
 
@@ -96,11 +96,11 @@ docs/
 
 | Document                                                                                         | Purpose                                                 | Last Updated |
 | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------- | ------------ |
-| [`PHASE_1_HARDENING_IMPLEMENTATION.md`](./implementations/PHASE_1_HARDENING_IMPLEMENTATION.md)   | Critical security fixes and access control improvements | Current      |
-| [`RSVP_LITE_IMPLEMENTATION_COMPLETE.md`](./implementations/RSVP_LITE_IMPLEMENTATION_COMPLETE.md) | Simplified RSVP system implementation                   | Current      |
-| [`ONE_TAP_INVITE_IMPLEMENTATION.md`](./implementations/ONE_TAP_INVITE_IMPLEMENTATION.md)         | Streamlined invitation process implementation           | Current      |
+| `PHASE_1_HARDENING_IMPLEMENTATION.md`   | Critical security fixes and access control improvements | Current      |
+| `RSVP_LITE_IMPLEMENTATION_COMPLETE.md` | Simplified RSVP system implementation                   | Current      |
+| `ONE_TAP_INVITE_IMPLEMENTATION.md`         | Streamlined invitation process implementation           | Current      |
 
-**⚙️ [View Implementations Documentation Index](./implementations/index.md)**
+**⚙️ View Implementations Documentation Index**
 
 ## 👥 Guest Management Documentation
 
@@ -110,7 +110,7 @@ docs/
 | --------------------------------------------------------------------------------------------------- | ----------------------------------------------------- | ------------ |
 | [`guest-management-audit.md`](./guest-management/guest-management-audit.md)                         | Comprehensive module audit with architecture analysis | Current      |
 | [`guest-management-ux-audit.md`](./guest-management/guest-management-ux-audit.md)                   | User experience focused audit and improvements        | Current      |
-| [`guest-management-phase3-completion.md`](./guest-management/guest-management-phase3-completion.md) | Latest phase completion report                        | Current      |
+| `guest-management-phase3-completion.md` | Latest phase completion report                        | Current      |
 
 **👥 [View Guest Management Documentation Index](./guest-management/index.md)**
 
@@ -120,8 +120,8 @@ docs/
 
 | Document                                            | Purpose                                           | Last Updated |
 | --------------------------------------------------- | ------------------------------------------------- | ------------ |
-| [`PHASE_1_SUMMARY.md`](./phases/PHASE_1_SUMMARY.md) | First major development phase completion summary  | Current      |
-| [`PHASE_2_SUMMARY.md`](./phases/PHASE_2_SUMMARY.md) | Second major development phase completion summary | Current      |
+| `PHASE_1_SUMMARY.md` | First major development phase completion summary  | Current      |
+| `PHASE_2_SUMMARY.md` | Second major development phase completion summary | Current      |
 
 **📈 [View Phases Documentation Index](./phases/index.md)**
 
@@ -133,12 +133,12 @@ Performance documentation is maintained in a separate, comprehensive system:
 
 | Documentation           | Location                                                         | Purpose                                                |
 | ----------------------- | ---------------------------------------------------------------- | ------------------------------------------------------ |
-| **Performance Center**  | [`../performance/README.md`](../performance/README.md)           | Main performance overview and quick start              |
-| **Optimization Guides** | [`../performance/documentation/`](../performance/documentation/) | Detailed performance guides and analysis               |
-| **Monitoring System**   | [`../performance/monitoring/`](../performance/monitoring/)       | Real-time performance alerts and tracking              |
-| **Advanced Frameworks** | [`../performance/frameworks/`](../performance/frameworks/)       | Service worker, virtualization, and optimization tools |
+| **Performance Center**  | `../performance/README.md`           | Main performance overview and quick start              |
+| **Optimization Guides** | `../performance/documentation/` | Detailed performance guides and analysis               |
+| **Monitoring System**   | `../performance/monitoring/`       | Real-time performance alerts and tracking              |
+| **Advanced Frameworks** | `../performance/frameworks/`       | Service worker, virtualization, and optimization tools |
 
-**⚡ [View Performance Documentation Center](../performance/README.md)**
+**⚡ View Performance Documentation Center**
 
 ## 📚 Historical Documentation
 
@@ -146,7 +146,7 @@ Performance documentation is maintained in a separate, comprehensive system:
 
 The archive contains comprehensive historical documentation organized by category, including legacy architecture decisions, completed refactoring projects, and evolutionary project planning.
 
-**📚 [View Archive Index](./archive/index.md)**
+**📚 View Archive Index**
 
 ## 🎯 Current Project Status
 

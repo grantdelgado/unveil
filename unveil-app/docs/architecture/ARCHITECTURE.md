@@ -80,7 +80,7 @@ As of January 2025, the codebase has undergone a comprehensive 5-phase refactor 
 - **Maintainability**: Clear separation of concerns and consistent patterns
 - **Developer Experience**: Comprehensive logging and debugging capabilities
 
-→ **Full Refactor Details**: [`../00-OVERVIEW/unveil-codebase-refactor-plan.md`](../00-OVERVIEW/unveil-codebase-refactor-plan.md)
+→ **Full Refactor Details**: `../00-OVERVIEW/unveil-codebase-refactor-plan.md`
 
 ---
 

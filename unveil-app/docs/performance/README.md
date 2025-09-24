@@ -161,7 +161,7 @@ import serviceWorker from '@/performance/frameworks/serviceWorker';
 
 - **[Main Performance Guide](./documentation/README.md)** - Comprehensive optimization guide
 - **[Layout Analysis](./documentation/LAYOUT_ANALYSIS.md)** - Layout optimization analysis
-- **[Week 4 Summary](./documentation/WEEK4_COMPLETION_SUMMARY.md)** - Completion status and metrics
+- **Week 4 Summary** - Completion status and metrics
 - **[Scripts Documentation](./scripts/index.md)** - Automated validation tools
 
 ## 🏆 Performance Achievements

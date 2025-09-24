@@ -1,0 +1,311 @@
+{
+  "timestamp": "2025-09-24T00:28:07.451Z",
+  "tool": "next",
+  "command": "pnpm build",
+  "environment": {
+    "TERM_PROGRAM": "vscode",
+    "TERM": "xterm-256color",
+    "SHELL": "/bin/zsh",
+    "HOMEBREW_REPOSITORY": "/opt/homebrew",
+    "TMPDIR": "/var/folders/cl/fm16jmzd6_z619p8j8wff4b40000gn/T/",
+    "TERM_PROGRAM_VERSION": "1.6.45",
+    "ZDOTDIR": "/Users/grantdelgado",
+    "CURSOR_TRACE_ID": "2898883e06c141bc8c85038bd302cc9c",
+    "ORIGINAL_XDG_CURRENT_DESKTOP": "undefined",
+    "MallocNanoZone": "0",
+    "ENABLE_IDE_INTEGRATION": "true",
+    "PNPM_HOME": "/Users/grantdelgado/Library/pnpm",
+    "USER": "grantdelgado",
+    "COMMAND_MODE": "unix2003",
+    "CLAUDE_CODE_SSE_PORT": "31372",
+    "SSH_AUTH_SOCK": "/private/tmp/com.apple.launchd.MwXKUpjsSr/Listeners",
+    "VSCODE_PROFILE_INITIALIZED": "1",
+    "__CF_USER_TEXT_ENCODING": "0x1F5:0x0:0x0",
+    "PAGER": "sh -c \"head -n 10000 | cat\"",
+    "PYDEVD_DISABLE_FILE_VALIDATION": "1",
+    "PATH": "/opt/homebrew/bin:/opt/homebrew/sbin:/Library/Frameworks/Python.framework/Versions/3.11/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/Users/grantdelgado/Library/pnpm:/Users/grantdelgado/.cursor/extensions/ms-python.debugpy-2025.10.0-darwin-arm64/bundled/scripts/noConfigScripts",
+    "_": "/usr/local/bin/node",
+    "USER_ZDOTDIR": "/Users/grantdelgado",
+    "__CFBundleIdentifier": "com.todesktop.230313mzl4w4u92",
+    "PWD": "/Users/grantdelgado/Unveil/unveil-app",
+    "DISABLE_AUTO_UPDATE": "true",
+    "LANG": "en_US.UTF-8",
+    "CURSOR_AGENT": "1",
+    "BUNDLED_DEBUGPY_PATH": "/Users/grantdelgado/.cursor/extensions/ms-python.debugpy-2025.10.0-darwin-arm64/bundled/libs/debugpy",
+    "VSCODE_GIT_ASKPASS_EXTRA_ARGS": "",
+    "XPC_FLAGS": "0x0",
+    "XPC_SERVICE_NAME": "0",
+    "VSCODE_INJECTION": "1",
+    "VSCODE_DEBUGPY_ADAPTER_ENDPOINTS": "/Users/grantdelgado/.cursor/extensions/ms-python.debugpy-2025.10.0-darwin-arm64/.noConfigDebugAdapterEndpoints/endpoint-f53660e855da2844.txt",
+    "npm_config_yes": "true",
+    "SHLVL": "2",
+    "HOME": "/Users/grantdelgado",
+    "VSCODE_GIT_ASKPASS_MAIN": "/Applications/Cursor.app/Contents/Resources/app/extensions/git/dist/askpass-main.js",
+    "HOMEBREW_PREFIX": "/opt/homebrew",
+    "PIP_NO_INPUT": "true",
+    "LOGNAME": "grantdelgado",
+    "VSCODE_GIT_IPC_HANDLE": "/var/folders/cl/fm16jmzd6_z619p8j8wff4b40000gn/T/vscode-git-bf71e0fdcd.sock",
+    "COMPOSER_NO_INTERACTION": "1",
+    "VSCODE_GIT_ASKPASS_NODE": "/Applications/Cursor.app/Contents/Frameworks/Cursor Helper (Plugin).app/Contents/MacOS/Cursor Helper (Plugin)",
+    "GIT_ASKPASS": "/Applications/Cursor.app/Contents/Resources/app/extensions/git/dist/askpass.sh",
+    "INFOPATH": "/opt/homebrew/share/info:/opt/homebrew/share/info:",
+    "HOMEBREW_CELLAR": "/opt/homebrew/Cellar",
+    "COLORTERM": "truecolor",
+    "NODE_ENV": "production",
+    "NEXT_TELEMETRY_DISABLED": "1",
+    "CI": "1"
+  },
+  "exitCode": 0,
+  "totalWarnings": 13,
+  "warnings": [
+    {
+      "id": "next_120bd87c",
+      "tool": "next",
+      "category": "deprecation",
+      "severity": "warning",
+      "message": "588:20  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",
+      "file": null,
+      "location": null,
+      "context": {
+        "fullLine": "588:20  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",
+        "surroundingLines": [
+          "",
+          "./components/features/events/GuestImportStep.tsx",
+          "588:20  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",
+          "590:24  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",
+          ""
+        ]
+      }
+    },
+    {
+      "id": "next_39ba0b1",
+      "tool": "next",
+      "category": "deprecation",
+      "severity": "warning",
+      "message": "590:24  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",
+      "file": null,
+      "location": null,
+      "context": {
+        "fullLine": "590:24  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",
+        "surroundingLines": [
+          "./components/features/events/GuestImportStep.tsx",
+          "588:20  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",
+          "590:24  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",
+          "",
+          "./components/features/guests/CSVImportModal.tsx"
+        ]
+      }
+    },
+    {
+      "id": "next_19123a5",
+      "tool": "next",
+      "category": "other",
+      "severity": "warning",
+      "message": "185:6  Warning: React Hook useCallback has a missing dependency: 'handleError'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps",
+      "file": null,
+      "location": null,
+      "context": {
+        "fullLine": "185:6  Warning: React Hook useCallback has a missing dependency: 'handleError'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps",
+        "surroundingLines": [
+          "",
+          "./components/features/guests/CSVImportModal.tsx",
+          "185:6  Warning: React Hook useCallback has a missing dependency: 'handleError'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps",
+          "308:6  Warning: React Hook useCallback has a missing dependency: 'handleError'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps",
+          ""
+        ]
+      }
+    },
+    {
+      "id": "next_113f5ae",
+      "tool": "next",
+      "category": "other",
+      "severity": "warning",
+      "message": "308:6  Warning: React Hook useCallback has a missing dependency: 'handleError'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps",
+      "file": null,
+      "location": null,
+      "context": {
+        "fullLine": "308:6  Warning: React Hook useCallback has a missing dependency: 'handleError'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps",
+        "surroundingLines": [
+          "./components/features/guests/CSVImportModal.tsx",
+          "185:6  Warning: React Hook useCallback has a missing dependency: 'handleError'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps",
+          "308:6  Warning: React Hook useCallback has a missing dependency: 'handleError'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps",
+          "",
+          "./components/features/messaging/host/RecentMessages.tsx"
+        ]
+      }
+    },
+    {
+      "id": "next_56c8e306",
+      "tool": "next",
+      "category": "deprecation",
+      "severity": "warning",
+      "message": "459:25  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",
+      "file": null,
+      "location": null,
+      "context": {
+        "fullLine": "459:25  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",
+        "surroundingLines": [
+          "",
+          "./components/features/messaging/host/RecentMessages.tsx",
+          "459:25  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",
+          "459:54  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",
+          "460:22  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax"
+        ]
+      }
+    },
+    {
+      "id": "next_45d36d1e",
+      "tool": "next",
+      "category": "deprecation",
+      "severity": "warning",
+      "message": "459:54  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",
+      "file": null,
+      "location": null,
+      "context": {
+        "fullLine": "459:54  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",
+        "surroundingLines": [
+          "./components/features/messaging/host/RecentMessages.tsx",
+          "459:25  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",
+          "459:54  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",
+          "460:22  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",
+          "461:22  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax"
+        ]
+      }
+    },
+    {
+      "id": "next_6fdbc10d",
+      "tool": "next",
+      "category": "deprecation",
+      "severity": "warning",
+      "message": "460:22  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",
+      "file": null,
+      "location": null,
+      "context": {
+        "fullLine": "460:22  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",
+        "surroundingLines": [
+          "459:25  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",
+          "459:54  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",
+          "460:22  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",
+          "461:22  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",
+          ""
+        ]
+      }
+    },
+    {
+      "id": "next_23789db4",
+      "tool": "next",
+      "category": "deprecation",
+      "severity": "warning",
+      "message": "461:22  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",
+      "file": null,
+      "location": null,
+      "context": {
+        "fullLine": "461:22  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",
+        "surroundingLines": [
+          "459:54  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",
+          "460:22  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",
+          "461:22  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",
+          "",
+          "./lib/services/eventCreation.ts"
+        ]
+      }
+    },
+    {
+      "id": "next_71e64b65",
+      "tool": "next",
+      "category": "deprecation",
+      "severity": "warning",
+      "message": "677:22  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",
+      "file": null,
+      "location": null,
+      "context": {
+        "fullLine": "677:22  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",
+        "surroundingLines": [
+          "",
+          "./lib/services/eventCreation.ts",
+          "677:22  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",
+          "705:25  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",
+          ""
+        ]
+      }
+    },
+    {
+      "id": "next_56f75a9e",
+      "tool": "next",
+      "category": "deprecation",
+      "severity": "warning",
+      "message": "705:25  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",
+      "file": null,
+      "location": null,
+      "context": {
+        "fullLine": "705:25  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",
+        "surroundingLines": [
+          "./lib/services/eventCreation.ts",
+          "677:22  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",
+          "705:25  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",
+          "",
+          "info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules"
+        ]
+      }
+    },
+    {
+      "id": "next_79f19a7c",
+      "tool": "next",
+      "category": "other",
+      "severity": "warning",
+      "message": "⚠ Compiled with warnings in 9.0s",
+      "file": null,
+      "location": null,
+      "context": {
+        "fullLine": " ⚠ Compiled with warnings in 9.0s",
+        "surroundingLines": [
+          "",
+          "",
+          " ⚠ Compiled with warnings in 9.0s",
+          "",
+          "asset size limit: The following asset(s) exceed the recommended size limit (215 KiB)."
+        ]
+      }
+    },
+    {
+      "id": "webpack_71b95330",
+      "tool": "webpack",
+      "category": "perf",
+      "severity": "warning",
+      "message": "asset size limit: The following asset(s) exceed the recommended size limit (215 KiB).",
+      "file": null,
+      "location": null,
+      "context": {
+        "size": null,
+        "fullLine": "asset size limit: The following asset(s) exceed the recommended size limit (215 KiB).",
+        "surroundingLines": [
+          " ⚠ Compiled with warnings in 9.0s",
+          "",
+          "asset size limit: The following asset(s) exceed the recommended size limit (215 KiB).",
+          "This can impact web performance.",
+          "Assets: "
+        ]
+      }
+    },
+    {
+      "id": "webpack_16a88dfc",
+      "tool": "webpack",
+      "category": "perf",
+      "severity": "warning",
+      "message": "entrypoint size limit: The following entrypoint(s) combined asset size exceeds the recommended limit (244 KiB). This can impact web performance.",
+      "file": null,
+      "location": null,
+      "context": {
+        "size": null,
+        "fullLine": "entrypoint size limit: The following entrypoint(s) combined asset size exceeds the recommended limit (244 KiB). This can impact web performance.",
+        "surroundingLines": [
+          "  static/chunks/2042-0abde6b0f7d6070e.js (391 KiB)",
+          "",
+          "entrypoint size limit: The following entrypoint(s) combined asset size exceeds the recommended limit (244 KiB). This can impact web performance.",
+          "Entrypoints:",
+          "  main (549 KiB)"
+        ]
+      }
+    }
+  ]
+}

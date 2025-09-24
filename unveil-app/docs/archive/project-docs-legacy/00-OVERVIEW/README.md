@@ -2,7 +2,7 @@
 
 > **World-Class Product Development**: Comprehensive documentation demonstrating enterprise-grade product management and software engineering practices.
 
-**🎯 Quick Start**: New to Unveil? Start with [Strategic Overview](./STRATEGIC_OVERVIEW.md) → [Architecture Guide](./docs-architecture-guide.md) → [Developer Setup](./docs-developer-guide.md)
+**🎯 Quick Start**: New to Unveil? Start with Strategic Overview → Architecture Guide → Developer Setup
 
 ---
 
@@ -10,9 +10,9 @@
 
 | 🎯 **STRATEGIC**                                  | 🔧 **TECHNICAL**                                           | 📋 **PROCESS**                                              | 📚 **REFERENCE**                                  |
 | ------------------------------------------------- | ---------------------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------- |
-| [Strategic Overview](./STRATEGIC_OVERVIEW.md)     | [Architecture Guide](./docs-architecture-guide.md)         | [Current Sprint](./plans-Phase-7-Final-Integration-Plan.md) | [Brand Guidelines](./reference-brand.md)          |
-| [Product Roadmap](./reference-MVP-ProjectPlan.md) | [Developer Setup](./docs-developer-guide.md)               | [Development Rules](./docs-rules.md)                        | [API Reference](./docs-messaging-system-guide.md) |
-| [Market Analysis](./reference-risk-matrix.md)     | [Testing Infrastructure](./docs-testing-infrastructure.md) | [Feature Specs](./plans-messaging-project-plan.md)          | [Quick Commands](./reference-quick-reference.md)  |
+| Strategic Overview     | Architecture Guide         | Current Sprint | Brand Guidelines          |
+| Product Roadmap | Developer Setup               | Development Rules                        | API Reference |
+| Market Analysis     | Testing Infrastructure | Feature Specs          | Quick Commands  |
 
 ---
 
@@ -20,26 +20,26 @@
 
 ### **🚀 Getting Started (New Developers)**
 
-1. **[Strategic Overview](./STRATEGIC_OVERVIEW.md)** - Business context & priorities
-2. **[Architecture Guide](./docs-architecture-guide.md)** - Technical foundation & stack decisions
-3. **[Developer Guide](./docs-developer-guide.md)** - Setup, workflows, and contribution guidelines
-4. **[Design System](./docs-unveil-design-system.md)** - UI principles, components, and styling
+1. **Strategic Overview** - Business context & priorities
+2. **Architecture Guide** - Technical foundation & stack decisions
+3. **Developer Guide** - Setup, workflows, and contribution guidelines
+4. **Design System** - UI principles, components, and styling
 
 ### **📊 Production Engineering**
 
 | Feature Area           | Primary Docs                                                                                               | Status              |
 | ---------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------- |
-| **Messaging System**   | [System Guide](./docs-messaging-system-guide.md) • [Troubleshooting](./docs-troubleshooting-messaging.md)  | ✅ Production Ready |
-| **Authentication**     | [Architecture Guide](./docs-architecture-guide.md) • [Security Notes](./docs-security-notes.md)            | ✅ Production Ready |
-| **Real-Time Features** | [Architecture Guide](./docs-architecture-guide.md) • [Performance Guide](./docs-testing-infrastructure.md) | ✅ Production Ready |
-| **Host Dashboard**     | [Feature Spec](./docs-HOST_DASHBOARD.md) • [Refactor Plan](./plans-host-dashboard-refactor.md)             | ✅ Production Ready |
+| **Messaging System**   | System Guide • Troubleshooting  | ✅ Production Ready |
+| **Authentication**     | Architecture Guide • Security Notes            | ✅ Production Ready |
+| **Real-Time Features** | Architecture Guide • Performance Guide | ✅ Production Ready |
+| **Host Dashboard**     | Feature Spec • Refactor Plan             | ✅ Production Ready |
 
 ### **🔧 Development Tools**
 
-- **[MCP Supabase Setup](./docs-mcp-supabase-setup.md)** - AI-powered database integration
-- **[Schema Binding](./docs-mcp-schema-binding.md)** - Type generation and validation
-- **[Test User Management](./docs-test-user-management.md)** - Development environment setup
-- **[Component Library](./docs-component-library-implementation.md)** - Reusable UI components
+- **MCP Supabase Setup** - AI-powered database integration
+- **Schema Binding** - Type generation and validation
+- **Test User Management** - Development environment setup
+- **Component Library** - Reusable UI components
 
 ---
 
@@ -47,17 +47,17 @@
 
 ### **📊 Strategic Planning**
 
-- **[Strategic Overview](./STRATEGIC_OVERVIEW.md)** - Executive summary, roadmap, KPIs
-- **[MVP Project Plan](./reference-MVP-ProjectPlan.md)** - Market analysis, competitive positioning
-- **[Phase 7 Integration Plan](./plans-Phase-7-Final-Integration-Plan.md)** - Current sprint objectives
-- **[Brand & Voice Guidelines](./reference-brand.md)** - Positioning and messaging framework
+- **Strategic Overview** - Executive summary, roadmap, KPIs
+- **MVP Project Plan** - Market analysis, competitive positioning
+- **Phase 7 Integration Plan** - Current sprint objectives
+- **Brand & Voice Guidelines** - Positioning and messaging framework
 
 ### **📋 Feature Development**
 
-- **[Messaging Project Plan](./plans-messaging-project-plan.md)** - Core feature specification
-- **[UI Standardization](./plans-unveil-ui-standardization.md)** - Design system implementation
-- **[Navigation System](./docs-NAVIGATION_SYSTEM.md)** - User experience architecture
-- **[Performance Optimization](./docs-testing-infrastructure.md)** - Technical excellence standards
+- **Messaging Project Plan** - Core feature specification
+- **UI Standardization** - Design system implementation
+- **Navigation System** - User experience architecture
+- **Performance Optimization** - Technical excellence standards
 
 ---
 
@@ -65,17 +65,17 @@
 
 ### **🏆 Business Case**
 
-- **[Strategic Overview](./STRATEGIC_OVERVIEW.md)** - Market opportunity and competitive advantages
-- **[Technical Differentiation](./docs-architecture-guide.md)** - Platform scalability and innovation
-- **[Security & Compliance](./docs-security-notes.md)** - Enterprise-grade data protection
-- **[Performance Metrics](./docs-testing-infrastructure.md)** - Quality assurance standards
+- **Strategic Overview** - Market opportunity and competitive advantages
+- **Technical Differentiation** - Platform scalability and innovation
+- **Security & Compliance** - Enterprise-grade data protection
+- **Performance Metrics** - Quality assurance standards
 
 ### **🤝 Integration Partners**
 
-- **[API Documentation](./docs-messaging-system-guide.md)** - Developer integration guides
-- **[SMS Setup Guide](./docs-SMS_SETUP_GUIDE.md)** - Twilio integration specification
-- **[Storage Configuration](./docs-storage-bucket-setup-guide.md)** - Media handling and CDN setup
-- **[Production Environment](./docs-production-environment-setup.md)** - Deployment architecture
+- **API Documentation** - Developer integration guides
+- **SMS Setup Guide** - Twilio integration specification
+- **Storage Configuration** - Media handling and CDN setup
+- **Production Environment** - Deployment architecture
 
 ---
 

@@ -1,0 +1,53 @@
+path,title,lastModified,wordCount,size,action,reason,targetPath,internalLinks,externalLinks
+"README.md","🎪 Unveil","2025-08-27",628,5496,"PROTECTED","Root policy file or runtime directory","",25,0
+"COMMIT_SUMMARY.md","✅ Guest Alphabetical Pagination - Committed & Pushed","2025-08-29",463,3682,"MOVE","General documentation","docs/general/COMMIT_SUMMARY.md",0,0
+"components/features/auth/README.md","Modern OTP Input Component","2025-08-22",467,3495,"MOVE","README documentation","docs/project/README.md",0,0
+"FINAL_PERFORMANCE_OPTIMIZATION_REPORT.md","Frontend Performance — Final Optimization Report","2025-09-15",1095,8480,"MOVE","Performance documentation","docs/performance/FINAL_PERFORMANCE_OPTIMIZATION_REPORT.md",0,0
+"lib/realtime/README.md","Realtime Subscription Management","2025-08-22",1283,10736,"MOVE","README documentation","docs/project/README.md",0,0
+"MESSAGING_HOOKS_CONSOLIDATION_ANALYSIS.md","Messaging Hooks Consolidation: Detailed Analysis & Safe Migration Strategy","2025-08-27",1711,14304,"MOVE","Report/analysis documentation","docs/reports/MESSAGING_HOOKS_CONSOLIDATION_ANALYSIS.md",0,0
+"MESSAGING_RPC_VERIFICATION_REPORT.md","Messaging RPC Verification Report","2025-08-29",770,6061,"MOVE","Report/analysis documentation","docs/reports/MESSAGING_RPC_VERIFICATION_REPORT.md",0,0
+"OTP_RESEND_COOLDOWN_CHANGE.md","OTP Resend Cooldown Reduction: 60s → 30s","2025-08-22",289,2428,"MOVE","General documentation","docs/general/OTP_RESEND_COOLDOWN_CHANGE.md",0,0
+"PR_SUMMARY.md","PR: Repository Hygiene & Security Hardening","2025-08-22",773,6625,"MOVE","General documentation","docs/general/PR_SUMMARY.md",0,0
+"RPC_FUNCTIONS_VERIFICATION_REPORT.md","RPC Functions Verification Report","2025-08-27",918,7417,"MOVE","Report/analysis documentation","docs/reports/RPC_FUNCTIONS_VERIFICATION_REPORT.md",0,0
+"SCHEDULED_MESSAGES_ACCEPTANCE_CHECKLIST.md","Scheduled Messages Cron Processing - Acceptance Checklist","2025-08-22",808,6284,"MOVE","General documentation","docs/general/SCHEDULED_MESSAGES_ACCEPTANCE_CHECKLIST.md",0,0
+"SCHEDULED_MESSAGES_ALERTS.md","Scheduled Messages Monitoring & Alerts","2025-08-22",704,5328,"MOVE","General documentation","docs/general/SCHEDULED_MESSAGES_ALERTS.md",0,0
+"SCHEDULED_MESSAGES_AUDIT_REPORT.md","Scheduled Messages Audit Report","2025-08-22",751,5902,"MOVE","Report/analysis documentation","docs/reports/SCHEDULED_MESSAGES_AUDIT_REPORT.md",0,0
+"SCHEDULED_MESSAGES_RUNBOOK.md","Scheduled Messages Operations Runbook","2025-08-22",1176,8847,"MOVE","General documentation","docs/general/SCHEDULED_MESSAGES_RUNBOOK.md",0,0
+"SCHEDULED_MESSAGES_VERIFICATION_REPORT.md","Scheduled Messages Production Verification Report","2025-08-22",1202,9492,"MOVE","Report/analysis documentation","docs/reports/SCHEDULED_MESSAGES_VERIFICATION_REPORT.md",0,0
+"SCHEDULED_SMS_AUDIT_REPORT.md","🚨 Scheduled SMS Missing Event Tags - Audit Report","2025-08-24",719,5385,"MOVE","Report/analysis documentation","docs/reports/SCHEDULED_SMS_AUDIT_REPORT.md",0,0
+"SCHEDULED_SMS_DATABASE_CONSISTENCY_REPORT.md","🛡️ Scheduled SMS Database Consistency Report","2025-08-24",725,5708,"MOVE","Report/analysis documentation","docs/reports/SCHEDULED_SMS_DATABASE_CONSISTENCY_REPORT.md",0,0
+"SHARED_CHUNK_OPTIMIZATION_SUMMARY.md","Frontend Performance — Shared Chunk Split & Host Dashboard Optimization","2025-09-15",947,7460,"MOVE","Performance documentation","docs/performance/SHARED_CHUNK_OPTIMIZATION_SUMMARY.md",0,0
+"supabase/migrations-archive/README.md","Archived Migrations","2025-08-22",276,2415,"MOVE","README documentation","docs/project/README.md",0,0
+"UNVEIL_CLEANUP_AUDIT_REPORT.md","Unveil App Cleanup Audit Report","2025-08-27",1632,12432,"MOVE","Report/analysis documentation","docs/reports/UNVEIL_CLEANUP_AUDIT_REPORT.md",0,0
+"ALPHABETICAL_ORDERING_IMPLEMENTATION.md","Alphabetical Guest Ordering Implementation","2025-08-29",1005,7365,"DELETE","Completed implementation report","",0,0
+"APPLY_ALPHABETICAL_ORDERING_FIX.md","URGENT: Apply Alphabetical Ordering Fix","2025-08-29",484,4205,"DELETE","Completed implementation report","",0,0
+"CI_GATES_IMPLEMENTATION_SUMMARY.md","CI Gates Implementation — Complete ✅","2025-09-15",950,6774,"DELETE","Completed implementation report","",0,0
+"CI_GATES_IMPLEMENTATION.md","CI Gates Implementation — Messaging Reliability, Mobile E2E, and Bundle Budgets","2025-09-15",1655,12570,"DELETE","Completed implementation report","",0,0
+"CLEAN_SMS_BRANDING_FIX.md","Clean SMS Branding Fix - Simplified Solution","2025-08-23",667,4757,"DELETE","Completed implementation report","",0,0
+"DEPLOYMENT_FIX.md","Production Deployment Fix - Guest Messaging Read-Only","2025-08-22",294,2015,"DELETE","Completed implementation report","",0,0
+"DIRECT_MESSAGES_AND_TIMEZONE_FIX_SUMMARY.md","Direct Messages & Timezone Fix Summary","2025-08-26",481,3694,"DELETE","Completed implementation report","",0,0
+"FRONTEND_PERFORMANCE_OPTIMIZATION_SUMMARY.md","Frontend Performance Optimization - Bundle Reduction Summary","2025-09-15",902,6995,"DELETE","Completed implementation report","",0,0
+"GUEST_FEED_PAST_ANNOUNCEMENTS_FIX_SUMMARY.md","Guest Feed — Past Announcements Missing Fix Summary","2025-08-26",652,4429,"DELETE","Completed implementation report","",0,0
+"GUEST_PAGINATION_IMPLEMENTATION_SUMMARY.md","Guest Management Pagination Implementation - Summary","2025-08-29",911,6690,"DELETE","Completed implementation report","",0,0
+"GUEST_PAGINATION_TEST_PLAN.md","Guest Pagination Implementation - Test Plan","2025-08-29",899,5579,"DELETE","Completed implementation report","",0,0
+"IMPLEMENTATION_COMPLETE.md","✅ Scheduled SMS Branding Parity - IMPLEMENTATION COMPLETE","2025-08-24",567,4510,"DELETE","Completed implementation report","",0,0
+"MESSAGE_HISTORY_REFRESH_FIX_SUMMARY.md","Message History Refresh Fix - Implementation Summary","2025-08-26",781,6346,"DELETE","Completed implementation report","",0,0
+"MESSAGING_CONSOLIDATION_CLOSEOUT_SUMMARY.md","Messaging Hook Consolidation - Clean Closeout Summary","2025-08-27",758,5572,"DELETE","Completed implementation report","",0,0
+"MESSAGING_HOOKS_RELIABILITY_TESTS_IMPLEMENTATION.md","Messaging Hooks Reliability Tests — Implementation Complete","2025-09-15",1571,12885,"DELETE","Completed implementation report","",0,0
+"ONE_HOUR_REMINDERS_IMPLEMENTATION_COMPLETE.md","One-Hour Event Reminders - Implementation Complete ✅","2025-08-25",777,5975,"DELETE","Completed implementation report","",0,0
+"PR_SECURITY_DEFINER_HOTFIX.md","Codify SECURITY DEFINER hotfix; add DB guardrails","2025-08-22",955,7714,"DELETE","Completed implementation report","",0,0
+"PRE_LAUNCH_FIXES_IMPLEMENTATION.md","🚀 Pre-Launch Fixes Implementation Summary","2025-08-27",791,6778,"DELETE","Completed implementation report","",0,0
+"RPC_AMBIGUITY_FIX_REPORT.md","RPC Ambiguity Fix Report","2025-08-22",585,5221,"DELETE","Completed implementation report","",0,0
+"RPC_SCHEMA_FIX_SUMMARY.md","RPC Schema Fix Summary","2025-08-26",366,2773,"DELETE","Completed implementation report","",0,0
+"RPC_TYPE_CASTING_FIX_SUMMARY.md","RPC Type Casting Fix Summary","2025-08-26",344,2633,"DELETE","Completed implementation report","",0,0
+"SCHEDULED_MESSAGES_CRON_IMPLEMENTATION.md","Scheduled Messages Cron Implementation Guide","2025-08-22",1324,11335,"DELETE","Completed implementation report","",0,0
+"SCHEDULED_MESSAGES_FIX_SUMMARY.md","Scheduled Messages — Recipient Count Fix & Reliability Improvements","2025-08-22",931,7016,"DELETE","Completed implementation report","",0,0
+"SCHEDULED_SEND_NOW_PARITY_IMPLEMENTATION.md","Scheduled vs Send-Now Message Parity Implementation","2025-08-23",749,6065,"DELETE","Completed implementation report","",0,0
+"SCHEDULED_SMS_BRANDING_PARITY_FIX.md","Scheduled SMS Branding Parity Fix","2025-08-23",618,5028,"DELETE","Completed implementation report","",0,0
+"SCHEDULED_SMS_BRANDING_PARITY_IMPLEMENTATION.md","Scheduled SMS Branding Parity Implementation","2025-08-24",646,5370,"DELETE","Completed implementation report","",0,0
+"SCHEDULED_SMS_EVENT_TAG_FIX.md","Scheduled SMS Event Tag Fix - Root Cause & Solution","2025-08-23",747,5784,"DELETE","Completed implementation report","",0,0
+"SCHEDULED_SMS_SAFETY_NET_IMPLEMENTATION.md","🛡️ Scheduled SMS Header Safety Net - Implementation Complete","2025-08-24",736,6376,"DELETE","Completed implementation report","",0,0
+"TEST_PLAN.md","Test Plan: Repository Hygiene & Security Fixes","2025-08-22",1085,8475,"DELETE","Completed implementation report","",0,0
+"UNVEIL_APP_MAP.md","Unveil App Map: Complete Architecture Overview","2025-08-27",1880,15039,"DELETE","Completed implementation report","",0,0
+"UNVEIL_CLEANUP_IMPLEMENTATION_COMPLETE.md","Unveil App Cleanup Implementation - COMPLETE ✅","2025-08-27",1100,8467,"DELETE","Completed implementation report","",0,0
+"V2_DEFAULT_IMPLEMENTATION_COMPLETE.md","Event Messages V2 — Default Implementation Complete","2025-08-26",506,3829,"DELETE","Completed implementation report","",0,0

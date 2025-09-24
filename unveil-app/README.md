@@ -11,13 +11,13 @@ Unveil is a production-ready wedding event management application that enables h
 ### **New Team Members**
 
 1. **[📚 Read the Documentation](./docs/)** — Complete platform overview and development guides
-2. **[🏗️ Architecture Overview](./docs/ARCHITECTURE.md)** — Technical foundation and design patterns
-3. **[🔧 Development Setup](./docs/DEVELOPMENT_GUIDE.md)** — Workflow, standards, and contribution guidelines
+2. **🏗️ Architecture Overview** — Technical foundation and design patterns
+3. **🔧 Development Setup** — Workflow, standards, and contribution guidelines
 
 ### **Production Deployment**
 
-1. **[📋 Release Checklist](./docs/RELEASE_CHECKLIST.md)** — Step-by-step production deployment guide
-2. **[⚙️ Deployment Guide](./docs/DEPLOYMENT.md)** — Environment setup and operations
+1. **📋 Release Checklist** — Step-by-step production deployment guide
+2. **⚙️ Deployment Guide** — Environment setup and operations
 
 ---
 
@@ -54,7 +54,7 @@ Unveil is a production-ready wedding event management application that enables h
 - **Messaging** — Communicate with hosts and other guests
 - **Event Access** — View schedules, locations, and details
 
-**👉 [Complete Feature Documentation](./docs/MVP_FEATURES.md)**
+**👉 Complete Feature Documentation**
 
 ---
 
@@ -69,7 +69,7 @@ Unveil is a production-ready wedding event management application that enables h
 
 > **Note**: Messaging hook consolidation is deferred. All live code continues to use the existing hooks (`useMessages`, `useScheduledMessages`, etc.). Experimental work has been archived in the `feature/messaging-consolidation-experiments` branch.
 
-**👉 [Complete Technical Documentation](./docs/ARCHITECTURE.md)**
+**👉 Complete Technical Documentation**
 
 ---
 
@@ -79,14 +79,14 @@ All documentation has been consolidated and organized in the **[`/docs`](./docs/
 
 | **Document**                                            | **Purpose**                                         |
 | ------------------------------------------------------- | --------------------------------------------------- |
-| **[📋 System Overview](./docs/SYSTEM_OVERVIEW.md)**     | High-level platform overview and current status     |
-| **[🏗️ Architecture](./docs/ARCHITECTURE.md)**           | Complete technical architecture and design patterns |
-| **[🔧 Development Guide](./docs/DEVELOPMENT_GUIDE.md)** | Workflow, coding standards, and team guidelines     |
-| **[📋 MVP Features](./docs/MVP_FEATURES.md)**           | Current scope, included/excluded features, roadmap  |
-| **[🛡️ Security](./docs/SECURITY.md)**                   | Security implementation and best practices          |
-| **[🎨 Design System](./docs/DESIGN_SYSTEM.md)**         | UI components and design patterns                   |
-| **[⚙️ Deployment](./docs/DEPLOYMENT.md)**               | Production environment setup procedures             |
-| **[📋 Release Checklist](./docs/RELEASE_CHECKLIST.md)** | Comprehensive deployment checklist                  |
+| **📋 System Overview**     | High-level platform overview and current status     |
+| **🏗️ Architecture**           | Complete technical architecture and design patterns |
+| **🔧 Development Guide** | Workflow, coding standards, and team guidelines     |
+| **📋 MVP Features**           | Current scope, included/excluded features, roadmap  |
+| **🛡️ Security**                   | Security implementation and best practices          |
+| **🎨 Design System**         | UI components and design patterns                   |
+| **⚙️ Deployment**               | Production environment setup procedures             |
+| **📋 Release Checklist** | Comprehensive deployment checklist                  |
 
 **👉 [Browse All Documentation](./docs/)**
 
@@ -124,7 +124,7 @@ pnpm test
 pnpm test:e2e
 ```
 
-**👉 [Complete Development Guide](./docs/DEVELOPMENT_GUIDE.md)**
+**👉 Complete Development Guide**
 
 ---
 
@@ -138,15 +138,15 @@ pnpm test:e2e
 - ✅ Database migrations applied
 - ✅ Security verification complete
 
-**👉 [Full Release Checklist](./docs/RELEASE_CHECKLIST.md)**
+**👉 Full Release Checklist**
 
 ---
 
 ## 📞 Support & Contact
 
 - **📚 Documentation**: [`/docs`](./docs/) folder contains comprehensive guides
-- **🔧 Technical Issues**: See [Architecture Guide](./docs/ARCHITECTURE.md) and [Development Guide](./docs/DEVELOPMENT_GUIDE.md)
-- **🚀 Deployment**: See [Release Checklist](./docs/RELEASE_CHECKLIST.md) and [Deployment Guide](./docs/DEPLOYMENT.md)
+- **🔧 Technical Issues**: See Architecture Guide and Development Guide
+- **🚀 Deployment**: See Release Checklist and Deployment Guide
 
 ---
 

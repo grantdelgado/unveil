@@ -131,4 +131,4 @@ Unveil is a production-ready wedding event management application that enables h
 
 ---
 
-_This system overview provides a high-level understanding of Unveil's architecture, features, and technical foundation. For detailed technical documentation, see the full [Architecture Guide](./ARCHITECTURE.md)._
+_This system overview provides a high-level understanding of Unveil's architecture, features, and technical foundation. For detailed technical documentation, see the full Architecture Guide._

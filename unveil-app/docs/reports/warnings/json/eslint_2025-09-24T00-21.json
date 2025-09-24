@@ -1,0 +1,8 @@
+{
+  "timestamp": "2025-09-24T00:21:39.489Z",
+  "tool": "eslint",
+  "command": "pnpm lint --format json",
+  "exitCode": 0,
+  "totalWarnings": 0,
+  "warnings": []
+}

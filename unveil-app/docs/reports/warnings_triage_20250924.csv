@@ -1,0 +1,30 @@
+Priority,Tool,Category,Severity,Code,Message,File,Route,Line,Column,Frequency,Owner,Recommended Action,Effort,Impact
+P1,next,deprecation,warning,,"588:20  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",,,,,1,frontend-team,"Migrate to new API before removal deadline",L,High
+P1,next,deprecation,warning,,"590:24  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",,,,,1,frontend-team,"Migrate to new API before removal deadline",L,High
+P1,next,react,warning,,"185:6  Warning: React Hook useCallback has a missing dependency: 'handleError'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps",,,,,1,frontend-team,"Fix React warning/error",M,Medium
+P1,next,react,warning,,"308:6  Warning: React Hook useCallback has a missing dependency: 'handleError'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps",,,,,1,frontend-team,"Fix React warning/error",M,Medium
+P1,next,deprecation,warning,,"459:25  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",,,,,1,frontend-team,"Migrate to new API before removal deadline",L,High
+P1,next,deprecation,warning,,"459:54  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",,,,,1,frontend-team,"Migrate to new API before removal deadline",L,High
+P1,next,deprecation,warning,,"460:22  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",,,,,1,frontend-team,"Migrate to new API before removal deadline",L,High
+P1,next,deprecation,warning,,"461:22  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",,,,,1,frontend-team,"Migrate to new API before removal deadline",L,High
+P1,next,deprecation,warning,,"677:22  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",,,,,1,frontend-team,"Migrate to new API before removal deadline",L,High
+P1,next,deprecation,warning,,"705:25  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_count. Consider migrating to message_deliveries table for new features.  no-restricted-syntax",,,,,1,frontend-team,"Migrate to new API before removal deadline",L,High
+P2,next,other,warning,,"⚠ Compiled with warnings in 9.0s",,,,,1,frontend-team,"Review and address warning",M,Low
+P1,webpack,perf,warning,,"asset size limit: The following asset(s) exceed the recommended size limit (215 KiB).",,,,,1,platform-team,"Optimize performance bottleneck",L,Low
+P1,webpack,perf,warning,,"entrypoint size limit: The following entrypoint(s) combined asset size exceeds the recommended limit (244 KiB). This can impact web performance.",,,,,1,platform-team,"Optimize performance bottleneck",L,Low
+P0,perf,perf,error,BUNDLE_SIZE_ERROR,"Bundle size 319 KB exceeds error threshold (250 KB)",,/guest/events/[eventId]/home,,,1,platform-team,"Optimize performance bottleneck",L,High
+P0,perf,perf,error,BUNDLE_SIZE_ERROR,"Bundle size 311 KB exceeds error threshold (250 KB)",,/host/events/[eventId]/dashboard,,,1,platform-team,"Optimize performance bottleneck",L,High
+P0,perf,perf,error,BUNDLE_SIZE_ERROR,"Bundle size 315 KB exceeds error threshold (250 KB)",,/host/events/[eventId]/details,,,1,platform-team,"Optimize performance bottleneck",L,High
+P0,perf,perf,error,BUNDLE_SIZE_ERROR,"Bundle size 305 KB exceeds error threshold (250 KB)",,/host/events/[eventId]/edit,,,2,platform-team,"Optimize performance bottleneck",L,High
+P0,perf,perf,error,BUNDLE_SIZE_ERROR,"Bundle size 285 KB exceeds error threshold (200 KB)",,/host/events/[eventId]/messages,,,2,platform-team,"Optimize performance bottleneck",L,High
+P0,perf,perf,error,BUNDLE_SIZE_ERROR,"Bundle size 294 KB exceeds error threshold (250 KB)",,/host/events/[eventId]/schedule,,,1,platform-team,"Optimize performance bottleneck",L,High
+P0,perf,perf,error,BUNDLE_SIZE_ERROR,"Bundle size 309 KB exceeds error threshold (250 KB)",,/host/events/create,,,1,platform-team,"Optimize performance bottleneck",L,High
+P0,perf,perf,error,BUNDLE_SIZE_ERROR,"Bundle size 304 KB exceeds error threshold (250 KB)",,/select-event,,,1,platform-team,"Optimize performance bottleneck",L,High
+P0,perf,perf,error,BUNDLE_SIZE_ERROR,"Bundle size 290 KB exceeds error threshold (250 KB)",,/setup,,,1,platform-team,"Optimize performance bottleneck",L,High
+P0,perf,perf,error,BUNDLE_SIZE_ERROR,"Bundle size 303 KB exceeds error threshold (250 KB)",,/guest/events/[eventId]/schedule,,,1,platform-team,"Optimize performance bottleneck",L,High
+P0,perf,perf,error,BUNDLE_SIZE_ERROR,"Bundle size 288 KB exceeds error threshold (250 KB)",,/profile,,,1,platform-team,"Optimize performance bottleneck",L,High
+P0,perf,perf,error,BUNDLE_SIZE_ERROR,"Bundle size 284 KB exceeds error threshold (250 KB)",,/reset-password,,,1,platform-team,"Optimize performance bottleneck",L,High
+P0,perf,perf,error,PERF_FAIL,"❌ Performance check failed! Some routes exceed bundle size limits.",,,,,1,platform-team,"Split bundle or lazy load components",L,High
+P0,perf,perf,error,LARGEST_BUNDLE_ERROR,"Largest bundle 319 KB exceeds 250 KB threshold",,,,,1,platform-team,"Split bundle or lazy load components",L,High
+P1,perf,perf,warning,AVERAGE_BUNDLE_WARNING,"Average bundle size 294.2 KB is high (>200 KB)",,,,,1,platform-team,"Split bundle or lazy load components",L,Low
+P0,perf,perf,error,ROUTES_OVER_BUDGET,"14 routes exceed their performance budgets",,,,,1,platform-team,"Optimize performance bottleneck",L,High

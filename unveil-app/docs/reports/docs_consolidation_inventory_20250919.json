@@ -1,0 +1,1195 @@
+[
+  {
+    "path": "README.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/README.md",
+    "title": "🎪 Unveil",
+    "lastModified": "2025-08-27",
+    "size": 5496,
+    "wordCount": 628,
+    "h2s": [
+      "🚀 Quick Start",
+      "📋 Current Status",
+      "🎯 MVP Features"
+    ],
+    "internalLinks": [
+      {
+        "text": "📚 Read the Documentation",
+        "url": "./docs/"
+      },
+      {
+        "text": "🏗️ Architecture Overview",
+        "url": "./docs/ARCHITECTURE.md"
+      },
+      {
+        "text": "🔧 Development Setup",
+        "url": "./docs/DEVELOPMENT_GUIDE.md"
+      },
+      {
+        "text": "📋 Release Checklist",
+        "url": "./docs/RELEASE_CHECKLIST.md"
+      },
+      {
+        "text": "⚙️ Deployment Guide",
+        "url": "./docs/DEPLOYMENT.md"
+      },
+      {
+        "text": "`/docs`",
+        "url": "./docs/"
+      },
+      {
+        "text": "Complete Feature Documentation",
+        "url": "./docs/MVP_FEATURES.md"
+      },
+      {
+        "text": "Complete Technical Documentation",
+        "url": "./docs/ARCHITECTURE.md"
+      },
+      {
+        "text": "`/docs`",
+        "url": "./docs/"
+      },
+      {
+        "text": "📋 System Overview",
+        "url": "./docs/SYSTEM_OVERVIEW.md"
+      },
+      {
+        "text": "🏗️ Architecture",
+        "url": "./docs/ARCHITECTURE.md"
+      },
+      {
+        "text": "🔧 Development Guide",
+        "url": "./docs/DEVELOPMENT_GUIDE.md"
+      },
+      {
+        "text": "📋 MVP Features",
+        "url": "./docs/MVP_FEATURES.md"
+      },
+      {
+        "text": "🛡️ Security",
+        "url": "./docs/SECURITY.md"
+      },
+      {
+        "text": "🎨 Design System",
+        "url": "./docs/DESIGN_SYSTEM.md"
+      },
+      {
+        "text": "⚙️ Deployment",
+        "url": "./docs/DEPLOYMENT.md"
+      },
+      {
+        "text": "📋 Release Checklist",
+        "url": "./docs/RELEASE_CHECKLIST.md"
+      },
+      {
+        "text": "Browse All Documentation",
+        "url": "./docs/"
+      },
+      {
+        "text": "Complete Development Guide",
+        "url": "./docs/DEVELOPMENT_GUIDE.md"
+      },
+      {
+        "text": "Full Release Checklist",
+        "url": "./docs/RELEASE_CHECKLIST.md"
+      },
+      {
+        "text": "`/docs`",
+        "url": "./docs/"
+      },
+      {
+        "text": "Architecture Guide",
+        "url": "./docs/ARCHITECTURE.md"
+      },
+      {
+        "text": "Development Guide",
+        "url": "./docs/DEVELOPMENT_GUIDE.md"
+      },
+      {
+        "text": "Release Checklist",
+        "url": "./docs/RELEASE_CHECKLIST.md"
+      },
+      {
+        "text": "Deployment Guide",
+        "url": "./docs/DEPLOYMENT.md"
+      }
+    ],
+    "externalLinks": [],
+    "classification": {
+      "action": "PROTECTED",
+      "reason": "Root policy file or runtime directory",
+      "targetPath": null
+    },
+    "contentPreview": "# 🎪 Unveil\n\n> **Modern Wedding Event Management Platform** — Mobile-first, real-time communication and memory sharing for hosts and guests\n\nUnveil is a production-ready wedding event management appli"
+  },
+  {
+    "path": "COMMIT_SUMMARY.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/COMMIT_SUMMARY.md",
+    "title": "✅ Guest Alphabetical Pagination - Committed & Pushed",
+    "lastModified": "2025-08-29",
+    "size": 3682,
+    "wordCount": 463,
+    "h2s": [
+      "🚀 **Successfully Committed to GitHub**",
+      "📋 **Changes Included**",
+      "🎯 **Features Implemented**"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "MOVE",
+      "reason": "General documentation",
+      "targetPath": "docs/general/COMMIT_SUMMARY.md"
+    },
+    "contentPreview": "# ✅ Guest Alphabetical Pagination - Committed & Pushed\n\n## 🚀 **Successfully Committed to GitHub**\n\n**Branch**: `feature/guest-alphabetical-pagination`  \n**Commit**: `48853c4`  \n**GitHub URL**: https:"
+  },
+  {
+    "path": "components/features/auth/README.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/components/features/auth/README.md",
+    "title": "Modern OTP Input Component",
+    "lastModified": "2025-08-22",
+    "size": 3495,
+    "wordCount": 467,
+    "h2s": [
+      "Overview",
+      "Features",
+      "Usage"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "MOVE",
+      "reason": "README documentation",
+      "targetPath": "docs/project/README.md"
+    },
+    "contentPreview": "# Modern OTP Input Component\n\n## Overview\n\nThe `ModernOTPInput` component provides a modern, mobile-first verification code input experience with 6 individual input boxes instead of a single text fiel"
+  },
+  {
+    "path": "FINAL_PERFORMANCE_OPTIMIZATION_REPORT.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/FINAL_PERFORMANCE_OPTIMIZATION_REPORT.md",
+    "title": "Frontend Performance — Final Optimization Report",
+    "lastModified": "2025-09-15",
+    "size": 8480,
+    "wordCount": 1095,
+    "h2s": [
+      "🎯 **MISSION STATUS: MAJOR SUCCESS** ✅",
+      "📊 **Final Performance Results**",
+      "🛠 **Technical Optimizations Implemented**"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "MOVE",
+      "reason": "Performance documentation",
+      "targetPath": "docs/performance/FINAL_PERFORMANCE_OPTIMIZATION_REPORT.md"
+    },
+    "contentPreview": "# Frontend Performance — Final Optimization Report\n\n## 🎯 **MISSION STATUS: MAJOR SUCCESS** ✅\n\n**Original Goal:** Eliminate shared chunk bloat & bring Host Dashboard <250KB  \n**Achievement:** **76 kB "
+  },
+  {
+    "path": "lib/realtime/README.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/lib/realtime/README.md",
+    "title": "Realtime Subscription Management",
+    "lastModified": "2025-08-22",
+    "size": 10736,
+    "wordCount": 1283,
+    "h2s": [
+      "Architecture Overview",
+      "Usage Patterns",
+      "Extending for New Tables"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "MOVE",
+      "reason": "README documentation",
+      "targetPath": "docs/project/README.md"
+    },
+    "contentPreview": "# Realtime Subscription Management\n\nThis directory contains the centralized realtime subscription management system for Unveil's Supabase integration. The system provides stable, self-healing WebSocke"
+  },
+  {
+    "path": "MESSAGING_HOOKS_CONSOLIDATION_ANALYSIS.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/MESSAGING_HOOKS_CONSOLIDATION_ANALYSIS.md",
+    "title": "Messaging Hooks Consolidation: Detailed Analysis & Safe Migration Strategy",
+    "lastModified": "2025-08-27",
+    "size": 14304,
+    "wordCount": 1711,
+    "h2s": [
+      "Executive Summary",
+      "1. Current Hook Analysis",
+      "2. Duplication Analysis"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "MOVE",
+      "reason": "Report/analysis documentation",
+      "targetPath": "docs/reports/MESSAGING_HOOKS_CONSOLIDATION_ANALYSIS.md"
+    },
+    "contentPreview": "# Messaging Hooks Consolidation: Detailed Analysis & Safe Migration Strategy\n\n*Generated for: Unveil App Cleanup Phase*\n\n## Executive Summary\n\nThe messaging system currently uses **5 overlapping hooks"
+  },
+  {
+    "path": "MESSAGING_RPC_VERIFICATION_REPORT.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/MESSAGING_RPC_VERIFICATION_REPORT.md",
+    "title": "Messaging RPC Verification Report",
+    "lastModified": "2025-08-29",
+    "size": 6061,
+    "wordCount": 770,
+    "h2s": [
+      "Executive Summary",
+      "Core Messaging Functions",
+      "Supporting Messaging Functions"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "MOVE",
+      "reason": "Report/analysis documentation",
+      "targetPath": "docs/reports/MESSAGING_RPC_VERIFICATION_REPORT.md"
+    },
+    "contentPreview": "# Messaging RPC Verification Report\n\n**Date:** January 27, 2025  \n**Project:** unveil-app (wvhtbqvnamerdkkjknuv)  \n**Purpose:** Verify all production messaging functions remain intact after cleanup pr"
+  },
+  {
+    "path": "OTP_RESEND_COOLDOWN_CHANGE.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/OTP_RESEND_COOLDOWN_CHANGE.md",
+    "title": "OTP Resend Cooldown Reduction: 60s → 30s",
+    "lastModified": "2025-08-22",
+    "size": 2428,
+    "wordCount": 289,
+    "h2s": [
+      "Summary",
+      "Changes Made",
+      "Verification"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "MOVE",
+      "reason": "General documentation",
+      "targetPath": "docs/general/OTP_RESEND_COOLDOWN_CHANGE.md"
+    },
+    "contentPreview": "# OTP Resend Cooldown Reduction: 60s → 30s\n\n## Summary\n\nReduced the OTP resend cooldown from 60 seconds to 30 seconds to make the resend flow less restrictive while maintaining all existing abuse prot"
+  },
+  {
+    "path": "PR_SUMMARY.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/PR_SUMMARY.md",
+    "title": "PR: Repository Hygiene & Security Hardening",
+    "lastModified": "2025-08-22",
+    "size": 6625,
+    "wordCount": 773,
+    "h2s": [
+      "🎯 Overview",
+      "🔒 Security Fixes (CRITICAL)",
+      "🗂️ Migration Hygiene"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "MOVE",
+      "reason": "General documentation",
+      "targetPath": "docs/general/PR_SUMMARY.md"
+    },
+    "contentPreview": "# PR: Repository Hygiene & Security Hardening\n\n**Type**: Security Fix + Documentation Restructure + CI Improvements  \n**Priority**: HIGH (Security vulnerabilities addressed)  \n**Impact**: Repository-w"
+  },
+  {
+    "path": "RPC_FUNCTIONS_VERIFICATION_REPORT.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/RPC_FUNCTIONS_VERIFICATION_REPORT.md",
+    "title": "RPC Functions Verification Report",
+    "lastModified": "2025-08-27",
+    "size": 7417,
+    "wordCount": 918,
+    "h2s": [
+      "Executive Summary",
+      "📋 Function Inventory",
+      "🔍 Security Analysis"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "MOVE",
+      "reason": "Report/analysis documentation",
+      "targetPath": "docs/reports/RPC_FUNCTIONS_VERIFICATION_REPORT.md"
+    },
+    "contentPreview": "# RPC Functions Verification Report\n\n*Generated: $(date)*  \n*Purpose: Verify current state of specific RPC functions and their security configurations*\n\n## Executive Summary\n\nAll four requested RPC fu"
+  },
+  {
+    "path": "SCHEDULED_MESSAGES_ACCEPTANCE_CHECKLIST.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/SCHEDULED_MESSAGES_ACCEPTANCE_CHECKLIST.md",
+    "title": "Scheduled Messages Cron Processing - Acceptance Checklist",
+    "lastModified": "2025-08-22",
+    "size": 6284,
+    "wordCount": 808,
+    "h2s": [
+      "🎯 **Primary Acceptance Criteria**",
+      "🧪 **Testing Criteria**",
+      "📋 **Operational Criteria**"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "MOVE",
+      "reason": "General documentation",
+      "targetPath": "docs/general/SCHEDULED_MESSAGES_ACCEPTANCE_CHECKLIST.md"
+    },
+    "contentPreview": "# Scheduled Messages Cron Processing - Acceptance Checklist\n\n## 🎯 **Primary Acceptance Criteria**\n\n### ✅ Cron → Worker Wiring\n\n- [x] **Cron Detection**: GET handler detects `x-vercel-cron-signature`,"
+  },
+  {
+    "path": "SCHEDULED_MESSAGES_ALERTS.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/SCHEDULED_MESSAGES_ALERTS.md",
+    "title": "Scheduled Messages Monitoring & Alerts",
+    "lastModified": "2025-08-22",
+    "size": 5328,
+    "wordCount": 704,
+    "h2s": [
+      "Overview",
+      "Key Metrics to Monitor",
+      "Log Patterns to Monitor"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "MOVE",
+      "reason": "General documentation",
+      "targetPath": "docs/general/SCHEDULED_MESSAGES_ALERTS.md"
+    },
+    "contentPreview": "# Scheduled Messages Monitoring & Alerts\n\n## Overview\n\nThis document outlines the monitoring strategy and recommended alerts for the scheduled messaging system in production.\n\n## Key Metrics to Monito"
+  },
+  {
+    "path": "SCHEDULED_MESSAGES_AUDIT_REPORT.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/SCHEDULED_MESSAGES_AUDIT_REPORT.md",
+    "title": "Scheduled Messages Audit Report",
+    "lastModified": "2025-08-22",
+    "size": 5902,
+    "wordCount": 751,
+    "h2s": [
+      "Executive Summary",
+      "Audit Findings",
+      "Implemented Fixes"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "MOVE",
+      "reason": "Report/analysis documentation",
+      "targetPath": "docs/reports/SCHEDULED_MESSAGES_AUDIT_REPORT.md"
+    },
+    "contentPreview": "# Scheduled Messages Audit Report\n\n**Date:** August 21, 2025  \n**Time:** 16:48 UTC  \n**Issue:** Scheduled messages not being sent at their scheduled time\n\n## Executive Summary\n\nA comprehensive audit r"
+  },
+  {
+    "path": "SCHEDULED_MESSAGES_RUNBOOK.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/SCHEDULED_MESSAGES_RUNBOOK.md",
+    "title": "Scheduled Messages Operations Runbook",
+    "lastModified": "2025-08-22",
+    "size": 8847,
+    "wordCount": 1176,
+    "h2s": [
+      "Quick Reference",
+      "Operational Commands",
+      "Database Operations"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "MOVE",
+      "reason": "General documentation",
+      "targetPath": "docs/general/SCHEDULED_MESSAGES_RUNBOOK.md"
+    },
+    "contentPreview": "# Scheduled Messages Operations Runbook\n\n## Quick Reference\n\n### Emergency Contacts\n\n- **Deployment URL**: `https://unveil-ajtd8da32-grant-delgados-projects.vercel.app` (latest)\n- **Monitoring**: Verc"
+  },
+  {
+    "path": "SCHEDULED_MESSAGES_VERIFICATION_REPORT.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/SCHEDULED_MESSAGES_VERIFICATION_REPORT.md",
+    "title": "Scheduled Messages Production Verification Report",
+    "lastModified": "2025-08-22",
+    "size": 9492,
+    "wordCount": 1202,
+    "h2s": [
+      "Executive Summary",
+      "Verification Results",
+      "Environment Verification"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "MOVE",
+      "reason": "Report/analysis documentation",
+      "targetPath": "docs/reports/SCHEDULED_MESSAGES_VERIFICATION_REPORT.md"
+    },
+    "contentPreview": "# Scheduled Messages Production Verification Report\n\n**Date**: August 21, 2025  \n**Verification By**: AI Assistant  \n**Production Deployment**: `https://unveil-ajtd8da32-grant-delgados-projects.vercel"
+  },
+  {
+    "path": "SCHEDULED_SMS_AUDIT_REPORT.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/SCHEDULED_SMS_AUDIT_REPORT.md",
+    "title": "🚨 Scheduled SMS Missing Event Tags - Audit Report",
+    "lastModified": "2025-08-24",
+    "size": 5385,
+    "wordCount": 719,
+    "h2s": [
+      "🔍 **Investigation Summary**",
+      "✅ **What I Verified (Working Correctly)**",
+      "🚨 **Most Likely Root Causes**"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "MOVE",
+      "reason": "Report/analysis documentation",
+      "targetPath": "docs/reports/SCHEDULED_SMS_AUDIT_REPORT.md"
+    },
+    "contentPreview": "# 🚨 Scheduled SMS Missing Event Tags - Audit Report\n\n**Date**: January 30, 2025  \n**Status**: 🔍 **INVESTIGATION COMPLETE**  \n**Issue**: Scheduled SMS messages missing `[Event Tag]` despite implement"
+  },
+  {
+    "path": "SCHEDULED_SMS_DATABASE_CONSISTENCY_REPORT.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/SCHEDULED_SMS_DATABASE_CONSISTENCY_REPORT.md",
+    "title": "🛡️ Scheduled SMS Database Consistency Report",
+    "lastModified": "2025-08-24",
+    "size": 5708,
+    "wordCount": 725,
+    "h2s": [
+      "📋 **Database Consistency Verification**",
+      "🔧 **Applied Database Changes**",
+      "🎯 **Benefits of This Approach**"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "MOVE",
+      "reason": "Report/analysis documentation",
+      "targetPath": "docs/reports/SCHEDULED_SMS_DATABASE_CONSISTENCY_REPORT.md"
+    },
+    "contentPreview": "# 🛡️ Scheduled SMS Database Consistency Report\n\n**Date**: January 30, 2025  \n**Status**: ✅ **DATABASE CONSISTENT & ENHANCED**  \n**Method**: Supabase MCP verification and enhancement\n\n## 📋 **Database"
+  },
+  {
+    "path": "SHARED_CHUNK_OPTIMIZATION_SUMMARY.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/SHARED_CHUNK_OPTIMIZATION_SUMMARY.md",
+    "title": "Frontend Performance — Shared Chunk Split & Host Dashboard Optimization",
+    "lastModified": "2025-09-15",
+    "size": 7460,
+    "wordCount": 947,
+    "h2s": [
+      "🎯 Mission Status: **MAJOR SUCCESS** ✅",
+      "📊 Performance Results",
+      "🛠 Technical Optimizations Implemented"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "MOVE",
+      "reason": "Performance documentation",
+      "targetPath": "docs/performance/SHARED_CHUNK_OPTIMIZATION_SUMMARY.md"
+    },
+    "contentPreview": "# Frontend Performance — Shared Chunk Split & Host Dashboard Optimization\n\n## 🎯 Mission Status: **MAJOR SUCCESS** ✅\n\n**Goal:** Split shared chunk and bring `/host/events/[eventId]/dashboard` to <250K"
+  },
+  {
+    "path": "supabase/migrations-archive/README.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/supabase/migrations-archive/README.md",
+    "title": "Archived Migrations",
+    "lastModified": "2025-08-22",
+    "size": 2415,
+    "wordCount": 276,
+    "h2s": [
+      "Why These Migrations Were Archived",
+      "Current Status",
+      "Production Database"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "MOVE",
+      "reason": "README documentation",
+      "targetPath": "docs/project/README.md"
+    },
+    "contentPreview": "# Archived Migrations\n\nThis directory contains SQL migration files that were moved from `supabase/migrations/` to resolve timestamp conflicts and ensure deterministic migration ordering.\n\n## Why These"
+  },
+  {
+    "path": "UNVEIL_CLEANUP_AUDIT_REPORT.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/UNVEIL_CLEANUP_AUDIT_REPORT.md",
+    "title": "Unveil App Cleanup Audit Report",
+    "lastModified": "2025-08-27",
+    "size": 12432,
+    "wordCount": 1632,
+    "h2s": [
+      "Executive Summary",
+      "1. Obsolete Routes Analysis",
+      "2. RPC Functions Audit"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "MOVE",
+      "reason": "Report/analysis documentation",
+      "targetPath": "docs/reports/UNVEIL_CLEANUP_AUDIT_REPORT.md"
+    },
+    "contentPreview": "# Unveil App Cleanup Audit Report\n\n*Generated on: $(date)*  \n*Purpose: Comprehensive review for safe architectural cleanup*\n\n## Executive Summary\n\nThis audit identifies obsolete routes, unused RPCs, h"
+  },
+  {
+    "path": "ALPHABETICAL_ORDERING_IMPLEMENTATION.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/ALPHABETICAL_ORDERING_IMPLEMENTATION.md",
+    "title": "Alphabetical Guest Ordering Implementation",
+    "lastModified": "2025-08-29",
+    "size": 7365,
+    "wordCount": 1005,
+    "h2s": [
+      "✅ IMPLEMENTATION COMPLETE",
+      "Problem Solved",
+      "Files Modified"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "DELETE",
+      "reason": "Completed implementation report",
+      "targetPath": null
+    },
+    "contentPreview": "# Alphabetical Guest Ordering Implementation\n\n## ✅ IMPLEMENTATION COMPLETE\n\nThis document summarizes the successful implementation of true alphabetical ordering for guest pagination, fixing the issue "
+  },
+  {
+    "path": "APPLY_ALPHABETICAL_ORDERING_FIX.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/APPLY_ALPHABETICAL_ORDERING_FIX.md",
+    "title": "URGENT: Apply Alphabetical Ordering Fix",
+    "lastModified": "2025-08-29",
+    "size": 4205,
+    "wordCount": 484,
+    "h2s": [
+      "Issue",
+      "Solution",
+      "Test Query"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "DELETE",
+      "reason": "Completed implementation report",
+      "targetPath": null
+    },
+    "contentPreview": "# URGENT: Apply Alphabetical Ordering Fix\n\n## Issue\nThe guest pagination is still showing guests in `created_at DESC` order (newest first) instead of alphabetical order. The RPC function needs to be u"
+  },
+  {
+    "path": "CI_GATES_IMPLEMENTATION_SUMMARY.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/CI_GATES_IMPLEMENTATION_SUMMARY.md",
+    "title": "CI Gates Implementation — Complete ✅",
+    "lastModified": "2025-09-15",
+    "size": 6774,
+    "wordCount": 950,
+    "h2s": [
+      "🎯 **Mission Accomplished**",
+      "📁 **Files Created/Modified**",
+      "🚀 **CI Pipeline Architecture**"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "DELETE",
+      "reason": "Completed implementation report",
+      "targetPath": null
+    },
+    "contentPreview": "# CI Gates Implementation — Complete ✅\n\n**Date:** January 15, 2025  \n**Implementation Time:** ~3 hours  \n**Status:** **PRODUCTION READY**\n\n---\n\n## 🎯 **Mission Accomplished**\n\nAll CI gates have been s"
+  },
+  {
+    "path": "CI_GATES_IMPLEMENTATION.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/CI_GATES_IMPLEMENTATION.md",
+    "title": "CI Gates Implementation — Messaging Reliability, Mobile E2E, and Bundle Budgets",
+    "lastModified": "2025-09-15",
+    "size": 12570,
+    "wordCount": 1655,
+    "h2s": [
+      "🎯 Implementation Summary",
+      "📁 **Files Implemented**",
+      "🚀 **CI Pipeline Architecture**"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "DELETE",
+      "reason": "Completed implementation report",
+      "targetPath": null
+    },
+    "contentPreview": "# CI Gates Implementation — Messaging Reliability, Mobile E2E, and Bundle Budgets\n\n**Date:** January 15, 2025  \n**Scope:** CI/CD pipeline with enforced gates for messaging reliability, mobile testing,"
+  },
+  {
+    "path": "CLEAN_SMS_BRANDING_FIX.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/CLEAN_SMS_BRANDING_FIX.md",
+    "title": "Clean SMS Branding Fix - Simplified Solution",
+    "lastModified": "2025-08-23",
+    "size": 4757,
+    "wordCount": 667,
+    "h2s": [
+      "Problem",
+      "Root Cause",
+      "Solution: Smart Client Fallback"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "DELETE",
+      "reason": "Completed implementation report",
+      "targetPath": null
+    },
+    "contentPreview": "# Clean SMS Branding Fix - Simplified Solution\n\n## Problem\nScheduled SMS messages were missing event tags (e.g., `[Sarah + David]`) while Send Now messages included them correctly.\n\n**User Report**: \n"
+  },
+  {
+    "path": "DEPLOYMENT_FIX.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/DEPLOYMENT_FIX.md",
+    "title": "Production Deployment Fix - Guest Messaging Read-Only",
+    "lastModified": "2025-08-22",
+    "size": 2015,
+    "wordCount": 294,
+    "h2s": [
+      "Issue Summary",
+      "Root Cause",
+      "Current State Verification"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "DELETE",
+      "reason": "Completed implementation report",
+      "targetPath": null
+    },
+    "contentPreview": "# Production Deployment Fix - Guest Messaging Read-Only\n\n## Issue Summary\n\nProduction is showing guest reply UI (\"Replies enabled\", \"Send a response\" button) while development shows the correct read-o"
+  },
+  {
+    "path": "DIRECT_MESSAGES_AND_TIMEZONE_FIX_SUMMARY.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/DIRECT_MESSAGES_AND_TIMEZONE_FIX_SUMMARY.md",
+    "title": "Direct Messages & Timezone Fix Summary",
+    "lastModified": "2025-08-26",
+    "size": 3694,
+    "wordCount": 481,
+    "h2s": [
+      "🚨 **Issues Identified**",
+      "✅ **Resolutions Applied**",
+      "🎯 **Technical Details**"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "DELETE",
+      "reason": "Completed implementation report",
+      "targetPath": null
+    },
+    "contentPreview": "# Direct Messages & Timezone Fix Summary\n\n## 🚨 **Issues Identified**\n\n### Issue 1: Direct Messages Not Appearing\nDirect messages to guests were not showing up in the Event Messages feed.\n\n**Root Caus"
+  },
+  {
+    "path": "FRONTEND_PERFORMANCE_OPTIMIZATION_SUMMARY.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/FRONTEND_PERFORMANCE_OPTIMIZATION_SUMMARY.md",
+    "title": "Frontend Performance Optimization - Bundle Reduction Summary",
+    "lastModified": "2025-09-15",
+    "size": 6995,
+    "wordCount": 902,
+    "h2s": [
+      "🎯 Mission Accomplished",
+      "📊 Performance Results",
+      "🛠 Optimizations Implemented"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "DELETE",
+      "reason": "Completed implementation report",
+      "targetPath": null
+    },
+    "contentPreview": "# Frontend Performance Optimization - Bundle Reduction Summary\n\n## 🎯 Mission Accomplished\n\n**Goal:** Reduce JS payload and long tasks on heaviest routes without UX changes. Target: largest route <250"
+  },
+  {
+    "path": "GUEST_FEED_PAST_ANNOUNCEMENTS_FIX_SUMMARY.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/GUEST_FEED_PAST_ANNOUNCEMENTS_FIX_SUMMARY.md",
+    "title": "Guest Feed — Past Announcements Missing Fix Summary",
+    "lastModified": "2025-08-26",
+    "size": 4429,
+    "wordCount": 652,
+    "h2s": [
+      "Root Cause Analysis",
+      "Diagnostic Results",
+      "Fix Implementation"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "DELETE",
+      "reason": "Completed implementation report",
+      "targetPath": null
+    },
+    "contentPreview": "# Guest Feed — Past Announcements Missing Fix Summary\n\n**Date:** January 30, 2025  \n**Issue:** Guest `f89034d6…` in event `24caa3a8…` only sees newest announcement, not earlier ones  \n**Root Cause:** "
+  },
+  {
+    "path": "GUEST_PAGINATION_IMPLEMENTATION_SUMMARY.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/GUEST_PAGINATION_IMPLEMENTATION_SUMMARY.md",
+    "title": "Guest Management Pagination Implementation - Summary",
+    "lastModified": "2025-08-29",
+    "size": 6690,
+    "wordCount": 911,
+    "h2s": [
+      "✅ IMPLEMENTATION COMPLETE",
+      "Root Cause Resolution",
+      "Files Modified"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "DELETE",
+      "reason": "Completed implementation report",
+      "targetPath": null
+    },
+    "contentPreview": "# Guest Management Pagination Implementation - Summary\n\n## ✅ IMPLEMENTATION COMPLETE\n\nThis document summarizes the successful implementation of server-side pagination with infinite scroll for the Host"
+  },
+  {
+    "path": "GUEST_PAGINATION_TEST_PLAN.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/GUEST_PAGINATION_TEST_PLAN.md",
+    "title": "Guest Pagination Implementation - Test Plan",
+    "lastModified": "2025-08-29",
+    "size": 5579,
+    "wordCount": 899,
+    "h2s": [
+      "Overview",
+      "Implementation Summary",
+      "Manual Testing Checklist"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "DELETE",
+      "reason": "Completed implementation report",
+      "targetPath": null
+    },
+    "contentPreview": "# Guest Pagination Implementation - Test Plan\n\n## Overview\nThis document outlines the testing approach for the newly implemented server-side pagination with infinite scroll in the Host Guest Managemen"
+  },
+  {
+    "path": "IMPLEMENTATION_COMPLETE.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/IMPLEMENTATION_COMPLETE.md",
+    "title": "✅ Scheduled SMS Branding Parity - IMPLEMENTATION COMPLETE",
+    "lastModified": "2025-08-24",
+    "size": 4510,
+    "wordCount": 567,
+    "h2s": [
+      "🎯 Mission Accomplished",
+      "📋 Requirements Fulfilled",
+      "🔧 Key Changes Made"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "DELETE",
+      "reason": "Completed implementation report",
+      "targetPath": null
+    },
+    "contentPreview": "# ✅ Scheduled SMS Branding Parity - IMPLEMENTATION COMPLETE\n\n**Date**: January 30, 2025  \n**Status**: ✅ **FULLY IMPLEMENTED & TESTED**  \n**All Requirements Met**: ✅ **YES**\n\n## 🎯 Mission Accomplished"
+  },
+  {
+    "path": "MESSAGE_HISTORY_REFRESH_FIX_SUMMARY.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/MESSAGE_HISTORY_REFRESH_FIX_SUMMARY.md",
+    "title": "Message History Refresh Fix - Implementation Summary",
+    "lastModified": "2025-08-26",
+    "size": 6346,
+    "wordCount": 781,
+    "h2s": [
+      "Overview",
+      "Root Causes Identified",
+      "Changes Implemented"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "DELETE",
+      "reason": "Completed implementation report",
+      "targetPath": null
+    },
+    "contentPreview": "# Message History Refresh Fix - Implementation Summary\n\n## Overview\nFixed two critical issues in the host Message History view:\n1. **Slow refresh**: Newly scheduled messages didn't appear until manual"
+  },
+  {
+    "path": "MESSAGING_CONSOLIDATION_CLOSEOUT_SUMMARY.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/MESSAGING_CONSOLIDATION_CLOSEOUT_SUMMARY.md",
+    "title": "Messaging Hook Consolidation - Clean Closeout Summary",
+    "lastModified": "2025-08-27",
+    "size": 5572,
+    "wordCount": 758,
+    "h2s": [
+      "🎯 Objective Achieved",
+      "✅ Completed Tasks",
+      "📋 Current State"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "DELETE",
+      "reason": "Completed implementation report",
+      "targetPath": null
+    },
+    "contentPreview": "# Messaging Hook Consolidation - Clean Closeout Summary\n\n*Completed: $(date)*  \n*Status: **SUCCESSFULLY CLOSED OUT***\n\n## 🎯 Objective Achieved\n\nThe messaging hook consolidation project has been **cle"
+  },
+  {
+    "path": "MESSAGING_HOOKS_RELIABILITY_TESTS_IMPLEMENTATION.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/MESSAGING_HOOKS_RELIABILITY_TESTS_IMPLEMENTATION.md",
+    "title": "Messaging Hooks Reliability Tests — Implementation Complete",
+    "lastModified": "2025-09-15",
+    "size": 12885,
+    "wordCount": 1571,
+    "h2s": [
+      "🎯 Implementation Summary",
+      "📁 **Files Implemented**",
+      "🧪 **Test Categories Implemented**"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "DELETE",
+      "reason": "Completed implementation report",
+      "targetPath": null
+    },
+    "contentPreview": "# Messaging Hooks Reliability Tests — Implementation Complete\n\n**Date:** January 15, 2025  \n**Scope:** Comprehensive test suite for messaging hooks, subscriptions, and pagination  \n**Coverage Target:*"
+  },
+  {
+    "path": "ONE_HOUR_REMINDERS_IMPLEMENTATION_COMPLETE.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/ONE_HOUR_REMINDERS_IMPLEMENTATION_COMPLETE.md",
+    "title": "One-Hour Event Reminders - Implementation Complete ✅",
+    "lastModified": "2025-08-25",
+    "size": 5975,
+    "wordCount": 777,
+    "h2s": [
+      "🎉 Implementation Summary",
+      "📋 What Was Implemented",
+      "🔧 How It Works"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "DELETE",
+      "reason": "Completed implementation report",
+      "targetPath": null
+    },
+    "contentPreview": "# One-Hour Event Reminders - Implementation Complete ✅\n\n## 🎉 Implementation Summary\n\nThe one-hour event reminder system has been successfully implemented following the detailed audit and plan. The sy"
+  },
+  {
+    "path": "PR_SECURITY_DEFINER_HOTFIX.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/PR_SECURITY_DEFINER_HOTFIX.md",
+    "title": "Codify SECURITY DEFINER hotfix; add DB guardrails",
+    "lastModified": "2025-08-22",
+    "size": 7714,
+    "wordCount": 955,
+    "h2s": [
+      "🎯 Overview",
+      "🛡️ Security Improvements Applied",
+      "📊 Current Security Status"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "DELETE",
+      "reason": "Completed implementation report",
+      "targetPath": null
+    },
+    "contentPreview": "# Codify SECURITY DEFINER hotfix; add DB guardrails\n\n**Type**: Security Hardening + CI/CD Guardrails  \n**Priority**: HIGH (Codifies critical security fixes)  \n**Impact**: Production security improveme"
+  },
+  {
+    "path": "PRE_LAUNCH_FIXES_IMPLEMENTATION.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/PRE_LAUNCH_FIXES_IMPLEMENTATION.md",
+    "title": "🚀 Pre-Launch Fixes Implementation Summary",
+    "lastModified": "2025-08-27",
+    "size": 6778,
+    "wordCount": 791,
+    "h2s": [
+      "📋 **Implemented Fixes**",
+      "🧪 **Verification Results**",
+      "🔄 **Rollback Instructions**"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "DELETE",
+      "reason": "Completed implementation report",
+      "targetPath": null
+    },
+    "contentPreview": "# 🚀 Pre-Launch Fixes Implementation Summary\n\n**Date:** January 30, 2025  \n**Status:** ✅ **COMPLETED**  \n**All Changes Applied Successfully**\n\n---\n\n## 📋 **Implemented Fixes**\n\n### **MAJOR-001: React "
+  },
+  {
+    "path": "RPC_AMBIGUITY_FIX_REPORT.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/RPC_AMBIGUITY_FIX_REPORT.md",
+    "title": "RPC Ambiguity Fix Report",
+    "lastModified": "2025-08-22",
+    "size": 5221,
+    "wordCount": 585,
+    "h2s": [
+      "Functions Found/Removed",
+      "Final Signature Details",
+      "Function Body (Preserved)"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "DELETE",
+      "reason": "Completed implementation report",
+      "targetPath": null
+    },
+    "contentPreview": "# RPC Ambiguity Fix Report\n\n**Date:** August 21, 2025  \n**Issue:** RPC function ambiguity blocking scheduled message processing  \n**Error:** \"Could not choose the best candidate function between: publ"
+  },
+  {
+    "path": "RPC_SCHEMA_FIX_SUMMARY.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/RPC_SCHEMA_FIX_SUMMARY.md",
+    "title": "RPC Schema Fix Summary",
+    "lastModified": "2025-08-26",
+    "size": 2773,
+    "wordCount": 366,
+    "h2s": [
+      "🚨 **Issue Identified**",
+      "✅ **Resolution Applied**",
+      "🎯 **Validation**"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "DELETE",
+      "reason": "Completed implementation report",
+      "targetPath": null
+    },
+    "contentPreview": "# RPC Schema Fix Summary\n\n## 🚨 **Issue Identified**\n\nThe `get_guest_event_messages_v2` RPC function had a **schema mismatch** error:\n\n```\n\"structure of query does not match function result type\"\n\"Ret"
+  },
+  {
+    "path": "RPC_TYPE_CASTING_FIX_SUMMARY.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/RPC_TYPE_CASTING_FIX_SUMMARY.md",
+    "title": "RPC Type Casting Fix Summary",
+    "lastModified": "2025-08-26",
+    "size": 2633,
+    "wordCount": 344,
+    "h2s": [
+      "🚨 **Issue Identified**",
+      "✅ **Resolution Applied**",
+      "🎯 **Current Status**"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "DELETE",
+      "reason": "Completed implementation report",
+      "targetPath": null
+    },
+    "contentPreview": "# RPC Type Casting Fix Summary\n\n## 🚨 **Issue Identified**\n\nThe `get_guest_event_messages_v2` RPC function had a **type casting issue** causing:\n\n```\n\"structure of query does not match function result"
+  },
+  {
+    "path": "SCHEDULED_MESSAGES_CRON_IMPLEMENTATION.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/SCHEDULED_MESSAGES_CRON_IMPLEMENTATION.md",
+    "title": "Scheduled Messages Cron Implementation Guide",
+    "lastModified": "2025-08-22",
+    "size": 11335,
+    "wordCount": 1324,
+    "h2s": [
+      "Overview",
+      "Architecture Changes",
+      "API Endpoints"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "DELETE",
+      "reason": "Completed implementation report",
+      "targetPath": null
+    },
+    "contentPreview": "# Scheduled Messages Cron Implementation Guide\n\n**Date:** August 21, 2025  \n**Status:** ✅ COMPLETED  \n**Issue:** Enable automatic scheduled message processing via Vercel Cron\n\n## Overview\n\nThis implem"
+  },
+  {
+    "path": "SCHEDULED_MESSAGES_FIX_SUMMARY.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/SCHEDULED_MESSAGES_FIX_SUMMARY.md",
+    "title": "Scheduled Messages — Recipient Count Fix & Reliability Improvements",
+    "lastModified": "2025-08-22",
+    "size": 7016,
+    "wordCount": 931,
+    "h2s": [
+      "Overview",
+      "Problems Fixed",
+      "Changes Made"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "DELETE",
+      "reason": "Completed implementation report",
+      "targetPath": null
+    },
+    "contentPreview": "# Scheduled Messages — Recipient Count Fix & Reliability Improvements\n\n## Overview\n\nThis PR fixes critical issues in the scheduled messaging system, ensuring accurate recipient counts, safe execution,"
+  },
+  {
+    "path": "SCHEDULED_SEND_NOW_PARITY_IMPLEMENTATION.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/SCHEDULED_SEND_NOW_PARITY_IMPLEMENTATION.md",
+    "title": "Scheduled vs Send-Now Message Parity Implementation",
+    "lastModified": "2025-08-23",
+    "size": 6065,
+    "wordCount": 749,
+    "h2s": [
+      "Summary",
+      "Issues Fixed",
+      "Files Modified"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "DELETE",
+      "reason": "Completed implementation report",
+      "targetPath": null
+    },
+    "contentPreview": "# Scheduled vs Send-Now Message Parity Implementation\n\n## Summary\n\nSuccessfully unified scheduled and send-now message flows to ensure identical behavior for message type preservation, audience resolu"
+  },
+  {
+    "path": "SCHEDULED_SMS_BRANDING_PARITY_FIX.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/SCHEDULED_SMS_BRANDING_PARITY_FIX.md",
+    "title": "Scheduled SMS Branding Parity Fix",
+    "lastModified": "2025-08-23",
+    "size": 5028,
+    "wordCount": 618,
+    "h2s": [
+      "Investigation Summary",
+      "Changes Made",
+      "Validation Results"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "DELETE",
+      "reason": "Completed implementation report",
+      "targetPath": null
+    },
+    "contentPreview": "# Scheduled SMS Branding Parity Fix\n\n## Investigation Summary\n\n### Root Cause Analysis\n\n**FINDING**: The scheduled SMS branding was **working correctly** for the investigated case. The \"missing\" brand"
+  },
+  {
+    "path": "SCHEDULED_SMS_BRANDING_PARITY_IMPLEMENTATION.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/SCHEDULED_SMS_BRANDING_PARITY_IMPLEMENTATION.md",
+    "title": "Scheduled SMS Branding Parity Implementation",
+    "lastModified": "2025-08-24",
+    "size": 5370,
+    "wordCount": 646,
+    "h2s": [
+      "🎯 Implementation Summary",
+      "🔧 Changes Made",
+      "📊 Current Environment Settings"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "DELETE",
+      "reason": "Completed implementation report",
+      "targetPath": null
+    },
+    "contentPreview": "# Scheduled SMS Branding Parity Implementation\n\n**Status**: ✅ **COMPLETED**  \n**Date**: January 30, 2025  \n**Author**: AI Assistant  \n\n## 🎯 Implementation Summary\n\nSuccessfully implemented scheduled "
+  },
+  {
+    "path": "SCHEDULED_SMS_EVENT_TAG_FIX.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/SCHEDULED_SMS_EVENT_TAG_FIX.md",
+    "title": "Scheduled SMS Event Tag Fix - Root Cause & Solution",
+    "lastModified": "2025-08-23",
+    "size": 5784,
+    "wordCount": 747,
+    "h2s": [
+      "Problem Identified",
+      "Root Cause Analysis",
+      "Solution Implemented"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "DELETE",
+      "reason": "Completed implementation report",
+      "targetPath": null
+    },
+    "contentPreview": "# Scheduled SMS Event Tag Fix - Root Cause & Solution\n\n## Problem Identified\n\n**Issue**: Scheduled SMS messages were missing the event tag header (e.g., `[Sarah + David]`) while Send Now messages incl"
+  },
+  {
+    "path": "SCHEDULED_SMS_SAFETY_NET_IMPLEMENTATION.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/SCHEDULED_SMS_SAFETY_NET_IMPLEMENTATION.md",
+    "title": "🛡️ Scheduled SMS Header Safety Net - Implementation Complete",
+    "lastModified": "2025-08-24",
+    "size": 6376,
+    "wordCount": 736,
+    "h2s": [
+      "📋 **Implementation Summary**",
+      "🎯 **Acceptance Criteria Met**",
+      "📊 **Production Verification Steps**"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "DELETE",
+      "reason": "Completed implementation report",
+      "targetPath": null
+    },
+    "contentPreview": "# 🛡️ Scheduled SMS Header Safety Net - Implementation Complete\n\n**Date**: January 30, 2025  \n**Status**: ✅ **IMPLEMENTED & TESTED**  \n**Intent**: Guarantee scheduled SMS includes `[EventTag]` header "
+  },
+  {
+    "path": "TEST_PLAN.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/TEST_PLAN.md",
+    "title": "Test Plan: Repository Hygiene & Security Fixes",
+    "lastModified": "2025-08-22",
+    "size": 8475,
+    "wordCount": 1085,
+    "h2s": [
+      "🎯 Scope of Changes",
+      "📋 Test Strategy",
+      "🔍 Risk Assessment"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "DELETE",
+      "reason": "Completed implementation report",
+      "targetPath": null
+    },
+    "contentPreview": "---\nstatus: active\nowner: development-team\nlast_reviewed: 2025-01-30\n---\n\n# Test Plan: Repository Hygiene & Security Fixes\n\n**PR Summary**: Comprehensive fixes for SECURITY DEFINER vulnerabilities, mi"
+  },
+  {
+    "path": "UNVEIL_APP_MAP.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/UNVEIL_APP_MAP.md",
+    "title": "Unveil App Map: Complete Architecture Overview",
+    "lastModified": "2025-08-27",
+    "size": 15039,
+    "wordCount": 1880,
+    "h2s": [
+      "Executive Summary",
+      "1. Page Inventory",
+      "2. Services & Hooks Inventory"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "DELETE",
+      "reason": "Completed implementation report",
+      "targetPath": null
+    },
+    "contentPreview": "# Unveil App Map: Complete Architecture Overview\n\n*Generated on: $(date)*\n\n## Executive Summary\n\nUnveil is a Next.js 14 wedding app using the App Router architecture with role-based access control (ho"
+  },
+  {
+    "path": "UNVEIL_CLEANUP_IMPLEMENTATION_COMPLETE.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/UNVEIL_CLEANUP_IMPLEMENTATION_COMPLETE.md",
+    "title": "Unveil App Cleanup Implementation - COMPLETE ✅",
+    "lastModified": "2025-08-27",
+    "size": 8467,
+    "wordCount": 1100,
+    "h2s": [
+      "Executive Summary",
+      "✅ Phase 1: Immediate Safe Wins (COMPLETED)",
+      "✅ Phase 2: Structural Improvements (COMPLETED)"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "DELETE",
+      "reason": "Completed implementation report",
+      "targetPath": null
+    },
+    "contentPreview": "# Unveil App Cleanup Implementation - COMPLETE ✅\n\n*Implementation Date: $(date)*  \n*Status: **SUCCESSFULLY COMPLETED***\n\n## Executive Summary\n\nAll three phases of the Unveil app cleanup have been **su"
+  },
+  {
+    "path": "V2_DEFAULT_IMPLEMENTATION_COMPLETE.md",
+    "fullPath": "/Users/grantdelgado/Unveil/unveil-app/V2_DEFAULT_IMPLEMENTATION_COMPLETE.md",
+    "title": "Event Messages V2 — Default Implementation Complete",
+    "lastModified": "2025-08-26",
+    "size": 3829,
+    "wordCount": 506,
+    "h2s": [
+      "✅ **SHIPPED: V2 is now the default**",
+      "Changes Made",
+      "Validation Results"
+    ],
+    "internalLinks": [],
+    "externalLinks": [],
+    "classification": {
+      "action": "DELETE",
+      "reason": "Completed implementation report",
+      "targetPath": null
+    },
+    "contentPreview": "# Event Messages V2 — Default Implementation Complete\n\n## ✅ **SHIPPED: V2 is now the default**\n\nThe stable guest messages implementation (V2) has been successfully deployed as the default behavior. Al"
+  }
+]

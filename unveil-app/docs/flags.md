@@ -225,9 +225,9 @@ logger.info('Feature flags initialized', {
 
 ## 📚 Related Documentation
 
-- [SMS Branding Configuration](./SMS_BRANDING_CONFIG.md)
+- SMS Branding Configuration
 - [Deployment Environment Setup](./development/DEPLOYMENT.md)
-- [Emergency Runbooks](./debugging/COMPLETE_SMS_SOLUTION.md)
+- Emergency Runbooks
 
 ---
 

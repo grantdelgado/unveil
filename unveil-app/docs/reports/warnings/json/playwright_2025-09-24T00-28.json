@@ -1,0 +1,8 @@
+{
+  "timestamp": "2025-09-24T00:29:00.475Z",
+  "tool": "playwright",
+  "command": "pnpm exec playwright test temp-warning-collection.spec.js --project=chromium-mobile",
+  "exitCode": 1,
+  "totalWarnings": 0,
+  "warnings": []
+}

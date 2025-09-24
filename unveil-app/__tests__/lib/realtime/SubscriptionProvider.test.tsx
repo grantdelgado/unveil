@@ -345,7 +345,7 @@ describe('SubscriptionProvider', () => {
 
   describe('Version Management', () => {
     it('should increment version on auth state changes', async () => {
-      let capturedVersions: number[] = [];
+      const capturedVersions: number[] = [];
 
       const TestComponent = () => {
         const { version } = useSubscriptionManager();

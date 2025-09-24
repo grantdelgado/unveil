@@ -1,0 +1,65 @@
+path,title,category,status,rationale,priority,estimated_effort,links_ok,actions
+SCHEDULED_MESSAGES_VERIFICATION_REPORT.md,Scheduled Messages Verification Report,Implementation,Archive,Completed implementation report,High,5min,Yes,Move to docs/archive/implementations/2025/q1-scheduled-messages/
+SCHEDULED_MESSAGES_CRON_IMPLEMENTATION.md,Scheduled Messages Cron Implementation,Implementation,Archive,Completed implementation report,High,5min,Yes,Move to docs/archive/implementations/2025/q1-scheduled-messages/
+MESSAGING_CONSOLIDATION_CLOSEOUT_SUMMARY.md,Messaging Consolidation Closeout Summary,Implementation,Archive,Completed consolidation work,High,5min,Yes,Move to docs/archive/implementations/2025/q3-messaging-consolidation/
+FRONTEND_PERFORMANCE_OPTIMIZATION_SUMMARY.md,Frontend Performance Optimization Summary,Performance,Archive,Completed optimization work,High,5min,Yes,Move to docs/archive/implementations/2025/q2-performance-optimization/
+SHARED_CHUNK_OPTIMIZATION_SUMMARY.md,Shared Chunk Optimization Summary,Performance,Archive,Completed optimization work,High,5min,Yes,Move to docs/archive/implementations/2025/q2-performance-optimization/
+ONE_HOUR_REMINDERS_IMPLEMENTATION_COMPLETE.md,One Hour Reminders Implementation Complete,Implementation,Archive,Completed feature implementation,High,5min,Yes,Move to docs/archive/implementations/2025/
+V2_DEFAULT_IMPLEMENTATION_COMPLETE.md,V2 Default Implementation Complete,Implementation,Archive,Completed V2 migration,High,5min,Yes,Move to docs/archive/implementations/2025/
+UNVEIL_CLEANUP_IMPLEMENTATION_COMPLETE.md,Unveil Cleanup Implementation Complete,Implementation,Archive,Completed cleanup work,High,5min,Yes,Move to docs/archive/implementations/2025/q4-cleanup-implementation/
+IMPLEMENTATION_COMPLETE.md,Implementation Complete,Implementation,Archive,Generic completion report,High,5min,Yes,Move to docs/archive/implementations/2025/
+PRE_LAUNCH_FIXES_IMPLEMENTATION.md,Pre Launch Fixes Implementation,Implementation,Archive,Completed pre-launch work,High,5min,Yes,Move to docs/archive/implementations/2025/
+docs/audits/db-health/2025-01-31-schema.md,Database Health Schema Audit,Audit,Merge,Part of DB health series,Medium,30min,Yes,Merge with other DB health audits into comprehensive guide
+docs/audits/db-health/2025-01-31-integrity.md,Database Health Integrity Audit,Audit,Merge,Part of DB health series,Medium,30min,Yes,Merge with other DB health audits into comprehensive guide
+docs/audits/db-health/2025-01-31-visibility.md,Database Health Visibility Audit,Audit,Merge,Part of DB health series,Medium,30min,Yes,Merge with other DB health audits into comprehensive guide
+docs/changes/db-health-summary.md,Database Health Summary,Audit,Merge,Summary of DB health audits,Medium,15min,Yes,Merge with other DB health audits into comprehensive guide
+docs/audits/message-history-timezone-utc-bug-fix.md,Message History Timezone UTC Bug Fix,Audit,Merge,Part of message history series,Medium,20min,Yes,Merge into comprehensive message history troubleshooting guide
+docs/audits/message-history-timezone-fix.md,Message History Timezone Fix,Audit,Merge,Part of message history series,Medium,20min,Yes,Merge into comprehensive message history troubleshooting guide
+docs/audits/message-history-variable-order-fix.md,Message History Variable Order Fix,Audit,Merge,Part of message history series,Medium,20min,Yes,Merge into comprehensive message history troubleshooting guide
+docs/audits/message-history-date-grouping-restoration.md,Message History Date Grouping Restoration,Audit,Merge,Part of message history series,Medium,20min,Yes,Merge into comprehensive message history troubleshooting guide
+docs/audits/message-history-exploratory-audit.md,Message History Exploratory Audit,Audit,Merge,Part of message history series,Medium,20min,Yes,Merge into comprehensive message history troubleshooting guide
+docs/architecture/ARCHITECTURE.md,Unveil Architecture Guide,Architecture,Keep,Core architecture reference,High,0min,Yes,Maintain current - essential reference
+docs/architecture/user-auth-flow.md,User Authentication Flow,Architecture,Keep,Critical authentication flow,High,0min,Yes,Maintain current - essential reference
+docs/architecture/event-creation-complete-guide.md,Event Creation Complete Guide,Architecture,Keep,User journey documentation,High,0min,Yes,Maintain current - essential reference
+UNVEIL_APP_MAP.md,Unveil App Map Complete Architecture Overview,Architecture,Keep,System overview,High,0min,Yes,Maintain current - essential reference
+README.md,Unveil Wedding App,Project,Keep,Project entry point,High,0min,Yes,Maintain current - essential reference
+docs/development/DEVELOPMENT_GUIDE.md,Development Guide,Development,Keep,Setup and development guide,High,0min,Yes,Maintain current - essential reference
+docs/development/DEPLOYMENT.md,Deployment Guide,Development,Keep,Deployment process,High,0min,Yes,Maintain current - essential reference
+docs/troubleshooting/CRON_AUTHENTICATION_GUIDE.md,Cron Authentication Guide,Development,Keep,Operations guide,High,0min,Yes,Maintain current - essential reference
+lib/realtime/README.md,Realtime Subscription Management,Technical,Keep,Technical reference,High,0min,Yes,Maintain current - essential reference
+TEST_PLAN.md,Test Plan,Development,Keep,QA reference,High,0min,Yes,Maintain current - essential reference
+docs/project/SYSTEM_OVERVIEW.md,Unveil System Overview,Project,Keep,High-level overview,High,0min,Yes,Maintain current - essential reference
+docs/project/RELEASE_CHECKLIST.md,Release Checklist,Project,Keep,Process guide,High,0min,Yes,Maintain current - essential reference
+docs/project/MVP_FEATURES.md,MVP Features,Project,Keep,Feature scope,High,0min,Yes,Maintain current - essential reference
+docs/flags.md,Feature Flags,Project,Keep,Feature flag reference,High,0min,Yes,Maintain current - essential reference
+docs/identity.md,Identity and Branding,Project,Keep,Branding guide,High,0min,Yes,Maintain current - essential reference
+docs/performance/documentation/WEEK4_COMPLETION_SUMMARY.md,Performance Week 4 Completion Summary,Performance,Archive,Historical performance report,Medium,5min,Yes,Move to docs/archive/implementations/2025/q2-performance-optimization/
+docs/performance/documentation/PERFORMANCE_WEEK3_REPORT.md,Performance Week 3 Report,Performance,Archive,Historical performance report,Medium,5min,Yes,Move to docs/archive/implementations/2025/q2-performance-optimization/
+docs/performance/documentation/PERFORMANCE_UPDATE.md,Performance Update,Performance,Archive,Historical performance report,Medium,5min,Yes,Move to docs/archive/implementations/2025/q2-performance-optimization/
+docs/performance/CONSOLIDATION_SUMMARY.md,Performance Consolidation Summary,Performance,Archive,Historical performance report,Medium,5min,Yes,Move to docs/archive/implementations/2025/q2-performance-optimization/
+docs/archive/project-docs-legacy/,Legacy Project Documentation,Legacy,Archive,Superseded documentation,Low,10min,Partial,Move to deeper archive structure
+docs/archive/unveil-mvp-rebuild-plan.md,Unveil MVP Rebuild Plan,Legacy,Archive,Superseded by current architecture,Low,5min,Yes,Move to deeper archive structure
+docs/project/messaging-mvp-status.md,Messaging MVP Status,Project,Update,May need status update if MVP complete,Medium,15min,Yes,Update status or archive if complete
+docs/project/messaging-module-mvp.md,Messaging Module MVP,Project,Update,May be superseded,Medium,15min,Yes,Review and update or merge
+docs/project/message-center-mvp.md,Message Center MVP,Project,Update,May be superseded,Medium,15min,Yes,Review and update or merge
+docs/audits/event-tag-implementation-complete.md,Event Tag Implementation Complete,Audit,Merge,Part of SMS/tagging series,Medium,20min,Yes,Merge into comprehensive SMS & tagging guide
+docs/audits/event-tag-standardization-implementation-plan.md,Event Tag Standardization Implementation Plan,Audit,Merge,Part of SMS/tagging series,Medium,20min,Yes,Merge into comprehensive SMS & tagging guide
+docs/audits/event-tag-sms-first-class-field-audit.md,Event Tag SMS First Class Field Audit,Audit,Merge,Part of SMS/tagging series,Medium,20min,Yes,Merge into comprehensive SMS & tagging guide
+docs/audits/guest-invite-sms-audit-2025-01-30.md,Guest Invite SMS Audit,Audit,Merge,Part of SMS/tagging series,Medium,20min,Yes,Merge into comprehensive SMS & tagging guide
+docs/implementations/HOST_DASHBOARD_ATTENDANCE_COUNTS_FIX.md,Host Dashboard Attendance Counts Fix,Implementation,Archive,Completed implementation,Medium,5min,Yes,Move to docs/archive/implementations/2025/
+docs/implementations/BULK_INVITATIONS_ERROR_FIXES.md,Bulk Invitations Error Fixes,Implementation,Archive,Completed implementation,Medium,5min,Yes,Move to docs/archive/implementations/2025/
+docs/implementations/UNIFIED_BULK_INVITATIONS_IMPLEMENTATION.md,Unified Bulk Invitations Implementation,Implementation,Archive,Completed implementation,Medium,5min,Yes,Move to docs/archive/implementations/2025/
+docs/implementations/MODIFY_FLOW_QA_HARDENING.md,Modify Flow QA Hardening,Implementation,Archive,Completed implementation,Medium,5min,Yes,Move to docs/archive/implementations/2025/
+docs/implementations/MODIFY_FLOW_AUDIENCE_DELIVERY_FIX.md,Modify Flow Audience Delivery Fix,Implementation,Archive,Completed implementation,Medium,5min,Yes,Move to docs/archive/implementations/2025/
+ALPHABETICAL_ORDERING_IMPLEMENTATION.md,Alphabetical Ordering Implementation,Implementation,Archive,Completed implementation,Medium,5min,Yes,Move to docs/archive/implementations/2025/
+APPLY_ALPHABETICAL_ORDERING_FIX.md,Apply Alphabetical Ordering Fix,Implementation,Archive,Completed implementation,Medium,5min,Yes,Move to docs/archive/implementations/2025/
+MESSAGING_HOOKS_RELIABILITY_TESTS_IMPLEMENTATION.md,Messaging Hooks Reliability Tests Implementation,Implementation,Archive,Completed implementation,Medium,5min,Yes,Move to docs/archive/implementations/2025/q3-messaging-consolidation/
+MESSAGING_RPC_VERIFICATION_REPORT.md,Messaging RPC Verification Report,Implementation,Archive,Completed verification,Medium,5min,Yes,Move to docs/archive/implementations/2025/q3-messaging-consolidation/
+GUEST_PAGINATION_IMPLEMENTATION_SUMMARY.md,Guest Pagination Implementation Summary,Implementation,Archive,Completed implementation,Medium,5min,Yes,Move to docs/archive/implementations/2025/
+MESSAGING_HOOKS_CONSOLIDATION_ANALYSIS.md,Messaging Hooks Consolidation Analysis,Implementation,Archive,Completed analysis,Medium,5min,Yes,Move to docs/archive/implementations/2025/q3-messaging-consolidation/
+RPC_FUNCTIONS_VERIFICATION_REPORT.md,RPC Functions Verification Report,Implementation,Archive,Completed verification,Medium,5min,Yes,Move to docs/archive/implementations/2025/
+RPC_TYPE_CASTING_FIX_SUMMARY.md,RPC Type Casting Fix Summary,Implementation,Archive,Completed fix,Medium,5min,Yes,Move to docs/archive/implementations/2025/
+RPC_SCHEMA_FIX_SUMMARY.md,RPC Schema Fix Summary,Implementation,Archive,Completed fix,Medium,5min,Yes,Move to docs/archive/implementations/2025/
+CI_GATES_IMPLEMENTATION.md,CI Gates Implementation,Implementation,Archive,Completed CI work,Medium,5min,Yes,Move to docs/archive/implementations/2025/
+CI_GATES_IMPLEMENTATION_SUMMARY.md,CI Gates Implementation Summary,Implementation,Archive,Completed CI work,Medium,5min,Yes,Move to docs/archive/implementations/2025/
+COMMIT_SUMMARY.md,Commit Summary,Implementation,Archive,Historical commit info,Low,5min,Yes,Move to docs/archive/implementations/2025/

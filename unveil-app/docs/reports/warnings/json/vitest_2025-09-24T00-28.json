@@ -1,0 +1,8 @@
+{
+  "timestamp": "2025-09-24T00:28:41.629Z",
+  "tool": "vitest",
+  "command": "pnpm test --reporter=verbose --run",
+  "exitCode": 1,
+  "totalWarnings": 0,
+  "warnings": []
+}

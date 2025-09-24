@@ -95,6 +95,7 @@
     "glob": "^11.0.3",
     "jsdom": "^25.0.1",
     "lighthouse": "^12.6.1",
+    "markdownlint-cli": "^0.45.0",
     "msw": "^2.6.6",
     "prettier": "^3.5.3",
     "puppeteer": "^24.16.2",

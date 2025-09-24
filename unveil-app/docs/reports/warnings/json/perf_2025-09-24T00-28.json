@@ -1,0 +1,327 @@
+{
+  "timestamp": "2025-09-24T00:28:41.114Z",
+  "tool": "perf",
+  "command": "pnpm perf:monitor",
+  "exitCode": 1,
+  "totalWarnings": 18,
+  "warnings": [
+    {
+      "id": "perf_2855e602",
+      "tool": "perf",
+      "code": "BUNDLE_SIZE_ERROR",
+      "category": "perf",
+      "severity": "error",
+      "message": "Bundle size 319 KB exceeds error threshold (250 KB)",
+      "file": null,
+      "location": null,
+      "route": "/guest/events/[eventId]/home",
+      "context": {
+        "type": "bundle-size-error",
+        "actualSize": 319,
+        "budgetSize": 250,
+        "excessSize": 69,
+        "threshold": "error"
+      }
+    },
+    {
+      "id": "perf_6fe7c16b",
+      "tool": "perf",
+      "code": "BUNDLE_SIZE_ERROR",
+      "category": "perf",
+      "severity": "error",
+      "message": "Bundle size 311 KB exceeds error threshold (250 KB)",
+      "file": null,
+      "location": null,
+      "route": "/host/events/[eventId]/dashboard",
+      "context": {
+        "type": "bundle-size-error",
+        "actualSize": 311,
+        "budgetSize": 250,
+        "excessSize": 61,
+        "threshold": "error"
+      }
+    },
+    {
+      "id": "perf_6985947",
+      "tool": "perf",
+      "code": "BUNDLE_SIZE_ERROR",
+      "category": "perf",
+      "severity": "error",
+      "message": "Bundle size 315 KB exceeds error threshold (250 KB)",
+      "file": null,
+      "location": null,
+      "route": "/host/events/[eventId]/details",
+      "context": {
+        "type": "bundle-size-error",
+        "actualSize": 315,
+        "budgetSize": 250,
+        "excessSize": 65,
+        "threshold": "error"
+      }
+    },
+    {
+      "id": "perf_3473b020",
+      "tool": "perf",
+      "code": "BUNDLE_SIZE_ERROR",
+      "category": "perf",
+      "severity": "error",
+      "message": "Bundle size 305 KB exceeds error threshold (250 KB)",
+      "file": null,
+      "location": null,
+      "route": "/host/events/[eventId]/edit",
+      "context": {
+        "type": "bundle-size-error",
+        "actualSize": 305,
+        "budgetSize": 250,
+        "excessSize": 55,
+        "threshold": "error"
+      }
+    },
+    {
+      "id": "perf_2df20399",
+      "tool": "perf",
+      "code": "BUNDLE_SIZE_ERROR",
+      "category": "perf",
+      "severity": "error",
+      "message": "Bundle size 285 KB exceeds error threshold (200 KB)",
+      "file": null,
+      "location": null,
+      "route": "/host/events/[eventId]/messages",
+      "context": {
+        "type": "bundle-size-error",
+        "actualSize": 285,
+        "budgetSize": 200,
+        "excessSize": 85,
+        "threshold": "error"
+      }
+    },
+    {
+      "id": "perf_397ef668",
+      "tool": "perf",
+      "code": "BUNDLE_SIZE_ERROR",
+      "category": "perf",
+      "severity": "error",
+      "message": "Bundle size 285 KB exceeds error threshold (200 KB)",
+      "file": null,
+      "location": null,
+      "route": "/host/events/[eventId]/guests",
+      "context": {
+        "type": "bundle-size-error",
+        "actualSize": 285,
+        "budgetSize": 200,
+        "excessSize": 85,
+        "threshold": "error"
+      }
+    },
+    {
+      "id": "perf_412c087e",
+      "tool": "perf",
+      "code": "BUNDLE_SIZE_ERROR",
+      "category": "perf",
+      "severity": "error",
+      "message": "Bundle size 294 KB exceeds error threshold (250 KB)",
+      "file": null,
+      "location": null,
+      "route": "/host/events/[eventId]/schedule",
+      "context": {
+        "type": "bundle-size-error",
+        "actualSize": 294,
+        "budgetSize": 250,
+        "excessSize": 44,
+        "threshold": "error"
+      }
+    },
+    {
+      "id": "perf_72996fa0",
+      "tool": "perf",
+      "code": "BUNDLE_SIZE_ERROR",
+      "category": "perf",
+      "severity": "error",
+      "message": "Bundle size 309 KB exceeds error threshold (250 KB)",
+      "file": null,
+      "location": null,
+      "route": "/host/events/create",
+      "context": {
+        "type": "bundle-size-error",
+        "actualSize": 309,
+        "budgetSize": 250,
+        "excessSize": 59,
+        "threshold": "error"
+      }
+    },
+    {
+      "id": "perf_40a25974",
+      "tool": "perf",
+      "code": "BUNDLE_SIZE_ERROR",
+      "category": "perf",
+      "severity": "error",
+      "message": "Bundle size 305 KB exceeds error threshold (250 KB)",
+      "file": null,
+      "location": null,
+      "route": "/login",
+      "context": {
+        "type": "bundle-size-error",
+        "actualSize": 305,
+        "budgetSize": 250,
+        "excessSize": 55,
+        "threshold": "error"
+      }
+    },
+    {
+      "id": "perf_115eef19",
+      "tool": "perf",
+      "code": "BUNDLE_SIZE_ERROR",
+      "category": "perf",
+      "severity": "error",
+      "message": "Bundle size 304 KB exceeds error threshold (250 KB)",
+      "file": null,
+      "location": null,
+      "route": "/select-event",
+      "context": {
+        "type": "bundle-size-error",
+        "actualSize": 304,
+        "budgetSize": 250,
+        "excessSize": 54,
+        "threshold": "error"
+      }
+    },
+    {
+      "id": "perf_3fcf7d9",
+      "tool": "perf",
+      "code": "BUNDLE_SIZE_ERROR",
+      "category": "perf",
+      "severity": "error",
+      "message": "Bundle size 290 KB exceeds error threshold (250 KB)",
+      "file": null,
+      "location": null,
+      "route": "/setup",
+      "context": {
+        "type": "bundle-size-error",
+        "actualSize": 290,
+        "budgetSize": 250,
+        "excessSize": 40,
+        "threshold": "error"
+      }
+    },
+    {
+      "id": "perf_490b5695",
+      "tool": "perf",
+      "code": "BUNDLE_SIZE_ERROR",
+      "category": "perf",
+      "severity": "error",
+      "message": "Bundle size 303 KB exceeds error threshold (250 KB)",
+      "file": null,
+      "location": null,
+      "route": "/guest/events/[eventId]/schedule",
+      "context": {
+        "type": "bundle-size-error",
+        "actualSize": 303,
+        "budgetSize": 250,
+        "excessSize": 53,
+        "threshold": "error"
+      }
+    },
+    {
+      "id": "perf_7406de52",
+      "tool": "perf",
+      "code": "BUNDLE_SIZE_ERROR",
+      "category": "perf",
+      "severity": "error",
+      "message": "Bundle size 288 KB exceeds error threshold (250 KB)",
+      "file": null,
+      "location": null,
+      "route": "/profile",
+      "context": {
+        "type": "bundle-size-error",
+        "actualSize": 288,
+        "budgetSize": 250,
+        "excessSize": 38,
+        "threshold": "error"
+      }
+    },
+    {
+      "id": "perf_ed34552",
+      "tool": "perf",
+      "code": "BUNDLE_SIZE_ERROR",
+      "category": "perf",
+      "severity": "error",
+      "message": "Bundle size 284 KB exceeds error threshold (250 KB)",
+      "file": null,
+      "location": null,
+      "route": "/reset-password",
+      "context": {
+        "type": "bundle-size-error",
+        "actualSize": 284,
+        "budgetSize": 250,
+        "excessSize": 34,
+        "threshold": "error"
+      }
+    },
+    {
+      "id": "perf_check_failed",
+      "tool": "perf",
+      "code": "PERF_FAIL",
+      "category": "perf",
+      "severity": "error",
+      "message": "❌ Performance check failed! Some routes exceed bundle size limits.",
+      "file": null,
+      "location": null,
+      "route": null,
+      "context": {
+        "type": "overall-failure",
+        "fullLine": "❌ Performance check failed! Some routes exceed bundle size limits."
+      }
+    },
+    {
+      "id": "perf_largest_bundle_error",
+      "tool": "perf",
+      "code": "LARGEST_BUNDLE_ERROR",
+      "category": "perf",
+      "severity": "error",
+      "message": "Largest bundle 319 KB exceeds 250 KB threshold",
+      "file": null,
+      "location": null,
+      "route": null,
+      "context": {
+        "type": "metrics-analysis",
+        "largestBundle": 319,
+        "threshold": 250,
+        "source": "performance-metrics.json"
+      }
+    },
+    {
+      "id": "perf_average_bundle_warning",
+      "tool": "perf",
+      "code": "AVERAGE_BUNDLE_WARNING",
+      "category": "perf",
+      "severity": "warning",
+      "message": "Average bundle size 294.2 KB is high (>200 KB)",
+      "file": null,
+      "location": null,
+      "route": null,
+      "context": {
+        "type": "metrics-analysis",
+        "averageBundle": 294.2,
+        "threshold": 200,
+        "source": "performance-metrics.json"
+      }
+    },
+    {
+      "id": "perf_routes_over_budget",
+      "tool": "perf",
+      "code": "ROUTES_OVER_BUDGET",
+      "category": "perf",
+      "severity": "error",
+      "message": "14 routes exceed their performance budgets",
+      "file": null,
+      "location": null,
+      "route": null,
+      "context": {
+        "type": "metrics-analysis",
+        "errorRoutes": 14,
+        "warningRoutes": 0,
+        "source": "performance-metrics.json"
+      }
+    }
+  ]
+}

@@ -6,8 +6,8 @@ This folder contains high-level summaries and reports for major development phas
 
 ### Phase Summaries
 
-- **[Phase 1 Summary](PHASE_1_SUMMARY.md)** - First major development phase completion summary
-- **[Phase 2 Summary](PHASE_2_SUMMARY.md)** - Second major development phase completion summary
+- **Phase 1 Summary** - First major development phase completion summary
+- **Phase 2 Summary** - Second major development phase completion summary
 
 ## 📊 Phase Overview
 

@@ -1,0 +1,33 @@
+{
+  "timestamp": "2025-09-24T00:21:50.143Z",
+  "summary": {
+    "total": 0,
+    "byTool": {},
+    "byCategory": {},
+    "byPriority": {
+      "P0": 0,
+      "P1": 0,
+      "P2": 0
+    },
+    "bySeverity": {},
+    "topIssues": [],
+    "trends": {}
+  },
+  "totalWarnings": 0,
+  "warnings": [],
+  "sourceFiles": [
+    "eslint_2025-09-24T00-21.json",
+    "typecheck_2025-09-24T00-21.json"
+  ],
+  "unificationRules": {
+    "deduplication": "Warnings deduplicated by tool+code+message+file+line",
+    "prioritization": "P0: ≥70 points, P1: ≥40 points, P2: <40 points",
+    "scoringFactors": {
+      "severity": "error:50, warning:20, info:5, advisory:10",
+      "category": "deprecation:40, security:45, perf:30, a11y:25, react:20, type:15, runtime:35",
+      "frequency": "frequency * 5 (max 25)",
+      "fileImpact": "messaging files: +15, host routes: +10, guest routes: +10",
+      "codeSpecific": "BUNDLE_SIZE_ERROR: +30, TS2571: +20, \"will be removed\": +25"
+    }
+  }
+}

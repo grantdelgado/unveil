@@ -1,0 +1,4732 @@
+{
+  "DELETE": [
+    {
+      "path": "docs/audit/versioned-functions-cleanup.md",
+      "title": "Versioned Functions Cleanup Summary",
+      "lastModified": "2025-08-27",
+      "wordCount": 784,
+      "size": 6360,
+      "links": 1,
+      "outboundLinks": [
+        {
+          "text": "versioned-functions-inventory.json",
+          "url": "./versioned-functions-inventory.json"
+        }
+      ],
+      "content": "# Versioned Functions Cleanup Summary\n\n**Date:** August 27, 2025  \n**Status:** ✅ Complete  \n**Audit Reference:** [versioned-functions-inventory.json](./versioned-functions-inventory.json)\n\n## Overview",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/realtime-stability-implementation.md",
+      "title": "Realtime Stability Implementation Summary",
+      "lastModified": "2025-08-27",
+      "wordCount": 870,
+      "size": 7106,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Realtime Stability Implementation Summary\n\n## Overview\n\nSuccessfully implemented comprehensive realtime stability improvements behind feature flags to address timeout storms,\nJWT refresh race condit",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/repeated-message-fetching-fix-summary.md",
+      "title": "Repeated Message Fetching Fix Summary",
+      "lastModified": "2025-08-27",
+      "wordCount": 643,
+      "size": 4976,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Repeated Message Fetching Fix Summary\n\n## Issue Description\nThe Send Messages page was experiencing repeated message fetching loops, causing excessive Supabase API calls and potential performance is",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/changes/revert-rollups-summary.md",
+      "title": "Rollups Revert Summary",
+      "lastModified": "2025-08-26",
+      "wordCount": 267,
+      "size": 2114,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Rollups Revert Summary\n\n## What Was Removed\n\n**Database Objects:**\n- `message_delivery_rollups_v1` view - Computed rollup analytics per message\n- `get_message_rollups(uuid)` RPC function - Event-sco",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/implementations/BULK_INVITATIONS_ERROR_FIXES.md",
+      "title": "Bulk Invitations Error Fixes",
+      "lastModified": "2025-08-25",
+      "wordCount": 557,
+      "size": 4449,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Bulk Invitations Error Fixes\n\n**Date**: January 30, 2025  \n**Status**: ✅ **COMPLETE**  \n**Intent**: Fix Modal import error and dashboard attendance count issues\n\n## 🚨 Issues Identified\n\n### 1. Moda",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Previous audit recommendation: Archive",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/implementations/HOST_DASHBOARD_ATTENDANCE_COUNTS_FIX.md",
+      "title": "Host Dashboard Attendance Counts Fix + Bulk Invite Modal Polish",
+      "lastModified": "2025-08-25",
+      "wordCount": 796,
+      "size": 6212,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Host Dashboard Attendance Counts Fix + Bulk Invite Modal Polish\n\n**Date**: January 30, 2025  \n**Status**: ✅ **COMPLETE**  \n**Intent**: Fix attendance counts on host dashboard + polish bulk invite co",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Previous audit recommendation: Archive",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/implementations/UNIFIED_BULK_INVITATIONS_IMPLEMENTATION.md",
+      "title": "Unified Bulk Invitations Implementation",
+      "lastModified": "2025-08-25",
+      "wordCount": 1065,
+      "size": 8544,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Unified Bulk Invitations Implementation\n\n**Date**: January 30, 2025  \n**Status**: ✅ **COMPLETE**  \n**Intent**: Replace bulk \"Send Invitations (N)\" composer routing with direct bulk-invite action usi",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Previous audit recommendation: Archive",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/implementations/MODIFY_FLOW_AUDIENCE_DELIVERY_FIX.md",
+      "title": "Modify Flow — Audience Prefill + Delivery Mode Fix Implementation",
+      "lastModified": "2025-08-24",
+      "wordCount": 1147,
+      "size": 9724,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Modify Flow — Audience Prefill + Delivery Mode Fix Implementation\n\n## Overview\n\nSuccessfully resolved two critical issues in the Modify scheduled message flow:\n1. **Audience Prefill Issue**: Direct ",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Previous audit recommendation: Archive",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/implementations/MODIFY_FLOW_QA_HARDENING.md",
+      "title": "Modify Flow — Post-ship QA & Hardening Implementation",
+      "lastModified": "2025-08-24",
+      "wordCount": 1309,
+      "size": 11687,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Modify Flow — Post-ship QA & Hardening Implementation\n\n## Overview\n\nSuccessfully hardened the shipped Modify flow fixes to eliminate async fragility and add robust safeguards. The implementation now",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Previous audit recommendation: Archive",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/audits/guest-header-audit.md",
+      "title": "Guest Event Header — Implementation Audit & Simplification Recommendations",
+      "lastModified": "2025-08-23",
+      "wordCount": 1136,
+      "size": 8759,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Guest Event Header — Implementation Audit & Simplification Recommendations\n\n**Date**: August 23, 2025  \n**Scope**: `app/guest/events/[eventId]/home/page.tsx` header implementation  \n**Status**: Rece",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/changes/remove-email-summary.md",
+      "title": "Email Removal Summary - Phone-Only MVP",
+      "lastModified": "2025-08-23",
+      "wordCount": 1186,
+      "size": 9250,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Email Removal Summary - Phone-Only MVP\n\n**Date:** January 23, 2025  \n**Migration Applied:** `20250823140817_remove_email_columns_and_refs.sql`  \n**Status:** ✅ COMPLETED (Including Profile Page Fix)\n",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/DOCUMENTATION_CONSOLIDATION_SUMMARY.md",
+      "title": "📚 Documentation Consolidation - Complete",
+      "lastModified": "2025-08-22",
+      "wordCount": 1103,
+      "size": 9461,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# 📚 Documentation Consolidation - Complete\n\n**Date:** February 1, 2025  \n**Status:** ✅ **COMPLETE**\n\n## 🎯 Consolidation Overview\n\nAll documentation for the Unveil project has been successfully conso",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/DOCUMENTATION_REORGANIZATION_SUMMARY.md",
+      "title": "Documentation Reorganization Summary",
+      "lastModified": "2025-08-22",
+      "wordCount": 713,
+      "size": 6690,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Documentation Reorganization Summary\n\n**Date**: January 30, 2025  \n**Status**: ✅ **COMPLETED**  \n**Impact**: 🗂️ **FULLY ORGANIZED DOCUMENTATION STRUCTURE**\n\n## Overview\n\nSuccessfully reorganized al",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/SMS_BRANDING_CONFIG.md",
+      "title": "SMS Branding Configuration",
+      "lastModified": "2025-08-22",
+      "wordCount": 305,
+      "size": 2210,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# SMS Branding Configuration\n\n## Overview\n\nSMS branding is **enabled by default** for all outbound SMS messages. Every SMS will include:\n- `[EventTag]` prefix for immediate event identification\n- One-",
+      "classification": {
+        "action": "DELETE",
+        "reason": "SMS implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/00-OVERVIEW/AUDIT_SUMMARY.md",
+      "title": "Unveil Codebase Comprehensive Audit Summary",
+      "lastModified": "2025-08-22",
+      "wordCount": 939,
+      "size": 7316,
+      "links": 1,
+      "outboundLinks": [
+        {
+          "text": "`unveil-codebase-refactor-plan.md`",
+          "url": "./unveil-codebase-refactor-plan.md"
+        }
+      ],
+      "content": "# Unveil Codebase Comprehensive Audit Summary\n\n**Date**: January 2025  \n**Scope**: Full codebase audit (app/, lib/, components/, hooks/, services/)  \n**Approach**: Senior engineer perspective focused ",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/00-OVERVIEW/PHASE_1_COMPLETION_SUMMARY.md",
+      "title": "Phase 1 Completion Summary - Foundation Cleanup",
+      "lastModified": "2025-08-22",
+      "wordCount": 778,
+      "size": 6228,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Phase 1 Completion Summary - Foundation Cleanup\n\n**Date**: January 2025  \n**Status**: ✅ COMPLETED  \n**Duration**: 1 session  \n**Commit**: `2b77deb`\n\n---\n\n## 🎯 Overview\n\nSuccessfully completed Phase",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/03-DESIGN/docs-component-library-implementation.md",
+      "title": "Unveil UI Component Library Implementation",
+      "lastModified": "2025-08-22",
+      "wordCount": 1152,
+      "size": 9510,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Unveil UI Component Library Implementation\n\n## 🎯 Overview\n\nSuccessfully created and **fully implemented** a comprehensive UI Component Library for Unveil that encapsulates all design patterns from ",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/05-ARCHIVE/archive-COMPLETION_SUMMARY.md",
+      "title": "Unveil App Refactoring - Completion Summary",
+      "lastModified": "2025-08-22",
+      "wordCount": 1009,
+      "size": 7754,
+      "links": 3,
+      "outboundLinks": [
+        {
+          "text": "`docs/architecture-guide.md`",
+          "url": "./docs-architecture-guide.md"
+        },
+        {
+          "text": "`docs/developer-guide.md`",
+          "url": "./docs-developer-guide.md"
+        },
+        {
+          "text": "`docs/refactor-roadmap.md`",
+          "url": "./archive-refactor-roadmap.md"
+        }
+      ],
+      "content": "# Unveil App Refactoring - Completion Summary\n\n**Date**: January 16, 2025  \n**Status**: Phase 6 Complete - PAUSED  \n**Final Commit**: `de352c7`\n\n---\n\n## 🎯 Project Status: PRODUCTION READY ⭐⭐⭐⭐⭐\n\nThe ",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/audits/GUEST_MESSAGES_ACCESS_CONTROL_FIX.md",
+      "title": "Guest Messages Access Control Fix - Complete Solution",
+      "lastModified": "2025-08-22",
+      "wordCount": 522,
+      "size": 3821,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Guest Messages Access Control Fix - Complete Solution\n\n## Root Cause Identified\n\nThe user was seeing \"Access denied: User is not a guest of this event\" because they were **removed from the event** (",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/audits/GUEST_MESSAGES_FIX_IMPLEMENTATION.md",
+      "title": "Guest Event Messages Feed Fix - Implementation Summary",
+      "lastModified": "2025-08-22",
+      "wordCount": 447,
+      "size": 3642,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Guest Event Messages Feed Fix - Implementation Summary\n\n## Problem Addressed\n\nGuest event messages feed was showing empty/incorrect results due to complex client-side queries that didn't properly fi",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/debugging/COMPLETE_SMS_SOLUTION.md",
+      "title": "🎯 Complete SMS Invitation Fix - DEFINITIVE SOLUTION",
+      "lastModified": "2025-08-22",
+      "wordCount": 813,
+      "size": 5764,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# 🎯 Complete SMS Invitation Fix - DEFINITIVE SOLUTION\n\n**Last Updated:** January 30, 2025  \n**Status:** ✅ COMPLETELY RESOLVED\n\n## 🔥 The Ultimate Fix That Solves Everything\n\nThis is the **comprehensi",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/dev-tools-implementation-summary.md",
+      "title": "Dev Tools Implementation Summary",
+      "lastModified": "2025-08-22",
+      "wordCount": 510,
+      "size": 3907,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Dev Tools Implementation Summary\n\n## Changes Made\n\n### ✅ Created Centralized Gate System\n\n- **New file**: `lib/dev/DevToolsGate.tsx`\n- **Purpose**: Single control point for all dev tools\n- **Feature",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/development/mobile-responsive-improvements.md",
+      "title": "Mobile Responsive Improvements - Implementation Report",
+      "lastModified": "2025-08-22",
+      "wordCount": 1017,
+      "size": 7787,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Mobile Responsive Improvements - Implementation Report\n\n## Overview\n\nThis document outlines comprehensive mobile responsive improvements implemented across the Unveil app to ensure excellent behavio",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/features/event-timezone-implementation.md",
+      "title": "Event Timezone Implementation",
+      "lastModified": "2025-08-22",
+      "wordCount": 1267,
+      "size": 9107,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Event Timezone Implementation\n\n## Overview\n\nThis feature adds first-class timezone support to events, ensuring all schedule times are consistently rendered in the event's venue timezone rather than ",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/features/guest-message-join-boundary.md",
+      "title": "Guest Message Join Boundary Implementation",
+      "lastModified": "2025-08-22",
+      "wordCount": 307,
+      "size": 2192,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Guest Message Join Boundary Implementation\n\n## Overview\n\nThe guest message feed now displays a clear visual boundary between messages sent before a guest joined an event and those sent after. This h",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/features/rsvp-lite-implementation-summary.md",
+      "title": "RSVP-Lite Implementation Summary",
+      "lastModified": "2025-08-22",
+      "wordCount": 1031,
+      "size": 7328,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# RSVP-Lite Implementation Summary\n\n**📅 Completed**: January 2025  \n**🎯 Goal**: Replace complex RSVP system with minimal \"decline-only\" flow  \n**📊 Status**: ✅ Complete - Ready for Production\n\n---\n\n",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/guest-management/guest-management-improvement-plan.md",
+      "title": "Guest Management Module - Implementation Roadmap",
+      "lastModified": "2025-08-22",
+      "wordCount": 1348,
+      "size": 9906,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Guest Management Module - Implementation Roadmap\n\n**Project:** Unveil Event Management Platform  \n**Based on:** Guest Management Audit Report (January 29, 2025)  \n**Implementation Start:** January 2",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/guest-management/guest-management-phase1-completion.md",
+      "title": "Guest Management Phase 1 - Completion Summary",
+      "lastModified": "2025-08-22",
+      "wordCount": 1264,
+      "size": 10149,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Guest Management Phase 1 - Completion Summary\n\n**Project:** Unveil Event Management Platform  \n**Phase:** 1 - Critical Fixes  \n**Status:** ✅ **COMPLETED**  \n**Completion Date:** January 29, 2025  \n*",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/guest-management/guest-management-phase2-completion.md",
+      "title": "Guest Management Phase 2 - Completion Summary",
+      "lastModified": "2025-08-22",
+      "wordCount": 1904,
+      "size": 15967,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Guest Management Phase 2 - Completion Summary\n\n**Project:** Unveil Event Management Platform  \n**Phase:** 2 - Performance & UX Optimizations  \n**Status:** ✅ **COMPLETED**  \n**Completion Date:** Janu",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/guest-management/guest-management-phase3-completion.md",
+      "title": "Guest Management Phase 3: MVP Simplification - COMPLETED ✅",
+      "lastModified": "2025-08-22",
+      "wordCount": 1304,
+      "size": 10183,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Guest Management Phase 3: MVP Simplification - COMPLETED ✅\n\n**Based on:** `guest-management-ux-audit.md` recommendations  \n**Completion Date:** January 2025  \n**Result:** 50% complexity reduction ac",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/implementations/COMPOSE_MESSAGE_RECIPIENTS_UPDATE_SUMMARY.md",
+      "title": "Compose Message Recipients Update - Implementation Summary",
+      "lastModified": "2025-08-22",
+      "wordCount": 643,
+      "size": 5307,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Compose Message Recipients Update - Implementation Summary\n\n## Overview\n\nUpdated the Compose Message recipients system to use `display_name` and always include hosts by default. This eliminates the ",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/implementations/EVENT_MEMBERSHIP_CONSISTENCY_IMPLEMENTATION.md",
+      "title": "Event Membership Consistency Implementation",
+      "lastModified": "2025-08-22",
+      "wordCount": 623,
+      "size": 4893,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Event Membership Consistency Implementation\n\n## Summary\n\nFixed the \"Choose an event\" list to hide events from removed guests and implemented canonical membership model with single rows per (event_id",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/implementations/GUEST_MANAGEMENT_ADD_NOW_INVITE_LATER_IMPLEMENTATION.md",
+      "title": "Guest Management — \"Add Now, Invite Later\" Implementation Summary",
+      "lastModified": "2025-08-22",
+      "wordCount": 724,
+      "size": 5130,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Guest Management — \"Add Now, Invite Later\" Implementation Summary\n\n## 🎯 Completed Implementation\n\nSuccessfully implemented the \"add now, invite later\" flow with simplified guest states and enhanced",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/implementations/INVITE_SMS_CHANGES_SUMMARY.md",
+      "title": "Invite SMS Link Changes Summary",
+      "lastModified": "2025-08-22",
+      "wordCount": 464,
+      "size": 3848,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Invite SMS Link Changes Summary\n\n## Overview\n\nSuccessfully switched invite SMS links from event-specific deep links to the guest hub (event selector) and implemented environment-aware URL generation",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/implementations/INVITE_TIMESTAMP_FIX_SUMMARY.md",
+      "title": "Invite Timestamp Bug Fix - Complete Implementation",
+      "lastModified": "2025-08-22",
+      "wordCount": 745,
+      "size": 5997,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Invite Timestamp Bug Fix - Complete Implementation\n\n## Problem Summary\n\n**Bug**: \"Invited • Sent X ago\" timestamp was updating after non-invite messages, showing \"Sent just now\" for regular messages",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/implementations/MESSAGE_TIMESTAMP_HUMAN_FRIENDLY_IMPLEMENTATION.md",
+      "title": "Event Messages Human-Friendly Timestamps Implementation",
+      "lastModified": "2025-08-22",
+      "wordCount": 671,
+      "size": 5207,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Event Messages Human-Friendly Timestamps Implementation\n\n## Overview\n\nSuccessfully implemented human-friendly timestamp rendering for the Event Messages module, replacing technical timestamps with i",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/implementations/ONE_TAP_INVITE_IMPLEMENTATION.md",
+      "title": "Guest Management — One-Tap Invite Implementation",
+      "lastModified": "2025-08-22",
+      "wordCount": 817,
+      "size": 6260,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Guest Management — One-Tap Invite Implementation\n\n## 🎯 Implementation Summary\n\nSuccessfully implemented one-tap invite functionality that immediately sends SMS and updates UI in place, replacing th",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/implementations/ONE_TAP_INVITE_SMS_TEMPLATE_UPDATE.md",
+      "title": "Guest Management — One-Tap Invite SMS Template + Simplified Row Actions",
+      "lastModified": "2025-08-22",
+      "wordCount": 843,
+      "size": 6526,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Guest Management — One-Tap Invite SMS Template + Simplified Row Actions\n\n## 🎯 Implementation Summary\n\nUpdated the SMS invitation template with proper greeting and line breaks, and simplified guest ",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/implementations/PHASE_1_HARDENING_IMPLEMENTATION.md",
+      "title": "Phase 1 Hardening — Implementation Summary",
+      "lastModified": "2025-08-22",
+      "wordCount": 1193,
+      "size": 9546,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Phase 1 Hardening — Implementation Summary\n\n**Date**: January 30, 2025  \n**Status**: ✅ **COMPLETED**  \n**Security Level**: 🔐 **HIGH-RISK GAPS CLOSED**\n\n## Overview\n\nSuccessfully implemented all Pha",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/implementations/RSVP_LITE_IMPLEMENTATION_COMPLETE.md",
+      "title": "✅ RSVP-Lite Implementation Complete",
+      "lastModified": "2025-08-22",
+      "wordCount": 1192,
+      "size": 10142,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# ✅ RSVP-Lite Implementation Complete\n\n**📅 Date**: January 2025  \n**🎯 Status**: **Production Ready** - All issues resolved  \n**🚀 Ready for**: Immediate deployment and testing\n\n---\n\n## 🔍 **Audit Ma",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/implementations/SCROLL_FIX_SUMMARY.md",
+      "title": "Select Event Page Scroll Fix Summary",
+      "lastModified": "2025-08-22",
+      "wordCount": 574,
+      "size": 4436,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Select Event Page Scroll Fix Summary\n\n## Problem Identified\n\nThe select-event page had unnecessary vertical scrolling even when content fit within the viewport, causing:\n\n- Janky mobile experience w",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/implementations/SIMPLIFIED_GUEST_CARD_IMPLEMENTATION.md",
+      "title": "Guest Management — Simplified Guest Card with Single Header Action",
+      "lastModified": "2025-08-22",
+      "wordCount": 886,
+      "size": 7062,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Guest Management — Simplified Guest Card with Single Header Action\n\n## 🎯 Implementation Summary\n\nSuccessfully refactored guest cards to show one contextual header action (Invite OR status chip) and",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/implementations/SINGLE_SOURCE_OF_TRUTH_IMPLEMENTATION_SUMMARY.md",
+      "title": "Single Source of Truth Implementation Summary",
+      "lastModified": "2025-08-22",
+      "wordCount": 716,
+      "size": 5451,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Single Source of Truth Implementation Summary\n\n## Overview\n\nSuccessfully implemented unified data consistency across Host Dashboard, Guest Management, and Messaging components by establishing Guest ",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/implementations/SMS_NOTIFICATION_TOGGLE_IMPLEMENTATION.md",
+      "title": "SMS Notification Toggle Implementation",
+      "lastModified": "2025-08-22",
+      "wordCount": 1107,
+      "size": 8169,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# SMS Notification Toggle Implementation\n\n## Overview\n\nThis PR implements a guest SMS notification toggle feature that allows guests to opt in/out of text message updates for specific events. The feat",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/implementations/TOAST_CONFIRMATION_IMPLEMENTATION.md",
+      "title": "Host Messaging - In-Modal Send Flow Implementation",
+      "lastModified": "2025-08-22",
+      "wordCount": 443,
+      "size": 3730,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Host Messaging - In-Modal Send Flow Implementation\n\n## Overview\n\nSuccessfully implemented the in-modal send flow that replaces the redirect/URL-param/toast flow with a unified modal experience that ",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/implementations/UNIFIED_GUEST_COUNTS_IMPLEMENTATION.md",
+      "title": "Unified Guest Counts Implementation",
+      "lastModified": "2025-08-22",
+      "wordCount": 370,
+      "size": 3062,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Unified Guest Counts Implementation\n\n## Discovery Summary\n\n### Where Old Counts Came From\n\n**Host Dashboard (`EventSummaryCard`):**\n\n- Header count: Direct query `event_guests.select('declined_at').",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/implementations/UNIFIED_MESSAGING_RECIPIENTS_IMPLEMENTATION.md",
+      "title": "Unified Messaging Recipients Implementation",
+      "lastModified": "2025-08-22",
+      "wordCount": 589,
+      "size": 4772,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Unified Messaging Recipients Implementation\n\n## Discovery Summary\n\n### Where Old Recipient Queries Came From\n\n**Messaging Components:**\n\n- `useGuestSelection`: Direct `event_guests` query (line 68-9",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/implementations/UNIFORM_HEADER_CHIP_IMPLEMENTATION.md",
+      "title": "Guest Management — Uniform Header Chips Implementation",
+      "lastModified": "2025-08-22",
+      "wordCount": 766,
+      "size": 6243,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Guest Management — Uniform Header Chips Implementation\n\n## 🎯 Implementation Summary\n\nCreated a shared `HeaderChip` component to ensure all guest card chips are exactly the same size (44px height × ",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/implementations/guest-display-name-implementation.md",
+      "title": "Guest Display Name Implementation",
+      "lastModified": "2025-08-22",
+      "wordCount": 1028,
+      "size": 8106,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Guest Display Name Implementation\n\nThis document describes the implementation of query-time override for guest names, ensuring that when a guest is linked to a user record with a `full_name`, the sy",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/implementations/hybrid-display-name-solution.md",
+      "title": "Hybrid Display Name Solution",
+      "lastModified": "2025-08-22",
+      "wordCount": 731,
+      "size": 5611,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Hybrid Display Name Solution\n\n## 🎯 **Overview**\n\nImplemented a **hybrid approach** that stores display names directly in the `event_guests` table while maintaining automatic synchronization with li",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/implementations/index.md",
+      "title": "Implementations Documentation",
+      "lastModified": "2025-08-22",
+      "wordCount": 343,
+      "size": 3300,
+      "links": 19,
+      "outboundLinks": [
+        {
+          "text": "Phase 1 Hardening Implementation",
+          "url": "PHASE_1_HARDENING_IMPLEMENTATION.md"
+        },
+        {
+          "text": "Event Membership Consistency",
+          "url": "EVENT_MEMBERSHIP_CONSISTENCY_IMPLEMENTATION.md"
+        },
+        {
+          "text": "Toast Confirmation Implementation",
+          "url": "TOAST_CONFIRMATION_IMPLEMENTATION.md"
+        },
+        {
+          "text": "Simplified Guest Card Implementation",
+          "url": "SIMPLIFIED_GUEST_CARD_IMPLEMENTATION.md"
+        },
+        {
+          "text": "Uniform Header Chip Implementation",
+          "url": "UNIFORM_HEADER_CHIP_IMPLEMENTATION.md"
+        },
+        {
+          "text": "Guest Management: Add Now Invite Later",
+          "url": "GUEST_MANAGEMENT_ADD_NOW_INVITE_LATER_IMPLEMENTATION.md"
+        },
+        {
+          "text": "One Tap Invite Implementation",
+          "url": "ONE_TAP_INVITE_IMPLEMENTATION.md"
+        },
+        {
+          "text": "SMS Notification Toggle",
+          "url": "SMS_NOTIFICATION_TOGGLE_IMPLEMENTATION.md"
+        },
+        {
+          "text": "RSVP Lite Implementation Complete",
+          "url": "RSVP_LITE_IMPLEMENTATION_COMPLETE.md"
+        },
+        {
+          "text": "Unified Messaging Recipients",
+          "url": "UNIFIED_MESSAGING_RECIPIENTS_IMPLEMENTATION.md"
+        },
+        {
+          "text": "Single Source of Truth Implementation",
+          "url": "SINGLE_SOURCE_OF_TRUTH_IMPLEMENTATION_SUMMARY.md"
+        },
+        {
+          "text": "Unified Guest Counts Implementation",
+          "url": "UNIFIED_GUEST_COUNTS_IMPLEMENTATION.md"
+        },
+        {
+          "text": "Guest Display Name Implementation",
+          "url": "guest-display-name-implementation.md"
+        },
+        {
+          "text": "Hybrid Display Name Solution",
+          "url": "hybrid-display-name-solution.md"
+        },
+        {
+          "text": "Invite Timestamp Fix Summary",
+          "url": "INVITE_TIMESTAMP_FIX_SUMMARY.md"
+        },
+        {
+          "text": "Compose Message Recipients Update",
+          "url": "COMPOSE_MESSAGE_RECIPIENTS_UPDATE_SUMMARY.md"
+        },
+        {
+          "text": "One Tap Invite SMS Template Update",
+          "url": "ONE_TAP_INVITE_SMS_TEMPLATE_UPDATE.md"
+        },
+        {
+          "text": "Scroll Fix Summary",
+          "url": "SCROLL_FIX_SUMMARY.md"
+        },
+        {
+          "text": "Invite SMS Changes Summary",
+          "url": "INVITE_SMS_CHANGES_SUMMARY.md"
+        }
+      ],
+      "content": "# Implementations Documentation\n\nThis folder contains detailed implementation reports, completion summaries, and technical documentation for features and fixes implemented in the Unveil app.\n\n## 📋 Co",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/messages-readmodel-implementation-plan.md",
+      "title": "Messages Read-Model Implementation Plan",
+      "lastModified": "2025-08-22",
+      "wordCount": 2981,
+      "size": 25811,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Messages Read-Model Implementation Plan\n\n**Date:** January 29, 2025  \n**Target:** Shift Announcements + Channels from `message_deliveries` to `messages` read model  \n**Approach:** Phased, feature-fl",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/messages-readmodel-v2/FINAL-SUMMARY.md",
+      "title": "Messages Read-Model V2 — FINAL IMPLEMENTATION SUMMARY",
+      "lastModified": "2025-08-22",
+      "wordCount": 717,
+      "size": 5792,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Messages Read-Model V2 — FINAL IMPLEMENTATION SUMMARY\n\n**Date:** January 29, 2025  \n**Status:** ✅ **COMPLETE DEPLOYMENT**  \n**Result:** Full migration to union read model with explicit type selector",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/messages-readmodel-v2/host-composer-implementation.md",
+      "title": "Host Composer — Explicit Type Selector Implementation",
+      "lastModified": "2025-08-22",
+      "wordCount": 871,
+      "size": 6480,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Host Composer — Explicit Type Selector Implementation\n\n**Date:** January 29, 2025  \n**Status:** ✅ **IMPLEMENTATION COMPLETE**  \n**Result:** Host composer now has explicit message type selector with ",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/messages-readmodel-v2/implementation-summary.md",
+      "title": "Messages Read-Model V2 — Implementation Summary",
+      "lastModified": "2025-08-22",
+      "wordCount": 899,
+      "size": 7088,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Messages Read-Model V2 — Implementation Summary\n\n**Date:** January 29, 2025  \n**Status:** ✅ **IMPLEMENTATION COMPLETE - READY FOR ATOMIC SWAP**  \n**Approach:** Single-path atomic RPC swap with compr",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/messages-readmodel-v2/plan.md",
+      "title": "Messages Read-Model V2 — Implementation Plan",
+      "lastModified": "2025-08-22",
+      "wordCount": 912,
+      "size": 7419,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Messages Read-Model V2 — Implementation Plan\n\n**Date:** January 29, 2025  \n**Status:** ✅ DISCOVERY COMPLETE - Ready for Implementation  \n**Approach:** Single-path atomic RPC swap with shadow verific",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/messages-readmodel-v2/segmented-control-final.md",
+      "title": "Host Composer — Clean Segmented Control Implementation",
+      "lastModified": "2025-08-22",
+      "wordCount": 877,
+      "size": 7413,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Host Composer — Clean Segmented Control Implementation\n\n**Date:** January 29, 2025  \n**Status:** ✅ **IMPLEMENTATION COMPLETE**  \n**Result:** Professional segmented control with icon-above-label and ",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/messages-readmodel-v2/segmented-control-implementation.md",
+      "title": "Host Composer — Clean Message Type Pills Implementation",
+      "lastModified": "2025-08-22",
+      "wordCount": 798,
+      "size": 6474,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Host Composer — Clean Message Type Pills Implementation\n\n**Date:** January 29, 2025  \n**Status:** ✅ **IMPLEMENTATION COMPLETE**  \n**Result:** Professional segmented control with proper A11y and no o",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/messages-visibility-fix.md",
+      "title": "Guest Event Messages - Visibility Fix Implementation",
+      "lastModified": "2025-08-22",
+      "wordCount": 823,
+      "size": 6083,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Guest Event Messages - Visibility Fix Implementation\n\n## Issue Summary\n\n**Problem**: Guests Nick Molcsan, Connor Smith, and Tom Gazzard could not see messages in event `24caa3a8-020e-4a80-9899-35ff2",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/modules/event-messages-pagination-notes.md",
+      "title": "Event Messages Pagination Implementation Notes",
+      "lastModified": "2025-08-22",
+      "wordCount": 685,
+      "size": 5116,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Event Messages Pagination Implementation Notes\n\n## Overview\n\nThe Guest View Event Messages module has been enhanced with:\n\n1. **Polished \"Jump to latest\" control** with neutral/attention states\n2. *",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/performance/CONSOLIDATION_SUMMARY.md",
+      "title": "📁 Performance Files Consolidation - Complete",
+      "lastModified": "2025-08-22",
+      "wordCount": 695,
+      "size": 6347,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# 📁 Performance Files Consolidation - Complete\n\n**Date:** February 1, 2025  \n**Status:** ✅ **COMPLETE**\n\n## 🎯 Consolidation Overview\n\nAll performance-related files have been successfully consolidate",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Previous audit recommendation: Archive",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/performance/documentation/PERFORMANCE_UPDATE.md",
+      "title": "Performance Update Report - Week 1 Implementations",
+      "lastModified": "2025-08-22",
+      "wordCount": 2514,
+      "size": 19771,
+      "links": 2,
+      "outboundLinks": [
+        {
+          "text": "PERFORMANCE_AUDIT_REPORT.md",
+          "url": "./PERFORMANCE_AUDIT_REPORT.md"
+        },
+        {
+          "text": "PERFORMANCE_WEEK3_REPORT.md",
+          "url": "./PERFORMANCE_WEEK3_REPORT.md"
+        }
+      ],
+      "content": "# Performance Update Report - Week 1 Implementations\n\n**Date:** February 1, 2025  \n**Implementation:** Week 1 Critical Performance Optimizations  \n**Status:** ✅ Complete\n\n## 🎯 Week 1 Objectives & Res",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Previous audit recommendation: Archive",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/performance/documentation/PERFORMANCE_WEEK3_REPORT.md",
+      "title": "Week 3 Performance Review and Optimization Plan - Unveil App",
+      "lastModified": "2025-08-22",
+      "wordCount": 2296,
+      "size": 19117,
+      "links": 1,
+      "outboundLinks": [
+        {
+          "text": "Reference",
+          "url": "https://supabase.com/docs/guides/database/postgres/row-level-security#call-functions-with-select"
+        }
+      ],
+      "content": "# Week 3 Performance Review and Optimization Plan - Unveil App\n\n**Date:** February 1, 2025  \n**Focus:** Comprehensive performance trace and optimization strategy  \n**Status:** 🔍 Analysis Complete | \ud83d",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Previous audit recommendation: Archive",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/performance/documentation/WEEK4_COMPLETION_SUMMARY.md",
+      "title": "Week 4 Performance Preparation - Completion Summary",
+      "lastModified": "2025-08-22",
+      "wordCount": 811,
+      "size": 6315,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Week 4 Performance Preparation - Completion Summary\n\n**Date:** February 1, 2025  \n**Status:** 🎉 **COMPLETE**\n\n## 📋 Task Completion Checklist\n\n### ✅ **Performance Snapshot & Guardrails**\n\n- **✅ per",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Previous audit recommendation: Archive",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/phases/PHASE_1_SUMMARY.md",
+      "title": "Phase 1 – Maintainability Quick Wins Summary",
+      "lastModified": "2025-08-22",
+      "wordCount": 429,
+      "size": 3272,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Phase 1 – Maintainability Quick Wins Summary\n\n## 🎯 Overview\n\nSuccessfully completed Phase 1 of the maintainability audit with zero behavior changes and all gates passing.\n\n## ✅ What Changed\n\n### 1.",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/phases/PHASE_2_SUMMARY.md",
+      "title": "Phase 2 – Import Path + Dead Code + Supabase Security Summary",
+      "lastModified": "2025-08-22",
+      "wordCount": 598,
+      "size": 4792,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Phase 2 – Import Path + Dead Code + Supabase Security Summary\n\n## 🎯 Overview\n\nSuccessfully completed Phase 2 of the maintainability audit, focusing on structural improvements and critical security ",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/project/REFACTORING_SUMMARY.md",
+      "title": "🔄 Unveil App Refactoring Summary",
+      "lastModified": "2025-08-22",
+      "wordCount": 1018,
+      "size": 8715,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# 🔄 Unveil App Refactoring Summary\n\n**Date**: January 2025  \n**Status**: ✅ **COMPLETED**  \n**Scope**: Comprehensive architecture optimization and modernization\n\n---\n\n## 🎯 **Refactoring Objectives**\n",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/05-ARCHIVE/archive-development-mode-auth-implementation.md",
+      "title": "Development Mode Authentication Implementation",
+      "lastModified": "2025-07-28",
+      "wordCount": 852,
+      "size": 6736,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Development Mode Authentication Implementation\n\n## Overview\n\nSuccessfully implemented comprehensive Supabase Development Mode Bypass for Unveil to enable full end-to-end account creation and event a",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/05-ARCHIVE/archive-phone-migration-summary.md",
+      "title": "Phone-Based Authentication Migration Summary",
+      "lastModified": "2025-07-28",
+      "wordCount": 841,
+      "size": 5720,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Phone-Based Authentication Migration Summary\n\n## Overview\n\nSuccessfully migrated Unveil from email-based to phone-based authentication for improved guest onboarding experience. This change enables S",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/05-ARCHIVE/archive-refactoring-summary.md",
+      "title": "🔄 Comprehensive Refactoring Summary: MCP Schema Alignment",
+      "lastModified": "2025-07-28",
+      "wordCount": 1374,
+      "size": 10959,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# 🔄 Comprehensive Refactoring Summary: MCP Schema Alignment\n\n**Date**: January 2025  \n**Status**: ✅ **COMPLETE - PRODUCTION READY**  \n**MCP Project**: `wvhtbqvnamerdkkjknuv`\n\n## 📊 **Overview**\n\nThis",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/05-ARCHIVE/archive-security-enhancements-summary.md",
+      "title": "Security Enhancements Implementation Summary",
+      "lastModified": "2025-07-28",
+      "wordCount": 1282,
+      "size": 10238,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Security Enhancements Implementation Summary\n\n## 🔒 **Task 2: Security Enhancements - COMPLETED**\n\n**Implementation Date**: June 17, 2025  \n**Status**: ✅ **PRODUCTION-READY**  \n**Build Status**: ✅ *",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/05-ARCHIVE/archive-session-summary-testing-setup.md",
+      "title": "Session Summary: Complete Testing Infrastructure Setup",
+      "lastModified": "2025-07-28",
+      "wordCount": 1318,
+      "size": 11624,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Session Summary: Complete Testing Infrastructure Setup\n\n_Date: January 2025_  \n_Status: ✅ Complete and Operational_\n\n## 🎯 Session Overview\n\nThis session focused on reviewing the Supabase schema/pol",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/05-ARCHIVE/archive-simplification-implementation-guide.md",
+      "title": "🚀 Database Schema & Auth Flow Simplification Implementation Guide",
+      "lastModified": "2025-07-28",
+      "wordCount": 1307,
+      "size": 9623,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# 🚀 Database Schema & Auth Flow Simplification Implementation Guide\n\nThis guide provides step-by-step instructions for implementing the complete simplification audit recommendations.\n\n## ⚠️ **BEFORE ",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/05-ARCHIVE/archive-unified-phone-auth-implementation.md",
+      "title": "Unified Phone-Based OTP Authentication Implementation",
+      "lastModified": "2025-07-28",
+      "wordCount": 822,
+      "size": 6514,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Unified Phone-Based OTP Authentication Implementation\n\n## Overview\n\nSuccessfully implemented clean, unified phone-based OTP authentication for Unveil with development phone whitelisting. This provid",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Completed implementation report",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/archive/unveil-mvp-rebuild-plan.md",
+      "title": "🚀 Unveil MVP Rebuild Plan",
+      "lastModified": "2025-07-28",
+      "wordCount": 4005,
+      "size": 31389,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# 🚀 Unveil MVP Rebuild Plan\n\n**Version:** 1.0  \n**Created:** January 2025  \n**Target Completion:** 3 weeks  \n**Engineering Lead:** TBD  \n**Status:** Planning Phase\n\n---\n\n## 🎯 Project Scope\n\n### Miss",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Previous audit recommendation: Archive",
+        "priority": "HIGH"
+      }
+    },
+    {
+      "path": "docs/archive/DEV_REMOVAL_CLEANUP.md",
+      "title": "Development Functionality Removal Report",
+      "lastModified": "2025-08-22",
+      "wordCount": 814,
+      "size": 6698,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Development Functionality Removal Report\n\n**Date:** $(date +%Y-%m-%d)  \n**Status:** ✅ **COMPLETE**  \n**Objective:** Remove all development/test-only functionality to ensure production-ready codebase",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/PHASE_4_COMPLETION_REPORT.md",
+      "title": "🚀 PHASE 4 COMPLETION REPORT",
+      "lastModified": "2025-08-22",
+      "wordCount": 916,
+      "size": 6795,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# 🚀 PHASE 4 COMPLETION REPORT\n\n## Final Cleanup, Performance & Production Readiness\n\n**Date**: January 2025  \n**Phase**: 4 of 4 (Refactor Complete)  \n**Status**: ✅ COMPLETED - MVP Lock-In v1.0 Ready\n",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/SYSTEM_AUDIT_AND_REFACTOR_PLAN.md",
+      "title": "📦 UNVEIL MVP - POST-RESET CODEBASE AUDIT & REFACTOR PLAN",
+      "lastModified": "2025-08-22",
+      "wordCount": 1001,
+      "size": 7926,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# 📦 UNVEIL MVP - POST-RESET CODEBASE AUDIT & REFACTOR PLAN\n\n**Date**: January 2025  \n**Commit**: `831ee3d` (Phase 5 Stable)  \n**Engineer**: Senior Production Review\n\n---\n\n## 🔍 EXECUTIVE SUMMARY\n\nThe",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/index.md",
+      "title": "Archived Documentation",
+      "lastModified": "2025-08-22",
+      "wordCount": 231,
+      "size": 1931,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Archived Documentation\n\nHistorical documentation from previous project phases, refactoring efforts, and legacy implementations.\n\n## 📚 Archive Contents\n\n### Legacy Project Documentation (`project-do",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/00-OVERVIEW/CLEANUP_RECOMMENDATIONS.md",
+      "title": "🧹 Documentation Cleanup Recommendations",
+      "lastModified": "2025-08-22",
+      "wordCount": 918,
+      "size": 8123,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# 🧹 Documentation Cleanup Recommendations\n\n**Goal**: Reduce cognitive load and focus on high-impact documentation  \n**Principle**: \"Show, don't overwhelm\" - Quality over quantity  \n**Target**: Reduce",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/00-OVERVIEW/OPTIMIZATION_PLAN.md",
+      "title": "📈 Project-Docs Optimization Plan",
+      "lastModified": "2025-08-22",
+      "wordCount": 1040,
+      "size": 9347,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# 📈 Project-Docs Optimization Plan\n\n**Goal**: Transform documentation into world-class product management and engineering demonstration  \n**Status**: Implementation Ready  \n**Timeline**: 2-3 hours im",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/00-OVERVIEW/STRATEGIC_OVERVIEW.md",
+      "title": "🎯 Unveil Strategic Overview",
+      "lastModified": "2025-08-22",
+      "wordCount": 777,
+      "size": 6211,
+      "links": 9,
+      "outboundLinks": [
+        {
+          "text": "Business Case & Market Analysis",
+          "url": "./reference-MVP-ProjectPlan.md"
+        },
+        {
+          "text": "Competitive Analysis",
+          "url": "./reference-risk-matrix.md"
+        },
+        {
+          "text": "Brand Guidelines",
+          "url": "./reference-brand.md"
+        },
+        {
+          "text": "Technical Architecture",
+          "url": "./docs-architecture-guide.md"
+        },
+        {
+          "text": "Development Workflow",
+          "url": "./docs-developer-guide.md"
+        },
+        {
+          "text": "Current Sprint Plan",
+          "url": "./plans-Phase-7-Final-Integration-Plan.md"
+        },
+        {
+          "text": "API Documentation",
+          "url": "./docs-messaging-system-guide.md"
+        },
+        {
+          "text": "Integration Guides",
+          "url": "./docs-SMS_SETUP_GUIDE.md"
+        },
+        {
+          "text": "Security Overview",
+          "url": "./docs-security-notes.md"
+        }
+      ],
+      "content": "# 🎯 Unveil Strategic Overview\n\n**Last Updated**: January 2, 2025  \n**Status**: Production MVP Ready  \n**Next Wedding Test**: February 2025\n\n---\n\n## 🚀 Executive Summary\n\nUnveil is a **production-read",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/00-OVERVIEW/unveil-codebase-refactor-plan.md",
+      "title": "Unveil Codebase Refactor Plan",
+      "lastModified": "2025-08-22",
+      "wordCount": 2354,
+      "size": 19475,
+      "links": 6,
+      "outboundLinks": [
+        {
+          "text": "Architecture Guide",
+          "url": "../01-ENGINEERING/docs-architecture-guide.md"
+        },
+        {
+          "text": "Component Library",
+          "url": "../03-DESIGN/docs-component-library-implementation.md"
+        },
+        {
+          "text": "Testing Infrastructure",
+          "url": "../01-ENGINEERING/docs-testing-infrastructure.md"
+        },
+        {
+          "text": "TypeScript Guidelines",
+          "url": "../06-REFERENCE/reference-quick-reference.md"
+        },
+        {
+          "text": "Code Style Rules",
+          "url": "../user_rules.md"
+        },
+        {
+          "text": "Performance Budgets",
+          "url": "../../lib/performance/performanceBudgets.ts"
+        }
+      ],
+      "content": "# Unveil Codebase Refactor Plan\n\n**Document Version**: 1.0  \n**Created**: January 2025  \n**Status**: 📋 Planning Phase  \n**Scope**: Comprehensive architecture cleanup and optimization\n\n---\n\n## 🎯 Exec",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/00-OVERVIEW/unveil-refactor-plan.md",
+      "title": "Unveil Comprehensive Refactor Plan",
+      "lastModified": "2025-08-22",
+      "wordCount": 1387,
+      "size": 9572,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Unveil Comprehensive Refactor Plan\n\n## Executive Summary\n\nThis document outlines a comprehensive refactor plan for the Unveil wedding event management application. Based on a thorough codebase analy",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/01-ENGINEERING/docs-architecture-guide.md",
+      "title": "Unveil Architecture Guide",
+      "lastModified": "2025-08-22",
+      "wordCount": 2316,
+      "size": 19723,
+      "links": 1,
+      "outboundLinks": [
+        {
+          "text": "`../00-OVERVIEW/unveil-codebase-refactor-plan.md`",
+          "url": "../00-OVERVIEW/unveil-codebase-refactor-plan.md"
+        }
+      ],
+      "content": "# Unveil Architecture Guide\n\n## 📋 Overview\n\nUnveil is a modern wedding event management application built with Next.js 14, Supabase, and TypeScript. The application enables hosts to create wedding ev",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/01-ENGINEERING/docs-developer-guide.md",
+      "title": "Unveil Developer Guide",
+      "lastModified": "2025-08-22",
+      "wordCount": 1828,
+      "size": 15293,
+      "links": 10,
+      "outboundLinks": [
+        {
+          "text": "Next.js Documentation",
+          "url": "https://nextjs.org/docs"
+        },
+        {
+          "text": "Supabase Documentation",
+          "url": "https://supabase.com/docs"
+        },
+        {
+          "text": "React Query Documentation",
+          "url": "https://tanstack.com/query/latest"
+        },
+        {
+          "text": "Tailwind CSS Documentation",
+          "url": "https://tailwindcss.com/docs"
+        },
+        {
+          "text": "`docs/architecture-guide.md`",
+          "url": "./docs-architecture-guide.md"
+        },
+        {
+          "text": "`docs/rules.md`",
+          "url": "./docs-rules.md"
+        },
+        {
+          "text": "`docs/testing-infrastructure.md`",
+          "url": "./docs-testing-infrastructure.md"
+        },
+        {
+          "text": "Supabase Dashboard",
+          "url": "https://app.supabase.com"
+        },
+        {
+          "text": "Vercel Dashboard",
+          "url": "https://vercel.com"
+        },
+        {
+          "text": "React DevTools",
+          "url": "https://react.dev/learn/react-developer-tools"
+        }
+      ],
+      "content": "# Unveil Developer Guide\n\n## 🚀 Quick Start\n\n### Prerequisites\n\n- **Node.js**: 18.x or later\n- **pnpm**: Latest version (recommended package manager)\n- **Supabase CLI**: For local development\n- **Git*",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/01-ENGINEERING/docs-import-optimization-guide.md",
+      "title": "Import/Export Optimization Guide",
+      "lastModified": "2025-08-22",
+      "wordCount": 830,
+      "size": 6324,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Import/Export Optimization Guide\n\n## Summary of Optimizations\n\nThis guide documents the import/export pattern optimizations implemented to improve tree-shaking, reduce bundle size, and eliminate cir",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/01-ENGINEERING/docs-messaging-system-guide.md",
+      "title": "📬 Unveil Messaging System Guide",
+      "lastModified": "2025-08-22",
+      "wordCount": 1267,
+      "size": 10703,
+      "links": 6,
+      "outboundLinks": [
+        {
+          "text": "SMS Setup Guide",
+          "url": "./docs-SMS_SETUP_GUIDE.md"
+        },
+        {
+          "text": "Production Environment Setup",
+          "url": "./docs-production-environment-setup.md"
+        },
+        {
+          "text": "Database Schema Reference",
+          "url": "../app/reference/schema.sql"
+        },
+        {
+          "text": "Developer Guide",
+          "url": "./docs-developer-guide.md"
+        },
+        {
+          "text": "Testing Infrastructure",
+          "url": "./docs-testing-infrastructure.md"
+        },
+        {
+          "text": "Component Library",
+          "url": "./docs-component-library-implementation.md"
+        }
+      ],
+      "content": "# 📬 Unveil Messaging System Guide\n\n## Overview\n\nThe Unveil messaging system enables wedding hosts to communicate with their guests through multiple channels (SMS, email, push notifications) with sche",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/01-ENGINEERING/docs-security-notes.md",
+      "title": "🔒 Unveil Security Documentation",
+      "lastModified": "2025-08-22",
+      "wordCount": 710,
+      "size": 5784,
+      "links": 4,
+      "outboundLinks": [
+        {
+          "text": "Supabase Database Linting",
+          "url": "https://supabase.com/docs/guides/database/database-linter"
+        },
+        {
+          "text": "PostgreSQL Security Best Practices",
+          "url": "https://www.postgresql.org/docs/current/security.html"
+        },
+        {
+          "text": "Row Level Security Documentation",
+          "url": "https://supabase.com/docs/guides/auth/row-level-security"
+        },
+        {
+          "text": "Supabase Auth Security",
+          "url": "https://supabase.com/docs/guides/platform/going-into-prod#security"
+        }
+      ],
+      "content": "# 🔒 Unveil Security Documentation\n\n## 🎯 Phase 3 Security Hardening Results\n\n### ✅ **COMPLETED SECURITY FIXES**\n\n#### **1. search_path Vulnerabilities - ELIMINATED**\n\n- **Issue**: 12 functions had mu",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/01-ENGINEERING/docs-troubleshooting-messaging.md",
+      "title": "🔧 Messaging System Troubleshooting Guide",
+      "lastModified": "2025-08-22",
+      "wordCount": 1702,
+      "size": 13531,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# 🔧 Messaging System Troubleshooting Guide\n\n## Quick Diagnosis Checklist\n\nWhen encountering messaging issues, run through this checklist:\n\n1. **Environment Check**\n\n   ```bash\n   npx tsx scripts/vali",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/02-PRODUCT/docs-HOST_DASHBOARD.md",
+      "title": "Host Dashboard Documentation",
+      "lastModified": "2025-08-22",
+      "wordCount": 1557,
+      "size": 13482,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Host Dashboard Documentation\n\n## Overview\n\nThe Host Dashboard is the primary interface for wedding hosts to manage their events, guests, and communications. This document provides comprehensive docu",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/02-PRODUCT/docs-PHASE_6_COMPLETION_REPORT.md",
+      "title": "Phase 6: Testing, Optimization & Documentation - Completion Report",
+      "lastModified": "2025-08-22",
+      "wordCount": 1423,
+      "size": 11666,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Phase 6: Testing, Optimization & Documentation - Completion Report\n\n**Project**: Unveil Wedding App - Host Dashboard MVP  \n**Phase**: 6 of 6 (Final Quality Gate)  \n**Status**: ✅ **COMPLETED**  \n**Da",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/02-PRODUCT/plans-Phase-7-Final-Integration-Plan.md",
+      "title": "📦 Phase 7: Final Integration & Testing",
+      "lastModified": "2025-08-22",
+      "wordCount": 3133,
+      "size": 24353,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# 📦 Phase 7: Final Integration & Testing\n\n**Status**: In Progress  \n**Priority**: Critical  \n**Owner**: Grant  \n**Timeline**: 2 weeks (January 29 - February 11, 2025)  \n**Dependencies**: Phase 6 (Mes",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/03-DESIGN/docs-unveil-design-system.md",
+      "title": "Unveil Design System Specification",
+      "lastModified": "2025-08-22",
+      "wordCount": 1201,
+      "size": 9216,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Unveil Design System Specification\n\n**Status**: ✅ **IMPLEMENTED** - Complete standardization across entire application  \n**Last Updated**: January 16, 2025  \n**Implementation**: 100% complete across",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/03-DESIGN/reference-UIUX-ExecutionPlan.md",
+      "title": "Unveil UI/UX Execution Plan",
+      "lastModified": "2025-08-22",
+      "wordCount": 1437,
+      "size": 11360,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Unveil UI/UX Execution Plan\n\n## 🔥 High Priority – Mobile-First Polish & Critical Interaction Fixes\n\n- [x] **OTP Auto-Focus & Auto-Submit**\n\n  - Summary: Automatically focus OTP input and submit on ",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/03-DESIGN/reference-brand.md",
+      "title": "Unveil – Living Brand Brief",
+      "lastModified": "2025-08-22",
+      "wordCount": 331,
+      "size": 2283,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Unveil – Living Brand Brief\n\n## ✨ Brand Purpose\n\nUnveil helps couples and guests focus on presence, not logistics—by streamlining wedding communication and preserving shared memories in one elegant ",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/03-DESIGN/reference-style-guide.md",
+      "title": "Unveil Style Guide - Updated Design System",
+      "lastModified": "2025-08-22",
+      "wordCount": 828,
+      "size": 6485,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Unveil Style Guide - Updated Design System\n\n## 🎨 Typography Hierarchy\n\n| Use Case             | Font  | Size | Weight       | Tailwind Classes            |\n| -------------------- | ----- | ---- | -",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/03-DESIGN/reference-voice.md",
+      "title": "Unveil – Voice & Naming Guide",
+      "lastModified": "2025-08-22",
+      "wordCount": 483,
+      "size": 3213,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Unveil – Voice & Naming Guide\n\n## 💬 Brand Voice Principles\n\n### 1. Calm & Clear\n\nAvoid clutter, confusion, or over-explanation. Say only what's needed—and say it gracefully.\n\n✅ \"You've joined Emma ",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/04-OPERATIONS/docs-documentation-changelog.md",
+      "title": "Documentation Changelog",
+      "lastModified": "2025-08-22",
+      "wordCount": 453,
+      "size": 3992,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Documentation Changelog\n\n## January 16, 2025 - Post-Standardization Documentation Audit\n\n### 🔍 Audit Overview\n\nComprehensive audit and cleanup of all documentation files following the completion of",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/04-OPERATIONS/docs-production-environment-setup.md",
+      "title": "🔧 Production Environment Setup Guide",
+      "lastModified": "2025-08-22",
+      "wordCount": 296,
+      "size": 2730,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# 🔧 Production Environment Setup Guide\n\n## Required Environment Variables\n\n### **Core Application (REQUIRED)**\n\n```bash\n# Supabase Configuration\nNEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supab",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/04-OPERATIONS/docs-storage-bucket-setup-guide.md",
+      "title": "🗄️ Supabase Storage Bucket Setup Guide",
+      "lastModified": "2025-08-22",
+      "wordCount": 556,
+      "size": 3969,
+      "links": 1,
+      "outboundLinks": [
+        {
+          "text": "Supabase Dashboard",
+          "url": "https://supabase.com/dashboard"
+        }
+      ],
+      "content": "# 🗄️ Supabase Storage Bucket Setup Guide\n\n## Overview\n\nThe Unveil app requires a storage bucket named `event-media` for photo and video uploads. This must be created manually in the Supabase Dashboar",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/05-ARCHIVE/archive-refactor-roadmap.md",
+      "title": "Unveil Refactor Roadmap",
+      "lastModified": "2025-08-22",
+      "wordCount": 2579,
+      "size": 19332,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Unveil Refactor Roadmap\n\n## 📊 Audit Summary\n\n**Overall Health: EXCELLENT ⭐⭐⭐⭐⭐**\n\nThe Unveil codebase demonstrates high-quality software engineering practices with clean architecture, strong type s",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/05-ARCHIVE/plans-host-dashboard-refactor.md",
+      "title": "Host Dashboard Refactor - MVP Focus",
+      "lastModified": "2025-08-22",
+      "wordCount": 4885,
+      "size": 37948,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Host Dashboard Refactor - MVP Focus\n\n**Project Status**: ✅ **COMPLETED** - Production Ready  \n**Last Updated**: January 17, 2025  \n**Completed**: January 17, 2025 (Ahead of Schedule)  \n**Priority**:",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/05-ARCHIVE/plans-messaging-project-plan.md",
+      "title": "Unveil Guest Communication Module - Project Plan",
+      "lastModified": "2025-08-22",
+      "wordCount": 5641,
+      "size": 44222,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Unveil Guest Communication Module - Project Plan\n\n**📅 Timeline**: 2 weeks intensive development  \n**🎯 Goal**: Comprehensive messaging system with host orchestration and guest interaction  \n**📊 St",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/05-ARCHIVE/plans-navigation-enhancements.md",
+      "title": "Navigation Enhancements Project Plan",
+      "lastModified": "2025-08-22",
+      "wordCount": 1648,
+      "size": 12504,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Navigation Enhancements Project Plan\n\n## 🎯 Project Overview\n\n**Objective**: Enhance user navigation experience with intelligent, contextual aids that improve flow continuity and orientation without",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/05-ARCHIVE/plans-participant-consolidation-plan.md",
+      "title": "🧩 Project Plan: Consolidate Participants into Guests",
+      "lastModified": "2025-08-22",
+      "wordCount": 2057,
+      "size": 14147,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# 🧩 Project Plan: Consolidate Participants into Guests\n\n## 📅 Timeline\n\n**Duration**: 1–2 days of focused implementation, testing, and cleanup before proceeding to Phase 5\n\n**Priority**: Critical - B",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/05-ARCHIVE/plans-supabase-schema-remediation-plan.md",
+      "title": "Supabase Schema Remediation Project Plan",
+      "lastModified": "2025-08-22",
+      "wordCount": 3963,
+      "size": 30240,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Supabase Schema Remediation Project Plan\n\n**Status**: ✅ **COMPLETED** - Production Ready  \n**Created**: January 29, 2025  \n**Completed**: January 29, 2025  \n**Final Result**: **98.5%+ Compatibility ",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/05-ARCHIVE/plans-unveil-ui-standardization.md",
+      "title": "Unveil UI Standardization Project Plan",
+      "lastModified": "2025-08-22",
+      "wordCount": 1469,
+      "size": 10471,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "⚠️ **ARCHIVED**: This file is preserved for historical reference but no longer reflects active project work. The UI Standardization Project was completed on January 16, 2025, and all objectives have b",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/05-ARCHIVE/plans-unveil-website-project-plan.md",
+      "title": "📌 Unveil Website Project Plan",
+      "lastModified": "2025-08-22",
+      "wordCount": 2332,
+      "size": 16995,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# 📌 Unveil Website Project Plan\n\n## 🧭 Overview\n\nThe Unveil website (www.sendunveil.com) is a standalone platform serving a dual purpose combining marketing presence with regulatory compliance docume",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/05-ARCHIVE/plans-unveil-website-recovery-plan.md",
+      "title": "Unveil Marketing Website - Recovery Plan",
+      "lastModified": "2025-08-22",
+      "wordCount": 1426,
+      "size": 10409,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Unveil Marketing Website - Recovery Plan\n\n**Status**: 🟡 Ready After Fixes  \n**Created**: June 22, 2025  \n**Project**: `apps/unveil-website`  \n**Target**: Clean deployment to `https://www.sendunveil",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/05-ARCHIVE/plans-unveil-website-simplified-plan.md",
+      "title": "🎯 Unveil Website Simplified Redesign Plan",
+      "lastModified": "2025-08-22",
+      "wordCount": 3188,
+      "size": 23211,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# 🎯 Unveil Website Simplified Redesign Plan\n\n## 📋 Executive Summary\n\n**Objective**: Create a clean, minimal 3-page website for Unveil that focuses on simplicity and clarity over full-scale marketing",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/06-REFERENCE/CLAUDE.md",
+      "title": "CLAUDE.md",
+      "lastModified": "2025-08-22",
+      "wordCount": 1268,
+      "size": 9377,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# CLAUDE.md\n\nThis file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.\n\n## Development Commands\n\n### Core Development\n\n- `pnpm dev` - Start development ser",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/06-REFERENCE/reference-MVP-ProjectPlan.md",
+      "title": "🎯 Unveil Wedding App - MVP Project Plan",
+      "lastModified": "2025-08-22",
+      "wordCount": 3358,
+      "size": 25059,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# 🎯 Unveil Wedding App - MVP Project Plan\n\n> **🏆 WEEK 2 STATUS: COMPLETE** ✅\n>\n> **Core Features:** Media Upload ✅ | Real-time Messaging ✅ | Guest Management ✅ | RSVP System ✅\n>\n> **Testing Results:",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/07-FUTURE/phase-6-observability-plan.md",
+      "title": "Phase 6: Observability & Testing (Planning)",
+      "lastModified": "2025-08-22",
+      "wordCount": 931,
+      "size": 7088,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Phase 6: Observability & Testing (Planning)\n\n**Document Version**: 1.0  \n**Created**: January 2025  \n**Status**: 🔮 Future Planning  \n**Dependencies**: Phase 1-5 Complete (v1.0.0)\n\n---\n\n## 🎯 Object",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-plans/improve-app-performance.md",
+      "title": "🚀 Improve App Performance — Project Plan",
+      "lastModified": "2025-08-22",
+      "wordCount": 1326,
+      "size": 9581,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# 🚀 Improve App Performance — Project Plan\n\n> This plan outlines tactical fixes to improve Unveil App performance based on profiling and diagnosis.\n\n## ✅ Overview\n\n- App feels slow during load and na",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/stale-docs/DEVELOPMENT_GUIDE.md",
+      "title": "Unveil - Development Workflow & Team Guidelines",
+      "lastModified": "2025-07-29",
+      "wordCount": 757,
+      "size": 5601,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Unveil - Development Workflow & Team Guidelines\n\n## 1. Project Overview\n\nUnveil is a modern, mobile-first wedding communication and memory platform built as a production-grade MVP. This document cov",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/01-ENGINEERING/docs-NAVIGATION_SYSTEM.md",
+      "title": "Navigation System Documentation",
+      "lastModified": "2025-07-28",
+      "wordCount": 1102,
+      "size": 7876,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Navigation System Documentation\n\n## Overview\n\nThe Unveil app now features a comprehensive, role-aware bottom navigation system that provides intuitive navigation for both hosts and guests while maki",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/01-ENGINEERING/docs-mcp-schema-binding.md",
+      "title": "MCP-Powered Live Schema Binding for Cursor",
+      "lastModified": "2025-07-28",
+      "wordCount": 665,
+      "size": 5161,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# MCP-Powered Live Schema Binding for Cursor\n\n## 🎯 **Objective**\n\nEnsure Cursor always has **complete and fully accurate knowledge** of your live Supabase database schema — permanently and automatica",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/01-ENGINEERING/docs-mcp-supabase-setup.md",
+      "title": "MCP Supabase Setup - Unveil App",
+      "lastModified": "2025-07-28",
+      "wordCount": 423,
+      "size": 2980,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# MCP Supabase Setup - Unveil App\n\n## ✅ Configuration Complete\n\nSuccessfully configured the official Supabase MCP server for Cursor IDE to connect directly to your live Supabase instance.\n\n### 🎯 Key ",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/01-ENGINEERING/docs-testing-infrastructure.md",
+      "title": "Testing Infrastructure Guide",
+      "lastModified": "2025-07-28",
+      "wordCount": 1313,
+      "size": 11634,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Testing Infrastructure Guide\n\n## Overview\n\nThis guide outlines the comprehensive testing infrastructure for the Unveil app, designed to ensure reliability, security, and performance across all featu",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/04-OPERATIONS/docs-SMS_SETUP_GUIDE.md",
+      "title": "SMS Integration Setup Guide",
+      "lastModified": "2025-07-28",
+      "wordCount": 761,
+      "size": 5560,
+      "links": 1,
+      "outboundLinks": [
+        {
+          "text": "twilio.com",
+          "url": "https://twilio.com"
+        }
+      ],
+      "content": "# SMS Integration Setup Guide\n\n## Overview\n\nThis guide walks you through setting up SMS integration for Unveil using Twilio. The SMS system is already built into the app - you just need to configure y",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/04-OPERATIONS/docs-test-user-management.md",
+      "title": "Test User Management System",
+      "lastModified": "2025-07-28",
+      "wordCount": 1209,
+      "size": 9001,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Test User Management System\n\nThis document explains the comprehensive test user management system implemented for the Unveil app to improve developer productivity and testing workflows.\n\n## 🎯 Overv",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/05-ARCHIVE/archive-REFACTOR_PLAN.md",
+      "title": "Unveil App Refactoring Plan",
+      "lastModified": "2025-07-28",
+      "wordCount": 922,
+      "size": 7264,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Unveil App Refactoring Plan\n\n## 🚨 CRITICAL ISSUES IDENTIFIED\n\n### 1. Component Organization Chaos\n\n**Current State**: Components scattered across multiple directories\n\n- `app/components/`: 6 compon",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/05-ARCHIVE/archive-phone-first-auth-refactor-plan.md",
+      "title": "Phone-First Authentication Refactoring Plan",
+      "lastModified": "2025-07-28",
+      "wordCount": 1181,
+      "size": 8404,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Phone-First Authentication Refactoring Plan\n\n## 🎯 **Overview**\n\nThis document outlines the comprehensive refactoring to simplify Unveil's authentication model:\n\n1. **Phone-first authentication** - ",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/05-ARCHIVE/archive-schema-simplification-audit.md",
+      "title": "🔍 Database Schema & Auth Flow Simplification Audit",
+      "lastModified": "2025-07-28",
+      "wordCount": 1662,
+      "size": 12555,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# 🔍 Database Schema & Auth Flow Simplification Audit\n\n## **Current State Analysis**\n\n### **❌ Complexity Issues Identified**\n\n1. **Over-engineered Tables**: 11+ tables with complex relationships\n2. **",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/06-REFERENCE/docs-rules.md",
+      "title": "Unveil - Development Workflow & Team Guidelines",
+      "lastModified": "2025-07-28",
+      "wordCount": 757,
+      "size": 5601,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Unveil - Development Workflow & Team Guidelines\n\n## 1. Project Overview\n\nUnveil is a modern, mobile-first wedding communication and memory platform built as a production-grade MVP. This document cov",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/06-REFERENCE/reference-ideas-log.md",
+      "title": "Ideas and Feature Log",
+      "lastModified": "2025-07-28",
+      "wordCount": 239,
+      "size": 1778,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Ideas and Feature Log\n\nThis document serves as a running list of new feature ideas, potential improvements, and other thoughts for the Unveil project. It helps capture inspiration without derailing ",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/06-REFERENCE/reference-quick-reference.md",
+      "title": "Unveil App - Quick Reference Guide",
+      "lastModified": "2025-07-28",
+      "wordCount": 265,
+      "size": 1877,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Unveil App - Quick Reference Guide\n\n## 🚀 Development Server\n\n```bash\nnpm run dev                # Start development server at http://localhost:3000\n```\n\n## 🧪 Testing Commands\n\n```bash\n# Primary te",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/06-REFERENCE/reference-risk-matrix.md",
+      "title": "Project Risk Matrix",
+      "lastModified": "2025-07-28",
+      "wordCount": 376,
+      "size": 3834,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Project Risk Matrix\n\nThis document outlines potential risks for the Unveil project, their likelihood and impact, and planned mitigation strategies. It should be reviewed and updated periodically, es",
+      "classification": {
+        "action": "DELETE",
+        "reason": "Legacy/archive directory",
+        "priority": "MEDIUM"
+      }
+    }
+  ],
+  "MERGE": [
+    {
+      "path": "docs/audits/db-health/2025-01-31-integrity.md",
+      "title": "Database Integrity Audit Report",
+      "lastModified": "2025-08-26",
+      "wordCount": 761,
+      "size": 6050,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Database Integrity Audit Report\n**Date:** 2025-01-31  \n**Scope:** Messaging & Core Tables Data Integrity  \n**Status:** READ-ONLY AUDIT COMPLETE\n\n## Executive Summary\n\nData integrity audit reveals **",
+      "classification": {
+        "action": "MERGE",
+        "reason": "Previous audit recommendation: Merge",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/audits/db-health/2025-01-31-schema.md",
+      "title": "Database Schema Audit Report",
+      "lastModified": "2025-08-26",
+      "wordCount": 579,
+      "size": 4814,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Database Schema Audit Report\n**Date:** 2025-01-31  \n**Scope:** Messaging & Core Tables Schema Health  \n**Status:** READ-ONLY AUDIT COMPLETE\n\n## Executive Summary\n\nSchema audit of core messaging tabl",
+      "classification": {
+        "action": "MERGE",
+        "reason": "Previous audit recommendation: Merge",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/audits/db-health/2025-01-31-visibility.md",
+      "title": "Announcements Visibility Audit Report",
+      "lastModified": "2025-08-26",
+      "wordCount": 793,
+      "size": 6167,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Announcements Visibility Audit Report\n**Date:** 2025-01-31  \n**Scope:** Message Visibility & Guest Access Verification  \n**Status:** READ-ONLY AUDIT COMPLETE\n\n## Executive Summary\n\nAnnouncements vis",
+      "classification": {
+        "action": "MERGE",
+        "reason": "Previous audit recommendation: Merge",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/changes/db-health-summary.md",
+      "title": "Database Health Audit Summary",
+      "lastModified": "2025-08-26",
+      "wordCount": 850,
+      "size": 6397,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Database Health Audit Summary\n**Date:** 2025-01-31  \n**Audit Type:** Read-Only End-to-End Database Health Check  \n**Scope:** Messaging & Core Tables (messages, message_deliveries, event_guests, sche",
+      "classification": {
+        "action": "MERGE",
+        "reason": "Previous audit recommendation: Merge",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/audits/event-tag-implementation-complete.md",
+      "title": "✅ Event Tag Standardization Implementation — COMPLETE",
+      "lastModified": "2025-08-24",
+      "wordCount": 946,
+      "size": 7111,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# ✅ Event Tag Standardization Implementation — COMPLETE\n\n**Date**: January 30, 2025  \n**Status**: 🎯 **IMPLEMENTATION COMPLETE**  \n**Intent**: Successfully standardized SMS header to `EventTag:` forma",
+      "classification": {
+        "action": "MERGE",
+        "reason": "Previous audit recommendation: Merge",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/audits/event-tag-sms-first-class-field-audit.md",
+      "title": "Event Creation — Make \"Event Tag for SMS\" a First-Class, Required Field",
+      "lastModified": "2025-08-24",
+      "wordCount": 1403,
+      "size": 10369,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Event Creation — Make \"Event Tag for SMS\" a First-Class, Required Field\n\n**Date**: January 30, 2025  \n**Status**: 📋 **AUDIT COMPLETE - READY FOR IMPLEMENTATION**  \n**Intent**: Ensure every new even",
+      "classification": {
+        "action": "MERGE",
+        "reason": "Previous audit recommendation: Merge",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/audits/event-tag-standardization-implementation-plan.md",
+      "title": "Event Creation & SMS Tag — Standardize, Require, and Align Constraints (20-char, colon format)",
+      "lastModified": "2025-08-24",
+      "wordCount": 1278,
+      "size": 9880,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Event Creation & SMS Tag — Standardize, Require, and Align Constraints (20-char, colon format)\n\n**Date**: January 30, 2025  \n**Status**: 🎯 **IMPLEMENTATION PLAN - READY TO EXECUTE**  \n**Intent**: R",
+      "classification": {
+        "action": "MERGE",
+        "reason": "Previous audit recommendation: Merge",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/audits/guest-invite-sms-audit-2025-01-30.md",
+      "title": "Guest Invite SMS — Copy, Length & Segmentation Audit",
+      "lastModified": "2025-08-24",
+      "wordCount": 1446,
+      "size": 10582,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Guest Invite SMS — Copy, Length & Segmentation Audit\n\n**Date**: January 30, 2025  \n**Status**: ✅ **COMPLETE**  \n**Intent**: Comprehensive analysis of guest invitation SMS text, character counts, enc",
+      "classification": {
+        "action": "MERGE",
+        "reason": "Previous audit recommendation: Merge",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/audits/message-history-date-grouping-restoration.md",
+      "title": "Message History — Date Grouping Restoration Report",
+      "lastModified": "2025-08-24",
+      "wordCount": 542,
+      "size": 4038,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Message History — Date Grouping Restoration Report\n\n**Date:** January 2025  \n**Issue:** Message History tab missing date grouping headers (Today/Yesterday/Full Date)  \n**Scope:** Restore date groupi",
+      "classification": {
+        "action": "MERGE",
+        "reason": "Previous audit recommendation: Merge",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/audits/message-history-exploratory-audit.md",
+      "title": "Message History — Exploratory Audit Report",
+      "lastModified": "2025-08-24",
+      "wordCount": 1221,
+      "size": 10181,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Message History — Exploratory Audit Report\n\n**Date:** January 2025  \n**Issue:** Message History view shows empty list and constant re-rendering  \n**Scope:** End-to-end data flow analysis (UI → hooks",
+      "classification": {
+        "action": "MERGE",
+        "reason": "Previous audit recommendation: Merge",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/audits/message-history-timezone-fix.md",
+      "title": "Message History — Timezone Calculation Fix",
+      "lastModified": "2025-08-24",
+      "wordCount": 696,
+      "size": 5388,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Message History — Timezone Calculation Fix\n\n**Date:** January 2025  \n**Issue:** Incorrect date grouping and time display in Message History when switching between Event Time and Local Time  \n**Scope",
+      "classification": {
+        "action": "MERGE",
+        "reason": "Previous audit recommendation: Merge",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/audits/message-history-timezone-utc-bug-fix.md",
+      "title": "Message History — UTC vs Local Time Bug Fix",
+      "lastModified": "2025-08-24",
+      "wordCount": 577,
+      "size": 3960,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Message History — UTC vs Local Time Bug Fix\n\n**Date:** August 24, 2025  \n**Issue:** Messages showing incorrect date groupings when toggling between Event Time and Local Time modes  \n**Scope:** Criti",
+      "classification": {
+        "action": "MERGE",
+        "reason": "Previous audit recommendation: Merge",
+        "priority": "MEDIUM"
+      }
+    },
+    {
+      "path": "docs/audits/message-history-variable-order-fix.md",
+      "title": "Message History — Variable Declaration Order Fix",
+      "lastModified": "2025-08-24",
+      "wordCount": 309,
+      "size": 2474,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Message History — Variable Declaration Order Fix\n\n**Date:** January 2025  \n**Issue:** `ReferenceError: Cannot access 'pastMessages' before initialization`  \n**Scope:** Fix JavaScript variable hoisti",
+      "classification": {
+        "action": "MERGE",
+        "reason": "Previous audit recommendation: Merge",
+        "priority": "MEDIUM"
+      }
+    }
+  ],
+  "KEEP": [
+    {
+      "path": "docs/reports/docs_audit_20250915.md",
+      "title": "Unveil Documentation Audit Report",
+      "lastModified": "2025-09-15",
+      "wordCount": 1128,
+      "size": 10256,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Unveil Documentation Audit Report\n## Executive Summary\n\n**Audit Date:** September 15, 2025  \n**Total Markdown Files:** 298 files  \n**Audit Scope:** Repository-wide documentation assessment  \n**Prima",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Recent report",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/reports/platform_readiness_20250915.md",
+      "title": "Unveil Platform Readiness Assessment",
+      "lastModified": "2025-09-15",
+      "wordCount": 1405,
+      "size": 10876,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Unveil Platform Readiness Assessment\n## Executive Summary\n\n**Assessment Date:** September 15, 2025  \n**Platform Status:** 🟢 **READY TO SCALE**  \n**Overall Readiness Score:** **87/100**\n\nUnveil's we",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Recent report",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/reports/rls_opt_20250115.md",
+      "title": "RLS Optimization Report - Behavior-Preserving Performance Enhancement",
+      "lastModified": "2025-09-15",
+      "wordCount": 1276,
+      "size": 10390,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# RLS Optimization Report - Behavior-Preserving Performance Enhancement\n\n**Date:** January 15, 2025  \n**Migration:** `rls_optimization_behavior_preserving_corrected`  \n**Project:** `unveil-app` (Supab",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Recent report",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/reports/unveil_health_audit_20250115.md",
+      "title": "Unveil App — Full Codebase & Database Health Audit",
+      "lastModified": "2025-09-15",
+      "wordCount": 2450,
+      "size": 17755,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Unveil App — Full Codebase & Database Health Audit\n\n**Date:** January 15, 2025  \n**Auditor:** AI Assistant (Claude Sonnet 4)  \n**Scope:** Complete read-only analysis of codebase architecture, databa",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Recent report",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/architecture/ARCHITECTURE.md",
+      "title": "Unveil Architecture Guide",
+      "lastModified": "2025-08-27",
+      "wordCount": 2346,
+      "size": 19993,
+      "links": 1,
+      "outboundLinks": [
+        {
+          "text": "`../00-OVERVIEW/unveil-codebase-refactor-plan.md`",
+          "url": "../00-OVERVIEW/unveil-codebase-refactor-plan.md"
+        }
+      ],
+      "content": "# Unveil Architecture Guide\n\n## 📋 Overview\n\nUnveil is a modern wedding event management application built with Next.js 14, Supabase, and TypeScript. The application enables hosts to create wedding ev",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Previous audit recommendation: Keep",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/audit/realtime-holistic-review.md",
+      "title": "Realtime Module — Idle/Reconnect Holistic Review",
+      "lastModified": "2025-08-27",
+      "wordCount": 1399,
+      "size": 11641,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Realtime Module — Idle/Reconnect Holistic Review\n\n## Executive Summary\n\n## Risk Rating: MEDIUM\n\nThe realtime module demonstrates sophisticated architecture with comprehensive error handling, but exh",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/audit/versioned-functions-inventory.md",
+      "title": "Versioned Functions Inventory & Dependency Map",
+      "lastModified": "2025-08-27",
+      "wordCount": 1289,
+      "size": 9320,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Versioned Functions Inventory & Dependency Map\n\n**Date:** January 27, 2025  \n**Purpose:** Comprehensive audit of versioned/duplicated functions across the Unveil app and database  \n**Status:** ✅ Com",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/realtime-memory-leak-fixes.md",
+      "title": "Realtime Memory Leak Fixes",
+      "lastModified": "2025-08-27",
+      "wordCount": 629,
+      "size": 5198,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Realtime Memory Leak Fixes\n\n## Issue Identified\n\nPerformance alert triggered: **Memory usage at 304.8MB exceeding 300MB limit**\n\nConsole logs showed patterns indicating memory leaks:\n- Multiple dupl",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/realtime-stability-hotfix.md",
+      "title": "Realtime Stability Hotfix",
+      "lastModified": "2025-08-27",
+      "wordCount": 599,
+      "size": 4959,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Realtime Stability Hotfix\n\n## Issues Addressed\n\nBased on the console logs provided, several critical issues were identified and fixed:\n\n### 1. \"tried to subscribe multiple times\" Error ❌→✅\n\n**Proble",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/audits/rollups/usage-inventory.md",
+      "title": "Rollups Revert - Usage Inventory",
+      "lastModified": "2025-08-26",
+      "wordCount": 328,
+      "size": 2919,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Rollups Revert - Usage Inventory\n\n## Rollup-Specific Code (TO BE REMOVED)\n\n### UI Components\n- **hooks/messaging/useMessageRollups.ts** - Complete file, rollup hook\n- **components/features/messaging",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/audits/rpc_md_delivery_status_report.md",
+      "title": "RPC Column Reference Fix Report",
+      "lastModified": "2025-08-26",
+      "wordCount": 418,
+      "size": 3511,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# RPC Column Reference Fix Report\n\n**Date**: January 25, 2025  \n**Issue**: 42703 \"column md.delivery_status does not exist\"  \n**Function**: `public.get_guest_event_messages`  \n**Status**: ✅ **RESOLVED",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/audits/bulk-vs-single-invitations.md",
+      "title": "Bulk Invitations — End-to-End Trace (UI→RPC→DB→Twilio) + Single-Invite Diff",
+      "lastModified": "2025-08-25",
+      "wordCount": 1576,
+      "size": 13662,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Bulk Invitations — End-to-End Trace (UI→RPC→DB→Twilio) + Single-Invite Diff\n\n**Date**: January 30, 2025  \n**Status**: ✅ **COMPLETE**  \n**Intent**: Complete code-level walkthrough of Send Invitations",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/MODIFY_ALWAYS_ON_ROLLOUT.md",
+      "title": "Modify Flow — Always-On Rollout (Feature Flag Removed)",
+      "lastModified": "2025-08-24",
+      "wordCount": 849,
+      "size": 6699,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Modify Flow — Always-On Rollout (Feature Flag Removed)\n\n## Overview\n\nSuccessfully removed the `NEXT_PUBLIC_FEATURE_MODIFY_SCHEDULED` feature flag and made the Modify functionality always available, ",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/MODIFY_FLOW_FIX_SUMMARY.md",
+      "title": "Modify Flow Fix — Eliminate \"Message Sent Successfully\" Mis-route",
+      "lastModified": "2025-08-24",
+      "wordCount": 871,
+      "size": 6911,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Modify Flow Fix — Eliminate \"Message Sent Successfully\" Mis-route\n\n## Issue Summary\n\nWhen tapping **Modify** on an upcoming scheduled message, the app was incorrectly showing the \"Message Sent Succe",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/SCHEDULED_MESSAGE_MODIFY_FEATURE.md",
+      "title": "Scheduled Message Cancel & Modify Feature",
+      "lastModified": "2025-08-24",
+      "wordCount": 835,
+      "size": 6124,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Scheduled Message Cancel & Modify Feature\n\n## Overview\n\nThis feature enhances the scheduled message functionality with improved Cancel UX and a new Modify capability that allows hosts to edit schedu",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/audits/guest-invite-sms-single-segment-update-2025-01-30.md",
+      "title": "Guest Invite SMS — Single Segment Optimization Update",
+      "lastModified": "2025-08-24",
+      "wordCount": 1113,
+      "size": 7637,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Guest Invite SMS — Single Segment Optimization Update\n\n**Date**: January 30, 2025  \n**Status**: ✅ **IMPLEMENTED**  \n**Intent**: Optimize guest invite SMS copy to ensure single GSM-7 segment delivery",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/audits/modify-button-end-to-end-walkthrough.md",
+      "title": "Modify Button — End-to-End Walkthrough (UI → RPC → DB → Realtime)",
+      "lastModified": "2025-08-24",
+      "wordCount": 1915,
+      "size": 17186,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Modify Button — End-to-End Walkthrough (UI → RPC → DB → Realtime)\n\n## Executive Summary\n\nThis document provides a comprehensive trace of the Modify button flow in the Unveil messaging system, from u",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/development/DEPLOYMENT.md",
+      "title": "🔧 Production Environment Setup Guide",
+      "lastModified": "2025-08-24",
+      "wordCount": 659,
+      "size": 5749,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# 🔧 Production Environment Setup Guide\n\n## Required Environment Variables\n\n### **Core Application (REQUIRED)**\n\n```bash\n# Supabase Configuration\nNEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supab",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Previous audit recommendation: Keep",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/troubleshooting/CRON_AUTHENTICATION_GUIDE.md",
+      "title": "🔧 Cron Authentication Troubleshooting Guide",
+      "lastModified": "2025-08-24",
+      "wordCount": 1017,
+      "size": 8051,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# 🔧 Cron Authentication Troubleshooting Guide\n\n**Last Updated:** January 30, 2025  \n**Scope:** Scheduled message processing authentication issues\n\n## 🎯 **Quick Diagnosis**\n\n### **Is Your Cron Workin",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Previous audit recommendation: Keep",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/audits/remove-email/db-inventory.md",
+      "title": "Database Email Inventory - Schema Audit",
+      "lastModified": "2025-08-23",
+      "wordCount": 1010,
+      "size": 7865,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Database Email Inventory - Schema Audit\n\n**Date:** January 21, 2025  \n**Purpose:** Comprehensive audit of email references in database schema for phone-only MVP conversion  \n**Database:** Supabase P",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/audits/remove-email/usage-inventory.md",
+      "title": "Email Usage Inventory - Code Audit",
+      "lastModified": "2025-08-23",
+      "wordCount": 783,
+      "size": 6574,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Email Usage Inventory - Code Audit\n\n**Date:** January 21, 2025  \n**Purpose:** Comprehensive audit of email references in codebase for phone-only MVP conversion\n\n## Executive Summary\n\nFound **166 fil",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/flags.md",
+      "title": "Feature Flags — Centralized Management & Policy",
+      "lastModified": "2025-08-23",
+      "wordCount": 876,
+      "size": 6611,
+      "links": 3,
+      "outboundLinks": [
+        {
+          "text": "SMS Branding Configuration",
+          "url": "./SMS_BRANDING_CONFIG.md"
+        },
+        {
+          "text": "Deployment Environment Setup",
+          "url": "./development/DEPLOYMENT.md"
+        },
+        {
+          "text": "Emergency Runbooks",
+          "url": "./debugging/COMPLETE_SMS_SOLUTION.md"
+        }
+      ],
+      "content": "# Feature Flags — Centralized Management & Policy\n\n**Status**: ✅ **ACTIVE**  \n**Owner**: Platform Team  \n**Last Updated**: January 30, 2025\n\n## 🎯 Overview\n\nUnveil uses a minimal, centralized approach",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Previous audit recommendation: Keep",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/identity.md",
+      "title": "Identity & Authentication",
+      "lastModified": "2025-08-23",
+      "wordCount": 733,
+      "size": 5120,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Identity & Authentication\n\n## Overview\n\nUnveil uses a phone-first identity system that prioritizes accessibility and simplicity. The platform supports guest flows that work entirely without email ad",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Previous audit recommendation: Keep",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/FINAL_PERFORMANCE_REVIEW.md",
+      "title": "🎯 Final Performance Review - Unveil App",
+      "lastModified": "2025-08-22",
+      "wordCount": 1328,
+      "size": 9686,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# 🎯 Final Performance Review - Unveil App\n\n**Date:** February 1, 2025  \n**Status:** ✅ **READY TO MOVE ON**  \n**Review Type:** Comprehensive Performance Analysis\n\n## 📊 Executive Summary\n\nAfter a comp",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/access/roles/delegated-hosts.md",
+      "title": "Delegated Hosts in Unveil",
+      "lastModified": "2025-08-22",
+      "wordCount": 1420,
+      "size": 11619,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Delegated Hosts in Unveil\n\n**Last Updated:** January 30, 2025  \n**Schema Version:** 98%+ Compatibility Achieved\n\n## 📖 Overview\n\nDelegated hosts are users who have been granted host-level permission",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/architecture/DESIGN_SYSTEM.md",
+      "title": "Unveil Design System Specification",
+      "lastModified": "2025-08-22",
+      "wordCount": 1201,
+      "size": 9216,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Unveil Design System Specification\n\n**Status**: ✅ **IMPLEMENTED** - Complete standardization across entire application  \n**Last Updated**: January 16, 2025  \n**Implementation**: 100% complete across",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Active documentation directory",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/architecture/SECURITY.md",
+      "title": "🔒 Unveil Security Documentation",
+      "lastModified": "2025-08-22",
+      "wordCount": 710,
+      "size": 5784,
+      "links": 4,
+      "outboundLinks": [
+        {
+          "text": "Supabase Database Linting",
+          "url": "https://supabase.com/docs/guides/database/database-linter"
+        },
+        {
+          "text": "PostgreSQL Security Best Practices",
+          "url": "https://www.postgresql.org/docs/current/security.html"
+        },
+        {
+          "text": "Row Level Security Documentation",
+          "url": "https://supabase.com/docs/guides/auth/row-level-security"
+        },
+        {
+          "text": "Supabase Auth Security",
+          "url": "https://supabase.com/docs/guides/platform/going-into-prod#security"
+        }
+      ],
+      "content": "# 🔒 Unveil Security Documentation\n\n## 🎯 Phase 3 Security Hardening Results\n\n### ✅ **COMPLETED SECURITY FIXES**\n\n#### **1. search_path Vulnerabilities - ELIMINATED**\n\n- **Issue**: 12 functions had mu",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Active documentation directory",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/architecture/event-creation-complete-guide.md",
+      "title": "🧭 Complete Mental Model: Event Creation in Unveil",
+      "lastModified": "2025-08-22",
+      "wordCount": 1469,
+      "size": 11840,
+      "links": 8,
+      "outboundLinks": [
+        {
+          "text": "Overview",
+          "url": "#overview"
+        },
+        {
+          "text": "1. Event Creation Logic",
+          "url": "#-1-event-creation-logic"
+        },
+        {
+          "text": "2. Guest Requirements",
+          "url": "#-2-guest-requirements"
+        },
+        {
+          "text": "3. Adding Guests After Creation",
+          "url": "#-3-adding-guests-after-creation"
+        },
+        {
+          "text": "4. Security & Ownership",
+          "url": "#-4-security--ownership"
+        },
+        {
+          "text": "5. Real-Time Validation & Rollback",
+          "url": "#-5-real-time-validation--rollback"
+        },
+        {
+          "text": "Complete Flow Summary",
+          "url": "#-complete-flow-summary"
+        },
+        {
+          "text": "Key Files Reference",
+          "url": "#-key-files-reference"
+        }
+      ],
+      "content": "# 🧭 Complete Mental Model: Event Creation in Unveil\n\nA comprehensive guide to understanding how event creation works in the Unveil app, from UI interaction to database consistency.\n\n## Table of Conte",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Previous audit recommendation: Keep",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/architecture/event-creation-flow.md",
+      "title": "Event Creation Flow Architecture",
+      "lastModified": "2025-08-22",
+      "wordCount": 1274,
+      "size": 13500,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Event Creation Flow Architecture\n\n**Updated:** January 29, 2025  \n**Version:** 2.0 - Service Layer Refactor\n\n## Overview\n\nThe event creation system has been refactored to follow project conventions ",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Active documentation directory",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/architecture/guest-import.md",
+      "title": "Guest Import System Architecture",
+      "lastModified": "2025-08-22",
+      "wordCount": 1867,
+      "size": 17684,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Guest Import System Architecture\n\n**Created:** January 29, 2025  \n**Version:** 1.0 - Full Implementation  \n**Integration:** Service Layer Pattern with EventCreationService\n\n## Overview\n\nThe guest im",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Active documentation directory",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/architecture/index.md",
+      "title": "Architecture Documentation",
+      "lastModified": "2025-08-22",
+      "wordCount": 120,
+      "size": 1016,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Architecture Documentation\n\nSystem architecture, design patterns, and technical specifications for the Unveil app.\n\n## 🏗️ Architecture Files\n\n### `ARCHITECTURE.md`\n\n**Core system architecture and d",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Active documentation directory",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/architecture/user-auth-flow.md",
+      "title": "Unveil User Authentication & Authorization Flow",
+      "lastModified": "2025-08-22",
+      "wordCount": 1931,
+      "size": 15233,
+      "links": 7,
+      "outboundLinks": [
+        {
+          "text": "User Lifecycle Overview",
+          "url": "#user-lifecycle-overview"
+        },
+        {
+          "text": "Phone Number Auth Flow",
+          "url": "#phone-number-auth-flow"
+        },
+        {
+          "text": "Supabase Integration",
+          "url": "#supabase-integration"
+        },
+        {
+          "text": "Session Management",
+          "url": "#session-management"
+        },
+        {
+          "text": "Edge Cases & Error Handling",
+          "url": "#edge-cases--error-handling"
+        },
+        {
+          "text": "Code Reference",
+          "url": "#code-reference"
+        },
+        {
+          "text": "Authentication Flow Diagram",
+          "url": "#authentication-flow-diagram"
+        }
+      ],
+      "content": "# Unveil User Authentication & Authorization Flow\n\n> **Last Updated:** January 2025  \n> **Version:** Phase 4 Production Ready  \n> **Compatibility:** Supabase Auth v12.2.3+\n\nThis document provides a co",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Previous audit recommendation: Keep",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/audits/INVITABLE_GUESTS_INVESTIGATION_FINDINGS.md",
+      "title": "Invitable Guests Investigation Findings",
+      "lastModified": "2025-08-22",
+      "wordCount": 619,
+      "size": 4751,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Invitable Guests Investigation Findings\n\n## Executive Summary\n\n**Decision: REMOVED** - The `public.invitable_guests` view was safely removed as it was unused and posed security risks.\n\n## Investigat",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/audits/MAINTAINABILITY_AUDIT_REPORT.md",
+      "title": "Unveil App Maintainability Audit Report",
+      "lastModified": "2025-08-22",
+      "wordCount": 1084,
+      "size": 8347,
+      "links": 1,
+      "outboundLinks": [
+        {
+          "text": "Supabase Security Guide",
+          "url": "https://supabase.com/docs/guides/database/database-linter?lint=0011_function_search_path_mutable"
+        }
+      ],
+      "content": "# Unveil App Maintainability Audit Report\n\n## Executive Summary\n\nThis comprehensive audit identifies maintainability issues and proposes a structured cleanup plan for the Unveil app. The analysis cove",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/audits/MEMBERSHIP_CONSISTENCY_DISCOVERY_NOTES.md",
+      "title": "Event Membership Consistency - Discovery Notes",
+      "lastModified": "2025-08-22",
+      "wordCount": 355,
+      "size": 2644,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Event Membership Consistency - Discovery Notes\n\n## Discovery Summary\n\n### 1. Event List Data Source ✅\n\n- **Component**: `app/select-event/page.tsx` uses `useUserEvents()` hook\n- **Hook**: `hooks/eve",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/audits/architecture-review-guest-display-names.md",
+      "title": "🏗️ Comprehensive Architecture Review: Guest Display Names",
+      "lastModified": "2025-08-22",
+      "wordCount": 1257,
+      "size": 10086,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# 🏗️ Comprehensive Architecture Review: Guest Display Names\n\n## 📊 **Executive Summary**\n\n**Overall Assessment: 🟢 EXCELLENT** - The implementation demonstrates intelligent design patterns and sustai",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/audits/event-access-visibility.md",
+      "title": "Event Access & Visibility — End-to-End Audit Report",
+      "lastModified": "2025-08-22",
+      "wordCount": 2265,
+      "size": 19332,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Event Access & Visibility — End-to-End Audit Report\n\n**Date:** January 29, 2025  \n**Scope:** Complete audit of event access control, visibility, and membership consistency  \n**Status:** 🔴 **High-Ri",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/audits/event-creation-audit.md",
+      "title": "Event Creation System Audit",
+      "lastModified": "2025-08-22",
+      "wordCount": 1696,
+      "size": 14015,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Event Creation System Audit\n\n## Unveil App - Complete Analysis\n\n**Generated:** January 29, 2025  \n**Audit Scope:** Event creation flow from UI to database  \n**Status:** Production-ready with scalabi",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/audits/index.md",
+      "title": "Audits Documentation",
+      "lastModified": "2025-08-22",
+      "wordCount": 217,
+      "size": 1900,
+      "links": 8,
+      "outboundLinks": [
+        {
+          "text": "Event Access Visibility",
+          "url": "event-access-visibility.md"
+        },
+        {
+          "text": "Guest Messages Access Control Fix",
+          "url": "GUEST_MESSAGES_ACCESS_CONTROL_FIX.md"
+        },
+        {
+          "text": "Guest Messages Fix Implementation",
+          "url": "GUEST_MESSAGES_FIX_IMPLEMENTATION.md"
+        },
+        {
+          "text": "Architecture Review: Guest Display Names",
+          "url": "architecture-review-guest-display-names.md"
+        },
+        {
+          "text": "Event Creation Audit",
+          "url": "event-creation-audit.md"
+        },
+        {
+          "text": "Maintainability Audit Report",
+          "url": "MAINTAINABILITY_AUDIT_REPORT.md"
+        },
+        {
+          "text": "Invitable Guests Investigation",
+          "url": "INVITABLE_GUESTS_INVESTIGATION_FINDINGS.md"
+        },
+        {
+          "text": "Membership Consistency Discovery",
+          "url": "MEMBERSHIP_CONSISTENCY_DISCOVERY_NOTES.md"
+        }
+      ],
+      "content": "# Audits Documentation\n\nThis folder contains comprehensive audits, investigations, and analysis reports for the Unveil app.\n\n## 📋 Contents\n\n### Security & Access Control\n\n- **[Event Access Visibility",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/audits/repo-docs-and-migrations-audit.md",
+      "title": "Repository Documentation & SQL Migrations Audit Report",
+      "lastModified": "2025-08-22",
+      "wordCount": 1348,
+      "size": 10778,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Repository Documentation & SQL Migrations Audit Report\n\n**Date:** January 30, 2025  \n**Scope:** Complete audit of Markdown documentation and SQL migration files  \n**Status:** ✅ **COMPLETED**\n\n## 🎯 ",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/auth-otp-resend.md",
+      "title": "OTP Resend Functionality",
+      "lastModified": "2025-08-22",
+      "wordCount": 633,
+      "size": 4457,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# OTP Resend Functionality\n\n## Overview\n\nThis document describes the OTP resend functionality that allows users to request a new verification code during the authentication process.\n\n## Features\n\n- **",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/database/auto-link-audit-retention.md",
+      "title": "Auto-Link Audit Retention Strategy",
+      "lastModified": "2025-08-22",
+      "wordCount": 418,
+      "size": 3287,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Auto-Link Audit Retention Strategy\n\n## Current State (MVP)\n\n- **Table size**: 2 records\n- **Growth rate**: ~2 records/day (test environment)\n- **Projected size**: ~730 records/year at current rate\n-",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/database/auto-link-quick-reference.md",
+      "title": "Auto-Link User ID Quick Reference",
+      "lastModified": "2025-08-22",
+      "wordCount": 518,
+      "size": 4017,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Auto-Link User ID Quick Reference\n\n## 🚀 Quick Start\n\n### Test the System\n\n```sql\n-- Test phone normalization\nSELECT normalize_phone('8725292147'), normalize_phone('+18725292147');\n\n-- Test central ",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/database/auto-link-user-by-phone.md",
+      "title": "Auto-Link User ID by Phone System",
+      "lastModified": "2025-08-22",
+      "wordCount": 1030,
+      "size": 8019,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Auto-Link User ID by Phone System\n\n## Overview\n\nThe auto-link system automatically populates `user_id` fields across tables when there's an unambiguous match between a phone number and an active eve",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/database/orphaned-deliveries-fix-report.md",
+      "title": "Orphaned Deliveries Fix Report",
+      "lastModified": "2025-08-22",
+      "wordCount": 564,
+      "size": 4642,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Orphaned Deliveries Fix Report\n\n## Problem Summary\n\n**Issue**: Some `message_deliveries.message_id` values were NULL, creating orphaned delivery records that weren't linked to any message. This brok",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/database/user-id-auto-population.md",
+      "title": "User ID Auto-Population System",
+      "lastModified": "2025-08-22",
+      "wordCount": 771,
+      "size": 5914,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# User ID Auto-Population System\n\n## 📋 Overview\n\nThis system automatically populates the `user_id` field in the `event_guests` table when a guest's phone number matches an existing user in the `users",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/debugging/date-timezone-fix.md",
+      "title": "Event Date Timezone Fix - Off-by-One Issue Resolution",
+      "lastModified": "2025-08-22",
+      "wordCount": 793,
+      "size": 6306,
+      "links": 3,
+      "outboundLinks": [
+        {
+          "text": "MDN Date Constructor",
+          "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/Date"
+        },
+        {
+          "text": "JavaScript Date Timezone Gotchas",
+          "url": "https://maggiepint.com/2017/04/11/the-javascript-date-nightmare/"
+        },
+        {
+          "text": "ISO 8601 Date Format",
+          "url": "https://en.wikipedia.org/wiki/ISO_8601"
+        }
+      ],
+      "content": "# Event Date Timezone Fix - Off-by-One Issue Resolution\n\n## Issue Summary\n\nFixed critical off-by-one date rendering issue where event dates stored as `2025-08-31` would display as \"Saturday, August 30",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/debugging/sms-invitation-troubleshooting.md",
+      "title": "SMS Invitation Troubleshooting Guide",
+      "lastModified": "2025-08-22",
+      "wordCount": 957,
+      "size": 6977,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# SMS Invitation Troubleshooting Guide\n\n**Last Updated:** January 30, 2025  \n**For:** Unveil SMS Invitation System\n\n## 🚨 Quick Diagnosis\n\nIf guests aren't receiving SMS invitations after import, run ",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/deployment/MESSAGING_PRODUCTION_GUIDE.md",
+      "title": "🚀 **Messaging Pipeline Production Deployment Guide**",
+      "lastModified": "2025-08-22",
+      "wordCount": 943,
+      "size": 7516,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# 🚀 **Messaging Pipeline Production Deployment Guide**\n\nThis guide ensures the complete messaging delivery pipeline is properly configured for production deployment.\n\n## ✅ **Pre-Deployment Checklist*",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/deployment/deployment-checklist.md",
+      "title": "Guest Display Name Deployment Checklist",
+      "lastModified": "2025-08-22",
+      "wordCount": 656,
+      "size": 4830,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Guest Display Name Deployment Checklist\n\n## ✅ **Pre-Deployment Verification**\n\n### **Database Status:**\n\n- ✅ Migration `add_guest_display_name_function` applied successfully\n- ✅ Migration `add_displ",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/deployment/guest-invite-deep-link-prerequisites.md",
+      "title": "Guest Invite Deep Link - Production Fix",
+      "lastModified": "2025-08-22",
+      "wordCount": 1190,
+      "size": 9393,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Guest Invite Deep Link - Production Fix\n\n## Problem Summary\n\nGuest auto-join was failing in production due to an RLS (Row Level Security) policy issue. The `event_guests_self_access` policy required",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/dev-overlay-audit.md",
+      "title": "Dev Overlay Audit Report",
+      "lastModified": "2025-08-22",
+      "wordCount": 634,
+      "size": 5710,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Dev Overlay Audit Report\n\n## Executive Summary\n\nThis audit identified **3 debug widgets** that can appear in the bottom-right corner of the app during development. Two are actively used, one is defi",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/dev-tools.md",
+      "title": "Development Tools Guide",
+      "lastModified": "2025-08-22",
+      "wordCount": 610,
+      "size": 4411,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Development Tools Guide\n\n## Overview\n\nDevelopment debug tools are **hidden by default** to reduce visual noise. This guide explains how to enable them and when to use each tool.\n\n---\n\n## Quick Start",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/development/AUTH_FLOW_REPORT.md",
+      "title": "Phone Authentication Flow - Technical Report",
+      "lastModified": "2025-08-22",
+      "wordCount": 1739,
+      "size": 13745,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Phone Authentication Flow - Technical Report\n\n## Executive Summary\n\nThe Unveil app implements a clean, production-ready phone-based OTP authentication system using Supabase Auth with Twilio SMS inte",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Active documentation directory",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/development/CLEANUP_DEMO.md",
+      "title": "Maintainability Cleanup Demo",
+      "lastModified": "2025-08-22",
+      "wordCount": 374,
+      "size": 2754,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Maintainability Cleanup Demo\n\n## What Was Done\n\nThis demonstrates the first phase of the maintainability cleanup plan with minimal risk changes:\n\n### 1. Comprehensive Audit Completed ✅\n\n- **Dependen",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Active documentation directory",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/development/CONSOLE_OPTIMIZATION.md",
+      "title": "Console Output Optimization",
+      "lastModified": "2025-08-22",
+      "wordCount": 250,
+      "size": 1786,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Console Output Optimization\n\n## Overview\n\nTo provide a cleaner development experience, we've optimized console output to reduce noise while maintaining important debugging capabilities.\n\n## Default ",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Active documentation directory",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/development/DEVELOPMENT_GUIDE.md",
+      "title": "Unveil - Development Workflow & Team Guidelines",
+      "lastModified": "2025-08-22",
+      "wordCount": 757,
+      "size": 5601,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Unveil - Development Workflow & Team Guidelines\n\n## 1. Project Overview\n\nUnveil is a modern, mobile-first wedding communication and memory platform built as a production-grade MVP. This document cov",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Previous audit recommendation: Keep",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/development/index.md",
+      "title": "Development Documentation",
+      "lastModified": "2025-08-22",
+      "wordCount": 112,
+      "size": 1007,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Development Documentation\n\nDeveloper guides, deployment procedures, and implementation details for the Unveil app.\n\n## 👨‍💻 Development Files\n\n### `DEVELOPMENT_GUIDE.md`\n\n**Comprehensive developer ",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Active documentation directory",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/development/mobile-qa-checklist.md",
+      "title": "Mobile QA Checklist",
+      "lastModified": "2025-08-22",
+      "wordCount": 851,
+      "size": 5185,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Mobile QA Checklist\n\n## Device Testing Matrix\n\n### iOS Devices\n\n- [ ] iPhone SE (375×667) - Smallest modern iPhone\n- [ ] iPhone 12/13/14 (390×844) - Standard modern iPhone\n- [ ] iPhone 14 Pro (393×8",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Active documentation directory",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/development/ui-change-verification-process.md",
+      "title": "UI Change Verification Process",
+      "lastModified": "2025-08-22",
+      "wordCount": 939,
+      "size": 6414,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# UI Change Verification Process\n\n## Overview\n\nThis document outlines the process to ensure that UI changes are properly reflected in the application and prevent situations where we make changes to co",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Active documentation directory",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/event-creation-idempotency.md",
+      "title": "Event Creation Idempotency",
+      "lastModified": "2025-08-22",
+      "wordCount": 952,
+      "size": 7661,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Event Creation Idempotency\n\n**Last Updated:** January 30, 2025  \n**Migration:** `20250130000000_add_event_creation_idempotency.sql`\n\n## 📋 Overview\n\nThis document describes the idempotency mechanism",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/event-messages-discovery.md",
+      "title": "Event Messages — End-to-End Discovery",
+      "lastModified": "2025-08-22",
+      "wordCount": 1645,
+      "size": 16523,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Event Messages — End-to-End Discovery\n\n**Date:** January 29, 2025  \n**Purpose:** Single-source-of-truth explanation of Event Messages module flow, visibility, and troubleshooting  \n**Status:** ✅ DIS",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/event-messages-healthcheck.md",
+      "title": "Event Messages — Full Path Health Check",
+      "lastModified": "2025-08-22",
+      "wordCount": 1959,
+      "size": 17745,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Event Messages — Full Path Health Check\n\n**Date:** January 29, 2025  \n**Purpose:** End-to-end audit of Event Messages system reliability and visibility issues  \n**Status:** ✅ HEALTH CHECK COMPLETE  ",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/features/rsvp-lite-audit-matrix.md",
+      "title": "RSVP-Lite Audit Matrix",
+      "lastModified": "2025-08-22",
+      "wordCount": 802,
+      "size": 6541,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# RSVP-Lite Audit Matrix\n\n**📅 Date**: January 2025  \n**🎯 Goal**: Identify and fix remaining legacy RSVP UI when RSVP-Lite is enabled  \n**📊 Status**: 🔍 Discovery Complete - Issues Identified\n\n---\n\n",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/guest-management/guest-creation-audit.md",
+      "title": "Guest Creation Process Audit",
+      "lastModified": "2025-08-22",
+      "wordCount": 1299,
+      "size": 10272,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Guest Creation Process Audit\n\n**Generated:** January 2025  \n**Scope:** Complete end-to-end guest creation flow (manual forms + CSV import)  \n**Target Module:** Guest Management\n\n---\n\n## 1. 📥 User I",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/guest-management/guest-event-page-redesign.md",
+      "title": "Guest Event Page Redesign Project Plan",
+      "lastModified": "2025-08-22",
+      "wordCount": 3061,
+      "size": 24866,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Guest Event Page Redesign Project Plan\n\n**📅 Implementation Started:** December 20, 2024  \n**📋 Status:** ALL 8 PHASES COMPLETED ✅🎉  \n**🎯 PROJECT COMPLETED:** Guest Event Page redesign fully imple",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/guest-management/guest-management-audit.md",
+      "title": "Guest Management Module Audit Report",
+      "lastModified": "2025-08-22",
+      "wordCount": 2351,
+      "size": 18953,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Guest Management Module Audit Report\n\n**Project:** Unveil Event Management Platform  \n**Module:** Guest Management  \n**Date:** January 29, 2025  \n**Scope:** UI/UX, Architecture, Database Integration",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/guest-management/guest-management-phase2-plan.md",
+      "title": "Guest Management Phase 2 - Performance & UX Optimizations",
+      "lastModified": "2025-08-22",
+      "wordCount": 1914,
+      "size": 16349,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Guest Management Phase 2 - Performance & UX Optimizations\n\n**Project:** Unveil Event Management Platform  \n**Phase:** 2 - Performance & UX  \n**Status:** 🚀 **IN PROGRESS**  \n**Start Date:** January ",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/guest-management/guest-management-phase3-plan.md",
+      "title": "Guest Management Phase 3: MVP Simplification Plan",
+      "lastModified": "2025-08-22",
+      "wordCount": 945,
+      "size": 7497,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Guest Management Phase 3: MVP Simplification Plan\n\n**Based on:** `guest-management-ux-audit.md` findings  \n**Goal:** 50% complexity reduction while maintaining core functionality  \n**Target:** MVP-r",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/guest-management/guest-management-uat-report.md",
+      "title": "Guest Management UAT Report",
+      "lastModified": "2025-08-22",
+      "wordCount": 2653,
+      "size": 19920,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Guest Management UAT Report\n\n**Test Date:** January 2025  \n**Component:** Simplified Guest Management (Phase 3 MVP)  \n**Tester:** AI Code Analysis + Manual Testing Framework  \n**Environment:** Devel",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/guest-management/guest-management-ux-audit.md",
+      "title": "Guest Management UX & UI Audit Report",
+      "lastModified": "2025-08-22",
+      "wordCount": 1450,
+      "size": 11544,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Guest Management UX & UI Audit Report\n\n**Target:** Guest Management Interface (`/host/events/[eventId]/guests/page.tsx`)  \n**Audience:** Product/Engineering team focused on MVP clarity and usability",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/guest-management/guest-onboarding-flow-audit.md",
+      "title": "Guest Onboarding Flow Audit",
+      "lastModified": "2025-08-22",
+      "wordCount": 1565,
+      "size": 12385,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Guest Onboarding Flow Audit\n\n> **Audit Date:** January 2025  \n> **Focus:** Guest addition, user creation, SMS automation, and identity linking  \n> **Status:** Production-ready with identified gaps\n\n",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/guest-management/index.md",
+      "title": "Guest Management Documentation",
+      "lastModified": "2025-08-22",
+      "wordCount": 330,
+      "size": 2821,
+      "links": 12,
+      "outboundLinks": [
+        {
+          "text": "Guest Management Audit",
+          "url": "guest-management-audit.md"
+        },
+        {
+          "text": "Guest Management UX Audit",
+          "url": "guest-management-ux-audit.md"
+        },
+        {
+          "text": "Guest Creation Audit",
+          "url": "guest-creation-audit.md"
+        },
+        {
+          "text": "Guest Management Phase 1 Completion",
+          "url": "guest-management-phase1-completion.md"
+        },
+        {
+          "text": "Guest Management Phase 2 Plan",
+          "url": "guest-management-phase2-plan.md"
+        },
+        {
+          "text": "Guest Management Phase 2 Completion",
+          "url": "guest-management-phase2-completion.md"
+        },
+        {
+          "text": "Guest Management Phase 3 Plan",
+          "url": "guest-management-phase3-plan.md"
+        },
+        {
+          "text": "Guest Management Phase 3 Completion",
+          "url": "guest-management-phase3-completion.md"
+        },
+        {
+          "text": "Guest Onboarding Flow Audit",
+          "url": "guest-onboarding-flow-audit.md"
+        },
+        {
+          "text": "Guest Event Page Redesign",
+          "url": "guest-event-page-redesign.md"
+        },
+        {
+          "text": "Guest Management UAT Report",
+          "url": "guest-management-uat-report.md"
+        },
+        {
+          "text": "Guest Management Improvement Plan",
+          "url": "guest-management-improvement-plan.md"
+        }
+      ],
+      "content": "# Guest Management Documentation\n\nThis folder contains comprehensive documentation for the guest management system, including audits, plans, and completion reports across multiple development phases.\n",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/host/host-editable-event-details.md",
+      "title": "Host-Editable Event Details Specification",
+      "lastModified": "2025-08-22",
+      "wordCount": 1883,
+      "size": 14852,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Host-Editable Event Details Specification\n\n## Overview\n\nThis document identifies every guest-facing field/component that should be editable by the host, maps them to database fields, and provides a ",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/message-delivery-user-id-linkage.md",
+      "title": "Message Delivery User ID Linkage System",
+      "lastModified": "2025-08-22",
+      "wordCount": 1046,
+      "size": 8510,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Message Delivery User ID Linkage System\n\n## Overview\n\nThis document describes the comprehensive system for ensuring `message_deliveries.user_id` is consistently populated when resolvable, implemente",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/messages-readmodel-feasibility.md",
+      "title": "Messages Read-Model Shift — Feasibility Report",
+      "lastModified": "2025-08-22",
+      "wordCount": 1778,
+      "size": 15047,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Messages Read-Model Shift — Feasibility Report\n\n**Date:** January 29, 2025  \n**Status:** ✅ FEASIBLE WITH SAFEGUARDS  \n**Risk Level:** LOW (with proposed phasing)\n\n## Executive Summary\n\nThe shift fro",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/messages-readmodel-v2/completion-report.md",
+      "title": "Messages Read-Model V2 — Completion Report",
+      "lastModified": "2025-08-22",
+      "wordCount": 867,
+      "size": 6627,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Messages Read-Model V2 — Completion Report\n\n**Date:** January 29, 2025  \n**Status:** ✅ **DEPLOYMENT COMPLETE**  \n**Result:** Successfully migrated to union read model with zero SMS disruption\n\n## 🎉",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/messages-readmodel-v2/final-hardening-changelog.md",
+      "title": "Messages Read-Model V2 — Final Hardening Changelog",
+      "lastModified": "2025-08-22",
+      "wordCount": 1078,
+      "size": 7994,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Messages Read-Model V2 — Final Hardening Changelog\n\n**Date:** January 29, 2025  \n**Scope:** Production hardening for pagination, ordering, UI copy, JWT rollover, and telemetry privacy\n\n## 🎯 Impleme",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/messages-readmodel-v2/final-hardening-validation.md",
+      "title": "Messages Read-Model V2 — Final Hardening Validation",
+      "lastModified": "2025-08-22",
+      "wordCount": 700,
+      "size": 5288,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Messages Read-Model V2 — Final Hardening Validation\n\n**Date:** January 29, 2025  \n**Status:** ✅ ALL TASKS COMPLETED  \n**Risk Level:** Low (incremental improvements with comprehensive testing)\n\n## 🎯",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/messages-readmodel-v2/shadow-report.md",
+      "title": "Shadow Verification Report - Messages Read-Model V2",
+      "lastModified": "2025-08-22",
+      "wordCount": 803,
+      "size": 6373,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Shadow Verification Report - Messages Read-Model V2\n\n**Date:** January 29, 2025  \n**Test Event:** David Banner's Wedding (`41191573-7726-4b98-a7c9-a27d139af93a`)  \n**Status:** ✅ **READY FOR ATOMIC S",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/messages-readmodel-v2/telemetry-pii-check.md",
+      "title": "Telemetry PII Privacy Check",
+      "lastModified": "2025-08-22",
+      "wordCount": 602,
+      "size": 4307,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Telemetry PII Privacy Check\n\n**Date:** January 29, 2025  \n**Scope:** Messages Read-Model V2 final hardening  \n**Status:** ✅ PASSED - No PII exposure detected\n\n## 🔒 Privacy Audit Results\n\n### Teleme",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/messages-visibility-audit.md",
+      "title": "Guest Event Messages — Production Visibility Audit",
+      "lastModified": "2025-08-22",
+      "wordCount": 1459,
+      "size": 11316,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Guest Event Messages — Production Visibility Audit\n\n**Date**: 2025-01-30  \n**Issue**: Guests Nick Molcsan, Connor Smith, Tom Gazzard cannot see messages in event `24caa3a8-020e-4a80-9899-35ff2797dcc",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/messages-visibility-fix-plan.md",
+      "title": "Guest Event Messages - Fix Plan",
+      "lastModified": "2025-08-22",
+      "wordCount": 320,
+      "size": 2193,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Guest Event Messages - Fix Plan\n\n## Root Cause Analysis\n\n**Primary Issue**: Client-side query filter bypasses RLS, blocking access to deliveries with NULL `user_id`\n\n**Specific Problem**:\n\n- `useGue",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/modules/event-messages-guest.md",
+      "title": "Guest View Event Messages Module",
+      "lastModified": "2025-08-22",
+      "wordCount": 1785,
+      "size": 14624,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Guest View Event Messages Module\n\n## Summary\n\nThe Guest View Event Messages module provides a read-only message feed for guests to view host announcements and send replies. The module consists of a ",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/performance/documentation/LAYOUT_ANALYSIS.md",
+      "title": "Layout Performance Analysis - Unveil App",
+      "lastModified": "2025-08-22",
+      "wordCount": 742,
+      "size": 6328,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Layout Performance Analysis - Unveil App\n\n**Date:** February 1, 2025  \n**Focus:** Shared layout optimization and provider efficiency\n\n## 📊 Current Layout Structure Analysis\n\n### ✅ **Well-Optimized ",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/performance/documentation/PERFORMANCE_AUDIT_REPORT.md",
+      "title": "Performance Audit Report - Unveil App",
+      "lastModified": "2025-08-22",
+      "wordCount": 1760,
+      "size": 13613,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Performance Audit Report - Unveil App\n\n**Date:** February 1, 2025  \n**Auditor:** AI Assistant  \n**App Version:** 0.1.0  \n**Next.js:** 15.3.4\n\n## 🎯 Executive Summary\n\nThis comprehensive performance ",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/performance/documentation/index.md",
+      "title": "Performance Documentation Index",
+      "lastModified": "2025-08-22",
+      "wordCount": 441,
+      "size": 3565,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Performance Documentation Index\n\nThis directory contains comprehensive performance documentation for the Unveil app.\n\n## 📚 Documentation Files\n\n### `README.md` - Main Performance Guide\n\n**Original ",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/performance/scripts/index.md",
+      "title": "Performance Scripts",
+      "lastModified": "2025-08-22",
+      "wordCount": 132,
+      "size": 1001,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Performance Scripts\n\nThis directory contains automated performance validation and monitoring scripts.\n\n## Available Scripts\n\n### `performance-check.js`\n\n**Purpose:** Automated bundle size validation",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/phases/index.md",
+      "title": "Development Phases Documentation",
+      "lastModified": "2025-08-22",
+      "wordCount": 261,
+      "size": 2032,
+      "links": 2,
+      "outboundLinks": [
+        {
+          "text": "Phase 1 Summary",
+          "url": "PHASE_1_SUMMARY.md"
+        },
+        {
+          "text": "Phase 2 Summary",
+          "url": "PHASE_2_SUMMARY.md"
+        }
+      ],
+      "content": "# Development Phases Documentation\n\nThis folder contains high-level summaries and reports for major development phases of the Unveil app.\n\n## 📋 Contents\n\n### Phase Summaries\n\n- **[Phase 1 Summary](PH",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/project/MVP_FEATURES.md",
+      "title": "📋 Unveil MVP Features",
+      "lastModified": "2025-08-22",
+      "wordCount": 787,
+      "size": 5474,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# 📋 Unveil MVP Features\n\n> **Current MVP Scope** — Production-ready features available in v1.0.0\n\n## 🎯 MVP Definition\n\nThe Unveil MVP delivers core wedding event management functionality for both ho",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Previous audit recommendation: Keep",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/project/RELEASE_CHECKLIST.md",
+      "title": "📋 UNVEIL MVP - PRODUCTION RELEASE CHECKLIST",
+      "lastModified": "2025-08-22",
+      "wordCount": 859,
+      "size": 5424,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# 📋 UNVEIL MVP - PRODUCTION RELEASE CHECKLIST\n\n## 🚀 PRE-DEPLOYMENT CHECKLIST\n\n### **Code Quality & Build**\n\n- [x] ✅ Clean TypeScript build (0 errors)\n- [x] ✅ ESLint passing (warnings acceptable)\n- [",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Previous audit recommendation: Keep",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/project/SYSTEM_OVERVIEW.md",
+      "title": "🏗️ Unveil System Overview",
+      "lastModified": "2025-08-22",
+      "wordCount": 630,
+      "size": 4729,
+      "links": 1,
+      "outboundLinks": [
+        {
+          "text": "Architecture Guide",
+          "url": "./ARCHITECTURE.md"
+        }
+      ],
+      "content": "# 🏗️ Unveil System Overview\n\n> **Wedding Event Management Platform** — Modern, mobile-first application for hosts and guests\n\n## 📋 What is Unveil?\n\nUnveil is a production-ready wedding event managem",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Previous audit recommendation: Keep",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/project/index.md",
+      "title": "Project Documentation",
+      "lastModified": "2025-08-22",
+      "wordCount": 122,
+      "size": 1099,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Project Documentation\n\nHigh-level project documentation and planning materials for the Unveil wedding app.\n\n## 📋 Project Files\n\n### `MVP_FEATURES.md`\n\n**Core feature specifications and requirements",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Active documentation directory",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/project/message-center-mvp.md",
+      "title": "Message Center MVP - Simplified Host Messaging",
+      "lastModified": "2025-08-22",
+      "wordCount": 1185,
+      "size": 8855,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Message Center MVP - Simplified Host Messaging\n\n## Overview\n\nThe Message Center MVP (`MessageCenterMVP.tsx`) is a streamlined, mobile-first messaging interface designed to reduce cognitive load and ",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Active documentation directory",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/project/messaging-module-mvp.md",
+      "title": "Host Messaging Module MVP - Enhanced Segmentation System",
+      "lastModified": "2025-08-22",
+      "wordCount": 5711,
+      "size": 44455,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Host Messaging Module MVP - Enhanced Segmentation System\n\n**📅 Timeline**: 2-3 weeks development  \n**🎯 Goal**: Enhanced host-side messaging with advanced recipient filtering and preview capabilitie",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Active documentation directory",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/project/messaging-mvp-status.md",
+      "title": "Messaging MVP Cleanup Status Report",
+      "lastModified": "2025-08-22",
+      "wordCount": 648,
+      "size": 5325,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Messaging MVP Cleanup Status Report\n\n_Generated: 2025-01-16_\n\n## ✅ Fixed Error Details\n\n### Critical Build-Blocking Error Resolved\n\n- **Issue**: Duplicate `MessageAnalytics` type definition in `lib/",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Active documentation directory",
+        "priority": "LOW"
+      }
+    },
+    {
+      "path": "docs/ux/host-dashboard-analysis.md",
+      "title": "Host Dashboard UX/UI Analysis Report",
+      "lastModified": "2025-08-22",
+      "wordCount": 1967,
+      "size": 16826,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Host Dashboard UX/UI Analysis Report\n\n_Generated: 2025-01-02_\n\n## Executive Summary\n\nThe Host Dashboard (`/host/events/[eventId]/dashboard`) serves as the primary control center for wedding hosts to",
+      "classification": {
+        "action": "KEEP",
+        "reason": "Default - needs manual review",
+        "priority": "LOW"
+      }
+    }
+  ],
+  "PROTECTED": [
+    {
+      "path": "docs/README.md",
+      "title": "📚 Unveil Documentation Center",
+      "lastModified": "2025-08-22",
+      "wordCount": 1167,
+      "size": 12937,
+      "links": 41,
+      "outboundLinks": [
+        {
+          "text": "`MVP_FEATURES.md`",
+          "url": "./project/MVP_FEATURES.md"
+        },
+        {
+          "text": "`SYSTEM_OVERVIEW.md`",
+          "url": "./project/SYSTEM_OVERVIEW.md"
+        },
+        {
+          "text": "`REFACTORING_SUMMARY.md`",
+          "url": "./project/REFACTORING_SUMMARY.md"
+        },
+        {
+          "text": "`RELEASE_CHECKLIST.md`",
+          "url": "./project/RELEASE_CHECKLIST.md"
+        },
+        {
+          "text": "View Project Documentation Index",
+          "url": "./project/index.md"
+        },
+        {
+          "text": "`ARCHITECTURE.md`",
+          "url": "./architecture/ARCHITECTURE.md"
+        },
+        {
+          "text": "`DESIGN_SYSTEM.md`",
+          "url": "./architecture/DESIGN_SYSTEM.md"
+        },
+        {
+          "text": "`SECURITY.md`",
+          "url": "./architecture/SECURITY.md"
+        },
+        {
+          "text": "View Architecture Documentation Index",
+          "url": "./architecture/index.md"
+        },
+        {
+          "text": "`DEVELOPMENT_GUIDE.md`",
+          "url": "./development/DEVELOPMENT_GUIDE.md"
+        },
+        {
+          "text": "`DEPLOYMENT.md`",
+          "url": "./development/DEPLOYMENT.md"
+        },
+        {
+          "text": "`AUTH_FLOW_REPORT.md`",
+          "url": "./development/AUTH_FLOW_REPORT.md"
+        },
+        {
+          "text": "View Development Documentation Index",
+          "url": "./development/index.md"
+        },
+        {
+          "text": "`MAINTAINABILITY_AUDIT_REPORT.md`",
+          "url": "./audits/MAINTAINABILITY_AUDIT_REPORT.md"
+        },
+        {
+          "text": "`event-access-visibility.md`",
+          "url": "./audits/event-access-visibility.md"
+        },
+        {
+          "text": "`GUEST_MESSAGES_ACCESS_CONTROL_FIX.md`",
+          "url": "./audits/GUEST_MESSAGES_ACCESS_CONTROL_FIX.md"
+        },
+        {
+          "text": "View Audits Documentation Index",
+          "url": "./audits/index.md"
+        },
+        {
+          "text": "`PHASE_1_HARDENING_IMPLEMENTATION.md`",
+          "url": "./implementations/PHASE_1_HARDENING_IMPLEMENTATION.md"
+        },
+        {
+          "text": "`RSVP_LITE_IMPLEMENTATION_COMPLETE.md`",
+          "url": "./implementations/RSVP_LITE_IMPLEMENTATION_COMPLETE.md"
+        },
+        {
+          "text": "`ONE_TAP_INVITE_IMPLEMENTATION.md`",
+          "url": "./implementations/ONE_TAP_INVITE_IMPLEMENTATION.md"
+        },
+        {
+          "text": "View Implementations Documentation Index",
+          "url": "./implementations/index.md"
+        },
+        {
+          "text": "`guest-management-audit.md`",
+          "url": "./guest-management/guest-management-audit.md"
+        },
+        {
+          "text": "`guest-management-ux-audit.md`",
+          "url": "./guest-management/guest-management-ux-audit.md"
+        },
+        {
+          "text": "`guest-management-phase3-completion.md`",
+          "url": "./guest-management/guest-management-phase3-completion.md"
+        },
+        {
+          "text": "View Guest Management Documentation Index",
+          "url": "./guest-management/index.md"
+        },
+        {
+          "text": "`PHASE_1_SUMMARY.md`",
+          "url": "./phases/PHASE_1_SUMMARY.md"
+        },
+        {
+          "text": "`PHASE_2_SUMMARY.md`",
+          "url": "./phases/PHASE_2_SUMMARY.md"
+        },
+        {
+          "text": "View Phases Documentation Index",
+          "url": "./phases/index.md"
+        },
+        {
+          "text": "`../performance/README.md`",
+          "url": "../performance/README.md"
+        },
+        {
+          "text": "`../performance/documentation/`",
+          "url": "../performance/documentation/"
+        },
+        {
+          "text": "`../performance/monitoring/`",
+          "url": "../performance/monitoring/"
+        },
+        {
+          "text": "`../performance/frameworks/`",
+          "url": "../performance/frameworks/"
+        },
+        {
+          "text": "View Performance Documentation Center",
+          "url": "../performance/README.md"
+        },
+        {
+          "text": "View Archive Index",
+          "url": "./archive/index.md"
+        },
+        {
+          "text": "Next.js Documentation",
+          "url": "https://nextjs.org/docs"
+        },
+        {
+          "text": "Supabase Documentation",
+          "url": "https://supabase.com/docs"
+        },
+        {
+          "text": "TypeScript Handbook",
+          "url": "https://www.typescriptlang.org/docs/"
+        },
+        {
+          "text": "Vercel Deployment Guide",
+          "url": "https://vercel.com/docs"
+        },
+        {
+          "text": "Supabase Project Dashboard",
+          "url": "https://supabase.com/dashboard"
+        },
+        {
+          "text": "React Query Documentation",
+          "url": "https://tanstack.com/query/latest"
+        },
+        {
+          "text": "Tailwind CSS Documentation",
+          "url": "https://tailwindcss.com/docs"
+        }
+      ],
+      "content": "# 📚 Unveil Documentation Center\n\n**Comprehensive documentation for the Unveil wedding planning application.**\n\nWelcome to the centralized documentation hub for Unveil, a modern wedding planning app b",
+      "classification": {
+        "action": "PROTECTED",
+        "reason": "Core documentation file",
+        "priority": "CRITICAL"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/00-OVERVIEW/README.md",
+      "title": "📚 Unveil Product & Engineering Documentation",
+      "lastModified": "2025-08-22",
+      "wordCount": 883,
+      "size": 8800,
+      "links": 47,
+      "outboundLinks": [
+        {
+          "text": "Strategic Overview",
+          "url": "./STRATEGIC_OVERVIEW.md"
+        },
+        {
+          "text": "Architecture Guide",
+          "url": "./docs-architecture-guide.md"
+        },
+        {
+          "text": "Developer Setup",
+          "url": "./docs-developer-guide.md"
+        },
+        {
+          "text": "Strategic Overview",
+          "url": "./STRATEGIC_OVERVIEW.md"
+        },
+        {
+          "text": "Architecture Guide",
+          "url": "./docs-architecture-guide.md"
+        },
+        {
+          "text": "Current Sprint",
+          "url": "./plans-Phase-7-Final-Integration-Plan.md"
+        },
+        {
+          "text": "Brand Guidelines",
+          "url": "./reference-brand.md"
+        },
+        {
+          "text": "Product Roadmap",
+          "url": "./reference-MVP-ProjectPlan.md"
+        },
+        {
+          "text": "Developer Setup",
+          "url": "./docs-developer-guide.md"
+        },
+        {
+          "text": "Development Rules",
+          "url": "./docs-rules.md"
+        },
+        {
+          "text": "API Reference",
+          "url": "./docs-messaging-system-guide.md"
+        },
+        {
+          "text": "Market Analysis",
+          "url": "./reference-risk-matrix.md"
+        },
+        {
+          "text": "Testing Infrastructure",
+          "url": "./docs-testing-infrastructure.md"
+        },
+        {
+          "text": "Feature Specs",
+          "url": "./plans-messaging-project-plan.md"
+        },
+        {
+          "text": "Quick Commands",
+          "url": "./reference-quick-reference.md"
+        },
+        {
+          "text": "Strategic Overview",
+          "url": "./STRATEGIC_OVERVIEW.md"
+        },
+        {
+          "text": "Architecture Guide",
+          "url": "./docs-architecture-guide.md"
+        },
+        {
+          "text": "Developer Guide",
+          "url": "./docs-developer-guide.md"
+        },
+        {
+          "text": "Design System",
+          "url": "./docs-unveil-design-system.md"
+        },
+        {
+          "text": "System Guide",
+          "url": "./docs-messaging-system-guide.md"
+        },
+        {
+          "text": "Troubleshooting",
+          "url": "./docs-troubleshooting-messaging.md"
+        },
+        {
+          "text": "Architecture Guide",
+          "url": "./docs-architecture-guide.md"
+        },
+        {
+          "text": "Security Notes",
+          "url": "./docs-security-notes.md"
+        },
+        {
+          "text": "Architecture Guide",
+          "url": "./docs-architecture-guide.md"
+        },
+        {
+          "text": "Performance Guide",
+          "url": "./docs-testing-infrastructure.md"
+        },
+        {
+          "text": "Feature Spec",
+          "url": "./docs-HOST_DASHBOARD.md"
+        },
+        {
+          "text": "Refactor Plan",
+          "url": "./plans-host-dashboard-refactor.md"
+        },
+        {
+          "text": "MCP Supabase Setup",
+          "url": "./docs-mcp-supabase-setup.md"
+        },
+        {
+          "text": "Schema Binding",
+          "url": "./docs-mcp-schema-binding.md"
+        },
+        {
+          "text": "Test User Management",
+          "url": "./docs-test-user-management.md"
+        },
+        {
+          "text": "Component Library",
+          "url": "./docs-component-library-implementation.md"
+        },
+        {
+          "text": "Strategic Overview",
+          "url": "./STRATEGIC_OVERVIEW.md"
+        },
+        {
+          "text": "MVP Project Plan",
+          "url": "./reference-MVP-ProjectPlan.md"
+        },
+        {
+          "text": "Phase 7 Integration Plan",
+          "url": "./plans-Phase-7-Final-Integration-Plan.md"
+        },
+        {
+          "text": "Brand & Voice Guidelines",
+          "url": "./reference-brand.md"
+        },
+        {
+          "text": "Messaging Project Plan",
+          "url": "./plans-messaging-project-plan.md"
+        },
+        {
+          "text": "UI Standardization",
+          "url": "./plans-unveil-ui-standardization.md"
+        },
+        {
+          "text": "Navigation System",
+          "url": "./docs-NAVIGATION_SYSTEM.md"
+        },
+        {
+          "text": "Performance Optimization",
+          "url": "./docs-testing-infrastructure.md"
+        },
+        {
+          "text": "Strategic Overview",
+          "url": "./STRATEGIC_OVERVIEW.md"
+        },
+        {
+          "text": "Technical Differentiation",
+          "url": "./docs-architecture-guide.md"
+        },
+        {
+          "text": "Security & Compliance",
+          "url": "./docs-security-notes.md"
+        },
+        {
+          "text": "Performance Metrics",
+          "url": "./docs-testing-infrastructure.md"
+        },
+        {
+          "text": "API Documentation",
+          "url": "./docs-messaging-system-guide.md"
+        },
+        {
+          "text": "SMS Setup Guide",
+          "url": "./docs-SMS_SETUP_GUIDE.md"
+        },
+        {
+          "text": "Storage Configuration",
+          "url": "./docs-storage-bucket-setup-guide.md"
+        },
+        {
+          "text": "Production Environment",
+          "url": "./docs-production-environment-setup.md"
+        }
+      ],
+      "content": "# 📚 Unveil Product & Engineering Documentation\n\n> **World-Class Product Development**: Comprehensive documentation demonstrating enterprise-grade product management and software engineering practices",
+      "classification": {
+        "action": "PROTECTED",
+        "reason": "Core documentation file",
+        "priority": "CRITICAL"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/05-ARCHIVE/archive-README.md",
+      "title": "Documentation Archive",
+      "lastModified": "2025-08-22",
+      "wordCount": 145,
+      "size": 1343,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Documentation Archive\n\nThis folder contains historical documentation from completed development phases of the Unveil project.\n\n## Contents\n\n- **COMPLETION_SUMMARY.md** - Final summary of major proje",
+      "classification": {
+        "action": "PROTECTED",
+        "reason": "Core documentation file",
+        "priority": "CRITICAL"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/05-ARCHIVE/docs-README.md",
+      "title": "📚 Unveil Documentation Index",
+      "lastModified": "2025-08-22",
+      "wordCount": 663,
+      "size": 7882,
+      "links": 33,
+      "outboundLinks": [
+        {
+          "text": "`architecture-guide.md`",
+          "url": "./docs-architecture-guide.md"
+        },
+        {
+          "text": "`developer-guide.md`",
+          "url": "./docs-developer-guide.md"
+        },
+        {
+          "text": "`testing-infrastructure.md`",
+          "url": "./docs-testing-infrastructure.md"
+        },
+        {
+          "text": "`unveil-design-system.md`",
+          "url": "./docs-unveil-design-system.md"
+        },
+        {
+          "text": "`component-library-implementation.md`",
+          "url": "./docs-component-library-implementation.md"
+        },
+        {
+          "text": "`../reference/style-guide.md`",
+          "url": "./reference-style-guide.md"
+        },
+        {
+          "text": "`mcp-supabase-setup.md`",
+          "url": "./docs-mcp-supabase-setup.md"
+        },
+        {
+          "text": "`mcp-schema-binding.md`",
+          "url": "./docs-mcp-schema-binding.md"
+        },
+        {
+          "text": "`SMS_SETUP_GUIDE.md`",
+          "url": "./docs-SMS_SETUP_GUIDE.md"
+        },
+        {
+          "text": "`test-user-management.md`",
+          "url": "./docs-test-user-management.md"
+        },
+        {
+          "text": "`NAVIGATION_SYSTEM.md`",
+          "url": "./docs-NAVIGATION_SYSTEM.md"
+        },
+        {
+          "text": "`rules.md`",
+          "url": "./docs-rules.md"
+        },
+        {
+          "text": "`../project-plans/unveil-ui-standardization.md`",
+          "url": "./plans-unveil-ui-standardization.md"
+        },
+        {
+          "text": "`../reference/brand.md`",
+          "url": "./reference-brand.md"
+        },
+        {
+          "text": "`../reference/voice.md`",
+          "url": "./reference-voice.md"
+        },
+        {
+          "text": "`../reference/quick-reference.md`",
+          "url": "./reference-quick-reference.md"
+        },
+        {
+          "text": "`archive/`",
+          "url": "./archive/"
+        },
+        {
+          "text": "`developer-guide.md`",
+          "url": "./docs-developer-guide.md"
+        },
+        {
+          "text": "`architecture-guide.md`",
+          "url": "./docs-architecture-guide.md"
+        },
+        {
+          "text": "`unveil-design-system.md`",
+          "url": "./docs-unveil-design-system.md"
+        },
+        {
+          "text": "`component-library-implementation.md`",
+          "url": "./docs-component-library-implementation.md"
+        },
+        {
+          "text": "`architecture-guide.md`",
+          "url": "./docs-architecture-guide.md"
+        },
+        {
+          "text": "`mcp-schema-binding.md`",
+          "url": "./docs-mcp-schema-binding.md"
+        },
+        {
+          "text": "`unveil-design-system.md`",
+          "url": "./docs-unveil-design-system.md"
+        },
+        {
+          "text": "`../reference/style-guide.md`",
+          "url": "./reference-style-guide.md"
+        },
+        {
+          "text": "`testing-infrastructure.md`",
+          "url": "./docs-testing-infrastructure.md"
+        },
+        {
+          "text": "`test-user-management.md`",
+          "url": "./docs-test-user-management.md"
+        },
+        {
+          "text": "`../reference/brand.md`",
+          "url": "./reference-brand.md"
+        },
+        {
+          "text": "`../reference/voice.md`",
+          "url": "./reference-voice.md"
+        },
+        {
+          "text": "`mcp-supabase-setup.md`",
+          "url": "./docs-mcp-supabase-setup.md"
+        },
+        {
+          "text": "`SMS_SETUP_GUIDE.md`",
+          "url": "./docs-SMS_SETUP_GUIDE.md"
+        },
+        {
+          "text": "`developer-guide.md`",
+          "url": "./docs-developer-guide.md"
+        },
+        {
+          "text": "`../reference/quick-reference.md`",
+          "url": "./reference-quick-reference.md"
+        }
+      ],
+      "content": "# 📚 Unveil Documentation Index\n\n## 🔖 Purpose\n\nThis folder contains all active documentation for the Unveil wedding app. Use this index to quickly find the right reference guide, specification, or pl",
+      "classification": {
+        "action": "PROTECTED",
+        "reason": "Core documentation file",
+        "priority": "CRITICAL"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/06-REFERENCE/reference-README.md",
+      "title": "Brand & Creative Reference",
+      "lastModified": "2025-08-22",
+      "wordCount": 162,
+      "size": 1209,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Brand & Creative Reference\n\nThis folder contains brand guidelines, design system, and strategic materials for the Unveil project.\n\n## Brand Identity\n\n- **brand.md** - Brand purpose, personality, tar",
+      "classification": {
+        "action": "PROTECTED",
+        "reason": "Core documentation file",
+        "priority": "CRITICAL"
+      }
+    },
+    {
+      "path": "docs/messages-readmodel-v2/README.md",
+      "title": "Messages Read-Model V2 — Complete Implementation",
+      "lastModified": "2025-08-22",
+      "wordCount": 534,
+      "size": 4327,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Messages Read-Model V2 — Complete Implementation\n\n**Status:** ✅ **READY FOR ATOMIC SWAP**  \n**Date:** January 29, 2025  \n**Approach:** Single-path atomic RPC swap (no feature flags)\n\n## 🎯 Implement",
+      "classification": {
+        "action": "PROTECTED",
+        "reason": "Core documentation file",
+        "priority": "CRITICAL"
+      }
+    },
+    {
+      "path": "docs/performance/README.md",
+      "title": "🚀 Unveil Performance Center",
+      "lastModified": "2025-08-22",
+      "wordCount": 755,
+      "size": 6244,
+      "links": 4,
+      "outboundLinks": [
+        {
+          "text": "Main Performance Guide",
+          "url": "./documentation/README.md"
+        },
+        {
+          "text": "Layout Analysis",
+          "url": "./documentation/LAYOUT_ANALYSIS.md"
+        },
+        {
+          "text": "Week 4 Summary",
+          "url": "./documentation/WEEK4_COMPLETION_SUMMARY.md"
+        },
+        {
+          "text": "Scripts Documentation",
+          "url": "./scripts/index.md"
+        }
+      ],
+      "content": "# 🚀 Unveil Performance Center\n\n**Consolidated performance optimization system for the Unveil wedding app.**\n\n## 📁 Directory Structure\n\n```\nperformance/\n├── README.md                    # This file -",
+      "classification": {
+        "action": "PROTECTED",
+        "reason": "Core documentation file",
+        "priority": "CRITICAL"
+      }
+    },
+    {
+      "path": "docs/performance/documentation/README.md",
+      "title": "Performance Guide - Unveil App",
+      "lastModified": "2025-08-22",
+      "wordCount": 1045,
+      "size": 8487,
+      "links": 3,
+      "outboundLinks": [
+        {
+          "text": "Next.js Performance Best Practices",
+          "url": "https://nextjs.org/docs/advanced-features/measuring-performance"
+        },
+        {
+          "text": "React Performance Optimization",
+          "url": "https://react.dev/learn/render-and-commit"
+        },
+        {
+          "text": "Supabase Performance Guide",
+          "url": "https://supabase.com/docs/guides/platform/performance"
+        }
+      ],
+      "content": "# Performance Guide - Unveil App\n\n**Last Updated:** February 1, 2025  \n**Status:** Week 3 Optimizations Complete  \n**Next Phase:** Week 4 Advanced Optimizations\n\n## 📊 Current Performance Metrics\n\n###",
+      "classification": {
+        "action": "PROTECTED",
+        "reason": "Core documentation file",
+        "priority": "CRITICAL"
+      }
+    },
+    {
+      "path": "docs/archive/project-docs-legacy/04-OPERATIONS/scripts-README.md",
+      "title": "Test Data Seeding Scripts",
+      "lastModified": "2025-07-28",
+      "wordCount": 609,
+      "size": 4225,
+      "links": 0,
+      "outboundLinks": [],
+      "content": "# Test Data Seeding Scripts\n\nThis directory contains scripts to create comprehensive test data for your Unveil app, allowing you to test both **host** and **guest** experiences.\n\n## 🎯 What Test Data ",
+      "classification": {
+        "action": "PROTECTED",
+        "reason": "Core documentation file",
+        "priority": "CRITICAL"
+      }
+    }
+  ]
+}

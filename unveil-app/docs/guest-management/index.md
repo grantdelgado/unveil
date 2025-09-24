@@ -14,17 +14,17 @@ This folder contains comprehensive documentation for the guest management system
 
 #### Phase 1
 
-- **[Guest Management Phase 1 Completion](guest-management-phase1-completion.md)** - First phase implementation results
+- **Guest Management Phase 1 Completion** - First phase implementation results
 
 #### Phase 2
 
 - **[Guest Management Phase 2 Plan](guest-management-phase2-plan.md)** - Planning document for second phase
-- **[Guest Management Phase 2 Completion](guest-management-phase2-completion.md)** - Second phase implementation results
+- **Guest Management Phase 2 Completion** - Second phase implementation results
 
 #### Phase 3
 
 - **[Guest Management Phase 3 Plan](guest-management-phase3-plan.md)** - Planning document for third phase
-- **[Guest Management Phase 3 Completion](guest-management-phase3-completion.md)** - Third phase implementation results
+- **Guest Management Phase 3 Completion** - Third phase implementation results
 
 ### User Experience & Flow
 
@@ -37,7 +37,7 @@ This folder contains comprehensive documentation for the guest management system
 
 ### Strategic Planning
 
-- **[Guest Management Improvement Plan](guest-management-improvement-plan.md)** - Overall improvement strategy and roadmap
+- **Guest Management Improvement Plan** - Overall improvement strategy and roadmap
 
 ## 📊 Module Overview
 

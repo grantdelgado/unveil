@@ -7,8 +7,8 @@ This folder contains comprehensive audits, investigations, and analysis reports 
 ### Security & Access Control
 
 - **[Event Access Visibility](event-access-visibility.md)** - Comprehensive audit of event access patterns and security vulnerabilities
-- **[Guest Messages Access Control Fix](GUEST_MESSAGES_ACCESS_CONTROL_FIX.md)** - Security fix for guest message access
-- **[Guest Messages Fix Implementation](GUEST_MESSAGES_FIX_IMPLEMENTATION.md)** - Implementation details for message access fixes
+- **Guest Messages Access Control Fix** - Security fix for guest message access
+- **Guest Messages Fix Implementation** - Implementation details for message access fixes
 
 ### Architecture Reviews
 
