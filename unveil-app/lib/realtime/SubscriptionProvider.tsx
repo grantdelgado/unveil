@@ -36,35 +36,41 @@ interface SubscriptionProviderProps {
 }
 
 /**
- * Enhanced SubscriptionProvider with auto re-init on auth changes
- *
- * Features:
- * - Automatically destroys manager on sign-out
- * - Creates fresh manager instance on sign-in
- * - Provides version number for hook dependencies
- * - Ensures components get new manager instance after auth transitions
- * - Prevents "SubscriptionManager is destroyed" errors
+ * FIXED: Enhanced SubscriptionProvider with race condition protection
+ * 
+ * Fixes:
+ * - Eliminated rapid auth transition loops
+ * - Proper initialization state management  
+ * - Prevented manager operation race conditions
+ * - Stabilized isReady state transitions
  */
 export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
   const [manager, setManager] = useState<SubscriptionManager | null>(null);
   const [version, setVersion] = useState(0);
   const [isReady, setIsReady] = useState(false);
   const { isAuthenticated, session } = useAuth();
-  const previousAuthState = useRef<boolean | null>(null);
-  const managerRef = useRef<SubscriptionManager | null>(null);
   
-  // Single token authority state
+  // Stabilized refs to prevent race conditions
+  const managerRef = useRef<SubscriptionManager | null>(null);
+  const initializationRef = useRef<Promise<void> | null>(null);
+  const isInitializedRef = useRef(false);
   const tokenUpdateInFlight = useRef(false);
   
-  // Prevent duplicate manager operations
-  const managerOperationInFlight = useRef(false);
-  const operationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Track auth state more precisely
+  const lastAuthState = useRef<{
+    isAuthenticated: boolean | null;
+    userId: string | null;
+    sessionId: string | null;
+  }>({
+    isAuthenticated: null,
+    userId: null, 
+    sessionId: null,
+  });
 
   // Centralized token refresh handler with mutex
   const applyToken = useCallback(async (newToken: string): Promise<void> => {
     if (tokenUpdateInFlight.current) {
       logger.realtime('🔄 Token update already in flight, skipping duplicate');
-      // Emit deduplication telemetry
       emitSetAuth({
         source: 'provider',
         deduped: true,
@@ -80,18 +86,16 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
       supabase.realtime.setAuth(newToken);
       const duration = Date.now() - startTime;
       
-      logger.realtime(`🔄 Realtime auth token updated (single authority) v${version}`, {
+      logger.realtime(`🔄 Realtime auth token updated v${version}`, {
         duration,
         singleAuthority: RealtimeFlags.singleTokenAuthority,
       });
       
-      // Emit telemetry for successful token refresh
       emitTokenRefreshSuccess({
         duration,
         userId: session?.user?.id,
       });
       
-      // Emit setAuth telemetry
       emitSetAuth({
         source: 'provider',
         deduped: false,
@@ -102,7 +106,6 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
       const duration = Date.now() - startTime;
       logger.error('❌ Failed to update realtime auth token:', error);
       
-      // Emit telemetry for failed token refresh
       emitTokenRefreshFailure({
         duration,
         userId: session?.user?.id,
@@ -113,164 +116,22 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
     }
   }, [version, session?.user?.id]);
 
-  // Separate effect for comprehensive auth state monitoring including token refresh
-  useEffect(() => {
-    let isMounted = true;
-
-    // Monitor all auth state changes including token refresh
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!isMounted) return;
-
-      logger.realtime(`🔐 Auth event in SubscriptionProvider: ${event}`, {
-        hasSession: !!session,
-        userId: session?.user?.id,
-        hasManager: !!managerRef.current,
-        version,
-        singleTokenAuthority: RealtimeFlags.singleTokenAuthority,
-      });
-
-      if (event === 'TOKEN_REFRESHED' && session) {
-        // Use centralized token authority when flag is enabled
-        if (RealtimeFlags.singleTokenAuthority) {
-          await applyToken(session.access_token);
-        } else {
-          // Legacy behavior - direct setAuth call
-          const startTime = Date.now();
-          try {
-            supabase.realtime.setAuth(session.access_token);
-            const duration = Date.now() - startTime;
-
-            logger.realtime(
-              `🔄 Realtime auth token updated (legacy) v${version}`,
-              {
-                userId: session.user?.id,
-                hasManager: !!managerRef.current,
-                duration,
-              },
-            );
-
-            // Emit telemetry for successful token refresh
-            emitTokenRefreshSuccess({
-              duration,
-              userId: session.user?.id,
-            });
-          } catch (error) {
-            const duration = Date.now() - startTime;
-            logger.error(
-              '❌ Failed to update realtime auth token in provider:',
-              error,
-            );
-
-            // Emit telemetry for failed token refresh
-            emitTokenRefreshFailure({
-              duration,
-              userId: session.user?.id,
-              error: error instanceof Error ? error.message : String(error),
-            });
-          }
-        }
-      } else if (event === 'SIGNED_IN' && session) {
-        // Ensure realtime auth is set on sign-in
-        if (RealtimeFlags.singleTokenAuthority) {
-          await applyToken(session.access_token);
-        } else {
-          try {
-            supabase.realtime.setAuth(session.access_token);
-            logger.realtime(
-              `🔑 Realtime auth set on sign-in (provider) v${version}`,
-            );
-          } catch (error) {
-            logger.error('❌ Failed to set realtime auth on sign-in:', error);
-          }
-        }
-      }
-    });
-
-    return () => {
-      isMounted = false;
-      subscription.unsubscribe();
-    };
-  }, [version, applyToken]);
-
-  useEffect(() => {
-    const wasAuthenticated = previousAuthState.current;
-    const isNowAuthenticated = isAuthenticated;
-
-    // Prevent duplicate operations
-    if (managerOperationInFlight.current) {
-      logger.realtime('🔄 Manager operation already in flight, skipping duplicate');
-      return;
+  // Initialize manager with proper async handling
+  const initializeManager = useCallback(async (): Promise<void> => {
+    // Prevent concurrent initialization
+    if (initializationRef.current) {
+      return initializationRef.current;
     }
-
-    // Track auth state changes with detailed logging
-    if (wasAuthenticated !== isNowAuthenticated) {
-      managerOperationInFlight.current = true;
-      logger.realtime(
-        `🔄 Auth transition detected: ${wasAuthenticated} → ${isNowAuthenticated}`,
-        {
-          wasAuthenticated,
-          isNowAuthenticated,
-          hasSession: !!session,
+    
+    const initPromise = (async () => {
+      try {
+        logger.realtime('🚀 Initializing SubscriptionManager', {
           userId: session?.user?.id,
-          currentManagerExists: !!managerRef.current,
-          currentVersion: version,
-        },
-      );
-
-      if (!isNowAuthenticated) {
-        // User signed out - destroy manager
-        logger.realtime('🔐 User signed out - destroying SubscriptionManager', {
-          hadManager: !!managerRef.current,
-          version,
+          hasSession: !!session,
         });
 
-        const hadManager = !!managerRef.current;
+        // Clean up any existing manager
         if (managerRef.current) {
-          try {
-            managerRef.current.destroy();
-            logger.realtime('✅ SubscriptionManager destroyed successfully');
-          } catch (error) {
-            logger.error('❌ Error destroying SubscriptionManager:', error);
-          }
-          managerRef.current = null;
-        }
-        setManager(null);
-        setIsReady(false);
-        setVersion((prev) => {
-          const newVersion = prev + 1;
-          logger.realtime(
-            `📊 Version incremented: ${prev} → ${newVersion} (sign out)`,
-          );
-
-          // Emit telemetry for manager reinit (destruction)
-          emitManagerReinit({
-            version: newVersion,
-            reason: 'sign_out',
-            userId: session?.user?.id,
-            hadPreviousManager: hadManager,
-          });
-
-          return newVersion;
-        });
-      } else if (isNowAuthenticated && session) {
-        // User signed in - create fresh manager
-        const hadExistingManager = !!managerRef.current;
-        logger.realtime(
-          '🔑 User signed in - creating fresh SubscriptionManager',
-          {
-            userId: session.user?.id,
-            hadExistingManager,
-            version,
-          },
-        );
-
-        // Ensure any existing manager is destroyed first
-        if (managerRef.current) {
-          logger.realtime(
-            '🧹 Destroying existing manager before creating new one',
-          );
           try {
             managerRef.current.destroy();
           } catch (error) {
@@ -278,73 +139,150 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
           }
         }
 
-        // Create new manager instance
-        try {
-          const newManager = new SubscriptionManager();
-          managerRef.current = newManager;
-          setManager(newManager);
-          setIsReady(true);
-          setVersion((prev) => {
-            const newVersion = prev + 1;
-            logger.realtime(
-              `📊 Version incremented: ${prev} → ${newVersion} (sign in)`,
-            );
-            logger.realtime(
-              `✅ Enhanced SubscriptionManager initialized (version ${newVersion})`,
-            );
-
-            // Emit telemetry for manager reinit (creation)
-            emitManagerReinit({
-              version: newVersion,
-              reason: 'sign_in',
-              userId: session.user?.id,
-              hadPreviousManager: hadExistingManager,
-            });
-
-            return newVersion;
+        // Create new manager
+        const newManager = new SubscriptionManager();
+        
+        // Set auth token if we have a session
+        if (session?.access_token) {
+          await applyToken(session.access_token);
+        }
+        
+        // Update refs and state
+        managerRef.current = newManager;
+        setManager(newManager);
+        setIsReady(true);
+        isInitializedRef.current = true;
+        
+        setVersion((prev) => {
+          const newVersion = prev + 1;
+          logger.realtime(
+            `✅ SubscriptionManager initialized successfully (v${newVersion})`,
+          );
+          
+          emitManagerReinit({
+            version: newVersion,
+            reason: 'sign_in',
+            userId: session?.user?.id,
+            hadPreviousManager: false,
           });
-        } catch (error) {
-          logger.error('❌ Failed to create new SubscriptionManager:', error);
-          setManager(null);
-          setIsReady(false);
+          
+          return newVersion;
+        });
+        
+      } catch (error) {
+        logger.error('❌ Failed to initialize SubscriptionManager:', error);
+        setManager(null);
+        setIsReady(false);
+        isInitializedRef.current = false;
+      }
+    })();
+    
+    initializationRef.current = initPromise;
+    await initPromise;
+    initializationRef.current = null;
+  }, [session, applyToken]);
+
+  // Destroy manager with proper cleanup
+  const destroyManager = useCallback(() => {
+    logger.realtime('🧹 Destroying SubscriptionManager');
+    
+    if (managerRef.current) {
+      try {
+        managerRef.current.destroy();
+      } catch (error) {
+        logger.error('❌ Error destroying SubscriptionManager:', error);
+      }
+    }
+    
+    managerRef.current = null;
+    setManager(null);
+    setIsReady(false);
+    isInitializedRef.current = false;
+    
+    setVersion((prev) => {
+      const newVersion = prev + 1;
+      emitManagerReinit({
+        version: newVersion,
+        reason: 'sign_out',
+        hadPreviousManager: true,
+      });
+      return newVersion;
+    });
+  }, []);
+
+  // Handle auth state changes with stabilization
+  useEffect(() => {
+    const currentState = {
+      isAuthenticated,
+      userId: session?.user?.id || null,
+      sessionId: session?.access_token ? 'present' : null,
+    };
+    
+    const lastState = lastAuthState.current;
+    
+    // Check if this is a meaningful state change
+    const hasChanged = 
+      currentState.isAuthenticated !== lastState.isAuthenticated ||
+      currentState.userId !== lastState.userId ||
+      currentState.sessionId !== lastState.sessionId;
+    
+    if (!hasChanged) {
+      return; // No meaningful change, skip
+    }
+    
+    logger.realtime('🔄 Auth state change detected', {
+      was: lastState,
+      now: currentState,
+      hasManager: !!managerRef.current,
+      isInitialized: isInitializedRef.current,
+    });
+    
+    // Update tracked state
+    lastAuthState.current = currentState;
+    
+    if (isAuthenticated && session) {
+      // User is authenticated - ensure manager exists
+      if (!isInitializedRef.current) {
+        initializeManager();
+      }
+    } else {
+      // User is not authenticated - cleanup manager
+      if (isInitializedRef.current) {
+        destroyManager();
+      }
+    }
+  }, [isAuthenticated, session, initializeManager, destroyManager]);
+
+  // Handle token refresh events
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'TOKEN_REFRESHED' && session) {
+        if (RealtimeFlags.singleTokenAuthority) {
+          await applyToken(session.access_token);
+        } else {
+          // Legacy behavior for token refresh
+          try {
+            supabase.realtime.setAuth(session.access_token);
+            logger.realtime('🔄 Token refreshed (legacy mode)');
+          } catch (error) {
+            logger.error('❌ Token refresh failed:', error);
+          }
         }
       }
-    } else if (wasAuthenticated === null && isNowAuthenticated === null) {
-      // Initial load - no change needed
-      logger.realtime('🔄 Initial auth state check (both null)', {
-        hasSession: !!session,
-        version,
-      });
-    }
+    });
 
-    previousAuthState.current = isNowAuthenticated;
-    
-    // Clear any existing timeout and set a new one
-    if (operationTimeoutRef.current) {
-      clearTimeout(operationTimeoutRef.current);
-    }
-    
-    operationTimeoutRef.current = setTimeout(() => {
-      managerOperationInFlight.current = false;
-      operationTimeoutRef.current = null;
-    }, 100);
-    // Note: `version` intentionally excluded from deps to prevent excessive re-runs
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, session]);
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [applyToken]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      // Clear any pending timeouts
-      if (operationTimeoutRef.current) {
-        clearTimeout(operationTimeoutRef.current);
-        operationTimeoutRef.current = null;
-      }
-      
       if (managerRef.current) {
-        logger.realtime(
-          '🧹 Cleaning up SubscriptionManager on provider unmount',
-        );
+        logger.realtime('🧹 Provider unmount cleanup');
         managerRef.current.destroy();
         managerRef.current = null;
       }
@@ -366,12 +304,7 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
 
 /**
  * Hook to access the current SubscriptionManager
- *
- * Features:
- * - Returns null if manager is not ready (prevents crashes)
- * - Provides version for dependency arrays
- * - Automatically gets fresh manager after auth transitions
- * - Enhanced debugging for troubleshooting
+ * FIXED: Reduced debug logging to prevent console spam
  */
 export function useSubscriptionManager(): SubscriptionContextType {
   const context = useContext(SubscriptionContext);
@@ -381,14 +314,40 @@ export function useSubscriptionManager(): SubscriptionContextType {
     );
   }
 
-  // Debug logging for hook usage
+  // Reduced debug logging - only log significant state changes
+  const previousState = useRef<{
+    hasManager: boolean;
+    isReady: boolean;
+    version: number;
+  }>({ hasManager: false, isReady: false, version: 0 });
+  
   useEffect(() => {
-    logger.realtime('🎣 useSubscriptionManager hook called', {
+    const current = {
       hasManager: !!context.manager,
       isReady: context.isReady,
       version: context.version,
-      managerState: context.manager ? 'active' : 'null',
-    });
+    };
+    
+    const prev = previousState.current;
+    
+    if (
+      current.hasManager !== prev.hasManager ||
+      current.isReady !== prev.isReady ||
+      current.version !== prev.version
+    ) {
+      logger.realtime('🎣 useSubscriptionManager state change', {
+        hasManager: current.hasManager,
+        isReady: current.isReady,
+        version: current.version,
+        changed: {
+          manager: current.hasManager !== prev.hasManager,
+          ready: current.isReady !== prev.isReady,
+          version: current.version !== prev.version,
+        },
+      });
+      
+      previousState.current = current;
+    }
   }, [context.manager, context.isReady, context.version]);
 
   return context;

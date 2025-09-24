@@ -1,0 +1,47 @@
+BUNDLE SIZE ANALYSIS - Next.js 15.3.4 Production Build
+Generated: September 24, 2025
+
+ASSET SIZE WARNINGS:
+- static/chunks/main-b93f3d68fe4be01b.js (366 KiB) - EXCEEDS 215 KiB limit
+- static/chunks/2042-432b3a62ba3c191d.js (391 KiB) - EXCEEDS 215 KiB limit
+
+ENTRYPOINT SIZE WARNINGS:
+- main (549 KiB) - EXCEEDS 244 KiB limit
+- main-app (676 KiB) - EXCEEDS 244 KiB limit
+
+ROUTE ANALYSIS:
+┌ Route (app)                                       Size  First Load JS
+├ ○ /                                             2 kB         288 kB
+├ ○ /_not-found                                  991 B         216 kB
+├ ƒ /guest/events/[eventId]                    4.53 kB         287 kB
+├ ƒ /guest/events/[eventId]/home               8.23 kB         318 kB ⚠️
+├ ƒ /guest/events/[eventId]/schedule           3.72 kB         302 kB ⚠️
+├ ƒ /host/events/[eventId]/dashboard           2.77 kB         311 kB ⚠️
+├ ƒ /host/events/[eventId]/details             17.8 kB         314 kB ⚠️
+├ ƒ /host/events/[eventId]/edit                5.06 kB         304 kB ⚠️
+├ ƒ /host/events/[eventId]/guests              1.81 kB         285 kB
+├ ƒ /host/events/[eventId]/messages            1.39 kB         284 kB
+├ ƒ /host/events/[eventId]/schedule            11.1 kB         294 kB
+├ ○ /host/events/create                        9.54 kB         309 kB ⚠️
+├ ○ /login                                     7.61 kB         304 kB ⚠️
+├ ○ /select-event                              4.72 kB         303 kB ⚠️
+├ ○ /setup                                     3.32 kB         289 kB
+└ ○ First Load JS shared by all                   215 kB
+
+SHARED CHUNK COMPOSITION:
+├ chunks/2042-432b3a62ba3c191d.js             122 kB  (Supabase client)
+├ chunks/d41f7d20-888b5991405b5503.js        53.2 kB  (React Query)
+├ chunks/dd77b620-e1ae1788dda83d17.js        36.6 kB  (Next.js framework)
+└ other shared chunks (total)                3.35 kB
+
+BUILD PERFORMANCE:
+- Build Time: 12.0s
+- Linting and Type Check: ✓ Passed
+- Static Generation: 29 pages
+
+CRITICAL ISSUES IDENTIFIED:
+1. Main app bundle 177% over limit (676KB vs 244KB target)
+2. Supabase client not code-split (122KB in shared chunk)
+3. React Query loaded synchronously (53KB impact)
+4. Heavy authentication routes >300KB each
+5. Host dashboard routes consistently over limit

@@ -1,0 +1,25 @@
+ID,Description,Severity,Blast Radius,Proposed Remedy,Estimated Effort,Dependencies,Category,Status
+P0-001,Bundle size violations - Main chunks exceed 400KB impacting Core Web Vitals,P0,High - All users affected by slow loading,Dynamic imports for heavy providers + route-based code splitting,M,Next.js build optimization,Performance,Open
+P0-002,Multiple RLS policies causing 300% query overhead on event_guests table,P0,High - All database queries affected,Consolidate 12+ overlapping policies into single comprehensive policies,M,Database migration,Performance,Open
+P0-003,Function search path vulnerabilities in 3 SECURITY DEFINER functions,P0,Medium - Security exposure potential,Add search_path hardening to vulnerable functions,S,Database migration,Security,Open
+P1-001,React Query key inconsistency across 171 usages,P1,High - Cache invalidation issues + maintenance burden,Implement centralized query key factory pattern,L,React Query refactor,Architecture,Open
+P1-002,Realtime subscription memory leaks in complex lifecycle management,P1,Medium - Memory growth over time,Consolidate 15+ subscription hooks into centralized manager,L,Realtime refactor,Performance,Open
+P1-003,16 unused database indexes consuming storage and write performance,P1,Medium - Degraded write performance,Remove unused indexes after usage analysis,S,Database cleanup,Performance,Open
+P1-004,Sequential scans on message queries missing composite indexes,P1,Medium - Growing query times as data scales,Add missing composite indexes for message analytics,S,Database optimization,Performance,Open
+P1-005,Missing foreign key indexes on 3 high-traffic tables,P1,Medium - Suboptimal join performance,Add indexes on message_deliveries and user_link_audit FKs,S,Database optimization,Performance,Open
+P1-006,Provider bundle bloat - Heavy providers loaded synchronously,P1,High - Shared chunk size impacts all routes,Implement lazy loading for React Query + Supabase providers,M,Bundle optimization,Performance,Open
+P2-001,Hook proliferation - 15+ messaging hooks with overlapping concerns,P2,Medium - Development velocity + maintenance,Consolidate messaging hooks from 15 to 5 core patterns,L,Code refactoring,Architecture,Open
+P2-002,Error handling inconsistency - 25+ different error patterns,P2,Medium - Inconsistent UX + testing complexity,Standardize error handling patterns across hooks/components,M,Error handling refactor,Architecture,Open
+P2-003,Code duplication - 40%+ shared logic patterns in messaging hooks,P2,Medium - Maintenance burden + bug multiplication,Extract shared logic into composable utilities,M,Code refactoring,Architecture,Open
+P2-004,Auth OTP expiry exceeds 1 hour security recommendation,P2,Low - Security best practice deviation,Configure OTP expiry to 30 minutes or less,S,Auth configuration,Security,Open
+P2-005,Leaked password protection disabled in Auth settings,P2,Low - Missing protection against compromised passwords,Enable HaveIBeenPwned integration in Supabase Auth,S,Auth configuration,Security,Open
+P2-006,PostgreSQL version has available security patches,P2,Low - Security vulnerability exposure,Upgrade PostgreSQL to latest patched version,M,Database upgrade,Security,Open
+P2-007,Barrel imports in shared chunks causing bundle bloat,P2,Medium - Suboptimal tree shaking,Replace barrel imports with direct imports in critical paths,M,Import optimization,Performance,Open
+P2-008,Unstable query keys causing cache misses,P2,Medium - Poor cache hit rates + unnecessary refetches,Implement stable query key generation patterns,M,React Query optimization,Performance,Open
+P2-009,Ad-hoc date/utils scattered across codebase,P2,Low - Maintenance complexity,Centralize date utilities and formatting logic,S,Code organization,Architecture,Open
+P2-010,Client components importing server code anti-pattern,P2,Medium - Bundle contamination risk,Audit and fix client/server boundary violations,M,Architecture cleanup,Architecture,Open
+P2-011,Implicit globals in utility functions,P2,Low - Testing complexity + side effect risks,Make dependencies explicit in utility function parameters,S,Code quality,Architecture,Open
+P2-012,Hydration/CLS risks in heavy components,P2,Medium - Core Web Vitals impact,Implement proper loading states and skeleton UIs,M,UX improvement,Performance,Open
+P2-013,Single-subscription guarantee violations in realtime,P2,Medium - Resource leaks + duplicate subscriptions,Enforce subscription uniqueness in SubscriptionManager,S,Realtime reliability,Architecture,Open
+P2-014,Channel key hygiene issues in realtime subscriptions,P2,Medium - Subscription conflicts + debugging complexity,Standardize channel key generation and lifecycle,S,Realtime reliability,Architecture,Open
+P2-015,Pagination/dedupe invariants not properly handled,P2,Low - Data consistency edge cases,Implement robust pagination and deduplication patterns,M,Data consistency,Architecture,Open
