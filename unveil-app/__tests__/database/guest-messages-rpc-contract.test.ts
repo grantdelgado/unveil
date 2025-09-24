@@ -10,7 +10,10 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
-import { supabase } from '@/lib/supabase/client';
+import { withAuthedSession } from '../_mocks/supabase-helpers';
+
+// Set up isolated Supabase mock for RPC contract testing
+const supabase = withAuthedSession();
 
 // Mock dependencies for isolated testing
 vi.mock('@/lib/logger');
@@ -52,7 +55,7 @@ interface MockGuestMessage {
   is_own_message: boolean;
 }
 
-describe('get_guest_event_messages RPC Contract', () => {
+describe('get_guest_event_messages RPC Contract — ordering/dedup/security @core', () => {
   const TEST_EVENT_ID = 'test-event-12345';
   const TEST_USER_ID = 'test-user-67890';
   const TEST_GUEST_ID = 'test-guest-abcde';
@@ -111,7 +114,7 @@ describe('get_guest_event_messages RPC Contract', () => {
         data: mockMessages,
         error: null,
       });
-      vi.mocked(supabase.rpc) = mockRpc;
+        supabase.rpc.mockImplementation(mockRpc);
 
       const { data, error } = await supabase.rpc('get_guest_event_messages', {
         p_event_id: TEST_EVENT_ID,
@@ -179,7 +182,7 @@ describe('get_guest_event_messages RPC Contract', () => {
         data: mockMessages,
         error: null,
       });
-      vi.mocked(supabase.rpc) = mockRpc;
+        supabase.rpc.mockImplementation(mockRpc);
 
       const { data, error } = await supabase.rpc('get_guest_event_messages', {
         p_event_id: TEST_EVENT_ID,
@@ -229,7 +232,7 @@ describe('get_guest_event_messages RPC Contract', () => {
         data: mockMessages,
         error: null,
       });
-      vi.mocked(supabase.rpc) = mockRpc;
+        supabase.rpc.mockImplementation(mockRpc);
 
       const { data, error } = await supabase.rpc('get_guest_event_messages', {
         p_event_id: TEST_EVENT_ID,
@@ -276,7 +279,7 @@ describe('get_guest_event_messages RPC Contract', () => {
         data: [mockMessage],
         error: null,
       });
-      vi.mocked(supabase.rpc) = mockRpc;
+        supabase.rpc.mockImplementation(mockRpc);
 
       const { data, error } = await supabase.rpc('get_guest_event_messages', {
         p_event_id: TEST_EVENT_ID,
@@ -327,7 +330,7 @@ describe('get_guest_event_messages RPC Contract', () => {
         data: [mockMessage],
         error: null,
       });
-      vi.mocked(supabase.rpc) = mockRpc;
+        supabase.rpc.mockImplementation(mockRpc);
 
       const { data, error } = await supabase.rpc('get_guest_event_messages', {
         p_event_id: TEST_EVENT_ID,
@@ -358,7 +361,7 @@ describe('get_guest_event_messages RPC Contract', () => {
         data: [mockMessage],
         error: null,
       });
-      vi.mocked(supabase.rpc) = mockRpc;
+        supabase.rpc.mockImplementation(mockRpc);
 
       const { data, error } = await supabase.rpc('get_guest_event_messages', {
         p_event_id: TEST_EVENT_ID,
@@ -413,7 +416,7 @@ describe('get_guest_event_messages RPC Contract', () => {
         data: mockMessages,
         error: null,
       });
-      vi.mocked(supabase.rpc) = mockRpc;
+        supabase.rpc.mockImplementation(mockRpc);
 
       const { data, error } = await supabase.rpc('get_guest_event_messages', {
         p_event_id: TEST_EVENT_ID,
@@ -446,7 +449,7 @@ describe('get_guest_event_messages RPC Contract', () => {
           code: 'PGRST000',
         },
       });
-      vi.mocked(supabase.rpc) = mockRpc;
+        supabase.rpc.mockImplementation(mockRpc);
 
       const { data, error } = await supabase.rpc('get_guest_event_messages', {
         p_event_id: 'unauthorized-event-id',
@@ -470,7 +473,7 @@ describe('get_guest_event_messages RPC Contract', () => {
           code: 'PGRST000',
         },
       });
-      vi.mocked(supabase.rpc) = mockRpc;
+        supabase.rpc.mockImplementation(mockRpc);
 
       const { data, error } = await supabase.rpc('get_guest_event_messages', {
         p_event_id: TEST_EVENT_ID,
@@ -538,7 +541,7 @@ describe('get_guest_event_messages RPC Contract', () => {
       const mockRpc = vi.fn()
         .mockResolvedValueOnce({ data: page1Messages, error: null })
         .mockResolvedValueOnce({ data: page2Messages, error: null });
-      vi.mocked(supabase.rpc) = mockRpc;
+        supabase.rpc.mockImplementation(mockRpc);
 
       // Fetch page 1
       const page1Result = await supabase.rpc('get_guest_event_messages', {
@@ -619,7 +622,7 @@ describe('get_guest_event_messages RPC Contract', () => {
         data: allMessages,
         error: null,
       });
-      vi.mocked(supabase.rpc) = mockRpc;
+        supabase.rpc.mockImplementation(mockRpc);
 
       const { data, error } = await supabase.rpc('get_guest_event_messages', {
         p_event_id: TEST_EVENT_ID,
@@ -652,7 +655,7 @@ describe('get_guest_event_messages RPC Contract', () => {
           code: 'PGRST000',
         },
       });
-      vi.mocked(supabase.rpc) = mockRpc;
+        supabase.rpc.mockImplementation(mockRpc);
 
       const { data, error } = await supabase.rpc('get_guest_event_messages', {
         p_event_id: 'invalid-uuid',
@@ -671,7 +674,7 @@ describe('get_guest_event_messages RPC Contract', () => {
         data: [],
         error: null,
       });
-      vi.mocked(supabase.rpc) = mockRpc;
+        supabase.rpc.mockImplementation(mockRpc);
 
       // Test with valid limit
       const { data, error } = await supabase.rpc('get_guest_event_messages', {
@@ -696,7 +699,7 @@ describe('get_guest_event_messages RPC Contract', () => {
         data: [],
         error: null,
       });
-      vi.mocked(supabase.rpc) = mockRpc;
+        supabase.rpc.mockImplementation(mockRpc);
 
       const { data, error } = await supabase.rpc('get_guest_event_messages', {
         p_event_id: TEST_EVENT_ID,

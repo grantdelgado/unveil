@@ -44,15 +44,15 @@ function createTestMessage(overrides: Partial<GuestMessage> = {}): GuestMessage 
 }
 
 // Helper to create messages with specific timestamps
-function createMessagesWithTimes(times: string[]): GuestMessage[] {
+function createMessagesWithTimes(times: string[], idPrefix: string = 'msg'): GuestMessage[] {
   return times.map((time, index) => createTestMessage({
-    message_id: `msg-${index + 1}`,
+    message_id: `${idPrefix}-${index + 1}`,
     created_at: time,
     content: `Message at ${time}`,
   }));
 }
 
-describe('Message Merge Utilities', () => {
+describe('Message Merge Utilities — dedup/ordering contracts @core', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     
@@ -91,12 +91,12 @@ describe('Message Merge Utilities', () => {
       const existing = createMessagesWithTimes([
         '2025-01-15T12:00:00Z', // oldest
         '2025-01-15T12:02:00Z', // newer
-      ]);
+      ], 'existing');
       
       const newMessages = createMessagesWithTimes([
         '2025-01-15T12:01:00Z', // middle
         '2025-01-15T12:03:00Z', // newest
-      ]);
+      ], 'new');
       
       const result = mergeMessages(existing, newMessages);
       
@@ -235,11 +235,11 @@ describe('Message Merge Utilities', () => {
       const existing = createMessagesWithTimes([
         '2025-01-15T12:02:00Z', // newer (first in DESC order)
         '2025-01-15T12:01:00Z', // older
-      ]);
+      ], 'desc-existing');
       
       const newMessages = createMessagesWithTimes([
         '2025-01-15T12:03:00Z', // newest (should be prepended)
-      ]);
+      ], 'desc-new');
       
       const result = mergeMessages(existing, newMessages, true); // trustRpcOrder=true
       
@@ -261,12 +261,12 @@ describe('Message Merge Utilities', () => {
       const page1 = createMessagesWithTimes([
         '2025-01-15T12:03:00Z',
         '2025-01-15T12:02:00Z',
-      ]);
+      ], 'page1');
       
       // Realtime insert arrives
       const realtimeInsert = createMessagesWithTimes([
         '2025-01-15T12:04:00Z', // Newer than page 1
-      ]);
+      ], 'realtime');
       
       // Merge realtime insert
       const afterRealtime = mergeMessages(page1, realtimeInsert);
@@ -275,7 +275,7 @@ describe('Message Merge Utilities', () => {
       const page2 = createMessagesWithTimes([
         '2025-01-15T12:01:00Z',
         '2025-01-15T12:00:00Z',
-      ]);
+      ], 'page2');
       
       const final = mergeMessages(afterRealtime, page2);
       
@@ -297,14 +297,14 @@ describe('Message Merge Utilities', () => {
         '2025-01-15T12:05:00Z',
         '2025-01-15T12:04:00Z',
         '2025-01-15T12:03:00Z', // cursor would be here
-      ]);
+      ], 'initial');
       
       // Next page should have messages older than cursor
       const nextPage = createMessagesWithTimes([
         '2025-01-15T12:02:00Z',
         '2025-01-15T12:01:00Z',
         '2025-01-15T12:00:00Z',
-      ]);
+      ], 'next');
       
       const result = mergeMessages(initialMessages, nextPage);
       
@@ -326,14 +326,15 @@ describe('Message Merge Utilities', () => {
         '2025-01-15T12:03:00Z',
         '2025-01-15T12:02:00Z',
         '2025-01-15T12:01:00Z',
-      ]);
+      ], 'p1');
       
       // Page 2 overlaps with last message from page 1
-      const page2 = createMessagesWithTimes([
-        '2025-01-15T12:01:00Z', // duplicate from page 1
-        '2025-01-15T12:00:00Z',
-        '2025-01-15T11:59:00Z',
-      ]);
+      // Page 2 overlaps with last message from page 1 - create explicit duplicate
+      const page2 = [
+        createTestMessage({ message_id: 'p1-3', created_at: '2025-01-15T12:01:00Z' }), // duplicate from page 1
+        createTestMessage({ message_id: 'p2-1', created_at: '2025-01-15T12:00:00Z' }),
+        createTestMessage({ message_id: 'p2-2', created_at: '2025-01-15T11:59:00Z' }),
+      ];
       
       const result = mergeMessages(page1, page2);
       

@@ -35,8 +35,8 @@ const mockMessage: ScheduledMessage = {
 };
 
 describe('CancelMessageDialog', () => {
-  const mockOnClose = jest.fn();
-  const mockOnConfirm = jest.fn();
+  const mockOnClose = vi.fn();
+  const mockOnConfirm = vi.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();

@@ -1,3 +1,4 @@
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { EventDetailsEditor } from '@/components/features/host-dashboard/EventDetailsEditor';
 import type { EventDetailsFormData } from '@/lib/validation/events';
@@ -47,8 +48,8 @@ vi.mock('react-hook-form', () => ({
     },
     watch: () => mockEvent,
     formState: { errors: {}, isDirty: true, isValid: true },
-    setValue: jest.fn(),
-    clearErrors: jest.fn(),
+    setValue: vi.fn(),
+    clearErrors: vi.fn(),
   }),
 }));
 

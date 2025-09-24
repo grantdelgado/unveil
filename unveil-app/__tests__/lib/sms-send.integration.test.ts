@@ -5,7 +5,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { sendSMS, sendBulkSMS } from '@/lib/sms';
-import { mockSupabaseClient, mockTwilioClient } from '@/src/test/setup';
+import { supabase, mockTwilioClient } from '@/src/test/setup';
 import { logger } from '@/lib/logger';
 
 describe('SMS Send Integration', () => {
@@ -25,7 +25,7 @@ describe('SMS Send Integration', () => {
     it('should send SMS with event tag and call Twilio with formatted body', async () => {
       // Mock event and guest data
       let callCount = 0;
-      mockSupabaseClient.from.mockReturnValue({
+      supabase.from.mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
             single: vi.fn().mockImplementation(() => {
@@ -47,7 +47,7 @@ describe('SMS Send Integration', () => {
       });
 
       // Mock A2P notice marking
-      mockSupabaseClient.rpc.mockResolvedValue({ error: null });
+      supabase.rpc.mockResolvedValue({ error: null });
 
       const result = await sendSMS({
         to: '+12345678901',
@@ -65,7 +65,7 @@ describe('SMS Send Integration', () => {
       });
 
       // Verify A2P notice was marked as sent
-      expect(mockSupabaseClient.rpc).toHaveBeenCalledWith('mark_a2p_notice_sent', {
+      expect(supabase.rpc).toHaveBeenCalledWith('mark_a2p_notice_sent', {
         _event_id: 'event-123',
         _guest_id: 'guest-456',
       });
@@ -77,7 +77,7 @@ describe('SMS Send Integration', () => {
     it('should not include STOP notice for subsequent SMS to same guest', async () => {
       // Mock event and guest data (guest already received STOP notice)
       let callCount = 0;
-      mockSupabaseClient.from.mockReturnValue({
+      supabase.from.mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
             single: vi.fn().mockImplementation(() => {
@@ -114,11 +114,11 @@ describe('SMS Send Integration', () => {
       });
 
       // Verify A2P notice was NOT marked (already sent)
-      expect(mockSupabaseClient.rpc).not.toHaveBeenCalled();
+      expect(supabase.rpc).not.toHaveBeenCalled();
     });
 
     it('should never include sender name in SMS body', async () => {
-      mockSupabaseClient.from.mockReturnValue({
+      supabase.from.mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
             single: vi.fn().mockResolvedValue({
@@ -146,7 +146,7 @@ describe('SMS Send Integration', () => {
     });
 
     it('should handle auto-generated event tags from title', async () => {
-      mockSupabaseClient.from.mockReturnValue({
+      supabase.from.mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
             single: vi.fn().mockResolvedValue({
@@ -172,7 +172,7 @@ describe('SMS Send Integration', () => {
     });
 
     it('should log SMS metrics without PII', async () => {
-      mockSupabaseClient.from.mockReturnValue({
+      supabase.from.mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
             single: vi.fn().mockResolvedValue({
@@ -221,7 +221,7 @@ describe('SMS Send Integration', () => {
       process.env.DEV_SIMULATE_INVITES = 'true';
 
       let callCount = 0;
-      mockSupabaseClient.from.mockReturnValue({
+      supabase.from.mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
             single: vi.fn().mockImplementation(() => {
@@ -242,7 +242,7 @@ describe('SMS Send Integration', () => {
         }),
       });
 
-      mockSupabaseClient.rpc.mockResolvedValue({ error: null });
+      supabase.rpc.mockResolvedValue({ error: null });
 
       const result = await sendSMS({
         to: '+12345678901',
@@ -256,7 +256,7 @@ describe('SMS Send Integration', () => {
       expect(mockTwilioClient.messages.create).not.toHaveBeenCalled();
       
       // Should still mark A2P notice as sent
-      expect(mockSupabaseClient.rpc).toHaveBeenCalledWith('mark_a2p_notice_sent', {
+      expect(supabase.rpc).toHaveBeenCalledWith('mark_a2p_notice_sent', {
         _event_id: 'event-123',
         _guest_id: 'guest-456',
       });
@@ -279,7 +279,7 @@ describe('SMS Send Integration', () => {
     it('should send multiple SMS with proper formatting', async () => {
       // Mock for all messages - simulate guests who already received STOP notice
       let callCount = 0;
-      mockSupabaseClient.from.mockReturnValue({
+      supabase.from.mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
             single: vi.fn().mockImplementation(() => {
@@ -334,7 +334,7 @@ describe('SMS Send Integration', () => {
 
   describe('Error Handling', () => {
     it('should handle Twilio errors gracefully', async () => {
-      mockSupabaseClient.from.mockReturnValue({
+      supabase.from.mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
             single: vi.fn().mockResolvedValue({
@@ -376,7 +376,7 @@ describe('SMS Send Integration', () => {
       // The actual SMS sending is tested separately with working mocks
       
       // Mock database error in formatter
-      mockSupabaseClient.from.mockReturnValue({
+      supabase.from.mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
             single: vi.fn().mockRejectedValue(new Error('DB error')),
@@ -407,14 +407,14 @@ describe('SMS Send Integration', () => {
       expect(result.includedStopNotice).toBe(false);
       
       // Should not have called Supabase (kill switch prevents it)
-      expect(mockSupabaseClient.from).not.toHaveBeenCalled();
+      expect(supabase.from).not.toHaveBeenCalled();
     });
 
     it('should use branding by default when no environment variable is set', async () => {
       // Ensure no kill switch is set (default behavior)
       delete process.env.SMS_BRANDING_DISABLED;
 
-      mockSupabaseClient.from.mockReturnValue({
+      supabase.from.mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
             single: vi.fn().mockResolvedValue({
@@ -433,7 +433,7 @@ describe('SMS Send Integration', () => {
       expect(result.includedStopNotice).toBe(false);
       
       // Should have called Supabase for event data
-      expect(mockSupabaseClient.from).toHaveBeenCalled();
+      expect(supabase.from).toHaveBeenCalled();
     });
   });
 });

@@ -16,6 +16,8 @@
     "check:email": "npx tsx scripts/check-email-optionality.ts",
     "format": "prettier --write .",
     "test": "vitest run --reporter=default",
+    "test:core": "vitest run --reporter=dot -t @core",
+    "test:unit": "vitest run --reporter=dot",
     "test:watch": "vitest --watch",
     "test:coverage": "vitest --coverage",
     "test:ui": "vitest --ui",

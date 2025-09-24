@@ -32,15 +32,15 @@ describe('useGuestMessagesRPC - Pagination De-duplication', () => {
     // Mock Supabase client
     const mockSupabase = {
       auth: {
-        getUser: jest.fn().mockResolvedValue({
+        getUser: vi.fn().mockResolvedValue({
           data: { user: mockUser },
           error: null,
         }),
       },
-      from: jest.fn().mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
+      from: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
               data: {
                 id: 'guest-123',
                 removed_at: null,
@@ -50,14 +50,14 @@ describe('useGuestMessagesRPC - Pagination De-duplication', () => {
             }),
           }),
         }),
-        order: jest.fn().mockReturnValue({
-          limit: jest.fn().mockResolvedValue({
+        order: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue({
             data: [],
             error: null,
           }),
         }),
       }),
-      rpc: jest.fn().mockResolvedValue({
+      rpc: vi.fn().mockResolvedValue({
         data: [],
         error: null,
       }),

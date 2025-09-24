@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { mockSupabaseClient } from '@/src/test/setup';
+import { supabase } from '@/src/test/setup';
 
 // Mock the entire scheduled worker module
 vi.mock('@/lib/sms-formatter', async () => {

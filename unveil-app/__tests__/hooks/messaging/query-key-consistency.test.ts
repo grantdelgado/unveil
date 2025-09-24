@@ -12,7 +12,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { renderHook, act } from '@testing-library/react';
 import { useScheduledMessagesQuery } from '@/hooks/messaging/scheduled/useScheduledMessagesQuery';
 import { useMessages } from '@/hooks/useMessages';
-import { queryKeys } from '@/lib/react-query';
+import { queryKeys } from '@/lib/react-query-client';
 
 // Mock dependencies
 vi.mock('@/lib/services/messaging');
@@ -87,8 +87,8 @@ describe('Query Key Consistency', () => {
       testCounters.queryKeyGenerations += 2;
       
       expect(keys1).not.toEqual(keys2);
-      expect(keys1[1]).toBe(eventId1);
-      expect(keys2[1]).toBe(eventId2);
+      expect(keys1[2]).toBe(eventId1); // eventId is at index 2 in ['messages', 'event', eventId]
+      expect(keys2[2]).toBe(eventId2);
     });
 
     it('should maintain hierarchical structure', () => {
@@ -392,8 +392,8 @@ describe('Query Key Consistency', () => {
         const key2 = queryKeys.eventMessages(undefined as any);
         testCounters.queryKeyGenerations += 2;
         
-        expect(key1[1]).toBe(null);
-        expect(key2[1]).toBe(undefined);
+        expect(key1[2]).toBe(null); // eventId is at index 2
+        expect(key2[2]).toBe(undefined);
       }).not.toThrow();
     });
   });

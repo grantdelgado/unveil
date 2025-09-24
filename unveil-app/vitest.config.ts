@@ -11,7 +11,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    setupFiles: ['./src/test/setup.ts'],
+    setupFiles: ['./__tests__/_setup/env.ts', './src/test/setup.ts'],
     include: ['**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     exclude: [
       'node_modules',
@@ -19,6 +19,7 @@ export default defineConfig({
       '.next',
       'playwright-tests/**/*',
       'tests/**/*', // Exclude Playwright e2e tests
+      '__tests__/e2e/**/*', // Exclude misplaced Playwright tests
       'test-results/**/*',
       '**/*.e2e.*',
       '**/playwright.config.*',
@@ -52,6 +53,7 @@ export default defineConfig({
       '@/lib': resolve(__dirname, './lib'),
       '@/components': resolve(__dirname, './components'),
       '@/hooks': resolve(__dirname, './hooks'),
+      '@/test/supabase-mock': resolve(__dirname, './__tests__/_mocks/supabase.ts'),
     },
   },
 });

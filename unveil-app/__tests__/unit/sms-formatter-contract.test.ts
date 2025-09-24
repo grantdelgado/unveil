@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { composeSmsText } from '@/lib/sms-formatter';
-import { mockSupabaseClient } from '@/src/test/setup';
+import { supabase } from '@/src/test/setup';
 
 describe('SMS Formatter Contract', () => {
   beforeEach(() => {
@@ -19,7 +19,7 @@ describe('SMS Formatter Contract', () => {
   describe('Enhanced Contract Fields', () => {
     it('should include explicit signals in result', async () => {
       // Mock successful event and guest fetch
-      mockSupabaseClient.from.mockImplementation((table: string) => {
+      supabase.from.mockImplementation((table: string) => {
         if (table === 'events') {
           return {
             select: () => ({
@@ -62,7 +62,7 @@ describe('SMS Formatter Contract', () => {
 
     it('should indicate subsequent SMS correctly', async () => {
       // Mock returning recipient
-      mockSupabaseClient.from.mockImplementation((table: string) => {
+      supabase.from.mockImplementation((table: string) => {
         if (table === 'events') {
           return {
             select: () => ({
@@ -103,7 +103,7 @@ describe('SMS Formatter Contract', () => {
       process.env.SMS_BRANDING_DISABLED = 'true';
       
       // Mock event fetch (still needed for header)
-      mockSupabaseClient.from.mockImplementation((table: string) => {
+      supabase.from.mockImplementation((table: string) => {
         if (table === 'events') {
           return {
             select: () => ({
@@ -137,7 +137,7 @@ describe('SMS Formatter Contract', () => {
   describe('Fallback Scenarios', () => {
     it('should indicate fallback when event fetch fails', async () => {
       // Mock event fetch failure
-      mockSupabaseClient.from.mockImplementation((table: string) => {
+      supabase.from.mockImplementation((table: string) => {
         if (table === 'events') {
           return {
             select: () => ({
@@ -166,7 +166,7 @@ describe('SMS Formatter Contract', () => {
   describe('Regression Protection', () => {
     it('should never use fallback in normal operation', async () => {
       // Mock successful operation
-      mockSupabaseClient.from.mockImplementation((table: string) => {
+      supabase.from.mockImplementation((table: string) => {
         if (table === 'events') {
           return {
             select: () => ({
@@ -204,7 +204,7 @@ describe('SMS Formatter Contract', () => {
       process.env.SMS_BRANDING_DISABLED = 'false';
       
       // Mock successful operation
-      mockSupabaseClient.from.mockImplementation((table: string) => {
+      supabase.from.mockImplementation((table: string) => {
         if (table === 'events') {
           return {
             select: () => ({

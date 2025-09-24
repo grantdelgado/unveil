@@ -14,7 +14,8 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 const supabase = createClient<Database>(supabaseUrl, supabaseServiceKey);
 
-describe('get_guest_event_messages_v2 - Stable Ordering', () => {
+describe.skip('get_guest_event_messages_v2 - Stable Ordering // @needs-contract', () => {
+  // TODO(grant): Convert to mock-based contract test instead of real DB operations
   let testEventId: string;
   let testUserId: string;
   let testGuestId: string;

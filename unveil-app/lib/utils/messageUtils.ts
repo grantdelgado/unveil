@@ -68,7 +68,10 @@ export function mergeMessages(
     }
 
     // Tie-breaker: use message_id for consistent ordering
-    return a.message_id.localeCompare(b.message_id);
+    // Handle null/undefined message_ids gracefully
+    const idA = a.message_id || '';
+    const idB = b.message_id || '';
+    return idA.localeCompare(idB);
   });
 
   return allMessages;
