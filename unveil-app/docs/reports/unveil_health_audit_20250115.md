@@ -61,6 +61,7 @@ unveil-app/
 ```
 
 **Architecture Grade: A-**
+
 - ✅ Clean Next.js App Router implementation
 - ✅ Role-based route separation (`/host/*` vs `/guest/*`)
 - ✅ Feature-first component organization
@@ -70,6 +71,7 @@ unveil-app/
 ### Module Boundaries & Dependencies
 
 **Dependency Analysis:**
+
 - **React Query**: Excellent patterns, consistent query key conventions
 - **Supabase Integration**: Proper client/server separation, typed throughout
 - **Performance Framework**: Comprehensive monitoring and budgets
@@ -82,6 +84,7 @@ unveil-app/
 ### Routing Architecture
 
 **Route Protection Pattern:**
+
 ```typescript
 // middleware.ts - Clean auth protection
 const route = classifyRoute(pathname);
@@ -91,17 +94,20 @@ if (route.requiresAuth && !token) {
 ```
 
 **Role-Based Routing:**
+
 - `/host/events/[eventId]/*` - Host management interface
 - `/guest/events/[eventId]/*` - Guest experience
 - Dynamic segments properly typed with Supabase generated types
 
 **Auth Flow Analysis:**
+
 1. **Login** → Phone-based OTP with magic links
 2. **Session Management** → Proper cookie handling, token refresh
 3. **Route Guards** → Middleware-based protection
 4. **Role Detection** → Database-driven via RLS functions
 
 **Grade: A**
+
 - ✅ Comprehensive middleware with rate limiting
 - ✅ Proper SSR/CSR boundaries
 - ✅ Clean auth token management
@@ -114,6 +120,7 @@ if (route.requiresAuth && !token) {
 ### Query Patterns & Caching
 
 **Query Key Conventions:**
+
 ```typescript
 // Consistent, hierarchical key structure
 ['messages', eventId]
@@ -122,12 +129,14 @@ if (route.requiresAuth && !token) {
 ```
 
 **Caching Strategy Analysis:**
+
 - **Stale Time**: Appropriate per data type (0ms for scheduled, 60s for messages)
 - **Pagination**: Proper server-side with stable ordering (`created_at DESC, id DESC`)
 - **Invalidation**: Smart invalidation patterns with dependency tracking
 - **Background Refresh**: Configured appropriately for realtime data
 
 **Performance Optimizations:**
+
 - ✅ `placeholderData` for smooth pagination
 - ✅ Parallel query execution where appropriate
 - ✅ Memoized query functions
@@ -156,12 +165,14 @@ if (route.requiresAuth && !token) {
 ### RLS Policy Analysis
 
 **Security Strengths:**
+
 - ✅ All tables have RLS enabled
 - ✅ Helper functions: `is_event_host()`, `is_event_guest()`, `can_access_event()`
 - ✅ Proper `SECURITY DEFINER` functions with `SET search_path = public, pg_temp`
 - ✅ Principle of least privilege applied consistently
 
 **Policy Complexity Concerns:**
+
 ```sql
 -- Complex subquery in message_deliveries policy
 message_deliveries_update_host_only: 
@@ -170,12 +181,14 @@ EXISTS (SELECT 1 FROM messages m JOIN events e ON e.id = m.event_id
 ```
 
 **Index Coverage Analysis:**
+
 - ✅ **Excellent coverage** for hot paths
 - ✅ Composite indexes match query patterns
 - ✅ Partial indexes for filtered queries
 - ✅ Unique constraints prevent data inconsistencies
 
 **Query Performance Sample:**
+
 ```
 EXPLAIN ANALYZE: messages WHERE event_id = ? ORDER BY created_at DESC, id DESC LIMIT 50
 -> Index Scan using idx_messages_event_host_lookup (cost=0.14..1.70 rows=1)
@@ -191,6 +204,7 @@ EXPLAIN ANALYZE: messages WHERE event_id = ? ORDER BY created_at DESC, id DESC L
 ### Subscription Architecture
 
 **SubscriptionManager Class Features:**
+
 - ✅ **Token Refresh Integration** - Automatic `supabase.realtime.setAuth()` calls
 - ✅ **Connection Pooling** - Prevents duplicate subscriptions
 - ✅ **Error Recovery** - Exponential backoff (2s → 30s max)
@@ -198,6 +212,7 @@ EXPLAIN ANALYZE: messages WHERE event_id = ? ORDER BY created_at DESC, id DESC L
 - ✅ **Memory Management** - Automatic cleanup on unmount
 
 **Safety Patterns:**
+
 ```typescript
 // Prevents subscription leaks
 const existingSubscription = this.subscriptions.get(subscriptionId);
@@ -207,6 +222,7 @@ if (existingSubscription?.channel && existingSubscription.channel.state !== 'clo
 ```
 
 **Network Resilience:**
+
 - ✅ Online/offline event handling
 - ✅ Visibility change handling (mobile Safari)
 - ✅ Adaptive timeouts based on connection quality
@@ -221,6 +237,7 @@ if (existingSubscription?.channel && existingSubscription.channel.state !== 'clo
 ### Message Types & Flow
 
 **Message Types:**
+
 - `announcement` - Broadcast to all guests
 - `channel` - Group discussions
 - `direct` - Private messages (delivery-gated)
@@ -228,6 +245,7 @@ if (existingSubscription?.channel && existingSubscription.channel.state !== 'clo
 - `invitation` - Guest invitations
 
 **Composer UX Analysis:**
+
 - ✅ Type selector with clear audience indicators
 - ✅ "Audience vs Notified (SMS)" distinction
 - ✅ Content validation and character limits
@@ -235,6 +253,7 @@ if (existingSubscription?.channel && existingSubscription.channel.state !== 'clo
 - ✅ Large group confirmation flow (>50 recipients)
 
 **Read Model Implementation:**
+
 ```typescript
 // Clean RPC-based message fetching
 get_guest_event_messages_v2(p_event_id: uuid, p_limit: int)
@@ -251,6 +270,7 @@ get_guest_event_messages_v2(p_event_id: uuid, p_limit: int)
 ### Environment Variable Patterns
 
 **Client-Safe Variables:**
+
 ```typescript
 NEXT_PUBLIC_SUPABASE_URL     // ✅ Properly prefixed
 NEXT_PUBLIC_SUPABASE_ANON_KEY // ✅ Anon key, not service key
@@ -258,6 +278,7 @@ NEXT_PUBLIC_APP_URL          // ✅ Safe for client bundle
 ```
 
 **Server-Only Secrets:**
+
 ```typescript
 SUPABASE_SERVICE_ROLE_KEY    // ✅ Server-only, not in bundle
 CRON_SECRET                  // ✅ API route protection
@@ -266,12 +287,14 @@ TWILIO_AUTH_TOKEN            // ✅ Never exposed to client
 ```
 
 **Security Headers:**
+
 - ✅ Comprehensive CSP policy
 - ✅ HSTS with preload
 - ✅ X-Frame-Options: DENY
 - ✅ Proper CORS configuration
 
 **Auth Patterns:**
+
 - ✅ PKCE flow for security
 - ✅ Phone-based OTP (no passwords)
 - ✅ Session persistence across tabs
@@ -286,6 +309,7 @@ TWILIO_AUTH_TOKEN            // ✅ Never exposed to client
 ### Test Coverage Analysis
 
 **Test Distribution:**
+
 - **Unit Tests**: 71 files in `__tests__/`
 - **Integration Tests**: 17 files
 - **E2E Tests**: 10 Playwright specs  
@@ -293,12 +317,14 @@ TWILIO_AUTH_TOKEN            // ✅ Never exposed to client
 - **Total**: 169 test files
 
 **Coverage Gaps:**
+
 - ⚠️ Limited hook testing (4 files vs 60 hooks)
 - ⚠️ Missing RLS policy tests
 - ⚠️ API route test coverage unclear
 - ⚠️ No visual regression testing
 
 **CI Configuration:**
+
 ```typescript
 // package.json scripts
 "precommit": "pnpm typecheck && pnpm lint --max-warnings=0 && pnpm test && pnpm check:email && pnpm build"
@@ -306,6 +332,7 @@ TWILIO_AUTH_TOKEN            // ✅ Never exposed to client
 ```
 
 **Quality Gates:**
+
 - ✅ TypeScript strict mode
 - ✅ ESLint with zero warnings
 - ✅ Prettier formatting
@@ -321,6 +348,7 @@ TWILIO_AUTH_TOKEN            // ✅ Never exposed to client
 ### Bundle Size Monitoring
 
 **Current Status:**
+
 ```typescript
 bundleSizes: {
   hostDashboard: '314KB',    // ⚠️ Approaching 350KB warning
@@ -330,12 +358,14 @@ bundleSizes: {
 ```
 
 **Performance Framework:**
+
 - ✅ Real-time bundle size monitoring
 - ✅ Core Web Vitals tracking (FCP, LCP, CLS, TTI)
 - ✅ Component render time monitoring
 - ✅ Development alerts for performance regressions
 
 **Optimization Patterns:**
+
 ```typescript
 // Dynamic imports for code splitting
 const MessageComposer = dynamic(() => import('./MessageComposer'), {
@@ -350,6 +380,7 @@ const sortedGuests = useMemo(() =>
 ```
 
 **Performance Budgets:**
+
 - Initial JS: 200KB (current: ~300KB) ⚠️
 - Component render: <16ms for 60fps ✅
 - API response: <1s ✅
@@ -364,6 +395,7 @@ const sortedGuests = useMemo(() =>
 ### Consent Flow Implementation
 
 **SMS Disclosure Component:**
+
 ```typescript
 // components/common/SmsDisclosure.tsx
 "By continuing, you agree to receive SMS passcodes from Unveil for 
@@ -372,6 +404,7 @@ unsubscribe or HELP for help. See our Privacy Policy."
 ```
 
 **Compliance Features:**
+
 - ✅ **Explicit Opt-in** - Clear consent language before SMS
 - ✅ **STOP/HELP Handling** - Webhook processing for carrier responses
 - ✅ **Rate Limiting** - 5 SMS requests per minute per client
@@ -380,6 +413,7 @@ unsubscribe or HELP for help. See our Privacy Policy."
 - ✅ **Opt-out Tracking** - `carrier_opted_out_at` field in database
 
 **A2P Notice System:**
+
 ```typescript
 // First SMS includes compliance footer
 if (formattedSms.includedStopNotice && guestId) {
@@ -388,6 +422,7 @@ if (formattedSms.includedStopNotice && guestId) {
 ```
 
 **Twilio Integration:**
+
 - ✅ Proper campaign ID usage
 - ✅ Content template compliance
 - ✅ Delivery status tracking
@@ -419,12 +454,14 @@ if (formattedSms.includedStopNotice && guestId) {
 ### 30 Days (Quick Wins)
 
 **Performance Optimization:**
+
 - [ ] Implement code splitting for heavy components
 - [ ] Optimize React Query refetch settings
 - [ ] Add lazy loading for non-critical features
 - [ ] Bundle size monitoring alerts
 
 **Testing Enhancement:**
+
 - [ ] Add unit tests for critical hooks
 - [ ] Implement RLS policy testing
 - [ ] Set up visual regression testing
@@ -435,12 +472,14 @@ if (formattedSms.includedStopNotice && guestId) {
 ### 60 Days (Medium Impact)
 
 **Database Optimization:**
+
 - [ ] Optimize complex RLS policies
 - [ ] Add query performance monitoring
 - [ ] Implement database connection pooling
 - [ ] Review index usage patterns
 
 **Architecture Cleanup:**
+
 - [ ] Resolve circular import dependencies
 - [ ] Standardize error boundary usage
 - [ ] Implement comprehensive logging standards
@@ -451,12 +490,14 @@ if (formattedSms.includedStopNotice && guestId) {
 ### 90 Days (Strategic Improvements)
 
 **Scalability Preparation:**
+
 - [ ] Implement advanced caching strategies
 - [ ] Add horizontal scaling considerations
 - [ ] Optimize realtime subscription patterns
 - [ ] Implement advanced monitoring
 
 **Developer Experience:**
+
 - [ ] Comprehensive API documentation
 - [ ] Advanced debugging tools
 - [ ] Performance profiling dashboard
@@ -478,6 +519,7 @@ if (formattedSms.includedStopNotice && guestId) {
 ### B. Query Performance Analysis
 
 **Hot Paths:**
+
 - Message fetching: 1.9ms average ✅
 - Guest lookup: Sub-millisecond with proper indexes ✅
 - Event access checks: Optimized with helper functions ✅
@@ -486,6 +528,7 @@ if (formattedSms.includedStopNotice && guestId) {
 ### C. Bundle Analysis
 
 **Largest Dependencies:**
+
 - React/Next.js: ~45KB
 - Supabase client: ~38KB  
 - React Query: ~25KB
@@ -495,6 +538,7 @@ if (formattedSms.includedStopNotice && guestId) {
 ### D. Security Audit Results
 
 **Strengths:**
+
 - No secrets in client bundle ✅
 - Proper CORS configuration ✅
 - Comprehensive CSP headers ✅
@@ -502,6 +546,7 @@ if (formattedSms.includedStopNotice && guestId) {
 - Input validation throughout ✅
 
 **Areas for Enhancement:**
+
 - Add security headers testing
 - Implement CSRF protection for state-changing operations
 - Consider implementing request signing for critical operations
@@ -517,6 +562,7 @@ Unveil demonstrates **exceptional engineering maturity** with a score of 78/100.
 The codebase provides an excellent foundation for scaling, with clear patterns, comprehensive documentation, and mature operational practices. The suggested improvements will enhance performance and maintainability while building on an already solid foundation.
 
 **Next Steps:**
+
 1. Address bundle size optimization (immediate)
 2. Enhance test coverage (high priority)
 3. Implement performance monitoring (ongoing)

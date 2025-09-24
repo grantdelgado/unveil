@@ -11,6 +11,7 @@ Found **6 email-related columns** across 3 core tables, plus **2 check constrain
 ## Email Columns by Table
 
 ### 1. `users` Table
+
 ```sql
 Column: email
 Type: text
@@ -22,6 +23,7 @@ Usage: Currently nullable, not required for phone-only auth
 **Analysis:** This column is optional and not used in current phone-only authentication flow. Safe to remove.
 
 ### 2. `event_guests` Table
+
 ```sql
 Column: guest_email  
 Type: text
@@ -33,6 +35,7 @@ Usage: Used in guest import CSV, optional field
 **Analysis:** Used in guest import functionality and guest management. Removing will require updates to import/export logic.
 
 ### 3. `message_deliveries` Table
+
 ```sql
 Column: email
 Type: character varying
@@ -57,6 +60,7 @@ Usage: Tracking for email delivery services
 **Analysis:** These columns support email delivery channel in messaging system. Currently unused since messaging is SMS-only.
 
 ### 4. `scheduled_messages` Table
+
 ```sql
 Column: send_via_email
 Type: boolean
@@ -71,23 +75,30 @@ Usage: Multi-channel messaging configuration
 ## Database Constraints Affected
 
 ### Check Constraints
+
 1. **`event_guests_preferred_communication_check`**
+
    ```sql
    CHECK (preferred_communication IN ('sms', 'push', 'email', 'none'))
    ```
+
    **Impact:** Must remove 'email' option from enum
 
 2. **`message_deliveries_email_status_check`**
+
    ```sql  
    CHECK (email_status IN ('pending', 'sent', 'delivered', 'failed', 'not_applicable'))
    ```
+
    **Impact:** Can be removed entirely with email_status column
 
 ### Foreign Key Constraints
+
 - **No foreign key constraints** directly reference email columns
 - All email columns are independent and safe to drop
 
 ### Indexes
+
 - **No indexes found** specifically on email columns
 - No index cleanup required
 
@@ -121,15 +132,18 @@ Usage: Multi-channel messaging configuration
    - **Lines:** `eg.guest_email`, `u.email` in SELECT
 
 ### Views
+
 - **No views found** that reference email columns
 
 ### RLS Policies  
+
 - **No RLS policies found** that reference email columns
 - Email removal will not affect row-level security
 
 ## Migration Strategy
 
 ### Phase 1: Update Functions
+
 ```sql
 -- Update functions to remove email parameters and return columns
 CREATE OR REPLACE FUNCTION add_or_restore_guest(...)  -- Remove p_email param
@@ -140,6 +154,7 @@ CREATE OR REPLACE FUNCTION get_messaging_recipients(...)  -- Remove email from S
 ```
 
 ### Phase 2: Drop Constraints
+
 ```sql
 -- Remove check constraints that reference email
 ALTER TABLE event_guests DROP CONSTRAINT event_guests_preferred_communication_check;
@@ -151,6 +166,7 @@ ALTER TABLE event_guests ADD CONSTRAINT event_guests_preferred_communication_che
 ```
 
 ### Phase 3: Drop Columns
+
 ```sql
 -- Drop email columns from all tables
 ALTER TABLE users DROP COLUMN email;
@@ -164,6 +180,7 @@ ALTER TABLE scheduled_messages DROP COLUMN send_via_email;
 ## Data Impact Analysis
 
 ### Current Data Check
+
 ```sql
 -- Check for existing email data
 SELECT 
@@ -173,6 +190,7 @@ SELECT
 ```
 
 ### Backup Considerations
+
 - Email data should be backed up before removal
 - Consider export for potential future migration
 - Document any business-critical email addresses
@@ -180,20 +198,24 @@ SELECT
 ## Dependencies & Risks
 
 ### Low Risk
+
 - `users.email` - Optional field, not used in auth flow
 - `scheduled_messages.send_via_email` - Defaults to false
 - `message_deliveries.email_*` - Unused in current SMS-only system
 
 ### Medium Risk  
+
 - `event_guests.guest_email` - Used in import/export, requires code changes
 - Database functions - Multiple functions need updates
 
 ### High Risk
+
 - **None identified** - No critical dependencies on email functionality
 
 ## Verification Queries
 
 ### Pre-Migration Verification
+
 ```sql
 -- Confirm no critical email dependencies
 SELECT column_name, table_name FROM information_schema.columns 
@@ -207,6 +229,7 @@ SELECT 'event_guests', COUNT(*) FROM event_guests WHERE guest_email IS NOT NULL;
 ```
 
 ### Post-Migration Verification  
+
 ```sql
 -- Confirm email columns are removed
 SELECT column_name FROM information_schema.columns 

@@ -11,6 +11,7 @@ Successfully removed the `NEXT_PUBLIC_FEATURE_MODIFY_SCHEDULED` feature flag and
 **File**: `components/features/messaging/host/RecentMessages.tsx`
 
 **Before**:
+
 ```tsx
 const canModifyMessage = (message: ScheduledMessage): boolean => {
   // Feature flag check - only show Modify if enabled
@@ -31,6 +32,7 @@ const canModifyMessage = (message: ScheduledMessage): boolean => {
 ```
 
 **After**:
+
 ```tsx
 const canModifyMessage = (message: ScheduledMessage): boolean => {
   const now = new Date();
@@ -87,7 +89,8 @@ React.useEffect(() => {
 
 ### 5. Updated Documentation
 
-**Files**: 
+**Files**:
+
 - `docs/SCHEDULED_MESSAGE_MODIFY_FEATURE.md`
 - `docs/MODIFY_FLOW_FIX_SUMMARY.md`
 
@@ -136,6 +139,7 @@ This immediately hides all Modify buttons while preserving Cancel functionality.
 ## Telemetry
 
 ### New Rollout Event
+
 ```typescript
 logger.sms('Feature rollout: modify always on', {
   event_id: eventId,
@@ -146,6 +150,7 @@ logger.sms('Feature rollout: modify always on', {
 ```
 
 ### Existing Events (Unchanged)
+
 - `Schedule modify requested` - When user clicks Modify
 - `Schedule modify succeeded` - When update completes successfully
 

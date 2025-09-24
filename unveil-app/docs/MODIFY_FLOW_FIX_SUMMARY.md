@@ -19,6 +19,7 @@ When tapping **Modify** on an upcoming scheduled message, the app was incorrectl
 
 - Added `isEditMode?: boolean` prop to interface
 - Updated success title logic:
+
   ```tsx
   {isEditMode
     ? 'Schedule Updated'
@@ -26,7 +27,9 @@ When tapping **Modify** on an upcoming scheduled message, the app was incorrectl
     ? 'Message Scheduled'
     : 'Message Sent Successfully'}
   ```
+
 - Updated button text for edit mode:
+
   ```tsx
   {isEditMode
     ? 'Update Scheduled Message'
@@ -42,6 +45,7 @@ When tapping **Modify** on an upcoming scheduled message, the app was incorrectl
 - Pass `isEditMode={!!editingMessage}` to `SendFlowModal`
 - Updated main button text to show "Update Scheduled Message" when editing
 - Enhanced telemetry to track content/timing/audience changes:
+
   ```tsx
   logger.sms('Schedule modify succeeded', {
     event_id: eventId,
@@ -94,12 +98,14 @@ When tapping **Modify** on an upcoming scheduled message, the app was incorrectl
 ## Behavioral Changes
 
 ### Before Fix
+
 1. Tap "Modify" → Composer opens ✅
 2. Make changes → Tap "Schedule Message" ✅
 3. **BUG**: Shows "Message Sent Successfully" ❌
 4. **BUG**: Drops user into fresh composer ❌
 
 ### After Fix
+
 1. Tap "Modify" → Composer opens ✅
 2. Make changes → Tap "**Update Scheduled Message**" ✅
 3. **FIXED**: Shows "**Schedule Updated**" ✅
@@ -116,6 +122,7 @@ When tapping **Modify** on an upcoming scheduled message, the app was incorrectl
 ## Always-On Feature
 
 Modify capability is now always enabled, gated only by business rules:
+
 - Message status must be `scheduled`
 - Send time must be at least 4 minutes in the future
 

@@ -29,12 +29,14 @@ This audit identifies obsolete routes, unused RPCs, hook duplication, error hand
 #### Detailed Analysis
 
 **`/app/dashboard/page.tsx`**
+
 - **Purpose**: Static MVP placeholder page
 - **Content**: Basic UI with "Start Building Features" button
 - **Usage**: No active navigation references found
 - **Recommendation**: **SAFE TO DELETE**
 
 **`/app/guest/home/page.tsx`**
+
 - **Purpose**: Generic guest home placeholder
 - **Content**: Static RSVP and photo upload buttons (non-functional)
 - **Usage**: Referenced in `lib/constants.ts` but no active navigation
@@ -58,7 +60,8 @@ All other 18 routes are actively used and properly integrated into the navigatio
 #### Detailed RPC Analysis
 
 **High-Risk RPCs:**
-- `backfill_announcement_deliveries(p_event_id, p_dry_run)` 
+
+- `backfill_announcement_deliveries(p_event_id, p_dry_run)`
   - **Issue**: Can modify historical delivery records
   - **Usage**: Only in `__tests__/integration/announcement-backfill-safety.test.ts`
   - **Guardrail Violation**: Modifies immutable delivery history
@@ -89,6 +92,7 @@ All other 18 routes are actively used and properly integrated into the navigatio
 ### 🔴 **MESSAGING HOOKS** - Significant Overlap
 
 #### Current State
+
 - **`useMessages`** (272 lines): Generic message CRUD with React Query
 - **`useGuestMessagesRPC`** (794 lines): Specialized guest messaging with real-time
 - **`useScheduledMessages`** (459 lines): Scheduled message management
@@ -96,12 +100,14 @@ All other 18 routes are actively used and properly integrated into the navigatio
 - **`useRecipientPreview`** (unknown): Message recipient preview
 
 #### Duplication Issues
+
 1. **State Management**: Multiple hooks manage similar message state
 2. **Error Handling**: Inconsistent patterns across hooks
 3. **Real-time Logic**: Duplicated subscription management
 4. **Caching**: Overlapping React Query keys
 
 #### Consolidation Recommendation
+
 ```typescript
 // Proposed unified structure
 useMessaging({
@@ -114,17 +120,20 @@ useMessaging({
 ### 🔴 **GUEST HOOKS** - Action Pattern Duplication
 
 #### Current State
+
 - **`useGuestDecline`** (91 lines): Handles event decline
 - **`useGuestRejoin`** (83 lines): Handles event rejoin  
 - **`useAutoJoinGuests`** (107 lines): Handles auto-joining
 - **`usePhoneDuplicateCheck`**: Phone validation
 
 #### Duplication Issues
+
 1. **Similar Patterns**: All follow same async action pattern
 2. **Error Handling**: Identical error state management
 3. **Loading States**: Repeated loading/success/error logic
 
 #### Consolidation Recommendation
+
 ```typescript
 // Proposed unified structure
 useGuestActions(eventId: string) {
@@ -145,6 +154,7 @@ useGuestActions(eventId: string) {
 #### Current Error Handling Approaches
 
 1. **Try-Catch with Alerts** (2 instances)
+
    ```typescript
    try {
      // operation
@@ -154,6 +164,7 @@ useGuestActions(eventId: string) {
    ```
 
 2. **Try-Catch with State** (Most common)
+
    ```typescript
    try {
      // operation
@@ -168,6 +179,7 @@ useGuestActions(eventId: string) {
    - `MessagingErrorFallback` (messaging-specific)
 
 4. **Silent Failures** (Console warnings)
+
    ```typescript
    catch (error) {
      console.warn('Failed to fetch event timezone:', error); // ❌ Silent to user
@@ -177,6 +189,7 @@ useGuestActions(eventId: string) {
 ### 🟡 **STANDARDIZATION OPPORTUNITIES**
 
 #### Recommended Unified Pattern
+
 ```typescript
 // Centralized error handling hook
 const useErrorHandler = () => ({
@@ -339,15 +352,18 @@ const useErrorHandler = () => ({
 ## 9. Estimated Impact
 
 ### Development Velocity
+
 - **Phase 1**: +15% (reduced cognitive load from obsolete code)
 - **Phase 2**: +25% (standardized patterns, better error handling)
 - **Phase 3**: +35% (unified hooks, cleaner architecture)
 
 ### Maintenance Burden
+
 - **Current**: High (multiple patterns, duplicated logic)
 - **After Cleanup**: Medium (standardized patterns, consolidated hooks)
 
 ### Risk Mitigation
+
 - **Current Risk**: Medium (inconsistent error handling, untested critical paths)
 - **After Cleanup**: Low (comprehensive testing, standardized patterns)
 

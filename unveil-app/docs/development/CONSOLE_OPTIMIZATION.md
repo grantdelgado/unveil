@@ -17,13 +17,13 @@ In development mode, the following console output is now minimized:
 
 If you need detailed logging for debugging, set the `UNVEIL_DEBUG` environment variable:
 
-### In `.env.local`:
+### In `.env.local`
 
 ```env
 UNVEIL_DEBUG=true
 ```
 
-### Or temporarily in terminal:
+### Or temporarily in terminal
 
 ```bash
 UNVEIL_DEBUG=true npm run dev

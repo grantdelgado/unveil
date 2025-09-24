@@ -8,12 +8,14 @@ Based on the console logs provided, several critical issues were identified and 
 
 **Problem**: The reconnection logic was attempting to subscribe on channels that were already subscribed, causing Supabase realtime errors.
 
-**Root Cause**: 
+**Root Cause**:
+
 - `cleanupExistingSubscription` was deleting the subscription from the map entirely
 - Reconnection attempts were trying to reuse existing channel instances
 - No proper check for existing active subscriptions before creating new ones
 
 **Fix Applied**:
+
 ```typescript
 // Added check before creating new subscriptions
 const existingSubscription = this.subscriptions.get(subscriptionId);
@@ -41,6 +43,7 @@ private cleanupExistingSubscription(subscriptionId: string): void {
 **Root Cause**: React effects were running multiple times without proper deduplication, especially during auth state changes.
 
 **Fix Applied**:
+
 ```typescript
 // Added operation mutex in SubscriptionProvider
 const managerOperationInFlight = useRef(false);
@@ -71,6 +74,7 @@ useEffect(() => {
 **Root Cause**: Error counters were only reset when health score was above 80 AND there were errors, missing cases where timeouts occurred without errors.
 
 **Fix Applied**:
+
 ```typescript
 // Reset timeout counter when any subscription succeeds
 if (subscription) {
@@ -92,6 +96,7 @@ if (stats.healthScore > 80 && (this.globalConsecutiveErrors > 0 || this.consecut
 **Problem**: Type errors were occurring due to nullable channel references.
 
 **Fix Applied**:
+
 ```typescript
 // Updated interface to allow null channels
 export interface SubscriptionState {
@@ -120,6 +125,7 @@ With these fixes, you should see:
 ## Monitoring
 
 The existing telemetry will now provide cleaner metrics:
+
 - `realtime.timeout.bg` / `realtime.timeout.fg` - Should show fewer false positives
 - `realtime.cold_reconnect.invoked` - Should only fire when truly needed
 - `realtime.setAuth.calls` / `realtime.setAuth.deduped` - Should show proper deduplication

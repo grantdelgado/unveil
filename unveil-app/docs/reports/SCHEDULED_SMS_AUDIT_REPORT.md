@@ -19,17 +19,20 @@ After comprehensive audit, I've identified the **most likely root causes** and p
 ## ✅ **What I Verified (Working Correctly)**
 
 ### 1. **Code Path Analysis**
+
 - ✅ Scheduled and Send Now use **identical SMS flow**: `sendBulkSMS` → `sendSMS` → `composeSmsText`
 - ✅ No separate code paths causing divergent behavior
 - ✅ Supabase client fallback logic works (server → admin client)
 
 ### 2. **Formatter Implementation**
+
 - ✅ `composeSmsText` works correctly in tests
 - ✅ Event tag generation logic is sound
 - ✅ Kill switch behavior preserves headers as designed
 - ✅ All 25 tests pass including new contract tests
 
 ### 3. **Environment Configuration**
+
 - ✅ Local `SMS_BRANDING_DISABLED` is unset (defaults to false)
 - ✅ Flag reading logic works correctly
 - ✅ No syntax errors in formatter code
@@ -37,19 +40,25 @@ After comprehensive audit, I've identified the **most likely root causes** and p
 ## 🚨 **Most Likely Root Causes**
 
 ### **Hypothesis #1: Production Kill Switch Active**
+
 **Probability**: 🔴 **HIGH**
+
 - `SMS_BRANDING_DISABLED=true` is set in production environment
 - **BUT**: My new implementation should preserve headers even with kill switch
 - **Issue**: Old kill switch behavior might still be cached or deployed
 
 ### **Hypothesis #2: Event Fetch Failures**
+
 **Probability**: 🟡 **MEDIUM**  
+
 - Database connectivity issues in scheduled worker context
 - RLS policies blocking event access for admin client
 - Network timeouts causing fallback to raw messages
 
 ### **Hypothesis #3: Deployment/Caching Issue**
+
 **Probability**: 🟡 **MEDIUM**
+
 - New formatter code not deployed to production
 - Require cache issues with flag changes
 - Environment variable changes not picked up
@@ -57,7 +66,9 @@ After comprehensive audit, I've identified the **most likely root causes** and p
 ## 🛠️ **Diagnostic Tools Provided**
 
 ### 1. **Enhanced Logging** (`app/api/messages/process-scheduled/route.ts`)
+
 Added comprehensive debug logging:
+
 ```typescript
 // Pre-send diagnostics
 logger.api('Scheduled SMS Debug - Pre-Send', {
@@ -77,17 +88,21 @@ logger.api('Scheduled SMS Direct Format Test', {
 ```
 
 ### 2. **Debug Script** (`scripts/debug-scheduled-sms.ts`)
+
 Standalone diagnostic tool to test formatter behavior:
+
 ```bash
 npx tsx scripts/debug-scheduled-sms.ts
 ```
 
 ### 3. **Test Suite** (`__tests__/debug/scheduled-sms-debug.test.ts`)
+
 Reproduces exact scenarios to identify issues.
 
 ## 🎯 **Immediate Action Plan**
 
 ### **Step 1: Check Production Environment**
+
 ```bash
 # Check if kill switch is active in production
 echo $SMS_BRANDING_DISABLED
@@ -99,12 +114,15 @@ echo $SMS_BRANDING_DISABLED
 ```
 
 ### **Step 2: Monitor Telemetry**
+
 Look for these metrics in production logs:
+
 - `messaging.formatter.fallback_used{path}` - Should be 0
 - `messaging.formatter.header_missing{path}` - Should be 0
 - `reason: 'fallback'` in SMS formatting logs
 
 ### **Step 3: Test Specific Scenarios**
+
 1. **If kill switch is ON**: Headers should still be preserved (new behavior)
 2. **If kill switch is OFF**: Headers should always be included
 3. **If fallback occurs**: Check event fetch errors or DB connectivity
@@ -112,16 +130,19 @@ Look for these metrics in production logs:
 ## 🔧 **Quick Fixes by Scenario**
 
 ### **If Kill Switch is Active (`SMS_BRANDING_DISABLED=true`)**
+
 - **Expected**: Headers preserved, brand/STOP removed
 - **If headers missing**: Old code still deployed, need to redeploy
 - **Action**: Verify new formatter code is live in production
 
 ### **If Event Fetch Failing**
+
 - **Symptoms**: `reason: 'fallback'` in logs
 - **Causes**: DB connectivity, RLS policies, network issues
 - **Action**: Check database logs and connectivity from worker
 
 ### **If Environment Issue**
+
 - **Symptoms**: Inconsistent behavior between environments
 - **Causes**: Cached environment variables, deployment issues
 - **Action**: Restart application, verify environment variables
@@ -129,6 +150,7 @@ Look for these metrics in production logs:
 ## 📊 **Expected Log Patterns**
 
 ### **Healthy Scheduled SMS (with headers)**
+
 ```
 SMS formatting completed: {
   included: { header: true, brand: true, stop: true },
@@ -138,6 +160,7 @@ SMS formatting completed: {
 ```
 
 ### **Kill Switch Active (headers preserved)**
+
 ```
 SMS formatting completed: {
   included: { header: true, brand: false, stop: false },
@@ -147,6 +170,7 @@ SMS formatting completed: {
 ```
 
 ### **Problematic Fallback (no headers)**
+
 ```
 SMS formatting completed: {
   included: { header: false, brand: false, stop: false },

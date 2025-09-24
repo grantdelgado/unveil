@@ -9,11 +9,13 @@ This feature enhances the scheduled message functionality with improved Cancel U
 ### 1. Enhanced Cancel Experience
 
 **Before:**
+
 - Basic `confirm()` dialog
 - No error handling or rollback
 - Limited user feedback
 
 **After:**
+
 - Rich modal dialog with message preview
 - Shows recipient count and delivery methods
 - Clear warning about irreversible action
@@ -23,6 +25,7 @@ This feature enhances the scheduled message functionality with improved Cancel U
 ### 2. Modify Capability
 
 **New functionality:**
+
 - "Modify" button on upcoming scheduled messages
 - Opens composer prefilled with existing message data
 - Supports editing content, timing, audience, and delivery methods
@@ -69,6 +72,7 @@ SECURITY DEFINER;
 ### Always-On Feature
 
 The Modify capability is now always enabled and gated only by business rules:
+
 - Message status must be `scheduled`
 - Send time must be at least 4 minutes in the future (3min + 1min freeze window)
 
@@ -130,11 +134,13 @@ logger.sms('Schedule modify succeeded', {
 ## Testing
 
 ### Unit Tests
+
 - `CancelMessageDialog.test.tsx` - Dialog component behavior
 - Validation logic for timing constraints
 - RPC function authorization and edge cases
 
 ### E2E Tests
+
 - `scheduled-message-modify.spec.ts` - Full user workflows
 - Cancel and modify flows
 - Error handling scenarios
@@ -143,10 +149,12 @@ logger.sms('Schedule modify succeeded', {
 ## Rollback Strategy
 
 ### Immediate Rollback
+
 - Add a simple guard constant in `canModifyMessage()` returning `false` to hide Modify buttons
 - Cancel functionality remains unchanged (enhanced but backward compatible)
 
 ### Database Rollback
+
 - New columns are nullable and have defaults
 - RPC function can be dropped without affecting existing functionality
 - No breaking changes to existing message flow

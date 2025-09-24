@@ -174,6 +174,7 @@ $function$
 - Multiple concurrent calls cannot process the same message
 - Database-level locking prevents race conditions
 - Status transitions prevent duplicate processing:
+
   ```sql
   UPDATE scheduled_messages
   SET status = 'sending', updated_at = now()

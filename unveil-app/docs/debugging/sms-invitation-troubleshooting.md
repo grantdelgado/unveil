@@ -212,7 +212,7 @@ WHERE event_id = 'your-event-id' AND sms_opt_out = true;
 
 ## 🔗 Additional Resources
 
-- **Twilio Console:** https://console.twilio.com/us1/develop/sms/logs
+- **Twilio Console:** <https://console.twilio.com/us1/develop/sms/logs>
 - **SMS Setup Guide:** `docs/archive/project-docs-legacy/04-OPERATIONS/docs-SMS_SETUP_GUIDE.md`
 - **Delegated Hosts Documentation:** `docs/access/roles/delegated-hosts.md`
 - **Environment Setup:** `docs/development/DEPLOYMENT.md`

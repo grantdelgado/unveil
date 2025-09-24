@@ -22,6 +22,7 @@ originalLocation: "MESSAGING_RPC_VERIFICATION_REPORT.md"
 ## Core Messaging Functions
 
 ### 1. `get_guest_event_messages_v2`
+
 - **Status:** ✅ ACTIVE
 - **Signature:** `(p_event_id uuid, p_limit integer DEFAULT 50, p_before timestamp with time zone DEFAULT NULL)`
 - **Return Type:** TABLE with message details including delivery status, sender info, and message metadata
@@ -31,6 +32,7 @@ originalLocation: "MESSAGING_RPC_VERIFICATION_REPORT.md"
 - **Notes:** Core guest messaging function - handles message retrieval with proper access controls and tag filtering
 
 ### 2. `resolve_message_recipients`
+
 - **Status:** ✅ ACTIVE
 - **Signature:** `(msg_event_id uuid, target_guest_ids uuid[], target_tags text[], require_all_tags boolean, target_rsvp_statuses text[], include_declined boolean)`
 - **Return Type:** TABLE with guest recipient details including SMS eligibility
@@ -40,6 +42,7 @@ originalLocation: "MESSAGING_RPC_VERIFICATION_REPORT.md"
 - **Notes:** Resolves message recipients with proper filtering and SMS opt-out handling
 
 ### 3. `update_scheduled_message`
+
 - **Status:** ✅ ACTIVE
 - **Signature:** `(p_message_id uuid, p_content text, p_send_at timestamp, p_message_type message_type_enum, ...)`
 - **Return Type:** jsonb (success/error response)
@@ -49,6 +52,7 @@ originalLocation: "MESSAGING_RPC_VERIFICATION_REPORT.md"
 - **Notes:** Handles scheduled message updates with proper authorization and timing validation
 
 ### 4. `upsert_message_delivery`
+
 - **Status:** ✅ ACTIVE
 - **Signature:** `(p_message_id uuid, p_guest_id uuid, p_phone_number varchar, ...)`
 - **Return Type:** uuid (delivery record ID)
@@ -60,6 +64,7 @@ originalLocation: "MESSAGING_RPC_VERIFICATION_REPORT.md"
 ## Supporting Messaging Functions
 
 ### 5. `get_scheduled_messages_for_processing`
+
 - **Status:** ✅ ACTIVE
 - **Signature:** `(p_limit integer DEFAULT 100, p_current_time timestamptz DEFAULT now())`
 - **Return Type:** TABLE with scheduled message details for cron processing
@@ -69,6 +74,7 @@ originalLocation: "MESSAGING_RPC_VERIFICATION_REPORT.md"
 - **Notes:** Critical for scheduled message processing pipeline
 
 ### 6. `get_messaging_recipients`
+
 - **Status:** ✅ ACTIVE
 - **Signature:** `(p_event_id uuid, p_include_hosts boolean DEFAULT false)`
 - **Return Type:** TABLE with recipient details and phone validation
@@ -78,6 +84,7 @@ originalLocation: "MESSAGING_RPC_VERIFICATION_REPORT.md"
 - **Notes:** Provides recipient list for messaging UI
 
 ### 7. `handle_sms_delivery_error`
+
 - **Status:** ✅ ACTIVE
 - **Signature:** `(p_phone text, p_error_code text, p_error_message text DEFAULT NULL)`
 - **Return Type:** json
@@ -87,6 +94,7 @@ originalLocation: "MESSAGING_RPC_VERIFICATION_REPORT.md"
 - **Notes:** Handles SMS delivery failures and auto-opt-out logic
 
 ### 8. `handle_sms_delivery_success`
+
 - **Status:** ✅ ACTIVE
 - **Signature:** `(p_phone text)`
 - **Return Type:** json
@@ -98,6 +106,7 @@ originalLocation: "MESSAGING_RPC_VERIFICATION_REPORT.md"
 ## Access Control Functions
 
 ### 9. `can_access_message`
+
 - **Status:** ✅ ACTIVE
 - **Signature:** `(p_message_id uuid)`
 - **Return Type:** boolean
@@ -107,8 +116,9 @@ originalLocation: "MESSAGING_RPC_VERIFICATION_REPORT.md"
 - **Notes:** Optimized message access validation
 
 ### 10. `guest_has_any_tags`
+
 - **Status:** ✅ ACTIVE (2 overloads)
-- **Signatures:** 
+- **Signatures:**
   - `(guest_id uuid, target_tags text[])`
   - `(p_user_id uuid, p_event_id uuid, target_tags text[])`
 - **Return Type:** boolean
@@ -118,6 +128,7 @@ originalLocation: "MESSAGING_RPC_VERIFICATION_REPORT.md"
 - **Notes:** Tag filtering logic for message targeting
 
 ### 11. `guest_has_all_tags`
+
 - **Status:** ✅ ACTIVE
 - **Signature:** `(guest_id uuid, target_tags text[])`
 - **Return Type:** boolean
@@ -129,6 +140,7 @@ originalLocation: "MESSAGING_RPC_VERIFICATION_REPORT.md"
 ## Trigger Functions
 
 ### 12. `update_scheduled_message_version`
+
 - **Status:** ✅ ACTIVE
 - **Type:** TRIGGER function
 - **Language:** plpgsql

@@ -174,7 +174,7 @@ This document outlines the comprehensive redesign of the Guest Event View Page (
 
 **Priority:** High | **Effort:** Low | **Impact:** High
 
-#### Tasks:
+#### Tasks
 
 1. **Remove Pink Welcome Box** (`Lines 291-299`)
 
@@ -185,16 +185,18 @@ This document outlines the comprehensive redesign of the Guest Event View Page (
    - Location: `components/features/guest/InstructionalBanner.tsx`
    - Props: `{ eventId: string, className?: string }`
    - Content:
+
      ```
      This page includes:
      • Info about the celebration
      • Messages from your hosts
      • A shared photo album to capture memories
      ```
+
    - Design: Subtle background, small text, minimal padding
    - Classes: `bg-stone-50 border border-stone-200 rounded-lg p-4 text-sm text-stone-600`
 
-#### Implementation Notes:
+#### Implementation Notes
 
 - Place banner after sticky header, before main content
 - Use bullet points with subtle styling
@@ -206,7 +208,7 @@ This document outlines the comprehensive redesign of the Guest Event View Page (
 
 **Priority:** High | **Effort:** Medium | **Impact:** High
 
-#### Tasks:
+#### Tasks
 
 1. **Remove Existing Moments Section** (`Lines 388-403`)
 
@@ -228,7 +230,7 @@ This document outlines the comprehensive redesign of the Guest Event View Page (
    - Add `shared_album_url` field to `event_guests` table if not exists
    - Type: `text` nullable field
 
-#### Button Specifications:
+#### Button Specifications
 
 - **Label:** "Open Shared Photo Album"
 - **Design:** `Button` component with `outline` variant
@@ -244,7 +246,7 @@ This document outlines the comprehensive redesign of the Guest Event View Page (
 
 **Priority:** Medium | **Effort:** Medium | **Impact:** Medium
 
-#### Tasks:
+#### Tasks
 
 1. **Reduce Visual Clutter** (`Lines 302-386`)
 
@@ -257,7 +259,7 @@ This document outlines the comprehensive redesign of the Guest Event View Page (
    - Optimize spacing between elements
    - Use subtle color variations
 
-#### Updated Design Specifications:
+#### Updated Design Specifications
 
 - **Section Title:** `text-lg font-medium text-stone-800` (reduced from `text-xl`)
 - **Icons:** `w-4 h-4 text-stone-400` (smaller, muted)
@@ -271,7 +273,7 @@ This document outlines the comprehensive redesign of the Guest Event View Page (
 
 **Priority:** Medium | **Effort:** Medium | **Impact:** High
 
-#### Tasks:
+#### Tasks
 
 1. **Redesign RSVP Buttons** (`Lines 189-233`, `Lines 416-437`)
 
@@ -285,7 +287,7 @@ This document outlines the comprehensive redesign of the Guest Event View Page (
    - Use softer colors and better hover states
    - Add subtle shadows for depth
 
-#### RSVP Button Specifications:
+#### RSVP Button Specifications
 
 - **Base Classes:** `w-full py-4 px-4 rounded-xl font-medium transition-all duration-300`
 - **Selected State:** Solid background with white text
@@ -299,7 +301,7 @@ This document outlines the comprehensive redesign of the Guest Event View Page (
 
 **Priority:** Low | **Effort:** Low | **Impact:** Medium
 
-#### Tasks:
+#### Tasks
 
 1. **Optimize Quick Actions Layout** (`Lines 440-464`)
 
@@ -312,7 +314,7 @@ This document outlines the comprehensive redesign of the Guest Event View Page (
    - Reduce padding and font sizes
    - Group related actions visually
 
-#### Updated Specifications:
+#### Updated Specifications
 
 - **Button Size:** `py-2.5 px-3 text-sm` (reduced from `py-3 px-4`)
 - **Layout:** Stack on mobile, 2-column grid on desktop
@@ -324,7 +326,7 @@ This document outlines the comprehensive redesign of the Guest Event View Page (
 
 **Priority:** Low | **Effort:** Low | **Impact:** Low
 
-#### Tasks:
+#### Tasks
 
 1. **Modernize Host Avatar** (`Lines 467-486`)
 
@@ -343,7 +345,7 @@ This document outlines the comprehensive redesign of the Guest Event View Page (
 
 **Priority:** Medium | **Effort:** Medium | **Impact:** Medium
 
-#### Tasks:
+#### Tasks
 
 1. **Simplify Message Display** (`Lines 405-410`)
 
@@ -362,7 +364,7 @@ This document outlines the comprehensive redesign of the Guest Event View Page (
 
 **Priority:** High | **Effort:** High | **Impact:** Very High
 
-#### Tasks:
+#### Tasks
 
 1. **Remove Header Clutter**
 
@@ -386,7 +388,7 @@ This document outlines the comprehensive redesign of the Guest Event View Page (
    - Loading states and error handling
    - Automatic refresh after successful updates
 
-#### Updated Design Specifications:
+#### Updated Design Specifications
 
 - **Badge**: `min-w-[180px] h-10 rounded-full border px-4 py-2 text-sm font-medium`
 - **Dropdown**: `w-48 bg-white rounded-lg shadow-lg border border-stone-200`

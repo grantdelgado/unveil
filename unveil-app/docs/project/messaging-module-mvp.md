@@ -957,6 +957,7 @@ function EventMessagingPage() {
    ```
 
 4. **Advanced Scheduling Hook**
+
    ```tsx
    const {
      scheduledMessages,
@@ -1111,6 +1112,7 @@ function EventMessagingPage() {
    ```
 
 4. **Advanced Analytics Service**
+
    ```tsx
    const analytics = await getMessageAnalytics(messageId);
    // Returns: delivery rates, recipient breakdown, channel performance

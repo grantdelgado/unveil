@@ -22,17 +22,20 @@ The messaging system currently uses **5 overlapping hooks** with significant dup
 
 **Purpose**: Generic message CRUD operations with React Query  
 **Database Operations**:
+
 - `supabase.from('messages').select()` - Direct table queries
 - `supabase.from('scheduled_messages').select()` - Direct table queries
 - `supabase.from('messages').insert()` - Message creation
 - `supabase.from('messages').delete()` - Message deletion
 
-**Used By**: 
+**Used By**:
+
 - `components/features/messaging/host/MessageCenter.tsx`
 - `components/features/host-dashboard/NotificationCenter.tsx`
 - `hooks/messaging/scheduled/useScheduledMessagesQuery.ts`
 
 **Key Features**:
+
 - React Query integration
 - Basic CRUD operations
 - Simple error handling
@@ -42,16 +45,19 @@ The messaging system currently uses **5 overlapping hooks** with significant dup
 
 **Purpose**: Specialized guest messaging with real-time subscriptions  
 **Database Operations**:
+
 - `supabase.rpc('get_guest_event_messages_v2')` - RPC-based message fetching
 - Real-time subscriptions via `SubscriptionManager`
 - Complex pagination logic
 - Message deduplication and merging
 
 **Used By**:
+
 - `components/features/messaging/guest/GuestMessaging.tsx`
 - Test files for pagination
 
 **Key Features**:
+
 - Advanced real-time subscriptions
 - Pagination with cursor-based loading
 - Complex error handling with normalization
@@ -62,16 +68,19 @@ The messaging system currently uses **5 overlapping hooks** with significant dup
 
 **Purpose**: Scheduled message management with real-time updates  
 **Database Operations**:
+
 - Service layer calls to `getScheduledMessages()`
 - Service layer calls to `createScheduledMessage()`
 - Service layer calls to `deleteScheduledMessage()`
 - Real-time subscriptions for scheduled messages
 
 **Used By**:
+
 - `components/features/messaging/host/RecentMessages.tsx`
 - `components/features/messaging/host/ScheduledMessagesList.tsx`
 
 **Key Features**:
+
 - Full CRUD operations for scheduled messages
 - Real-time updates
 - StrictMode-safe implementation
@@ -81,14 +90,17 @@ The messaging system currently uses **5 overlapping hooks** with significant dup
 
 **Purpose**: Recipient selection logic using RPC  
 **Database Operations**:
+
 - `supabase.rpc('get_messaging_recipients')` - RPC for recipient data
 - Caching with stale-while-revalidate pattern
 
 **Used By**:
+
 - `hooks/messaging/useGuestSelection.ts`
 - `hooks/messaging/useRecipientPreview.ts`
 
 **Key Features**:
+
 - Unified recipient scope
 - Performance optimization with caching
 - Consistent with guest management scope
@@ -97,14 +109,17 @@ The messaging system currently uses **5 overlapping hooks** with significant dup
 
 **Purpose**: Real-time recipient preview for message composition  
 **Database Operations**:
+
 - Uses `useMessagingRecipients` internally
 - `supabase.from('event_guests').select()` for tag statistics
 - Complex filtering and preview logic
 
 **Used By**:
+
 - Message composition components (inferred)
 
 **Key Features**:
+
 - Real-time filtering preview
 - Tag statistics calculation
 - RSVP status filtering
@@ -117,6 +132,7 @@ The messaging system currently uses **5 overlapping hooks** with significant dup
 ### 🔴 **Critical Duplications**
 
 #### **State Management Patterns**
+
 ```typescript
 // Pattern repeated across 4 hooks
 const [loading, setLoading] = useState(true);
@@ -125,6 +141,7 @@ const [data, setData] = useState<T[]>([]);
 ```
 
 #### **Error Handling Logic**
+
 ```typescript
 // Similar error handling in 3 hooks
 catch (err) {
@@ -135,6 +152,7 @@ catch (err) {
 ```
 
 #### **React Query Key Conflicts**
+
 ```typescript
 // Potential conflicts between hooks
 ['messages', eventId]           // useMessages
@@ -142,6 +160,7 @@ catch (err) {
 ```
 
 #### **Real-time Subscription Overlap**
+
 - `useGuestMessagesRPC`: Complex subscription management
 - `useScheduledMessages`: Separate subscription for scheduled messages
 - Both manage similar subscription lifecycle patterns
@@ -149,11 +168,13 @@ catch (err) {
 ### 🟡 **Database Operation Overlaps**
 
 #### **Message Fetching**
+
 - `useMessages`: Direct table queries
 - `useGuestMessagesRPC`: RPC-based queries
 - **Risk**: Different data shapes and access patterns
 
 #### **Scheduled Message Operations**
+
 - `useMessages`: Basic scheduled message queries
 - `useScheduledMessages`: Full CRUD operations
 - **Risk**: Cache invalidation conflicts
@@ -188,6 +209,7 @@ catch (err) {
 ### 🚀 **Phase 1: Preparation (0 Risk)**
 
 #### **Step 1.1: Create Unified Interface**
+
 ```typescript
 // New unified hook interface (backward compatible)
 interface UseMessagingOptions {
@@ -225,6 +247,7 @@ interface UseMessagingReturn {
 ```
 
 #### **Step 1.2: Implement with Delegation Pattern**
+
 ```typescript
 // Implementation delegates to existing hooks (no changes to current behavior)
 export function useMessaging(options: UseMessagingOptions): UseMessagingReturn {
@@ -253,6 +276,7 @@ export function useMessaging(options: UseMessagingOptions): UseMessagingReturn {
 ### 🔧 **Phase 2: Gradual Migration (Low Risk)**
 
 #### **Step 2.1: Migrate Components One by One**
+
 ```typescript
 // Before (in MessageCenter.tsx)
 const { messages, loading, error } = useMessages(eventId);
@@ -266,6 +290,7 @@ const { messages, messagesLoading: loading, messagesError: error } = useMessagin
 ```
 
 #### **Step 2.2: Add Feature Flags**
+
 ```typescript
 // Safe rollback mechanism
 const USE_UNIFIED_MESSAGING = process.env.NEXT_PUBLIC_USE_UNIFIED_MESSAGING === 'true';
@@ -286,6 +311,7 @@ export function MessageCenter({ eventId }: Props) {
 ### 🏗️ **Phase 3: Internal Consolidation (Medium Risk)**
 
 #### **Step 3.1: Consolidate Database Operations**
+
 ```typescript
 // Internal implementation consolidates database calls
 function useMessagingInternal(options: UseMessagingOptions) {
@@ -309,6 +335,7 @@ function useMessagingInternal(options: UseMessagingOptions) {
 ```
 
 #### **Step 3.2: Migrate Database Operations Safely**
+
 ```typescript
 // Preserve exact same database operations
 async function fetchGuestMessages(eventId: string) {
@@ -333,6 +360,7 @@ async function fetchHostMessages(eventId: string) {
 ### 🧹 **Phase 4: Cleanup (Low Risk)**
 
 #### **Step 4.1: Remove Old Hooks Gradually**
+
 ```typescript
 // Mark as deprecated first
 /** @deprecated Use useMessaging instead */
@@ -343,6 +371,7 @@ export function useMessages(eventId?: string) {
 ```
 
 #### **Step 4.2: Final Removal**
+
 - Remove deprecated hooks only after all components migrated
 - Update imports across codebase
 - Remove unused React Query keys
@@ -375,18 +404,21 @@ export function useMessages(eventId?: string) {
 ## 6. Risk Mitigation Checklist
 
 ### **Before Migration**
+
 - [ ] **Full Test Suite**: Run all existing tests to establish baseline
 - [ ] **Database Backup**: Full backup before any changes
 - [ ] **Feature Flags**: Implement rollback mechanism
 - [ ] **Monitoring**: Set up error rate monitoring
 
 ### **During Migration**
+
 - [ ] **Component-by-Component**: Migrate one component at a time
 - [ ] **A/B Testing**: Use feature flags to test new vs old hooks
 - [ ] **Error Monitoring**: Watch for increased error rates
 - [ ] **Performance Monitoring**: Check for performance regressions
 
 ### **After Migration**
+
 - [ ] **Verification**: Confirm all functionality works identically
 - [ ] **Performance Check**: Verify no performance degradation
 - [ ] **Error Rate Check**: Confirm error rates remain stable
@@ -397,24 +429,28 @@ export function useMessages(eventId?: string) {
 ## 7. Implementation Timeline
 
 ### **Week 1: Preparation**
+
 - Create unified interface
 - Implement delegation pattern
 - Add feature flags
 - **Risk**: None (no behavior changes)
 
 ### **Week 2: Migration**
+
 - Migrate 2-3 components
 - Test thoroughly
 - Monitor for issues
 - **Risk**: Low (feature flags enable rollback)
 
 ### **Week 3: Consolidation**
+
 - Consolidate internal implementation
 - Optimize database operations
 - Remove duplication
 - **Risk**: Medium (requires careful testing)
 
 ### **Week 4: Cleanup**
+
 - Remove deprecated hooks
 - Update documentation
 - Final verification
@@ -425,16 +461,19 @@ export function useMessages(eventId?: string) {
 ## 8. Success Metrics
 
 ### **Code Quality**
+
 - **Lines of Code**: Reduce from ~1,953 lines to ~800 lines (60% reduction)
 - **Duplication**: Eliminate 4 duplicate state management patterns
 - **Consistency**: Single error handling pattern across all messaging
 
 ### **Performance**
+
 - **Bundle Size**: Reduce messaging hook bundle by ~40%
 - **Memory Usage**: Eliminate duplicate subscriptions
 - **API Calls**: Optimize overlapping queries
 
 ### **Maintainability**
+
 - **Single Source of Truth**: One hook for all messaging operations
 - **Unified Testing**: Single test suite for all messaging logic
 - **Easier Debugging**: Centralized error handling and logging
@@ -446,16 +485,19 @@ export function useMessages(eventId?: string) {
 The messaging hooks consolidation is **safe and beneficial** with proper implementation:
 
 ### ✅ **Database Safety**
+
 - Zero risk to database operations
 - All queries and RPC calls preserved exactly
 - RLS policies remain fully protective
 
 ### ✅ **Migration Safety**
+
 - Gradual migration with feature flags
 - Backward compatibility maintained
 - Easy rollback mechanism
 
 ### ✅ **Long-term Benefits**
+
 - 60% reduction in code duplication
 - Improved maintainability
 - Better performance

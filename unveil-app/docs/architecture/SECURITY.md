@@ -10,6 +10,7 @@
 - **Fix**: Added `SET search_path = ''` to all functions in migration `20250129000005`
 - **Impact**: **100% elimination** of search_path vulnerabilities
 - **Functions Secured**:
+
   ```sql
   ✅ is_event_host()          ✅ guest_has_any_tags()
   ✅ is_event_guest()         ✅ guest_has_all_tags()
@@ -29,6 +30,7 @@
 
 - **Status**: ✅ **100% RLS Coverage**
 - **Protected Tables**: 7/7 tables have active RLS policies
+
   ```
   ✅ events              ✅ message_deliveries
   ✅ event_guests        ✅ scheduled_messages
@@ -66,7 +68,7 @@ These settings **MUST be configured in Supabase Dashboard** (cannot be set via S
 
 The security test suite (`tests/security/cross-event-access-validation.spec.ts`) validates:
 
-#### ❌ **Prevented Access Patterns**:
+#### ❌ **Prevented Access Patterns**
 
 - Hosts cannot access other hosts' events
 - Guests cannot access events they're not invited to
@@ -74,14 +76,14 @@ The security test suite (`tests/security/cross-event-access-validation.spec.ts`)
 - Messages are isolated between events
 - Phone-only guests have strict event isolation
 
-#### 🚫 **Privilege Escalation Protection**:
+#### 🚫 **Privilege Escalation Protection**
 
 - Guests cannot escalate to host privileges
 - Cannot create unauthorized events
 - Cannot access unauthorized messaging functions
 - Function calls are properly scoped to user permissions
 
-#### ✅ **Authorized Access Patterns**:
+#### ✅ **Authorized Access Patterns**
 
 - Hosts can access their own events
 - Guests can access their invited events

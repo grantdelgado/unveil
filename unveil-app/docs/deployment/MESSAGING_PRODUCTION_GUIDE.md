@@ -44,7 +44,7 @@ npx supabase db pull --schema public
 
 ### **3. Twilio Console Configuration**
 
-1. **Login to Twilio Console**: https://console.twilio.com/
+1. **Login to Twilio Console**: <https://console.twilio.com/>
 2. **Configure Webhook**:
 
    - Go to Phone Numbers > Manage > Active Numbers
@@ -107,6 +107,7 @@ This will check:
    ```
 
 3. **Test Webhook Processing**:
+
    ```bash
    # Send a test message
    # Check Twilio webhook logs
@@ -238,15 +239,15 @@ Before marking the deployment as successful, verify:
 
 ### **Twilio Support**
 
-- Console: https://console.twilio.com/
-- Support: https://support.twilio.com/
-- Status: https://status.twilio.com/
+- Console: <https://console.twilio.com/>
+- Support: <https://support.twilio.com/>
+- Status: <https://status.twilio.com/>
 
 ### **Vercel Support**
 
-- Dashboard: https://vercel.com/dashboard
-- Documentation: https://vercel.com/docs
-- Status: https://www.vercel-status.com/
+- Dashboard: <https://vercel.com/dashboard>
+- Documentation: <https://vercel.com/docs>
+- Status: <https://www.vercel-status.com/>
 
 ### **Emergency Procedures**
 

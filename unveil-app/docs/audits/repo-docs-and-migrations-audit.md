@@ -19,7 +19,7 @@ This comprehensive audit examined **213 Markdown files** and **57 SQL migration 
 
 ### HIGH RISK
 
-| Risk | Impact | Likelihood | Rationale | 
+| Risk | Impact | Likelihood | Rationale |
 |------|--------|------------|-----------|
 | **Search Path Vulnerabilities in SECURITY DEFINER Functions** | High | Medium | 20+ functions lack explicit `SET search_path = ''` creating privilege escalation risk |
 | **Out-of-Order Migration Timestamps** | High | Low | 8 migrations with duplicate/conflicting timestamps could cause deployment failures |
@@ -48,6 +48,7 @@ This comprehensive audit examined **213 Markdown files** and **57 SQL migration 
 **Total Files:** 213 Markdown files  
 **Size Range:** 65 bytes - 44.4KB  
 **Classification:**
+
 - Implementation docs: 45 files
 - Architecture docs: 8 files  
 - Legacy archive: 62 files
@@ -80,27 +81,32 @@ This comprehensive audit examined **213 Markdown files** and **57 SQL migration 
 #### Critical Migration Issues
 
 1. **Search Path Security Vulnerabilities**
+
    ```sql
    -- VULNERABLE PATTERN (found in 20+ functions)
    CREATE OR REPLACE FUNCTION public.some_function()
    LANGUAGE plpgsql
    SECURITY DEFINER  -- Missing: SET search_path = ''
    ```
+
    - **Risk:** Privilege escalation through search_path manipulation
    - **Files:** 22 migrations contain SECURITY DEFINER functions
    - **Mitigation:** All recent functions (2025-08-19+) properly secured
 
 2. **Timestamp Conflicts**
+
    ```
    20250101000000_initial_schema.sql
    20250101000000_add_message_templates.sql  ← CONFLICT
    20250129000010_add_atomic_event_creation.sql  
    20250129000010_fix_stable_ordering_guest_messages.sql  ← CONFLICT
    ```
+
    - **Impact:** Unpredictable migration order in fresh deployments
    - **Affected:** 8 migration files with duplicate timestamps
 
 3. **Destructive Operations**
+
    ```sql
    -- Found in 20250120000005_backfill_canonical_membership.sql
    DROP FUNCTION IF EXISTS public.dedupe_event_guests();
@@ -108,12 +114,14 @@ This comprehensive audit examined **213 Markdown files** and **57 SQL migration 
    -- Found in 20250122000000_fix_guest_messages_rpc_nullability.sql  
    DROP FUNCTION IF EXISTS public.get_guest_event_messages(uuid, int, timestamptz);
    ```
+
    - **Risk:** Data loss without rollback procedures
    - **Mitigation:** Most include recreation logic in same migration
 
 ### Schema Drift Analysis
 
 **Current Production Schema vs Migrations:**
+
 - ✅ **Tables:** All 8 core tables present and consistent
 - ✅ **Functions:** `get_guest_event_messages()` and `get_guest_event_messages_legacy()` both exist
 - ✅ **RLS Policies:** All policies properly applied
@@ -122,6 +130,7 @@ This comprehensive audit examined **213 Markdown files** and **57 SQL migration 
 ### Codebase Usage Analysis
 
 **RPC Function Usage:**
+
 ```typescript
 // CONFIRMED USAGE PATTERNS
 supabase.rpc('get_guest_event_messages', { p_event_id, p_limit, p_before })
@@ -135,6 +144,7 @@ supabase.rpc('get_user_events', { ... })
 ```
 
 **Unused Functions Detected:**
+
 - Several helper functions in migrations appear unused in codebase
 - Legacy RPC functions preserved for rollback capability
 
@@ -143,10 +153,12 @@ supabase.rpc('get_user_events', { ... })
 ### 1-Week Actions (Critical)
 
 1. **Fix Search Path Vulnerabilities** ⚠️
+
    ```sql
    -- Apply to all SECURITY DEFINER functions
    SET search_path = ''
    ```
+
    - **Files:** Review all 22 migrations with SECURITY DEFINER
    - **Priority:** HIGH - Security vulnerability
    - **Effort:** 4 hours
@@ -235,15 +247,18 @@ supabase.rpc('get_user_events', { ... })
 ### Current Security Posture: **MEDIUM RISK**
 
 **Vulnerabilities:**
+
 - Search path injection in SECURITY DEFINER functions (PRE-2025-08-19)
 - PII in documentation (low risk - appears to be test data)
 
 **Mitigations in Place:**
+
 - RLS policies properly configured
 - Recent functions properly secured
 - Production access controls functioning
 
 **Recommended Actions:**
+
 - Immediate patching of search_path vulnerabilities
 - PII sanitization in documentation
 - Security scanning integration

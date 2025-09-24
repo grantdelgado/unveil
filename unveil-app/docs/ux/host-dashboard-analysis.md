@@ -324,6 +324,7 @@ _Managing Guests:_
    ```
 
 3. **Reduce Header Weight**
+
    ```diff
    - Full event description in header
    + Truncated description with "Read more"

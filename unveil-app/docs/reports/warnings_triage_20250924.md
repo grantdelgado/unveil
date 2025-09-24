@@ -1,4 +1,5 @@
 # Warnings Triage Report
+
 *Generated on 9/23/2025, 7:29:05 PM*
 
 ## Executive Summary
@@ -11,26 +12,27 @@
 | **P2 (Medium)** | 1 |
 
 ### Risk Assessment
+
 🔴 **HIGH RISK** - Multiple critical issues need immediate action
 
 **Key Concerns:**
+
 - 8 deprecation warnings (may break in future versions)
 - 18 performance warnings (bundle size/runtime)
 
-
 ### Tool Breakdown
+
 | Tool | Count | Status |
 |------|-------|--------|
 | next | 11 | 🟠 Some issues |
 | webpack | 2 | 🟡 Few issues |
 | perf | 16 | 🟠 Some issues |
 
-
 ---
 
 ## Top Risks (P0)
 
-### 1. PERF: Bundle size 319 KB exceeds error threshold (250 KB)...
+### 1. PERF: Bundle size 319 KB exceeds error threshold (250 KB)
 
 **Tool:** perf  
 **File:** N/A  
@@ -45,7 +47,7 @@ Optimize performance bottleneck
 
 ---
 
-### 2. PERF: Bundle size 311 KB exceeds error threshold (250 KB)...
+### 2. PERF: Bundle size 311 KB exceeds error threshold (250 KB)
 
 **Tool:** perf  
 **File:** N/A  
@@ -60,7 +62,7 @@ Optimize performance bottleneck
 
 ---
 
-### 3. PERF: Bundle size 315 KB exceeds error threshold (250 KB)...
+### 3. PERF: Bundle size 315 KB exceeds error threshold (250 KB)
 
 **Tool:** perf  
 **File:** N/A  
@@ -75,7 +77,7 @@ Optimize performance bottleneck
 
 ---
 
-### 4. PERF: Bundle size 305 KB exceeds error threshold (250 KB)...
+### 4. PERF: Bundle size 305 KB exceeds error threshold (250 KB)
 
 **Tool:** perf  
 **File:** N/A  
@@ -90,7 +92,7 @@ Optimize performance bottleneck
 
 ---
 
-### 5. PERF: Bundle size 285 KB exceeds error threshold (200 KB)...
+### 5. PERF: Bundle size 285 KB exceeds error threshold (200 KB)
 
 **Tool:** perf  
 **File:** N/A  
@@ -105,7 +107,7 @@ Optimize performance bottleneck
 
 ---
 
-### 6. PERF: Bundle size 294 KB exceeds error threshold (250 KB)...
+### 6. PERF: Bundle size 294 KB exceeds error threshold (250 KB)
 
 **Tool:** perf  
 **File:** N/A  
@@ -120,7 +122,7 @@ Optimize performance bottleneck
 
 ---
 
-### 7. PERF: Bundle size 309 KB exceeds error threshold (250 KB)...
+### 7. PERF: Bundle size 309 KB exceeds error threshold (250 KB)
 
 **Tool:** perf  
 **File:** N/A  
@@ -135,7 +137,7 @@ Optimize performance bottleneck
 
 ---
 
-### 8. PERF: Bundle size 304 KB exceeds error threshold (250 KB)...
+### 8. PERF: Bundle size 304 KB exceeds error threshold (250 KB)
 
 **Tool:** perf  
 **File:** N/A  
@@ -150,7 +152,7 @@ Optimize performance bottleneck
 
 ---
 
-### 9. PERF: Bundle size 290 KB exceeds error threshold (250 KB)...
+### 9. PERF: Bundle size 290 KB exceeds error threshold (250 KB)
 
 **Tool:** perf  
 **File:** N/A  
@@ -165,7 +167,7 @@ Optimize performance bottleneck
 
 ---
 
-### 10. PERF: Bundle size 303 KB exceeds error threshold (250 KB)...
+### 10. PERF: Bundle size 303 KB exceeds error threshold (250 KB)
 
 **Tool:** perf  
 **File:** N/A  
@@ -180,13 +182,12 @@ Optimize performance bottleneck
 
 ---
 
-
-
 ---
 
 ## Priority Breakdown
 
 ### P0 - Critical Issues (15)
+
 *Must fix immediately - potential production impact*
 
 #### PERF (15)
@@ -218,9 +219,8 @@ Optimize performance bottleneck
 
   *... and 10 more perf warnings*
 
-
-
 ### P1 - High Priority (13)
+
 *Should fix in current sprint - quality/performance impact*
 
 #### DEPRECATION (8)
@@ -271,9 +271,8 @@ Optimize performance bottleneck
   - File: `N/A`
   - Action: Split bundle or lazy load components
 
-
-
 ### P2 - Medium Priority (1)
+
 *Fix when convenient - maintenance/technical debt*
 
 #### OTHER (1)
@@ -281,9 +280,6 @@ Optimize performance bottleneck
 - **next**: ⚠ Compiled with warnings in 9.0s
   - File: `N/A`
   - Action: Review and address warning
-
-
-
 
 ---
 
@@ -315,31 +311,37 @@ Optimize performance bottleneck
 ## Action Playbook
 
 ### Next.js/Webpack Performance
+
 - **Bundle size > 250KB**: Split into smaller chunks using `dynamic()`
 - **Asset optimization**: Compress images, optimize fonts
 - **Modular imports**: Use tree-shaking friendly imports
 
 ### TypeScript Issues
+
 - **`any` types**: Add proper type definitions
 - **Missing types**: Enable stricter TypeScript options
 - **Type errors**: Review and fix type mismatches
 
 ### React Warnings
+
 - **useEffect deps**: Add missing dependencies or use `useCallback`
 - **Key props**: Add stable keys to list items
 - **Hydration**: Ensure server/client markup matches
 
 ### ESLint Warnings
+
 - **Autofix**: Run `pnpm lint:fix` for style issues
 - **Custom rules**: Review deprecated API usage warnings
 - **React hooks**: Fix dependency arrays and hook usage
 
 ### Deprecation Warnings
+
 - **Check migration guides**: Review Next.js, React, Supabase docs
 - **Timeline**: Plan migration before removal deadlines
 - **Testing**: Thoroughly test after API changes
 
 ### Performance Monitoring
+
 - **Bundle analyzer**: Use `pnpm build:analyze` for detailed analysis
 - **Lighthouse**: Regular performance audits
 - **Monitoring**: Set up alerts for bundle size regressions
@@ -351,11 +353,13 @@ Optimize performance bottleneck
 ### NEXT (11 warnings)
 
 **Top Issues:**
+
 1. [P1] 588:20  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_...
 2. [P1] 590:24  Warning: DEPRECATED: Legacy analytics fields delivered_count and failed_...
 3. [P1] 185:6  Warning: React Hook useCallback has a missing dependency: 'handleError'. ...
 
 **Recommended Next Steps:**
+
 - Run bundle analyzer to identify large dependencies
 - Consider code splitting for heavy routes
 - Optimize image and font loading
@@ -363,10 +367,12 @@ Optimize performance bottleneck
 ### WEBPACK (2 warnings)
 
 **Top Issues:**
+
 1. [P1] asset size limit: The following asset(s) exceed the recommended size limit (215 ...
 2. [P1] entrypoint size limit: The following entrypoint(s) combined asset size exceeds t...
 
 **Recommended Next Steps:**
+
 - Run bundle analyzer to identify large dependencies
 - Consider code splitting for heavy routes
 - Optimize image and font loading
@@ -376,16 +382,16 @@ Optimize performance bottleneck
 ⚠️ **15 critical issues requiring immediate attention**
 
 **Top Issues:**
+
 1. [P0] Bundle size 319 KB exceeds error threshold (250 KB)...
 2. [P0] Bundle size 311 KB exceeds error threshold (250 KB)...
 3. [P0] Bundle size 315 KB exceeds error threshold (250 KB)...
 
 **Recommended Next Steps:**
+
 - Address bundle size budget violations
 - Optimize large route chunks
 - Monitor performance regressions
-
-
 
 ---
 
@@ -393,14 +399,14 @@ Optimize performance bottleneck
 
 ### Frequent Problem Areas
 
-
-
 ---
 
 ## Appendices
 
 ### A. Data Sources
+
 This report aggregated warnings from:
+
 - build_2025-09-24T00-27.json
 - eslint_2025-09-24T00-21.json
 - eslint_2025-09-24T00-28.json
@@ -411,12 +417,14 @@ This report aggregated warnings from:
 - vitest_2025-09-24T00-28.json
 
 ### B. Methodology
+
 - **Prioritization**: P0 ≥70 points, P1 ≥40 points, P2 <40 points
 - **Scoring Factors**: Severity, category impact, frequency, file/route importance
 - **Deduplication**: By tool + code + message + file + line
 - **Classification**: Automated with manual review recommended
 
 ### C. Export Formats
+
 - **Full CSV**: `warnings_triage_20250924.csv`
 - **JSON Data**: Available in `docs/reports/warnings/`
 

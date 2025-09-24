@@ -127,7 +127,7 @@ name,phone,email,role,notes,tags
 | ------- | -------- | -------- | ------------------- | ------------------ |
 | `name`  | string   | ✅       | 1-100 chars         | "John Doe"         |
 | `phone` | string   | ✅       | E.164 format        | "+1234567890"      |
-| `email` | string   | ❌       | Valid email         | "john@example.com" |
+| `email` | string   | ❌       | Valid email         | "<john@example.com>" |
 | `role`  | enum     | ❌       | guest\|host         | "guest"            |
 | `notes` | string   | ❌       | Max 1000 chars      | "Best man"         |
 | `tags`  | string[] | ❌       | Semicolon separated | "family;vip"       |

@@ -18,6 +18,7 @@ Unveil uses a minimal, centralized approach to feature flags. Only essential ope
 **Risk Level**: 🔴 **HIGH** - affects all SMS delivery
 
 #### Usage
+
 ```typescript
 import { flags } from '@/config/flags';
 
@@ -28,6 +29,7 @@ if (flags.ops.smsBrandingDisabled) {
 ```
 
 #### Environment Variable
+
 ```bash
 # Enable SMS branding (default behavior)
 SMS_BRANDING_DISABLED=false
@@ -37,11 +39,13 @@ SMS_BRANDING_DISABLED=true
 ```
 
 #### When to Use
+
 - **Emergency**: SMS delivery issues with new branding format
 - **Compliance**: Regulatory concerns with A2P messaging
 - **Testing**: Validate legacy format behavior
 
 #### Rollback Process
+
 1. Set environment variable: `SMS_BRANDING_DISABLED=true`
 2. Restart application (no code deployment needed)
 3. All new SMS will use legacy format (no event tags, no A2P footer)
@@ -50,6 +54,7 @@ SMS_BRANDING_DISABLED=true
 6. Re-enable: `SMS_BRANDING_DISABLED=false`
 
 #### Legacy Behavior (When Disabled)
+
 - No event tags prepended to messages
 - No A2P "Reply STOP to opt out" footer
 - Direct message body sent to Twilio
@@ -60,6 +65,7 @@ SMS_BRANDING_DISABLED=true
 ## 📋 Temporary Flag Policy
 
 Temporary flags are **strongly discouraged** but may be used for:
+
 - Short-term rollouts (< 2 weeks)
 - A/B testing (< 1 month)
 - Emergency feature toggles
@@ -73,6 +79,7 @@ All temporary flags **MUST** include:
 ```
 
 **Required Fields**:
+
 - `owner`: GitHub username responsible for removal
 - `remove_by`: ISO date when flag must be removed
 - `description`: Brief explanation of purpose
@@ -80,6 +87,7 @@ All temporary flags **MUST** include:
 ### **CI Protection**
 
 The CI pipeline runs `pnpm check:flags` to:
+
 - ✅ Validate all temporary flags have required metadata
 - ⚠️  Warn about flags expiring within 7 days
 - ❌ **Fail builds** if any flags are past their `remove_by` date
@@ -149,6 +157,7 @@ describe('Feature Flag', () => {
 ### **Integration Tests**
 
 All operational flags must have integration tests covering:
+
 - ✅ Default behavior (flag disabled)
 - ✅ Alternate behavior (flag enabled)
 - ✅ Error handling in both states

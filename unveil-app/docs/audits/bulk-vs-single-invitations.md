@@ -101,6 +101,7 @@ RETURNS TABLE(
 ```
 
 **Eligibility Filters Applied**:
+
 - ✅ `role != 'host'` (hosts excluded)
 - ✅ `removed_at IS NULL` (active guests only)
 - ✅ `invited_at IS NULL` (not previously invited)
@@ -166,6 +167,7 @@ if (preselectionPreset === 'not_invited' && eventDetails && !message && !editing
 **API Endpoint**: `app/api/messages/send/route.ts:13-532`
 
 **Key Parameters**:
+
 - `messageType`: 'announcement' (default for bulk)
 - `targetGuestIds`: Array of selected guest IDs
 - `content`: User-edited message content
@@ -188,6 +190,7 @@ if (isInvitationSend && guestIds.length > 0) {
 ### 5. DB Effects & Idempotency
 
 **Tables Modified**:
+
 - `messages`: New message record created
 - `message_deliveries`: Per-recipient delivery records
 - `event_guests`: **May not update** invitation timestamps (depends on `isInvitationSend`)
@@ -239,6 +242,7 @@ export async function sendSingleGuestInvite(
 **Route**: `app/api/guests/invite-single/route.ts:18-255`
 
 **Key Steps**:
+
 1. **Host Authorization**: Verifies `is_event_host(eventId)`
 2. **Guest Validation**: Checks eligibility, phone format
 3. **Template Generation**: Uses `createInvitationMessage()`
@@ -270,6 +274,7 @@ export const createInvitationMessage = (
 ### 5. DB Effects
 
 **Always Updates**:
+
 - `event_guests.invited_at` (if first time)
 - `event_guests.last_invited_at` (always)
 - `event_guests.invite_attempts` (incremented)
@@ -338,6 +343,7 @@ GROUP BY role, status;
 **Impact**: Inconsistent user experience, different SMS lengths/costs
 
 **Evidence**:
+
 - Bulk: `"Hi there! You are invited to ${eventTitle} on ${eventDate}!..."`
 - Single: `"Get ready! Wedding updates will come from this number..."`
 

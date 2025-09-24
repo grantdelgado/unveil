@@ -174,6 +174,7 @@ USING (user_id = (select auth.uid()));
    ```
 
 2. **Message Deliveries RLS**
+
    ```sql
    -- Location: app/reference/schema.sql:259-267
    CREATE POLICY message_deliveries_select_optimized ON message_deliveries FOR SELECT USING (

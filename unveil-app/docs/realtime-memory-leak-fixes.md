@@ -5,7 +5,8 @@
 Performance alert triggered: **Memory usage at 304.8MB exceeding 300MB limit**
 
 Console logs showed patterns indicating memory leaks:
-- Multiple duplicate manager reinit events 
+
+- Multiple duplicate manager reinit events
 - React StrictMode causing excessive effect runs (visible in long stack traces)
 - Event listeners not being properly cleaned up
 - Timeout references accumulating without cleanup
@@ -17,6 +18,7 @@ Console logs showed patterns indicating memory leaks:
 **Problem**: `setTimeout` in SubscriptionProvider was creating memory leaks because timeouts weren't being cleared.
 
 **Fix Applied**:
+
 ```typescript
 // Added timeout reference tracking
 const operationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -48,6 +50,7 @@ useEffect(() => {
 **Problem**: Event listeners were using `.bind(this)` in both `addEventListener` and `removeEventListener`, creating different function references that couldn't be properly removed.
 
 **Fix Applied**:
+
 ```typescript
 // Store bound handlers as instance properties
 private boundVisibilityHandler: (() => void) | null = null;
@@ -78,6 +81,7 @@ destroy() {
 **Problem**: `foregroundReconnectDebounce` timeout wasn't being cleared in the destroy method.
 
 **Fix Applied**:
+
 ```typescript
 destroy() {
   // Clear any pending foreground reconnect debounce
@@ -94,6 +98,7 @@ destroy() {
 **Problem**: SubscriptionProvider effect was including `version` in dependencies, causing excessive re-runs when version changed frequently.
 
 **Fix Applied**:
+
 ```typescript
 // Before: [isAuthenticated, session, version] - caused frequent re-runs
 // After: [isAuthenticated, session] - only runs on actual auth changes
@@ -105,6 +110,7 @@ destroy() {
 **Problem**: Module-level `activeSubscriptions` Map could grow without bounds in development.
 
 **Fix Applied**:
+
 ```typescript
 // Added periodic monitoring and cleanup
 function cleanupStaleSubscriptions() {
@@ -134,6 +140,7 @@ With these fixes, you should see:
 ## Monitoring
 
 The performance alert system will continue to monitor:
+
 - **Memory threshold**: 300MB in development (currently at 304.8MB)
 - **Alert cooldown**: 10 minutes between alerts
 - **Trend analysis**: Detects memory trending upward over time
@@ -148,6 +155,7 @@ The performance alert system will continue to monitor:
 ## Development Tools
 
 You can monitor memory in Chrome DevTools:
+
 1. Open DevTools → Performance tab
 2. Check "Memory" checkbox
 3. Record a session while using the app

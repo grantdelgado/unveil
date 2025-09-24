@@ -369,14 +369,14 @@ Simplified Layout:
 
 ## 🎨 Visual Mockup Suggestions
 
-### Before (Current):
+### Before (Current)
 
 ```
 [Progress Chart] [Activity Feed]  ← Too much visual weight
 [🏷️All] [✅Attending] [⏳Pending] [🤷Maybe] [❌Declined]  ← 5 filters overwhelming
 ```
 
-### After (Proposed):
+### After (Proposed)
 
 ```
 [🔍 Search] [📄 Import Guests]  ← Primary actions first
