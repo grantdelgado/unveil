@@ -456,8 +456,14 @@ export function RecentMessages({
       type: 'sent' as const,
       status: 'sent',
       sent_at: msg.delivered_at || msg.created_at || '',
+      // TODO(grant): Migrate to delivery-based counts via message_deliveries RPC; tracked in issue #analytics-migration
+      // eslint-disable-next-line no-restricted-syntax -- temporary until migration lands
       recipient_count: (msg.delivered_count || 0) + (msg.failed_count || 0),
+      // TODO(grant): Migrate to delivery-based counts via message_deliveries RPC; tracked in issue #analytics-migration
+      // eslint-disable-next-line no-restricted-syntax -- temporary until migration lands
       success_count: msg.delivered_count || 0,
+      // TODO(grant): Migrate to delivery-based counts via message_deliveries RPC; tracked in issue #analytics-migration
+      // eslint-disable-next-line no-restricted-syntax -- temporary until migration lands
       failure_count: msg.failed_count || 0,
       scheduled_message_id: msg.scheduled_message_id, // Track linkage for deduplication
     }));

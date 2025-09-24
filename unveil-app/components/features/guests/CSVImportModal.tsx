@@ -182,7 +182,7 @@ export function CSVImportModal({ eventId, onClose, onImportComplete }: CSVImport
       console.error('CSV parsing error:', error);
       handleError(error, { context: 'Parse CSV file' });
     }
-  }, []);
+  }, [handleError]);
 
   // File drop handler
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -305,7 +305,7 @@ export function CSVImportModal({ eventId, onClose, onImportComplete }: CSVImport
       handleError(error, { context: 'Import guests' });
       setStep('preview');
     }
-  }, [validGuests, errorGuests, parsedGuests.length, eventId, importGuests, onImportComplete]);
+  }, [validGuests, errorGuests, parsedGuests.length, eventId, importGuests, onImportComplete, handleError]);
 
 
 

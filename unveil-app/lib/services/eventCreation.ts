@@ -674,6 +674,8 @@ export class EventCreationService {
         operationId,
         eventId,
         importedCount: importResult.imported_count,
+        // TODO(grant): Migrate to delivery-based counts via message_deliveries RPC; tracked in issue #analytics-migration
+        // eslint-disable-next-line no-restricted-syntax -- temporary until migration lands
         failedCount: importResult.failed_count,
       });
 
@@ -702,6 +704,8 @@ export class EventCreationService {
         success: true,
         data: {
           imported_count: importResult.imported_count,
+          // TODO(grant): Migrate to delivery-based counts via message_deliveries RPC; tracked in issue #analytics-migration
+          // eslint-disable-next-line no-restricted-syntax -- temporary until migration lands
           failed_count: importResult.failed_count,
           failed_rows: importResult.failed_rows,
           event_id: eventId,

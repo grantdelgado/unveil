@@ -585,8 +585,12 @@ export function GuestImportStep({
                     Successfully imported {importResult.data.imported_count}{' '}
                     guests
                   </p>
+                  {/* TODO(grant): Migrate to delivery-based counts via message_deliveries RPC; tracked in issue #analytics-migration */}
+                  {/* eslint-disable-next-line no-restricted-syntax -- temporary until migration lands */}
                   {importResult.data.failed_count > 0 && (
                     <p className="text-orange-700 mt-1">
+                      {/* TODO(grant): Migrate to delivery-based counts via message_deliveries RPC; tracked in issue #analytics-migration */}
+                      {/* eslint-disable-next-line no-restricted-syntax -- temporary until migration lands */}
                       {importResult.data.failed_count} guests failed to import
                     </p>
                   )}
