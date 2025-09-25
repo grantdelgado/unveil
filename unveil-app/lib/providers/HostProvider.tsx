@@ -3,8 +3,18 @@
 import { ReactNode } from 'react';
 import dynamic from 'next/dynamic';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
-import { ReactQueryProvider } from '@/lib/react-query-client';
-import { AuthProvider } from '@/lib/auth/AuthProvider';
+
+// Lazy load React Query provider  
+const ReactQueryProvider = dynamic(
+  () => import('@/lib/react-query-client').then((mod) => ({ default: mod.ReactQueryProvider })),
+  { ssr: false }
+);
+
+// Lazy load Auth provider
+const AuthProvider = dynamic(
+  () => import('@/lib/auth/AuthProvider').then((mod) => ({ default: mod.AuthProvider })),
+  { ssr: false }
+);
 
 // Lazy load heavy providers only needed for host functionality
 const SubscriptionProvider = dynamic(

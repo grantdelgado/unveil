@@ -7,6 +7,7 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 });
 
 const nextConfig: NextConfig = {
+  // Enhanced image optimization for performance
   images: {
     remotePatterns: [
       {
@@ -16,6 +17,12 @@ const nextConfig: NextConfig = {
         pathname: '/storage/v1/object/public/**',
       },
     ],
+    // Enable modern image formats for better performance
+    formats: ['image/avif', 'image/webp'],
+    // Optimize image loading
+    minimumCacheTTL: 86400, // 24 hours
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
   typescript: {
     ignoreBuildErrors: false,
@@ -25,7 +32,7 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ['lucide-react', '@tanstack/react-query'],
     clientTraceMetadata: ['appDir', 'turbopack'],
   },
-  // Modular imports for better tree-shaking
+  // Enhanced modular imports for better tree-shaking
   modularizeImports: {
     'lucide-react': {
       transform: 'lucide-react/dist/esm/icons/{{member}}',
@@ -33,6 +40,12 @@ const nextConfig: NextConfig = {
     },
     'lodash': {
       transform: 'lodash/{{member}}',
+    },
+    'lodash-es': {
+      transform: 'lodash-es/{{member}}',
+    },
+    'date-fns': {
+      transform: 'date-fns/{{member}}',
     },
   },
   // Consolidated webpack configuration
@@ -168,6 +181,26 @@ const nextConfig: NextConfig = {
           {
             key: 'Cache-Control',
             value: 'public, max-age=31536000, immutable', // 1 year
+          },
+        ],
+      },
+      {
+        // Next.js static assets optimization
+        source: '/_next/static/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable', // 1 year
+          },
+        ],
+      },
+      {
+        // Image optimization with longer cache
+        source: '/_next/image(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=86400', // 24 hours
           },
         ],
       },

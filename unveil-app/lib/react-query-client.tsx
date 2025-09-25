@@ -2,6 +2,18 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
+import dynamic from 'next/dynamic';
+
+// Only load React Query devtools in development (excluded from production bundle)
+const ReactQueryDevtools = 
+  process.env.NODE_ENV === 'development'
+    ? dynamic(() => 
+        import('@tanstack/react-query-devtools').then((mod) => ({
+          default: mod.ReactQueryDevtools,
+        })),
+        { ssr: false }
+      )
+    : null;
 
 export function ReactQueryProvider({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
@@ -59,7 +71,11 @@ export function ReactQueryProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <QueryClientProvider client={queryClient}>
+      {children}
+      {/* Only load React Query devtools in development */}
+      {ReactQueryDevtools && <ReactQueryDevtools initialIsOpen={false} />}
+    </QueryClientProvider>
   );
 }
 
