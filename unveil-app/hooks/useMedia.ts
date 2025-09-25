@@ -2,6 +2,8 @@ import { useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase/client';
 import type { Database } from '@/app/reference/supabase.types';
+import { qk } from '@/lib/queryKeys';
+import { invalidate, smartInvalidate } from '@/lib/queryInvalidation';
 
 type Media = Database['public']['Tables']['media']['Row'];
 type MediaInsert = Database['public']['Tables']['media']['Insert'];
@@ -35,7 +37,7 @@ export function useMedia(eventId?: string): UseMediaReturn {
     isLoading: loading,
     error,
   } = useQuery({
-    queryKey: ['media', eventId],
+    queryKey: qk.media.feed(eventId || ''),
     queryFn: async () => {
       if (!eventId) return [];
 
@@ -100,7 +102,7 @@ export function useMedia(eventId?: string): UseMediaReturn {
       return data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['media', variables.eventId] });
+      smartInvalidate(queryClient).mediaUploaded(variables.eventId);
     },
   });
 
@@ -129,7 +131,10 @@ export function useMedia(eventId?: string): UseMediaReturn {
       if (error) throw new Error(error.message);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['media'] });
+      // Note: We invalidate all media queries since we don't have eventId in this context
+      queryClient.invalidateQueries({ 
+        predicate: (query) => query.queryKey[0] === 'media' 
+      });
     },
   });
 
@@ -162,7 +167,8 @@ export function useMedia(eventId?: string): UseMediaReturn {
 
   const refreshMedia = useCallback(
     async (eventId: string): Promise<void> => {
-      await queryClient.invalidateQueries({ queryKey: ['media', eventId] });
+      const inv = invalidate(queryClient);
+      await inv.media.allFeeds(eventId);
     },
     [queryClient],
   );

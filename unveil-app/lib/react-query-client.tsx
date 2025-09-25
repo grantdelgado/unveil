@@ -3,6 +3,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 import dynamic from 'next/dynamic';
+import { qk } from './queryKeys';
+import { initQueryObservability } from './queryObservability';
 
 // Only load React Query devtools in development (excluded from production bundle)
 const ReactQueryDevtools = 
@@ -17,8 +19,8 @@ const ReactQueryDevtools =
 
 export function ReactQueryProvider({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
-    () =>
-      new QueryClient({
+    () => {
+      const client = new QueryClient({
         defaultOptions: {
           queries: {
             // Stale time: How long data is considered fresh
@@ -67,7 +69,71 @@ export function ReactQueryProvider({ children }: { children: ReactNode }) {
             },
           },
         },
-      }),
+      });
+
+      // Set per-domain query defaults using canonical keys
+      // Messages - realtime data, short stale time
+      client.setQueryDefaults(qk.messages.list('placeholder'), {
+        staleTime: 30_000, // 30 seconds
+        gcTime: 5 * 60_000, // 5 minutes
+        refetchOnWindowFocus: false, // Rely on realtime updates
+      });
+
+      // Media - longer stale time as content doesn't change frequently
+      client.setQueryDefaults(qk.media.feed('placeholder'), {
+        staleTime: 10 * 60_000, // 10 minutes 
+        gcTime: 20 * 60_000, // 20 minutes
+        refetchOnWindowFocus: false,
+      });
+
+      // Guest lists - moderate stale time, important for RSVP accuracy
+      client.setQueryDefaults(qk.eventGuests.list('placeholder'), {
+        staleTime: 60_000, // 1 minute
+        gcTime: 10 * 60_000, // 10 minutes
+        refetchOnWindowFocus: false, // Rely on realtime for RSVP changes
+      });
+
+      // Guest counts - need immediate updates for dashboard accuracy
+      client.setQueryDefaults(qk.eventGuests.counts('placeholder'), {
+        staleTime: 30_000, // 30 seconds
+        gcTime: 5 * 60_000, // 5 minutes
+        refetchOnWindowFocus: false,
+      });
+
+      // Scheduled messages - immediate freshness for host management
+      client.setQueryDefaults(qk.scheduledMessages.list('placeholder'), {
+        staleTime: 0, // Always stale, always fresh
+        gcTime: 10 * 60_000, // 10 minutes
+        refetchOnWindowFocus: true, // Refetch for immediate state
+        refetchOnMount: 'always',
+      });
+
+      // Analytics - longer cache as calculations are expensive
+      client.setQueryDefaults(qk.analytics.event('placeholder'), {
+        staleTime: 15 * 60_000, // 15 minutes
+        gcTime: 30 * 60_000, // 30 minutes
+        refetchOnWindowFocus: false,
+      });
+
+      // Events - static data, long cache
+      client.setQueryDefaults(qk.events.listMine(), {
+        staleTime: 15 * 60_000, // 15 minutes
+        gcTime: 30 * 60_000, // 30 minutes
+        refetchOnWindowFocus: false,
+      });
+
+      // User data - very static, long cache
+      client.setQueryDefaults(qk.users.me(), {
+        staleTime: 60 * 60_000, // 1 hour
+        gcTime: 24 * 60 * 60_000, // 24 hours
+        refetchOnWindowFocus: false,
+      });
+
+      // Auto-initialize observability (noop in production)
+      initQueryObservability(client);
+
+      return client;
+    }
   );
 
   return (

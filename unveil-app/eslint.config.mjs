@@ -45,6 +45,62 @@ const eslintConfig = [
     }
   },
   {
+    // React Query canonical key enforcement
+    files: ['hooks/**/*.ts', 'hooks/**/*.tsx', 'components/**/*.tsx', 'app/**/*.tsx'],
+    ignores: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx', '__tests__/**/*'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        // Disallow string queryKey in useQuery/useInfiniteQuery
+        {
+          selector: 'ObjectExpression > Property[key.name="queryKey"] > Literal[typeof="string"]',
+          message: 'String queryKey is not allowed. Use canonical key factory from @/lib/queryKeys instead. Example: qk.messages.list(eventId)'
+        },
+        // Disallow array literals in queryKey (use canonical factory instead)
+        {
+          selector: 'ObjectExpression > Property[key.name="queryKey"] > ArrayExpression:not([elements.0.value="test"]):not([elements.0.value="mock"])',
+          message: 'Raw array queryKey is not allowed. Use canonical key factory from @/lib/queryKeys instead. Example: qk.messages.list(eventId). To disable in tests: // eslint-disable-next-line no-restricted-syntax'
+        },
+        // Catch template literal and dynamic keys
+        {
+          selector: 'ObjectExpression > Property[key.name="queryKey"] > TemplateLiteral',
+          message: 'Template literal queryKey is not allowed. Use canonical key factory from @/lib/queryKeys instead.'
+        },
+        // Catch variable assignments that might be raw arrays
+        {
+          selector: 'ObjectExpression > Property[key.name="queryKey"] > Identifier[name!=/^qk$/][name!=/.*QueryKey$/]',
+          message: 'Variable queryKey should use canonical key factory. Ensure the variable comes from qk.* or is properly typed as QueryKey.'
+        },
+        // Disallow raw queryKey in invalidateQueries
+        {
+          selector: 'CallExpression[callee.property.name="invalidateQueries"] ObjectExpression > Property[key.name="queryKey"] > ArrayExpression:not([elements.0.value="test"]):not([elements.0.value="mock"])',
+          message: 'Raw array queryKey in invalidateQueries is not allowed. Use invalidate() helper from @/lib/queryInvalidation or canonical keys from @/lib/queryKeys instead.'
+        },
+        // Disallow specific legacy patterns
+        {
+          selector: 'ArrayExpression[elements.0.value="messages"][elements.1]',
+          message: 'Legacy messages key pattern detected. Use qk.messages.list(eventId) instead.'
+        },
+        {
+          selector: 'ArrayExpression[elements.0.value="guests"][elements.1]',
+          message: 'Legacy guests key pattern detected. Use qk.eventGuests.list(eventId) instead.'
+        },
+        {
+          selector: 'ArrayExpression[elements.0.value="scheduled-messages"][elements.1]',
+          message: 'Legacy scheduled-messages key pattern detected. Use qk.scheduledMessages.list(eventId) instead.'
+        },
+        {
+          selector: 'ArrayExpression[elements.0.value="media"][elements.1]',
+          message: 'Legacy media key pattern detected. Use qk.media.feed(eventId) instead.'
+        },
+        {
+          selector: 'ArrayExpression[elements.0.value="events"]:not([elements.1])',
+          message: 'Legacy events key pattern detected. Use qk.events.listMine() instead.'
+        }
+      ]
+    }
+  },
+  {
     // Warn about legacy analytics fields usage (existing code allowed, but discouraged)
     files: ['**/*.ts', '**/*.tsx'],
     rules: {

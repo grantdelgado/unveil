@@ -2,6 +2,8 @@ import { useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase/client';
 import type { Database } from '@/app/reference/supabase.types';
+import { qk } from '@/lib/queryKeys';
+import { invalidate, smartInvalidate } from '@/lib/queryInvalidation';
 
 type EventGuest = Database['public']['Tables']['event_guests']['Row'];
 type EventGuestInsert = Database['public']['Tables']['event_guests']['Insert'];
@@ -35,7 +37,7 @@ export function useGuests(eventId?: string): UseGuestsReturn {
     isLoading: loading,
     error,
   } = useQuery({
-    queryKey: ['guests', eventId],
+    queryKey: qk.eventGuests.list(eventId || ''),
     queryFn: async () => {
       if (!eventId) return [];
 
@@ -75,16 +77,7 @@ export function useGuests(eventId?: string): UseGuestsReturn {
       return data;
     },
     onSuccess: (_, variables) => {
-      // Invalidate guest queries to refresh guest lists and counts
-      queryClient.invalidateQueries({
-        queryKey: ['guests', variables.event_id],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ['guest-counts', variables.event_id],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ['unified-guest-counts', variables.event_id],
-      });
+      smartInvalidate(queryClient).guestMutation(variables.event_id);
     },
   });
 
@@ -114,7 +107,10 @@ export function useGuests(eventId?: string): UseGuestsReturn {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['guests'] });
+      // Note: We invalidate all guest queries since we don't have eventId in this context
+      queryClient.invalidateQueries({ 
+        predicate: (query) => query.queryKey[0] === 'eventGuests' 
+      });
     },
   });
 
@@ -135,7 +131,10 @@ export function useGuests(eventId?: string): UseGuestsReturn {
       if (error) throw new Error(error.message);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['guests'] });
+      // Note: We invalidate all guest queries since we don't have eventId in this context
+      queryClient.invalidateQueries({ 
+        predicate: (query) => query.queryKey[0] === 'eventGuests' 
+      });
     },
   });
 
@@ -211,17 +210,7 @@ export function useGuests(eventId?: string): UseGuestsReturn {
       return results;
     },
     onSuccess: (_, variables) => {
-      // Invalidate guest queries to refresh guest lists
-      queryClient.invalidateQueries({
-        queryKey: ['guests', variables.eventId],
-      });
-      // Also invalidate any guest counts queries that might exist
-      queryClient.invalidateQueries({
-        queryKey: ['guest-counts', variables.eventId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ['unified-guest-counts', variables.eventId],
-      });
+      smartInvalidate(queryClient).guestMutation(variables.eventId);
     },
   });
 
@@ -269,7 +258,8 @@ export function useGuests(eventId?: string): UseGuestsReturn {
 
   const refreshGuests = useCallback(
     async (eventId: string): Promise<void> => {
-      await queryClient.invalidateQueries({ queryKey: ['guests', eventId] });
+      const inv = invalidate(queryClient);
+      await inv.guests.allLists(eventId);
     },
     [queryClient],
   );

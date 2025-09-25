@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase/client';
 import type { Database } from '@/app/reference/supabase.types';
+import { qk } from '@/lib/queryKeys';
+import { invalidate, smartInvalidate } from '@/lib/queryInvalidation';
 
 type Event = Database['public']['Tables']['events']['Row'];
 type EventInsert = Database['public']['Tables']['events']['Insert'];
@@ -33,7 +35,7 @@ export function useEvents(): UseEventsReturn {
     isLoading: loading,
     error,
   } = useQuery({
-    queryKey: ['events'],
+    queryKey: qk.events.listMine(),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('events')
@@ -63,7 +65,7 @@ export function useEvents(): UseEventsReturn {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['events'] });
+      invalidate(queryClient).event.listMine();
     },
   });
 
@@ -87,7 +89,7 @@ export function useEvents(): UseEventsReturn {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['events'] });
+      invalidate(queryClient).event.listMine();
     },
   });
 
@@ -99,7 +101,7 @@ export function useEvents(): UseEventsReturn {
       if (error) throw new Error(error.message);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['events'] });
+      invalidate(queryClient).event.listMine();
     },
   });
 
@@ -145,7 +147,7 @@ export function useEvents(): UseEventsReturn {
   }, []);
 
   const refreshEvents = useCallback(async (): Promise<void> => {
-    await queryClient.invalidateQueries({ queryKey: ['events'] });
+    await invalidate(queryClient).event.listMine();
   }, [queryClient]);
 
   return {

@@ -2,6 +2,8 @@ import React, { useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase/client';
 import type { Database } from '@/app/reference/supabase.types';
+import { qk } from '@/lib/queryKeys';
+import { invalidate } from '@/lib/queryInvalidation';
 
 type Message = Database['public']['Tables']['messages']['Row'];
 type MessageInsert = Database['public']['Tables']['messages']['Insert'];
@@ -60,7 +62,7 @@ export function useMessages(eventId?: string): UseMessagesReturn {
     isLoading: loading,
     error,
   } = useQuery({
-    queryKey: ['messages', eventId],
+    queryKey: qk.messages.list(eventId || ''),
     queryFn: async () => {
       if (!eventId) {
         console.log('[useMessages] No eventId provided');
@@ -98,7 +100,7 @@ export function useMessages(eventId?: string): UseMessagesReturn {
 
   // Get scheduled messages
   const { data: scheduledMessages } = useQuery({
-    queryKey: ['scheduled-messages', eventId],
+    queryKey: qk.scheduledMessages.list(eventId || ''),
     queryFn: async () => {
       if (!eventId) {
         console.log('[useMessages] No eventId for scheduled messages');
@@ -154,9 +156,7 @@ export function useMessages(eventId?: string): UseMessagesReturn {
       return data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ['messages', variables.eventId],
-      });
+      invalidate(queryClient).messages.allLists(variables.eventId);
     },
   });
 
@@ -175,9 +175,7 @@ export function useMessages(eventId?: string): UseMessagesReturn {
       return data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ['scheduled-messages', variables.event_id],
-      });
+      invalidate(queryClient).scheduledMessages.allLists(variables.event_id);
     },
   });
 
@@ -189,7 +187,11 @@ export function useMessages(eventId?: string): UseMessagesReturn {
       if (error) throw new Error(error.message);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['messages'] });
+      // Note: We invalidate all message lists since we don't have eventId in this context
+      // This is a limitation of the current API - ideally deleteMessage would take eventId
+      queryClient.invalidateQueries({ 
+        predicate: (query) => query.queryKey[0] === 'messages' 
+      });
     },
   });
 
@@ -204,7 +206,10 @@ export function useMessages(eventId?: string): UseMessagesReturn {
       if (error) throw new Error(error.message);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['scheduled-messages'] });
+      // Note: We invalidate all scheduled messages since we don't have eventId in this context
+      queryClient.invalidateQueries({ 
+        predicate: (query) => query.queryKey[0] === 'scheduledMessages' 
+      });
     },
   });
 
@@ -239,19 +244,11 @@ export function useMessages(eventId?: string): UseMessagesReturn {
 
   const refreshMessages = useCallback(
     async (eventId: string): Promise<void> => {
-      // Invalidate all message-related queries with consistent keys
-      await queryClient.invalidateQueries({ queryKey: ['messages', eventId] });
-      await queryClient.invalidateQueries({
-        queryKey: ['scheduled-messages', eventId],
-      });
-      // Also invalidate queries with filters (from useScheduledMessagesQuery)
-      await queryClient.invalidateQueries({
-        queryKey: ['scheduled-messages'],
-        predicate: (query) => {
-          const [table, id] = query.queryKey;
-          return table === 'scheduled-messages' && id === eventId;
-        }
-      });
+      const inv = invalidate(queryClient);
+      await Promise.all([
+        inv.messages.allLists(eventId),
+        inv.scheduledMessages.allLists(eventId),
+      ]);
     },
     [queryClient],
   );
