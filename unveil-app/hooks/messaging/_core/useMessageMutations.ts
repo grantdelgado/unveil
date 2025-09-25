@@ -6,7 +6,7 @@
  * and deletion with proper cache invalidation targeting.
  */
 
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase/client';
 import { qk } from '@/lib/queryKeys';
@@ -32,7 +32,6 @@ import type {
 export function useMessageMutations(): UseMessageMutationsReturn {
   const queryClient = useQueryClient();
   const [globalError, setGlobalError] = useState<Error | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   
   // Dev observability - track mutation usage
   const logActivity = useCallback((event: Omit<DevObservabilityEvent, 'hook'>) => {
@@ -381,19 +380,23 @@ export function useMessageMutations(): UseMessageMutationsReturn {
     },
   });
   
-  // Track overall loading state
-  const combinedIsLoading = 
+  // Track overall loading state with useMemo (proper derived state pattern)
+  const isLoading = useMemo(() => 
     sendAnnouncementMutation.isPending ||
     sendChannelMutation.isPending ||
     sendDirectMutation.isPending ||
     scheduleMessageMutation.isPending ||
     cancelScheduledMutation.isPending ||
-    deleteMessageMutation.isPending;
-  
-  // Update global loading state
-  if (combinedIsLoading !== isLoading) {
-    setIsLoading(combinedIsLoading);
-  }
+    deleteMessageMutation.isPending,
+    [
+      sendAnnouncementMutation.isPending,
+      sendChannelMutation.isPending,
+      sendDirectMutation.isPending,
+      scheduleMessageMutation.isPending,
+      cancelScheduledMutation.isPending,
+      deleteMessageMutation.isPending,
+    ]
+  );
   
   return {
     sendAnnouncement: sendAnnouncementMutation.mutateAsync,
@@ -411,7 +414,7 @@ export function useMessageMutations(): UseMessageMutationsReturn {
         deleteMessageMutation.mutateAsync({ eventId, messageId }),
       [deleteMessageMutation.mutateAsync]
     ),
-    isLoading: combinedIsLoading,
+    isLoading,
     error: globalError,
   };
 }
