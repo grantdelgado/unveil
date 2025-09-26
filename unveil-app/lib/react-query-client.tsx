@@ -8,7 +8,7 @@ import { initQueryObservability } from './queryObservability';
 
 // Only load React Query devtools in development (excluded from production bundle)
 const ReactQueryDevtools = 
-  process.env.NODE_ENV === 'development'
+  process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_ENABLE_DEVTOOLS !== 'false'
     ? dynamic(() => 
         import('@tanstack/react-query-devtools').then((mod) => ({
           default: mod.ReactQueryDevtools,
@@ -140,7 +140,9 @@ export function ReactQueryProvider({ children }: { children: ReactNode }) {
     <QueryClientProvider client={queryClient}>
       {children}
       {/* Only load React Query devtools in development */}
-      {ReactQueryDevtools && <ReactQueryDevtools initialIsOpen={false} />}
+      {process.env.NODE_ENV === 'development' && ReactQueryDevtools && (
+        <ReactQueryDevtools initialIsOpen={false} />
+      )}
     </QueryClientProvider>
   );
 }

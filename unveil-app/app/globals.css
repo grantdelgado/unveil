@@ -132,6 +132,12 @@ body {
   height: 100dvh;
 }
 
+/* Additional dynamic viewport utilities for flexibility */
+.min-h-100svh { min-height: 100svh; }
+.min-h-100dvh { min-height: 100dvh; }
+.h-100svh { height: 100svh; }
+.h-100dvh { height: 100dvh; }
+
 /* Legacy support classes for backward compatibility */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   .h-safe-area-inset-bottom {

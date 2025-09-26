@@ -14,10 +14,10 @@ export default function HomePage() {
     let isMounted = true;
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
-    const waitMinDisplay = () =>
-      new Promise<void>((resolve) => {
-        timeoutId = setTimeout(() => resolve(), 1500);
-      });
+  const waitMinDisplay = () =>
+    new Promise<void>((resolve) => {
+      timeoutId = setTimeout(() => resolve(), 300); // Reduced from 1500ms to 300ms
+    });
 
     const load = async () => {
       // Wait for auth to finish loading and minimum display time
@@ -43,7 +43,7 @@ export default function HomePage() {
 
   return (
     <div
-      className="min-h-[100dvh] bg-white flex flex-col items-center justify-center px-6 text-gray-900"
+      className="min-h-100dvh bg-white flex flex-col items-center justify-center px-6 text-gray-900"
       aria-busy="true"
       aria-live="polite"
     >

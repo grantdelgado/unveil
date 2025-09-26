@@ -37,7 +37,7 @@ export const LoadingPage: React.FC<{ message?: string }> = ({
   message = 'Loading...',
 }) => {
   return (
-    <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center p-4 md:p-6">
+    <div className="min-h-100dvh bg-[#FAFAFA] flex items-center justify-center p-4 md:p-6">
       <div className="text-center">
         <LoadingSpinner size="lg" text={message} />
       </div>
