@@ -9,7 +9,7 @@ import { smartInvalidation } from '@/lib/queryUtils';
 import { logger } from '@/lib/logger';
 
 import { isValidUUID } from '@/lib/utils/validation';
-import { useEventSubscription } from '@/hooks/realtime';
+import { useEventSubscriptionSafe } from '@/hooks/realtime/useEventSubscriptionSafe';
 
 interface UseEventWithGuestReturn {
   event: EventWithHost | null;
@@ -102,9 +102,9 @@ export function useEventWithGuest(
   }, [fetchEventData]);
 
   // Realtime: keep guestInfo in sync for this specific user's guest record
-  // Only subscribe if we have both eventId and userId to minimize unnecessary subscriptions
-  useEventSubscription({
-    eventId: eventId,
+  // Always call the hook to maintain hook order, but conditionally enable
+  useEventSubscriptionSafe({
+    eventId: eventId || null,
     table: 'event_guests',
     event: '*',
     // Filter to only this user's guest record to reduce noise
@@ -114,6 +114,9 @@ export function useEventWithGuest(
         : undefined,
     onDataChange: useCallback(
       (payload) => {
+        // Early exit if we don't have the required data
+        if (!eventId || !userId) return;
+        
         try {
           // This subscription is already filtered to the current user's row
           const updated = payload.new as unknown as {
@@ -150,6 +153,7 @@ export function useEventWithGuest(
     onError: useCallback((err: Error) => {
       logger.realtimeError('Guest realtime subscription error', err);
     }, []),
+    // Only enable subscription when we have both eventId and userId
     enabled: Boolean(eventId && userId),
   });
 

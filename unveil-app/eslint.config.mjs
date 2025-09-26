@@ -40,6 +40,10 @@ const eslintConfig = [
         {
           selector: 'CallExpression[callee.property.name="rpc"][arguments.0.value=/get_guest_event_messages_(v1|legacy)/]',
           message: 'Direct RPC calls to deprecated get_guest_event_messages_v1 or legacy versions are not allowed. Use get_guest_event_messages_v2 instead.'
+        },
+        {
+          selector: 'CallExpression[callee.property.name="rpc"][arguments.0.value=/get_guest_event_messages_v[23]/]',
+          message: 'Direct RPC calls to get_guest_event_messages_v2/v3 are prohibited. Use canonical alias "get_guest_event_messages" to ensure proper delegation and type safety.'
         }
       ]
     }

@@ -330,8 +330,8 @@ export function GuestMessaging({
           <div className="text-center space-y-4">
             <EmptyState
               variant="messages"
-              title="No messages yet"
-              description="Your host hasn't sent any messages for this event yet. Check back later!"
+              title="No announcements yet"
+              description="Check back soon."
             />
           </div>
         </div>
