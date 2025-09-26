@@ -3,9 +3,23 @@
 import { useState, useEffect, useCallback, memo, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import type { Database } from '@/app/reference/supabase.types';
-import PhotoUpload from './PhotoUpload';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+
+// Dynamic import for PhotoUpload to reduce initial bundle size
+const PhotoUpload = dynamic(() => import('./PhotoUpload'), {
+  loading: () => (
+    <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+      <div className="animate-pulse">
+        <div className="w-12 h-12 bg-gray-200 rounded-full mx-auto mb-4"></div>
+        <div className="h-4 bg-gray-200 rounded w-32 mx-auto mb-2"></div>
+        <div className="h-3 bg-gray-200 rounded w-24 mx-auto"></div>
+      </div>
+    </div>
+  ),
+  ssr: false, // Upload functionality is client-only
+});
 
 type Media = Database['public']['Tables']['media']['Row'];
 
