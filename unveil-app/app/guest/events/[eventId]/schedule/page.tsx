@@ -12,8 +12,8 @@ import {
 } from '@/components/ui';
 import EventSchedule from '@/components/features/scheduling/EventSchedule';
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth/AuthProvider';
 
 export default function GuestEventSchedulePage() {
   const params = useParams();
@@ -21,25 +21,18 @@ export default function GuestEventSchedulePage() {
   const eventId = params.eventId as string;
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-  // Get session first
+  // Use auth provider instead of direct Supabase client
+  const { session, loading: authLoading } = useAuth();
+  
   useEffect(() => {
-    const getSession = async () => {
-      const {
-        data: { session },
-        error: sessionError,
-      } = await supabase.auth.getSession();
-
-      if (sessionError || !session?.user) {
-        console.error('❌ Error getting session:', sessionError);
+    if (!authLoading) {
+      if (!session?.user) {
         router.push('/login');
         return;
       }
-
       setCurrentUserId(session.user.id);
-    };
-
-    getSession();
-  }, [router]);
+    }
+  }, [session, authLoading, router]);
 
   // Use the custom hook to fetch event and guest data
   const { event, loading, error } = useEventWithGuest(eventId, currentUserId);

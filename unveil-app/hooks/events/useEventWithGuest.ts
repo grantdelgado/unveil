@@ -151,7 +151,6 @@ export function useEventWithGuest(
       logger.realtimeError('Guest realtime subscription error', err);
     }, []),
     enabled: Boolean(eventId && userId),
-    performanceOptions: { enablePooling: true, eventId: eventId || undefined },
   });
 
   return {

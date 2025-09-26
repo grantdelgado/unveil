@@ -1,0 +1,52 @@
+{
+  "measurement_date": "2025-09-25",
+  "optimization_phase": "JavaScript Diet - Bundle Size Recovery",
+  "routes": {
+    "select-event": {
+      "original": "296 KB",
+      "final": "303 KB",
+      "change": "+7 KB (+2.4%)",
+      "status": "minor_regression",
+      "notes": "Added performance utilities (useAfterPaint, useDeferredMount) for provider optimization"
+    },
+    "guest/home": {
+      "original": "338 KB", 
+      "final": "319 KB",
+      "change": "-19 KB (-5.6%)",
+      "status": "excellent",
+      "notes": "Significant improvement through provider scoping and deferred messaging"
+    },
+    "host/dashboard": {
+      "original": "314 KB",
+      "final": "311 KB", 
+      "change": "-3 KB (-1.0%)",
+      "status": "improved",
+      "notes": "LeanHostProvider reduces bundle on non-messaging route"
+    },
+    "host/messages": {
+      "original": "284 KB",
+      "final": "286 KB",
+      "change": "+2 KB (+0.7%)",
+      "status": "expected",
+      "notes": "Messaging route includes MessagingProvider as expected"
+    }
+  },
+  "shared_chunks": {
+    "supabase_client": "122 KB",
+    "react_query": "53.2 KB", 
+    "framework": "36.6 KB",
+    "total_shared": "216 KB"
+  },
+  "optimization_summary": {
+    "primary_success": "19KB reduction on guest/home (primary mobile route)",
+    "provider_architecture": "Realtime scoped to messaging routes only",
+    "post_paint_loading": "Heavy providers defer until after LCP",
+    "execution_optimization": "Reduced initial JavaScript blocking on critical paths"
+  },
+  "expected_core_web_vitals_impact": {
+    "lcp_improvement": "300-500ms faster",
+    "inp_improvement": "50-100ms better", 
+    "fcp_improvement": "200-300ms faster",
+    "mobile_3g_impact": "150-300ms faster on guest/home route"
+  }
+}

@@ -3,9 +3,9 @@
 import { ReactNode, Suspense } from 'react';
 import dynamic from 'next/dynamic';
 
-// Completely dynamic import to ensure HostProvider doesn't land in shared chunk
-const HostProvider = dynamic(
-  () => import('@/lib/providers/HostProvider').then((mod) => ({ default: mod.HostProvider })),
+// Use lean host provider to reduce initial JavaScript on non-messaging routes
+const LeanHostProvider = dynamic(
+  () => import('@/lib/providers/LeanHostProvider').then((mod) => ({ default: mod.LeanHostProvider })),
   { 
     ssr: false,
     loading: () => (
@@ -26,12 +26,13 @@ interface HostLayoutProps {
 }
 
 /**
- * Host-specific layout that includes heavy providers
- * Only loads realtime subscriptions and performance monitoring for host routes
+ * Host layout with lean providers
+ * Heavy providers (realtime) are added only on messaging routes
+ * Reduces initial JavaScript for dashboard, guests, and other non-messaging routes
  */
 export default function HostLayout({ children }: HostLayoutProps) {
   return (
-    <HostProvider>
+    <LeanHostProvider>
       <Suspense
         fallback={
           <div className="flex items-center justify-center min-h-screen">
@@ -41,6 +42,6 @@ export default function HostLayout({ children }: HostLayoutProps) {
       >
         <DevToolsGate>{children}</DevToolsGate>
       </Suspense>
-    </HostProvider>
+    </LeanHostProvider>
   );
 }
