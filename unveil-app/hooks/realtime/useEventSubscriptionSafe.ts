@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef, useEffect, useState } from 'react';
 import { useSubscriptionManagerSafe } from '@/lib/realtime/SubscriptionProvider';
 import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
@@ -71,23 +71,85 @@ export function useEventSubscriptionSafe({
     };
   }
 
-  // If provider is available, set up the subscription
-  // This would be the normal subscription logic, but for now we'll keep it simple
+  // If provider is available, set up the actual subscription
+  const unsubscribeRef = useRef<(() => void) | null>(null);
+  const [isConnectedState, setIsConnectedState] = useState(false);
+
+  const subscribe = useCallback(() => {
+    if (!enabled || !eventId || !subscriptionManager.manager) {
+      return;
+    }
+
+    // Clean up existing subscription
+    if (unsubscribeRef.current) {
+      unsubscribeRef.current();
+      unsubscribeRef.current = null;
+    }
+
+    try {
+      const subscriptionId = `safe-${eventId}-${table}-${event}`;
+      
+      unsubscribeRef.current = subscriptionManager.manager.subscribe(subscriptionId, {
+        table,
+        event,
+        schema: 'public',
+        filter,
+        callback: safeOnDataChange,
+        onError: safeOnError,
+        onStatusChange: (status) => {
+          setIsConnectedState(status === 'connected');
+        },
+        timeoutMs: 30000,
+        retryOnTimeout: true,
+        enableBackoff: true,
+        maxRetries: 3,
+      });
+
+      logger.realtime(`✅ Safe realtime subscription created: ${subscriptionId}`);
+    } catch (error) {
+      logger.error('Failed to create safe realtime subscription', error);
+      safeOnError(error instanceof Error ? error : new Error(String(error)));
+    }
+  }, [enabled, eventId, table, event, filter, subscriptionManager.manager, safeOnDataChange, safeOnError]);
+
+  const unsubscribe = useCallback(() => {
+    if (unsubscribeRef.current) {
+      unsubscribeRef.current();
+      unsubscribeRef.current = null;
+      setIsConnectedState(false);
+    }
+  }, []);
+
+  const reconnect = useCallback(() => {
+    unsubscribe();
+    subscribe();
+  }, [subscribe, unsubscribe]);
+
+  // Auto-subscribe when manager becomes ready
+  useEffect(() => {
+    if (subscriptionManager.isReady && enabled && eventId) {
+      subscribe();
+    }
+
+    return () => {
+      unsubscribe();
+    };
+  }, [subscriptionManager.isReady, enabled, eventId, subscribe, unsubscribe]);
+
   return {
-    isConnected: false,
-    subscribe: () => {
-      if (process.env.NODE_ENV === 'development') {
-        logger.realtime('Safe realtime subscription requested but not implemented yet');
-      }
+    isConnected: isConnectedState,
+    subscribe,
+    unsubscribe,
+    reconnect,
+    getStats: () => subscriptionManager.manager?.getStats() || { totalPools: 0, totalSubscriptions: 0 },
+    getPerformanceMetrics: () => {
+      const stats = subscriptionManager.manager?.getStats();
+      return {
+        healthScore: stats?.healthScore || 100,
+        activeSubscriptions: stats?.activeSubscriptions || 0,
+        connectionState: isConnectedState ? 'connected' as const : 'disconnected' as const,
+        errorCount: stats?.errorCount || 0,
+      };
     },
-    unsubscribe: () => {},
-    reconnect: () => {},
-    getStats: () => ({ totalPools: 0, totalSubscriptions: 0 }),
-    getPerformanceMetrics: () => ({
-      healthScore: 100,
-      activeSubscriptions: 0,
-      connectionState: 'disconnected' as const,
-      errorCount: 0,
-    }),
   };
 }
