@@ -799,9 +799,16 @@ export type Database = {
           source: string
         }[]
       }
-      get_guest_event_messages_v2: {
-        Args: { p_before?: string; p_event_id: string; p_limit?: number }
+      get_guest_event_messages: {
+        Args: {
+          p_before?: string
+          p_cursor_created_at?: string
+          p_cursor_id?: string
+          p_event_id: string
+          p_limit?: number
+        }
         Returns: {
+          channel_tags: string[]
           content: string
           created_at: string
           delivery_status: string
@@ -811,6 +818,29 @@ export type Database = {
           message_type: string
           sender_avatar_url: string
           sender_name: string
+          source: string
+        }[]
+      }
+      get_guest_event_messages_v2: {
+        Args: {
+          p_before?: string
+          p_cursor_created_at?: string
+          p_cursor_id?: string
+          p_event_id: string
+          p_limit?: number
+        }
+        Returns: {
+          channel_tags: string[]
+          content: string
+          created_at: string
+          delivery_status: string
+          is_catchup: boolean
+          is_own_message: boolean
+          message_id: string
+          message_type: string
+          sender_avatar_url: string
+          sender_name: string
+          source: string
         }[]
       }
       get_guest_invitation_status: {

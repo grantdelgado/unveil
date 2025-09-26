@@ -30,6 +30,10 @@ export function useEventSubscriptionSafe({
 }: UseEventSubscriptionSafeOptions) {
   const subscriptionManager = useSubscriptionManagerSafe();
   
+  // Always call all hooks to maintain hook order
+  const unsubscribeRef = useRef<(() => void) | null>(null);
+  const [isConnectedState, setIsConnectedState] = useState(false);
+  
   // Safe callbacks that handle missing provider
   const safeOnDataChange = useCallback((payload: RealtimePostgresChangesPayload<any>) => {
     try {
@@ -45,38 +49,26 @@ export function useEventSubscriptionSafe({
     onError?.(error);
   }, [onError]);
 
-  // If no subscription manager, return disabled state
-  if (!subscriptionManager || !subscriptionManager.isReady) {
-    if (process.env.NODE_ENV === 'development' && enabled && eventId) {
+  // Check if subscription manager is available
+  const isProviderReady = subscriptionManager?.isReady ?? false;
+  
+  // Log when realtime is disabled (development only)
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development' && enabled && eventId && !isProviderReady) {
       logger.realtime(`🔕 Realtime disabled for ${table} (no SubscriptionProvider)`, {
         eventId,
         table,
         hasManager: !!subscriptionManager,
-        isReady: subscriptionManager?.isReady || false
+        isReady: isProviderReady
       });
     }
-    
-    return {
-      isConnected: false,
-      subscribe: () => {},
-      unsubscribe: () => {},
-      reconnect: () => {},
-      getStats: () => ({ totalPools: 0, totalSubscriptions: 0 }),
-      getPerformanceMetrics: () => ({
-        healthScore: 100, // No connections, no issues
-        activeSubscriptions: 0,
-        connectionState: 'disconnected' as const,
-        errorCount: 0,
-      }),
-    };
-  }
+  }, [enabled, eventId, table, subscriptionManager, isProviderReady]);
 
-  // If provider is available, set up the actual subscription
-  const unsubscribeRef = useRef<(() => void) | null>(null);
-  const [isConnectedState, setIsConnectedState] = useState(false);
+  // If no subscription manager, return disabled state (but don't early return)
+  const shouldCreateSubscription = isProviderReady && enabled && eventId;
 
   const subscribe = useCallback(() => {
-    if (!enabled || !eventId || !subscriptionManager.manager) {
+    if (!shouldCreateSubscription || !subscriptionManager?.manager) {
       return;
     }
 
@@ -110,7 +102,7 @@ export function useEventSubscriptionSafe({
       logger.error('Failed to create safe realtime subscription', error);
       safeOnError(error instanceof Error ? error : new Error(String(error)));
     }
-  }, [enabled, eventId, table, event, filter, subscriptionManager.manager, safeOnDataChange, safeOnError]);
+  }, [shouldCreateSubscription, eventId, table, event, filter, subscriptionManager?.manager, safeOnDataChange, safeOnError]);
 
   const unsubscribe = useCallback(() => {
     if (unsubscribeRef.current) {
@@ -125,29 +117,30 @@ export function useEventSubscriptionSafe({
     subscribe();
   }, [subscribe, unsubscribe]);
 
-  // Auto-subscribe when manager becomes ready
+  // Auto-subscribe when conditions are met
   useEffect(() => {
-    if (subscriptionManager.isReady && enabled && eventId) {
+    if (shouldCreateSubscription) {
       subscribe();
     }
 
     return () => {
       unsubscribe();
     };
-  }, [subscriptionManager.isReady, enabled, eventId, subscribe, unsubscribe]);
+  }, [shouldCreateSubscription, subscribe, unsubscribe]);
 
+  // Always return the same structure to maintain consistency
   return {
-    isConnected: isConnectedState,
+    isConnected: shouldCreateSubscription ? isConnectedState : false,
     subscribe,
     unsubscribe,
     reconnect,
-    getStats: () => subscriptionManager.manager?.getStats() || { totalPools: 0, totalSubscriptions: 0 },
+    getStats: () => subscriptionManager?.manager?.getStats() || { totalPools: 0, totalSubscriptions: 0 },
     getPerformanceMetrics: () => {
-      const stats = subscriptionManager.manager?.getStats();
+      const stats = subscriptionManager?.manager?.getStats();
       return {
         healthScore: stats?.healthScore || 100,
         activeSubscriptions: stats?.activeSubscriptions || 0,
-        connectionState: isConnectedState ? 'connected' as const : 'disconnected' as const,
+        connectionState: (shouldCreateSubscription && isConnectedState) ? 'connected' as const : 'disconnected' as const,
         errorCount: stats?.errorCount || 0,
       };
     },

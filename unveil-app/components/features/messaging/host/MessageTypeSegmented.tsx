@@ -52,76 +52,52 @@ export function MessageTypeSegmented({
 
   return (
     <div className={cn('w-full', className)}>
-      {/* Segmented Control */}
+      {/* Pills Container */}
       <div
-        role="radiogroup"
+        role="tablist"
         aria-label="Message type"
-        className="grid grid-cols-3 gap-2 p-1 rounded-xl bg-gray-100 w-full"
+        className="flex gap-2 overflow-x-auto"
       >
         {(Object.keys(messageTypeConfig) as MessageType[]).map((type) => {
           const config = messageTypeConfig[type];
-          const Icon = config.icon;
           const isActive = value === type;
 
           return (
             <button
               key={type}
               type="button"
-              role="radio"
-              aria-checked={isActive}
+              role="tab"
+              aria-selected={isActive}
               aria-label={`${config.label}: ${config.description}`}
-              onClick={() => onChange(type)}
+              onClick={() => {
+                onChange(type);
+                // Dev-only observability
+                if (process.env.NODE_ENV === 'development') {
+                  console.log('ui:typeSelector:changed', { type });
+                }
+              }}
               onKeyDown={(e) => handleKeyDown(e, type)}
               className={cn(
-                // Base styles - icon above label layout
-                'inline-flex h-16 w-full flex-col items-center justify-center gap-1 rounded-lg border transition-all duration-200',
-                'text-center touch-manipulation',
+                // Base styles - pill shape with adequate touch target
+                'inline-flex h-11 items-center justify-center gap-2 px-4 rounded-full transition-all duration-200',
+                'text-center touch-manipulation whitespace-nowrap font-medium text-sm',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2',
                 // State styles
                 isActive
-                  ? 'bg-white text-gray-900 shadow-sm border-gray-200'
-                  : 'bg-transparent text-gray-600 border-transparent hover:bg-white/50 hover:text-gray-900',
+                  ? 'bg-purple-600 text-white border-2 border-purple-600 shadow-sm'
+                  : 'bg-white text-gray-700 border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50',
               )}
-              tabIndex={isActive ? 0 : -1}
+              tabIndex={0}
             >
-              <Icon className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
-              <span className="text-[12px] sm:text-sm leading-tight font-medium whitespace-normal break-words">
-                {config.label}
-              </span>
+              <span>{config.label}</span>
             </button>
           );
         })}
       </div>
 
-      {/* Type Description */}
-      <div className="mt-3 text-sm text-gray-600">
-        <div
-          className={cn(
-            'rounded-lg p-3 border',
-            value === 'announcement' &&
-              'bg-purple-50 border-purple-200 text-purple-800',
-            value === 'channel' && 'bg-blue-50 border-blue-200 text-blue-800',
-            value === 'direct' && 'bg-gray-50 border-gray-200 text-gray-800',
-          )}
-        >
-          <div className="font-medium mb-1">
-            Audience: {messageTypeConfig[value].description}
-          </div>
-          <div
-            className={cn(
-              'text-sm',
-              value === 'announcement' && 'text-purple-700',
-              value === 'channel' && 'text-blue-700',
-              value === 'direct' && 'text-gray-700',
-            )}
-          >
-            {value === 'announcement' &&
-              'Visible in app to all current and future guests.'}
-            {value === 'channel' &&
-              'Visible in app to anyone with these tags (past & future).'}
-            {value === 'direct' && 'Visible only to the selected recipients.'}
-          </div>
-        </div>
+      {/* Sublabel with audience explanation */}
+      <div className="mt-3 text-xs text-gray-600 text-center">
+        Audience controls who can see this. Notified now (SMS) shows who gets a text.
       </div>
     </div>
   );

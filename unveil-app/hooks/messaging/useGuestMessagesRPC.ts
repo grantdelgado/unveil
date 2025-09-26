@@ -158,17 +158,21 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
 
       // Use RPC function to get all messages (announcements + deliveries + own messages)
       // This ensures new guests see historical announcements
-      logger.info('Fetching guest messages via RPC v2', {
+      logger.info('Fetching guest messages via RPC v3 (stable)', {
         eventId,
         windowSize: INITIAL_WINDOW_SIZE,
       });
 
+      // CANONICAL RPC: Always use get_guest_event_messages (NOT v2/v3 directly)
+      // @deprecated Do NOT call get_guest_event_messages_v2 or get_guest_event_messages_v3 directly
       const { data, error: rpcError } = await supabase.rpc(
-        'get_guest_event_messages_v2',
+        'get_guest_event_messages',
         {
           p_event_id: eventId,
           p_limit: INITIAL_WINDOW_SIZE + 1,
           p_before: undefined,
+          p_cursor_created_at: undefined,
+          p_cursor_id: undefined,
         },
       );
 
@@ -211,6 +215,14 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
       const messagesToShow = hasMoreMessages
         ? messagesArray.slice(0, INITIAL_WINDOW_SIZE)
         : messagesArray;
+
+      // PII-safe telemetry for v3 usage
+      logger.info('🔧 📊 [TELEMETRY] messaging.rpc_v3_rows', {
+        count: messagesToShow.length,
+        window: INITIAL_WINDOW_SIZE,
+        hadCursor: false, // Initial fetch doesn't use cursor
+        eventId, // No PII - just event UUID
+      });
 
       // Map RPC response to GuestMessage type with safe type adapter
       const adaptedMessages = messagesToShow.map(mapRpcMessageToGuestMessage);
@@ -352,18 +364,22 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
       setIsFetchingOlder(true);
       setError(null);
 
-      logger.info('Fetching older guest messages via RPC v2', {
+      logger.info('Fetching older guest messages via RPC v3 (stable)', {
         eventId,
         before: oldestMessageCursor,
         paginationKey,
       });
 
+      // CANONICAL RPC: Always use get_guest_event_messages (NOT v2/v3 directly)
+      // @deprecated Do NOT call get_guest_event_messages_v2 or get_guest_event_messages_v3 directly
       const { data, error: rpcError } = await supabase.rpc(
-        'get_guest_event_messages_v2',
+        'get_guest_event_messages',
         {
           p_event_id: eventId,
           p_limit: OLDER_MESSAGES_BATCH_SIZE + 1,
           p_before: oldestMessageCursor,
+          p_cursor_created_at: undefined,
+          p_cursor_id: undefined,
         },
       );
 
@@ -391,6 +407,14 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
         ? messagesArray.slice(0, OLDER_MESSAGES_BATCH_SIZE)
         : messagesArray;
 
+      // PII-safe telemetry for v3 pagination
+      logger.info('🔧 📊 [TELEMETRY] messaging.rpc_v3_pagination', {
+        count: messagesToPrepend.length,
+        window: OLDER_MESSAGES_BATCH_SIZE,
+        hadCursor: Boolean(oldestMessageCursor),
+        eventId, // No PII - just event UUID
+      });
+
       if (messagesToPrepend.length > 0) {
         // Map RPC response to GuestMessage type with safe type adapter
         const adaptedMessages = messagesToPrepend.map(mapRpcMessageToGuestMessage);
@@ -398,7 +422,7 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
         // Reverse to chronological order and prepend to existing messages
         const sortedOlderMessages = adaptedMessages.reverse();
 
-        // Use merge function with stable ordering (always true for v2)
+        // Use merge function with stable ordering (always true for v3)
         setMessages((prevMessages) => 
           mergeMessages(prevMessages, sortedOlderMessages, true)
         );
