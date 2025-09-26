@@ -4,7 +4,7 @@ import './globals.css';
 
 import { APP_CONFIG } from '@/lib/constants';
 import { Suspense } from 'react';
-import { GuestProvider } from '@/lib/providers/GuestProvider';
+import { LeanRootProvider } from '@/lib/providers/LeanRootProvider';
 
 // Load auth debug utilities in development
 if (process.env.NODE_ENV === 'development') {
@@ -23,9 +23,9 @@ const inter = localFont({
     },
   ],
   variable: '--font-inter',
-  display: 'swap',
-  preload: false, // Let Next.js handle preloading more intelligently
-  fallback: ['Inter', 'system-ui', 'sans-serif'],
+  display: 'swap', // Prevent layout shift
+  preload: true, // Preload critical font for LCP text
+  fallback: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
 });
 
 export const metadata: Metadata = {
@@ -135,13 +135,18 @@ export default function RootLayout({
         <meta name="msapplication-config" content="/icons/browserconfig.xml" />
         <meta name="theme-color" content="#E15B50" />
 
-        {/* Preload critical resources */}
-        <link rel="dns-prefetch" href="//wvhtbqvnamerdkkjknuv.supabase.co" />
+        {/* Performance optimization: Preconnect to critical origins */}
+        <link rel="preconnect" href="https://wvhtbqvnamerdkkjknuv.supabase.co" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://wvhtbqvnamerdkkjknuv.supabase.co" crossOrigin="use-credentials" />
+        
+        {/* DNS prefetch for less critical resources */}
+        <link rel="dns-prefetch" href="//fonts.gstatic.com" />
+        <link rel="dns-prefetch" href="//api.twilio.com" />
       </head>
       <body
         className={`${inter.variable} antialiased font-sans touch-manipulation`}
       >
-        <GuestProvider>
+        <LeanRootProvider>
           <Suspense
             fallback={
               <div className="flex items-center justify-center min-h-screen">
@@ -151,7 +156,7 @@ export default function RootLayout({
           >
 {children}
           </Suspense>
-        </GuestProvider>
+        </LeanRootProvider>
       </body>
     </html>
   );

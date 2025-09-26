@@ -4,6 +4,8 @@ import { useEffect, useState, Suspense, lazy } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/app/reference/supabase.types';
+import { MessagingProvider } from '@/lib/providers/MessagingProvider';
+import { useAfterPaint } from '@/lib/utils/performance';
 import {
   PageWrapper,
   CardContainer,
@@ -11,7 +13,7 @@ import {
   LoadingSpinner,
 } from '@/components/ui';
 
-// Lazy load enhanced messaging center with selection and scheduling
+// Performance: Lazy load messaging center after critical content renders
 const LazyMessageCenter = lazy(() =>
   import('@/components/features/messaging/host/MessageCenter').then((m) => ({
     default: m.MessageCenter,
@@ -28,6 +30,7 @@ function MessagesPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const eventId = params.eventId as string;
+  const afterPaint = useAfterPaint();
 
   // Get preselection parameters from URL
   const preset = searchParams.get('preset'); // 'not_invited', 'custom', etc.
@@ -213,25 +216,36 @@ function MessagesPageContent() {
           </BackButton>
         </div>
 
-        {/* Message Center Interface */}
-        <Suspense
-          fallback={
-            <div className="flex items-center justify-center py-8">
-              <LoadingSpinner size="lg" />
-              <span className="ml-3 text-gray-600">
-                Loading message center...
-              </span>
-            </div>
-          }
-        >
-          <LazyMessageCenter
-            eventId={eventId}
-            preselectionPreset={preset}
-            preselectedGuestIds={
-              guestsParam ? guestsParam.split(',') : undefined
-            }
-          />
-        </Suspense>
+        {/* Message Center Interface - With realtime provider after paint */}
+        {afterPaint ? (
+          <MessagingProvider>
+            <Suspense
+              fallback={
+                <div className="flex items-center justify-center py-8">
+                  <LoadingSpinner size="lg" />
+                  <span className="ml-3 text-gray-600">
+                    Loading message center...
+                  </span>
+                </div>
+              }
+            >
+              <LazyMessageCenter
+                eventId={eventId}
+                preselectionPreset={preset}
+                preselectedGuestIds={
+                  guestsParam ? guestsParam.split(',') : undefined
+                }
+              />
+            </Suspense>
+          </MessagingProvider>
+        ) : (
+          <div className="flex items-center justify-center py-8">
+            <LoadingSpinner size="lg" />
+            <span className="ml-3 text-gray-600">
+              Preparing message center...
+            </span>
+          </div>
+        )}
       </div>
     </PageWrapper>
   );

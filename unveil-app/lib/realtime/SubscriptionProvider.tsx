@@ -354,6 +354,15 @@ export function useSubscriptionManager(): SubscriptionContextType {
 }
 
 /**
+ * Safe version of useSubscriptionManager that returns null when provider is missing
+ * Use this in hooks that should work without realtime functionality
+ */
+export function useSubscriptionManagerSafe(): SubscriptionContextType | null {
+  const context = useContext(SubscriptionContext);
+  return context || null;
+}
+
+/**
  * Legacy compatibility function - now uses provider-managed instance
  * @deprecated Use useSubscriptionManager hook instead
  */

@@ -1,0 +1,10 @@
+table_name,live_tuples,total_operations,inserts,updates,deletes,dead_tuples,last_analyze
+message_deliveries,1436,1599,1477,82,40,9,2025-09-25 01:32:27.367335+00
+user_link_audit,1064,1075,1066,7,2,2,2025-08-30 23:01:48.942815+00
+event_guests,143,1610,199,1366,45,4,2025-09-25 01:34:08.330422+00
+messages,106,218,137,50,31,6,2025-09-25 01:32:27.381789+00
+users,81,282,145,115,22,40,2025-09-25 01:33:24.595249+00
+scheduled_messages,44,169,51,106,12,56,2025-09-25 01:34:08.327027+00
+event_schedule_items,7,11,7,4,0,4,null
+events,3,45,17,18,10,19,2025-09-25 01:33:24.577286+00
+media,0,0,0,0,0,0,null
