@@ -2,6 +2,7 @@
 
 import { ReactNode } from 'react';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
+import { RumCollectorWrapper } from '@/components/common/RumCollectorWrapper';
 import dynamic from 'next/dynamic';
 
 // Only load essential providers for routing and error handling
@@ -41,12 +42,14 @@ interface LeanRootProviderProps {
  * - No realtime subscriptions at root level
  * - No performance monitoring unless needed
  * - Minimal JavaScript for critical routes
+ * - Includes lightweight RUM collection for performance insights
  */
 export function LeanRootProvider({ children }: LeanRootProviderProps) {
   return (
     <ErrorBoundary>
       <ReactQueryProvider>
         <AuthProvider>
+          <RumCollectorWrapper />
           {children}
         </AuthProvider>
       </ReactQueryProvider>

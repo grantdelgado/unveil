@@ -67,6 +67,10 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
     sessionId: null,
   });
 
+  // Enhanced deduplication tracking
+  const lastReinitAt = useRef<number>(0);
+  const lastSessionId = useRef<string | null>(null);
+
   // Centralized token refresh handler with mutex
   const applyToken = useCallback(async (newToken: string): Promise<void> => {
     if (tokenUpdateInFlight.current) {
@@ -114,20 +118,52 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
     } finally {
       tokenUpdateInFlight.current = false;
     }
-  }, [version, session?.user?.id]);
+  }, [session?.user?.id]);
 
-  // Initialize manager with proper async handling
+  // Initialize manager with proper async handling and deduplication
   const initializeManager = useCallback(async (): Promise<void> => {
     // Prevent concurrent initialization
     if (initializationRef.current) {
       return initializationRef.current;
     }
+
+    // Enhanced deduplication: Check if we should skip this reinit
+    const currentTime = Date.now();
+    const currentSessionId = session?.access_token?.slice(-8) || null; // Use token suffix as session ID
+    const timeSinceLastReinit = currentTime - lastReinitAt.current;
+    const isSameSession = currentSessionId === lastSessionId.current;
+
+    if (isSameSession && timeSinceLastReinit < 2000) {
+      logger.realtime('🔕 Ignoring reinit - same session within 2000ms', {
+        timeSinceLastReinit,
+        sessionId: currentSessionId,
+        userId: session?.user?.id,
+      });
+      
+      // Emit counter for observability
+      emitManagerReinit({
+        version: version,
+        reason: 'deduped',
+        userId: session?.user?.id,
+        hadPreviousManager: !!managerRef.current,
+        deduped: true,
+        timeSinceLastMs: timeSinceLastReinit,
+      });
+      
+      return;
+    }
+
+    // Update tracking variables
+    lastReinitAt.current = currentTime;
+    lastSessionId.current = currentSessionId;
     
     const initPromise = (async () => {
       try {
         logger.realtime('🚀 Initializing SubscriptionManager', {
           userId: session?.user?.id,
           hasSession: !!session,
+          sessionId: currentSessionId,
+          timeSinceLastReinit,
         });
 
         // Clean up any existing manager
