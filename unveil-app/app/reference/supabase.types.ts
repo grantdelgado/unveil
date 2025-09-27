@@ -675,6 +675,19 @@ export type Database = {
       }
     }
     Functions: {
+      add_or_restore_guest: {
+        Args: {
+          p_event_id: string
+          p_name?: string
+          p_phone: string
+          p_role?: string
+        }
+        Returns: Json
+      }
+      backfill_guest_deliveries: {
+        Args: { p_guest_id: string; p_user_id: string }
+        Returns: number
+      }
       backfill_user_id_from_phone: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -683,112 +696,112 @@ export type Database = {
           updated_count: number
         }[]
       }
-      is_event_host: {
-        Args: { p_event_id: string }
-        Returns: boolean
-      }
-      get_invitable_guest_ids: {
-        Args: { p_event_id: string }
-        Returns: {
-          guest_id: string
-        }[]
-      }
-      get_scheduled_messages_for_processing: {
-        Args: { p_current_time?: string; p_limit?: number }
-        Returns: {
-          content: string
-          created_at: string
-          event_id: string
-          event_sms_tag: string
-          event_title: string
-          failure_count: number
-          id: string
-          idempotency_key: string
-          message_type: Database["public"]["Enums"]["message_type_enum"]
-          modification_count: number
-          modified_at: string
-          recipient_count: number
-          recipient_snapshot: Json
-          scheduled_local: string
-          scheduled_tz: string
-          send_at: string
-          send_via_push: boolean
-          send_via_sms: boolean
-          sender_user_id: string
-          sent_at: string
-          status: string
-          subject: string
-          success_count: number
-          target_all_guests: boolean
-          target_guest_ids: string[]
-          target_guest_tags: string[]
-          target_sub_event_ids: string[]
-          updated_at: string
-          version: number
-        }[]
-      }
-      upsert_message_delivery: {
+      backfill_user_links: {
         Args: {
-          p_guest_id: string
-          p_message_id: string
-          p_phone_number?: string
-          p_push_provider_id?: string
-          p_push_status?: string
-          p_sms_provider_id?: string
-          p_sms_status?: string
-          p_user_id?: string
+          p_batch_size?: number
+          p_dry_run?: boolean
+          p_table_name?: string
+        }
+        Returns: {
+          ambiguous_count: number
+          linked_count: number
+          no_match_count: number
+          processed_count: number
+          sample_results: Json
+          skipped_count: number
+        }[]
+      }
+      build_event_reminder_content: {
+        Args: {
+          p_event_id: string
+          p_event_timezone: string
+          p_start_at_utc: string
+          p_sub_event_title: string
         }
         Returns: string
       }
-      resolve_message_recipients: {
-        Args: {
-          include_declined?: boolean
-          msg_event_id: string
-          require_all_tags?: boolean
-          target_guest_ids?: string[]
-          target_rsvp_statuses?: string[]
-          target_tags?: string[]
-        }
+      bulk_guest_auto_join: {
+        Args: { p_phone?: string }
+        Returns: Json
+      }
+      bulk_guest_auto_join_from_auth: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      can_access_delivery_v2: {
+        Args: { p_guest_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      can_access_event: {
+        Args: { p_event_id: string }
+        Returns: boolean
+      }
+      can_access_message: {
+        Args: { p_message_id: string }
+        Returns: boolean
+      }
+      can_manage_deliveries_v2: {
+        Args: { p_message_id: string }
+        Returns: boolean
+      }
+      can_manage_message_delivery: {
+        Args: { m_id?: string; sm_id?: string }
+        Returns: boolean
+      }
+      can_read_event: {
+        Args: { e: string }
+        Returns: boolean
+      }
+      can_write_event: {
+        Args: { e: string }
+        Returns: boolean
+      }
+      check_phone_exists_for_event: {
+        Args: { p_event_id: string; p_phone: string }
+        Returns: boolean
+      }
+      create_event_with_host_atomic: {
+        Args: { event_data: Json }
         Returns: {
-          can_receive_sms: boolean
-          display_name: string
-          guest_id: string
-          guest_name: string
-          phone: string
-          recipient_type: string
-          sms_opt_out: boolean
+          created_at: string
+          error_message: string
+          event_id: string
+          operation: string
+          success: boolean
         }[]
       }
-      update_guest_invitation_tracking_strict: {
-        Args: { p_event_id: string; p_guest_ids: string[] }
-        Returns: Json
+      current_announcement_audience_count: {
+        Args: { p_scheduled_message_id: string }
+        Returns: number
       }
-      update_guest_messaging_activity: {
-        Args: { p_event_id: string; p_guest_ids: string[] }
-        Returns: Json
-      }
-      handle_sms_delivery_error: {
-        Args: {
-          p_error_code: string
-          p_error_message?: string
-          p_phone: string
-        }
-        Returns: Json
-      }
-      handle_sms_delivery_success: {
-        Args: { p_phone: string }
-        Returns: Json
-      }
-      get_user_events: {
-        Args: { user_id_param?: string }
+      detect_duplicate_events: {
+        Args: Record<PropertyKey, never>
         Returns: {
+          created_at_range: string
+          duplicate_count: number
           event_date: string
-          id: string
-          is_host: boolean
-          location: string
-          role: string
-          rsvp_status: string
+          event_ids: string[]
+          host_name: string
+          host_user_id: string
           title: string
+        }[]
+      }
+      event_id_from_message: {
+        Args: { m_id: string }
+        Returns: string
+      }
+      event_id_from_scheduled_message: {
+        Args: { sm_id: string }
+        Returns: string
+      }
+      get_event_guest_counts: {
+        Args: { p_event_id: string }
+        Returns: {
+          attending: number
+          declined: number
+          not_invited: number
+          total_guests: number
+          total_invited: number
         }[]
       }
       get_event_guests_with_display_names: {
@@ -825,44 +838,19 @@ export type Database = {
           user_onboarding_completed: boolean
           user_phone: string
           user_updated_at: string
-          user_sms_consent_given_at: string | null
-          user_sms_consent_ip_address: string | null
-          user_sms_consent_user_agent: string | null
         }[]
       }
-      soft_delete_guest: {
-        Args: { p_guest_id: string }
+      get_event_reminder_status: {
+        Args: { p_event_id: string; p_timeline_id: string }
         Returns: Json
       }
-      guest_decline_event: {
-        Args: { p_decline_reason?: string; p_event_id: string }
-        Returns: Json
-      }
-      guest_rejoin_event: {
-        Args: { p_event_id: string }
-        Returns: Json
-      }
-      host_clear_guest_decline: {
-        Args: { p_event_id: string; p_guest_user_id: string }
-        Returns: Json
-      }
-      check_phone_exists_for_event: {
-        Args: { p_event_id: string; p_phone: string }
+      get_feature_flag: {
+        Args: { flag_name: string }
         Returns: boolean
       }
-      get_event_guest_counts: {
-        Args: { p_event_id: string }
-        Returns: {
-          attending: number
-          declined: number
-          not_invited: number
-          total_guests: number
-          total_invited: number
-        }[]
-      }
-      current_announcement_audience_count: {
-        Args: { p_scheduled_message_id: string }
-        Returns: number
+      get_guest_display_name: {
+        Args: { p_guest_name: string; p_user_full_name: string }
+        Returns: string
       }
       get_guest_event_messages: {
         Args: {
@@ -886,6 +874,68 @@ export type Database = {
           source: string
         }[]
       }
+      get_guest_event_messages_v2: {
+        Args: {
+          p_before?: string
+          p_cursor_created_at?: string
+          p_cursor_id?: string
+          p_event_id: string
+          p_limit?: number
+        }
+        Returns: {
+          channel_tags: string[]
+          content: string
+          created_at: string
+          delivery_status: string
+          is_catchup: boolean
+          is_own_message: boolean
+          message_id: string
+          message_type: string
+          sender_avatar_url: string
+          sender_name: string
+          source: string
+        }[]
+      }
+      get_guest_event_messages_v3: {
+        Args: {
+          p_before?: string
+          p_cursor_created_at?: string
+          p_cursor_id?: string
+          p_event_id: string
+          p_limit?: number
+        }
+        Returns: {
+          channel_tags: string[]
+          content: string
+          created_at: string
+          delivery_status: string
+          is_catchup: boolean
+          is_own_message: boolean
+          message_id: string
+          message_type: string
+          sender_avatar_url: string
+          sender_name: string
+          source: string
+        }[]
+      }
+      get_guest_invitation_status: {
+        Args: {
+          p_declined_at: string
+          p_invited_at: string
+          p_joined_at: string
+        }
+        Returns: string
+      }
+      get_guest_join_timestamp: {
+        Args: { p_event_id: string }
+        Returns: string
+      }
+      get_invitable_guest_ids: {
+        Args: { p_event_id: string }
+        Returns: {
+          guest_id: string
+        }[]
+      }
       get_messaging_recipients: {
         Args: { p_event_id: string; p_include_hosts?: boolean }
         Returns: {
@@ -903,14 +953,241 @@ export type Database = {
           user_phone: string
         }[]
       }
-      add_or_restore_guest: {
+      get_scheduled_messages_for_processing: {
+        Args: { p_current_time?: string; p_limit?: number }
+        Returns: {
+          content: string
+          created_at: string
+          event_id: string
+          event_sms_tag: string
+          event_title: string
+          failure_count: number
+          id: string
+          idempotency_key: string
+          message_type: Database["public"]["Enums"]["message_type_enum"]
+          modification_count: number
+          modified_at: string
+          recipient_count: number
+          recipient_snapshot: Json
+          scheduled_local: string
+          scheduled_tz: string
+          send_at: string
+          send_via_push: boolean
+          send_via_sms: boolean
+          sender_user_id: string
+          sent_at: string
+          status: string
+          subject: string
+          success_count: number
+          target_all_guests: boolean
+          target_guest_ids: string[]
+          target_guest_tags: string[]
+          target_sub_event_ids: string[]
+          updated_at: string
+          version: number
+        }[]
+      }
+      get_user_events: {
+        Args: { user_id_param?: string }
+        Returns: {
+          event_date: string
+          id: string
+          is_host: boolean
+          location: string
+          role: string
+          rsvp_status: string
+          title: string
+        }[]
+      }
+      guest_auto_join: {
+        Args: { p_event_id: string; p_phone: string }
+        Returns: Json
+      }
+      guest_decline_event: {
+        Args: { p_decline_reason?: string; p_event_id: string }
+        Returns: Json
+      }
+      guest_exists_for_phone: {
+        Args: { p_event_id: string; p_phone: string }
+        Returns: boolean
+      }
+      guest_has_all_tags: {
+        Args: { guest_id: string; target_tags: string[] }
+        Returns: boolean
+      }
+      guest_has_any_tags: {
+        Args:
+          | { guest_id: string; target_tags: string[] }
+          | { p_event_id: string; p_user_id: string; target_tags: string[] }
+        Returns: boolean
+      }
+      guest_rejoin_event: {
+        Args: { p_event_id: string }
+        Returns: Json
+      }
+      handle_sms_delivery_error: {
         Args: {
-          p_event_id: string
-          p_name?: string
+          p_error_code: string
+          p_error_message?: string
           p_phone: string
-          p_role?: string
         }
         Returns: Json
+      }
+      handle_sms_delivery_success: {
+        Args: { p_phone: string }
+        Returns: Json
+      }
+      host_clear_guest_decline: {
+        Args: { p_event_id: string; p_guest_user_id: string }
+        Returns: Json
+      }
+      insert_event_guest: {
+        Args: {
+          p_event_id: string
+          p_guest_name: string
+          p_phone: string
+          p_rsvp_status?: string
+        }
+        Returns: string
+      }
+      is_event_guest: {
+        Args: { p_event_id: string } | { p_event_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      is_event_host: {
+        Args: { p_event_id: string }
+        Returns: boolean
+      }
+      is_guest_attending_rsvp_lite: {
+        Args: { guest_event_id: string; guest_user_id: string }
+        Returns: boolean
+      }
+      is_valid_auth_session: {
+        Args: { auth_user_id: string }
+        Returns: boolean
+      }
+      is_valid_phone_for_messaging: {
+        Args: { phone_number: string }
+        Returns: boolean
+      }
+      link_user_by_phone: {
+        Args: { p_event_id: string; p_normalized_phone: string }
+        Returns: {
+          guest_id: string
+          outcome: Database["public"]["Enums"]["user_link_outcome_enum"]
+          user_id: string
+        }[]
+      }
+      lookup_user_by_phone: {
+        Args: { user_phone: string }
+        Returns: {
+          created_at: string
+          full_name: string
+          id: string
+          onboarding_completed: boolean
+          phone: string
+        }[]
+      }
+      mark_a2p_notice_sent: {
+        Args: { _event_id: string; _guest_id: string }
+        Returns: undefined
+      }
+      normalize_phone: {
+        Args: { phone_input: string }
+        Returns: string
+      }
+      normalize_phone_number: {
+        Args: { input_phone: string }
+        Returns: string
+      }
+      resolve_event_from_message_v2: {
+        Args: { p_message_id: string }
+        Returns: string
+      }
+      resolve_message_recipients: {
+        Args: {
+          include_declined?: boolean
+          msg_event_id: string
+          require_all_tags?: boolean
+          target_guest_ids?: string[]
+          target_rsvp_statuses?: string[]
+          target_tags?: string[]
+        }
+        Returns: {
+          can_receive_sms: boolean
+          display_name: string
+          guest_id: string
+          guest_name: string
+          phone: string
+          recipient_type: string
+          sms_opt_out: boolean
+        }[]
+      }
+      restore_guest: {
+        Args: { p_guest_id: string }
+        Returns: Json
+      }
+      rollback_user_links: {
+        Args: {
+          p_dry_run?: boolean
+          p_since_timestamp: string
+          p_table_name?: string
+        }
+        Returns: {
+          rolled_back_count: number
+          sample_records: Json
+        }[]
+      }
+      soft_delete_guest: {
+        Args: { p_guest_id: string }
+        Returns: Json
+      }
+      sync_event_reminder_on_time_change: {
+        Args: { p_event_id: string; p_timeline_id: string }
+        Returns: Json
+      }
+      update_guest_invitation_tracking: {
+        Args: { p_event_id: string; p_guest_ids: string[] }
+        Returns: Json
+      }
+      update_guest_invitation_tracking_strict: {
+        Args: { p_event_id: string; p_guest_ids: string[] }
+        Returns: Json
+      }
+      update_guest_messaging_activity: {
+        Args: { p_event_id: string; p_guest_ids: string[] }
+        Returns: Json
+      }
+      update_scheduled_message: {
+        Args: {
+          p_content: string
+          p_message_id: string
+          p_message_type: Database["public"]["Enums"]["message_type_enum"]
+          p_send_at: string
+          p_send_via_push?: boolean
+          p_send_via_sms?: boolean
+          p_target_all_guests?: boolean
+          p_target_guest_ids?: string[]
+          p_target_guest_tags?: string[]
+        }
+        Returns: Json
+      }
+      upsert_event_reminder: {
+        Args: { p_enabled: boolean; p_event_id: string; p_timeline_id: string }
+        Returns: Json
+      }
+      upsert_message_delivery: {
+        Args: {
+          p_guest_id: string
+          p_message_id: string
+          p_phone_number?: string
+          p_push_provider_id?: string
+          p_push_status?: string
+          p_sms_provider_id?: string
+          p_sms_status?: string
+          p_user_id?: string
+        }
+        Returns: string
       }
       validate_guest_phone_not_host: {
         Args: { p_event_id: string; p_phone: string }

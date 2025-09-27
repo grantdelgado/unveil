@@ -73,17 +73,17 @@ export function useRecipientPreview({
       display_name: recipient.guest_display_name,
       users: recipient.user_full_name
         ? {
-            id: '', // Not needed for preview
+            id: '', // Not returned by RPC
             full_name: recipient.user_full_name,
             phone: recipient.user_phone || '',
-            avatar_url: null,
-            created_at: null,
-            updated_at: null,
-            intended_redirect: null,
-            onboarding_completed: false,
-            sms_consent_given_at: null,
-            sms_consent_ip_address: null,
-            sms_consent_user_agent: null,
+            avatar_url: null, // Not returned by RPC
+            created_at: null, // Not returned by RPC
+            updated_at: null, // Not returned by RPC
+            intended_redirect: null, // Not returned by RPC
+            onboarding_completed: false, // Not returned by RPC
+            sms_consent_given_at: null, // Not returned by RPC
+            sms_consent_ip_address: null, // Not returned by RPC
+            sms_consent_user_agent: null, // Not returned by RPC
           }
         : null,
       // Computed fields
