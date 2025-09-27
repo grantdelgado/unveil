@@ -22,9 +22,11 @@ interface TokenRefreshMetric {
 
 interface ManagerReinitMetric {
   version: number;
-  reason: 'sign_in' | 'sign_out' | 'error';
+  reason: 'sign_in' | 'sign_out' | 'error' | 'deduped';
   userId?: string;
   hadPreviousManager: boolean;
+  deduped?: boolean;
+  timeSinceLastMs?: number;
 }
 
 interface SubscribeWhileDestroyedMetric {
@@ -97,13 +99,28 @@ class RealtimeTelemetry {
         reason: metric.reason,
         userId: metric.userId,
         hadPreviousManager: metric.hadPreviousManager,
+        deduped: metric.deduped,
+        timeSinceLastMs: metric.timeSinceLastMs,
       },
     });
+
+    // Emit specific counter for deduplication observability
+    if (metric.reason === 'deduped') {
+      this.emit({
+        event: 'realtime.manager.reinit.ignored',
+        data: {
+          timeSinceLastMs: metric.timeSinceLastMs,
+          version: metric.version,
+        },
+      });
+    }
 
     if (this.isDevelopment) {
       logger.realtime(`🔄 Manager reinit v${metric.version}`, {
         reason: metric.reason,
         hadPrevious: metric.hadPreviousManager,
+        deduped: metric.deduped,
+        timeSinceLastMs: metric.timeSinceLastMs,
       });
     }
   }

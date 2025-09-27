@@ -345,6 +345,13 @@ jobs:
           npm run perf:monitor
         continue-on-error: true
 
+      - name: Run bundle budget validation
+        id: bundle-budget
+        run: |
+          echo "📊 Validating bundle size budgets..."
+          npm run build:budget
+        continue-on-error: true
+
       - name: Parse performance results
         id: perf-results
         run: |
@@ -394,6 +401,7 @@ jobs:
           DASHBOARD_SIZE=${{ steps.perf-results.outputs.dashboard_size }}
           ERROR_ROUTES=${{ steps.perf-results.outputs.error_routes }}
           WARNING_ROUTES=${{ steps.perf-results.outputs.warning_routes }}
+          BUNDLE_BUDGET_STATUS=${{ steps.bundle-budget.outcome }}
           
           DASHBOARD_LIMIT=250
           WARNING_LIMIT=220
@@ -401,10 +409,17 @@ jobs:
           echo "🎯 Enforcing bundle size limits..."
           echo "  Dashboard limit: ${DASHBOARD_LIMIT}KB"
           echo "  Warning threshold: ${WARNING_LIMIT}KB"
+          echo "  Bundle budget check: ${BUNDLE_BUDGET_STATUS}"
           
           FAILED=false
           
-          # Check dashboard size
+          # Check bundle budget validation first (most comprehensive)
+          if [ "$BUNDLE_BUDGET_STATUS" = "failure" ]; then
+            echo "❌ Bundle budget validation failed - routes exceed 10KB regression threshold"
+            FAILED=true
+          fi
+          
+          # Check dashboard size (legacy check)
           if [ "$DASHBOARD_SIZE" -ge "$DASHBOARD_LIMIT" ]; then
             echo "❌ Dashboard bundle ($DASHBOARD_SIZE KB) exceeds limit ($DASHBOARD_LIMIT KB)"
             FAILED=true
@@ -414,7 +429,7 @@ jobs:
             echo "✅ Dashboard bundle ($DASHBOARD_SIZE KB) within limits"
           fi
           
-          # Check for routes over budget
+          # Check for routes over budget (legacy check)
           if [ "$ERROR_ROUTES" -gt 0 ]; then
             echo "❌ $ERROR_ROUTES route(s) exceed bundle size budgets"
             FAILED=true
@@ -423,16 +438,22 @@ jobs:
           if [ "$FAILED" = true ]; then
             echo ""
             echo "💡 To fix bundle size issues:"
-            echo "  1. Run 'npm run perf:monitor' locally to see detailed breakdown"
-            echo "  2. Consider lazy loading heavy components with dynamic()"
-            echo "  3. Remove unused dependencies and imports"
-            echo "  4. Split large components into smaller chunks"
+            echo "  1. Run 'npm run perf:budget' locally to see detailed bundle analysis"
+            echo "  2. Use 'npm run build:analyze' to visualize bundle composition"
+            echo "  3. Consider lazy loading heavy components with dynamic()"
+            echo "  4. Remove unused dependencies and imports"
+            echo "  5. Split large components into smaller chunks"
             echo ""
             exit 1
           fi
           
-          if [ "$WARNING_ROUTES" -gt 0 ]; then
-            echo "⚠️ $WARNING_ROUTES route(s) have bundle size warnings"
+          if [ "$WARNING_ROUTES" -gt 0 ] || [ "$BUNDLE_BUDGET_STATUS" = "success" ]; then
+            if [ "$WARNING_ROUTES" -gt 0 ]; then
+              echo "⚠️ $WARNING_ROUTES route(s) have bundle size warnings"
+            fi
+            if [ "$BUNDLE_BUDGET_STATUS" = "success" ]; then
+              echo "✅ Bundle budgets met for all routes"
+            fi
           fi
           
           echo "✅ All performance budgets met!"
@@ -483,12 +504,216 @@ jobs:
               body: body
             });
 
+  # Job 5: Lighthouse CI with Production Build
+  lighthouse-ci:
+    name: 'Lighthouse CI'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: type-lint-build
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-output
+          path: .next/
+
+      - name: Install Lighthouse CI
+        run: npm install -g @lhci/cli@0.14.x
+
+      - name: Start production server
+        run: |
+          npm run start &
+          echo $! > server.pid
+          npx wait-on http://localhost:3000 --timeout 60000
+        env:
+          NODE_ENV: production
+          NEXT_PUBLIC_SUPABASE_URL: https://test.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: test-anon-key
+
+      - name: Run Lighthouse CI
+        run: |
+          echo "🚀 Running Lighthouse CI against production build..."
+          lhci collect --config=lighthouserc.js
+          lhci assert --config=lighthouserc.js
+        env:
+          LHCI_BUILD_CONTEXT__CURRENT_HASH: ${{ github.sha }}
+          LHCI_BUILD_CONTEXT__COMMIT_TIME: ${{ github.event.head_commit.timestamp }}
+
+      - name: Extract performance metrics
+        id: lighthouse-metrics
+        run: |
+          # Extract key metrics from LHCI results
+          if [ -f ".lighthouseci/lhr-*.json" ]; then
+            LANDING_LCP=$(node -e "
+              const fs = require('fs');
+              const files = fs.readdirSync('.lighthouseci').filter(f => f.includes('lhr-') && f.includes('localhost:3000/'));
+              if (files.length > 0) {
+                const report = JSON.parse(fs.readFileSync(\`.lighthouseci/\${files[0]}\`, 'utf8'));
+                const lcp = report.audits['largest-contentful-paint']?.numericValue;
+                console.log(lcp ? Math.round(lcp) : 0);
+              } else {
+                console.log(0);
+              }
+            ")
+            
+            LOGIN_LCP=$(node -e "
+              const fs = require('fs');
+              const files = fs.readdirSync('.lighthouseci').filter(f => f.includes('lhr-') && f.includes('login'));
+              if (files.length > 0) {
+                const report = JSON.parse(fs.readFileSync(\`.lighthouseci/\${files[0]}\`, 'utf8'));
+                const lcp = report.audits['largest-contentful-paint']?.numericValue;
+                console.log(lcp ? Math.round(lcp) : 0);
+              } else {
+                console.log(0);
+              }
+            ")
+            
+            LANDING_PERF=$(node -e "
+              const fs = require('fs');
+              const files = fs.readdirSync('.lighthouseci').filter(f => f.includes('lhr-') && f.includes('localhost:3000/'));
+              if (files.length > 0) {
+                const report = JSON.parse(fs.readFileSync(\`.lighthouseci/\${files[0]}\`, 'utf8'));
+                const score = report.categories.performance?.score * 100;
+                console.log(score ? Math.round(score) : 0);
+              } else {
+                console.log(0);
+              }
+            ")
+            
+            echo "landing_lcp=$LANDING_LCP" >> $GITHUB_OUTPUT
+            echo "login_lcp=$LOGIN_LCP" >> $GITHUB_OUTPUT
+            echo "landing_perf=$LANDING_PERF" >> $GITHUB_OUTPUT
+            
+            echo "🎯 Lighthouse Metrics:"
+            echo "  Landing LCP: ${LANDING_LCP}ms"
+            echo "  Login LCP: ${LOGIN_LCP}ms"
+            echo "  Landing Performance: ${LANDING_PERF}/100"
+          else
+            echo "❌ No Lighthouse reports found"
+            exit 1
+          fi
+
+      - name: Validate performance thresholds
+        run: |
+          LANDING_LCP=${{ steps.lighthouse-metrics.outputs.landing_lcp }}
+          LOGIN_LCP=${{ steps.lighthouse-metrics.outputs.login_lcp }}
+          LANDING_PERF=${{ steps.lighthouse-metrics.outputs.landing_perf }}
+          
+          LCP_THRESHOLD=2500
+          PERF_THRESHOLD=75
+          
+          echo "🎯 Validating performance thresholds..."
+          echo "  LCP threshold: ${LCP_THRESHOLD}ms"
+          echo "  Performance threshold: ${PERF_THRESHOLD}/100"
+          
+          FAILED=false
+          
+          if [ "$LANDING_LCP" -gt "$LCP_THRESHOLD" ]; then
+            echo "❌ Landing LCP ($LANDING_LCP ms) exceeds threshold ($LCP_THRESHOLD ms)"
+            FAILED=true
+          else
+            echo "✅ Landing LCP ($LANDING_LCP ms) within threshold"
+          fi
+          
+          if [ "$LOGIN_LCP" -gt "$LCP_THRESHOLD" ]; then
+            echo "❌ Login LCP ($LOGIN_LCP ms) exceeds threshold ($LCP_THRESHOLD ms)"
+            FAILED=true
+          else
+            echo "✅ Login LCP ($LOGIN_LCP ms) within threshold"
+          fi
+          
+          if [ "$LANDING_PERF" -lt "$PERF_THRESHOLD" ]; then
+            echo "❌ Landing performance ($LANDING_PERF/100) below threshold ($PERF_THRESHOLD/100)"
+            FAILED=true
+          else
+            echo "✅ Landing performance ($LANDING_PERF/100) meets threshold"
+          fi
+          
+          if [ "$FAILED" = true ]; then
+            echo ""
+            echo "💡 Performance optimization tips:"
+            echo "  1. Remove artificial delays (waitMinDisplay)"
+            echo "  2. Optimize bundle sizes with dynamic imports"
+            echo "  3. Improve image loading with next/image"
+            echo "  4. Use Web Vitals debugging: npm run lighthouse:baseline"
+            echo ""
+            exit 1
+          fi
+          
+          echo "✅ All Lighthouse performance thresholds met!"
+
+      - name: Kill production server
+        if: always()
+        run: |
+          if [ -f server.pid ]; then
+            kill $(cat server.pid) || echo "Server already stopped"
+            rm server.pid
+          fi
+
+      - name: Upload Lighthouse artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lighthouse-reports
+          path: |
+            .lighthouseci/
+            lighthouse-*.json
+          retention-days: 7
+
+      - name: Comment Lighthouse results on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const landingLcp = '${{ steps.lighthouse-metrics.outputs.landing_lcp }}';
+            const loginLcp = '${{ steps.lighthouse-metrics.outputs.login_lcp }}';
+            const landingPerf = '${{ steps.lighthouse-metrics.outputs.landing_perf }}';
+            
+            const lcpStatus = (lcp) => lcp <= 2500 ? '✅' : lcp <= 4000 ? '⚠️' : '❌';
+            const perfStatus = (score) => score >= 75 ? '✅' : score >= 50 ? '⚠️' : '❌';
+            
+            const body = `## 🚨 Lighthouse CI Performance Report
+            
+            | Page | LCP | Performance Score | Status |
+            |------|-----|------------------|--------|
+            | Landing (/) | ${landingLcp}ms | ${landingPerf}/100 | ${lcpStatus(landingLcp)} ${perfStatus(landingPerf)} |
+            | Login (/login) | ${loginLcp}ms | - | ${lcpStatus(loginLcp)} |
+            
+            **Thresholds:** LCP ≤2500ms, Performance ≥75/100
+            
+            ${landingLcp <= 2500 && loginLcp <= 2500 && landingPerf >= 75 ? 
+              '🎉 All Lighthouse performance thresholds met!' : 
+              '⚠️ Some performance thresholds not met. Check artifacts for detailed reports.'}
+            
+            📊 [View detailed Lighthouse reports in CI artifacts]
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
   # Summary job to aggregate all results
   ci-summary:
     name: 'CI Summary'
     runs-on: ubuntu-latest
     if: always()
-    needs: [type-lint-build, messaging-hooks-coverage, e2e-mobile-smoke, perf-budget]
+    needs: [type-lint-build, messaging-hooks-coverage, e2e-mobile-smoke, perf-budget, lighthouse-ci]
     
     steps:
       - name: Check all job results
@@ -500,11 +725,13 @@ jobs:
           MESSAGING_COVERAGE="${{ needs.messaging-hooks-coverage.result }}"
           E2E_MOBILE="${{ needs.e2e-mobile-smoke.result }}"
           PERF_BUDGET="${{ needs.perf-budget.result }}"
+          LIGHTHOUSE_CI="${{ needs.lighthouse-ci.result }}"
           
           echo "🔍 Type/Lint/Build: $TYPE_LINT_BUILD"
           echo "🧪 Messaging Coverage: $MESSAGING_COVERAGE"
           echo "📱 E2E Mobile: $E2E_MOBILE"
           echo "📊 Performance Budget: $PERF_BUDGET"
+          echo "🚨 Lighthouse CI: $LIGHTHOUSE_CI"
           echo ""
           
           FAILED=false
@@ -526,6 +753,11 @@ jobs:
           
           if [ "$PERF_BUDGET" != "success" ]; then
             echo "❌ Performance budget exceeded (dashboard ≥250KB)"
+            FAILED=true
+          fi
+          
+          if [ "$LIGHTHOUSE_CI" != "success" ]; then
+            echo "❌ Lighthouse CI failed (LCP >2.5s or Performance <75)"
             FAILED=true
           fi
           

@@ -1,0 +1,70 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Bundle Size Budgets for Unveil App",
+  "description": "Route-level bundle size thresholds to prevent performance regressions",
+  "routes": {
+    "/select-event": {
+      "firstLoadJS": 280,
+      "warning": 250,
+      "description": "Event selection page - Critical path for users"
+    },
+    "/guest/home": {
+      "firstLoadJS": 320,
+      "warning": 290,
+      "description": "Guest home page - Main guest entry point"
+    },
+    "/guest/schedule": {
+      "firstLoadJS": 280,
+      "warning": 250,
+      "description": "Guest schedule view - Event timeline display"
+    },
+    "/host/dashboard": {
+      "firstLoadJS": 350,
+      "warning": 320,
+      "description": "Host dashboard - Rich interactive features allowed"
+    },
+    "/host/messaging": {
+      "firstLoadJS": 400,
+      "warning": 370,
+      "description": "Host messaging - Real-time features require more JS"
+    },
+    "/": {
+      "firstLoadJS": 220,
+      "warning": 200,
+      "description": "Landing page - Must be extremely fast for SEO/conversion"
+    },
+    "/login": {
+      "firstLoadJS": 200,
+      "warning": 180,
+      "description": "Login page - Authentication entry point"
+    }
+  },
+  "globalThresholds": {
+    "maxRouteSize": 400,
+    "averageRouteSize": 280,
+    "totalBundleSize": 2000,
+    "sharedChunks": {
+      "vendor": 800,
+      "common": 150
+    }
+  },
+  "excludePatterns": [
+    "_app",
+    "_error", 
+    "_document",
+    "404"
+  ],
+  "metadata": {
+    "version": "1.0.0",
+    "lastUpdated": "2025-09-26",
+    "budgetRationale": {
+      "guest": "Guest routes prioritize speed over features - lower budgets",
+      "host": "Host routes can trade some performance for rich functionality",
+      "core": "Landing/login pages must be ultra-fast for conversion/SEO"
+    },
+    "regressionTolerance": {
+      "error": "10KB increase triggers CI failure",
+      "warning": "5KB increase triggers PR warning"
+    }
+  }
+}

@@ -3,6 +3,10 @@ import { fileURLToPath } from 'url';
 import { FlatCompat } from '@eslint/eslintrc';
 import eslintConfigPrettier from 'eslint-config-prettier';
 
+// Import custom ESLint rules
+import canonicalMessagingRpc from './eslint-rules/canonical-messaging-rpc.js';
+import messagingHooks from './eslint-rules/messaging-hooks.js';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 

@@ -418,6 +418,36 @@ export type Database = {
           },
         ]
       }
+      rum_events: {
+        Row: {
+          build_id: string | null
+          device: string
+          id: number
+          metric: string
+          route: string
+          ts: string
+          value: number
+        }
+        Insert: {
+          build_id?: string | null
+          device: string
+          id?: number
+          metric: string
+          route: string
+          ts?: string
+          value: number
+        }
+        Update: {
+          build_id?: string | null
+          device?: string
+          id?: number
+          metric?: string
+          route?: string
+          ts?: string
+          value?: number
+        }
+        Relationships: []
+      }
       scheduled_messages: {
         Row: {
           content: string
@@ -596,6 +626,9 @@ export type Database = {
           intended_redirect: string | null
           onboarding_completed: boolean
           phone: string
+          sms_consent_given_at: string | null
+          sms_consent_ip_address: string | null
+          sms_consent_user_agent: string | null
           updated_at: string | null
         }
         Insert: {
@@ -606,6 +639,9 @@ export type Database = {
           intended_redirect?: string | null
           onboarding_completed?: boolean
           phone: string
+          sms_consent_given_at?: string | null
+          sms_consent_ip_address?: string | null
+          sms_consent_user_agent?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -616,13 +652,27 @@ export type Database = {
           intended_redirect?: string | null
           onboarding_completed?: boolean
           phone?: string
+          sms_consent_given_at?: string | null
+          sms_consent_ip_address?: string | null
+          sms_consent_user_agent?: string | null
           updated_at?: string | null
         }
         Relationships: []
       }
     }
     Views: {
-      [_ in never]: never
+      rum_p75_7d: {
+        Row: {
+          avg_value: number | null
+          max_value: number | null
+          metric: string | null
+          min_value: number | null
+          n: number | null
+          p75: number | null
+          route: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       add_or_restore_guest: {
@@ -678,12 +728,32 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      can_access_delivery_v2: {
+        Args: { p_guest_id: string; p_user_id: string }
+        Returns: boolean
+      }
       can_access_event: {
         Args: { p_event_id: string }
         Returns: boolean
       }
       can_access_message: {
         Args: { p_message_id: string }
+        Returns: boolean
+      }
+      can_manage_deliveries_v2: {
+        Args: { p_message_id: string }
+        Returns: boolean
+      }
+      can_manage_message_delivery: {
+        Args: { m_id?: string; sm_id?: string }
+        Returns: boolean
+      }
+      can_read_event: {
+        Args: { e: string }
+        Returns: boolean
+      }
+      can_write_event: {
+        Args: { e: string }
         Returns: boolean
       }
       check_phone_exists_for_event: {
@@ -700,6 +770,10 @@ export type Database = {
           success: boolean
         }[]
       }
+      current_announcement_audience_count: {
+        Args: { p_scheduled_message_id: string }
+        Returns: number
+      }
       detect_duplicate_events: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -711,6 +785,14 @@ export type Database = {
           host_user_id: string
           title: string
         }[]
+      }
+      event_id_from_message: {
+        Args: { m_id: string }
+        Returns: string
+      }
+      event_id_from_scheduled_message: {
+        Args: { sm_id: string }
+        Returns: string
       }
       get_event_guest_counts: {
         Args: { p_event_id: string }
@@ -770,35 +852,6 @@ export type Database = {
         Args: { p_guest_name: string; p_user_full_name: string }
         Returns: string
       }
-      get_guest_event_messages_legacy: {
-        Args: { p_before?: string; p_event_id: string; p_limit?: number }
-        Returns: {
-          content: string
-          created_at: string
-          delivery_status: string
-          is_own_message: boolean
-          message_id: string
-          message_type: string
-          sender_avatar_url: string
-          sender_name: string
-        }[]
-      }
-      get_guest_event_messages_v1: {
-        Args: { p_before?: string; p_event_id: string; p_limit?: number }
-        Returns: {
-          channel_tags: string[]
-          content: string
-          created_at: string
-          delivery_status: string
-          is_catchup: boolean
-          is_own_message: boolean
-          message_id: string
-          message_type: string
-          sender_avatar_url: string
-          sender_name: string
-          source: string
-        }[]
-      }
       get_guest_event_messages: {
         Args: {
           p_before?: string
@@ -822,6 +875,28 @@ export type Database = {
         }[]
       }
       get_guest_event_messages_v2: {
+        Args: {
+          p_before?: string
+          p_cursor_created_at?: string
+          p_cursor_id?: string
+          p_event_id: string
+          p_limit?: number
+        }
+        Returns: {
+          channel_tags: string[]
+          content: string
+          created_at: string
+          delivery_status: string
+          is_catchup: boolean
+          is_own_message: boolean
+          message_id: string
+          message_type: string
+          sender_avatar_url: string
+          sender_name: string
+          source: string
+        }[]
+      }
+      get_guest_event_messages_v3: {
         Args: {
           p_before?: string
           p_cursor_created_at?: string
@@ -1023,6 +1098,10 @@ export type Database = {
       }
       normalize_phone_number: {
         Args: { input_phone: string }
+        Returns: string
+      }
+      resolve_event_from_message_v2: {
+        Args: { p_message_id: string }
         Returns: string
       }
       resolve_message_recipients: {
