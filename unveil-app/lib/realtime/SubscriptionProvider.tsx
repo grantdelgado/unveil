@@ -118,7 +118,7 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
     } finally {
       tokenUpdateInFlight.current = false;
     }
-  }, [session?.user?.id]);
+  }, [version, session?.user?.id]);
 
   // Initialize manager with proper async handling and deduplication
   const initializeManager = useCallback(async (): Promise<void> => {
@@ -216,7 +216,7 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
     initializationRef.current = initPromise;
     await initPromise;
     initializationRef.current = null;
-  }, [session, applyToken]);
+  }, [version, session, applyToken]);
 
   // Destroy manager with proper cleanup
   const destroyManager = useCallback(() => {

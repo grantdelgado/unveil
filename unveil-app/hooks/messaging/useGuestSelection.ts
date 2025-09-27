@@ -98,6 +98,9 @@ export function useGuestSelection({
             updated_at: null,
             intended_redirect: null,
             onboarding_completed: false,
+            sms_consent_given_at: null,
+            sms_consent_ip_address: null,
+            sms_consent_user_agent: null,
           }
         : null,
       // Computed fields
