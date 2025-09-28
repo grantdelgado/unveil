@@ -39,16 +39,9 @@ function validateRumEvent(data: unknown): RumEventPayload | null {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createApiSupabaseClient(request);
-    
-    // Verify user is authenticated for RUM collection
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      );
-    }
+    // Skip auth check for RUM collection - anonymous performance data is acceptable
+    // This enables performance monitoring during login/onboarding flows
+    // We don't store PII and this data helps monitor login/signup performance
 
     const body = await request.json();
     const rumEvent = validateRumEvent(body);
@@ -62,7 +55,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Insert RUM event (no user ID stored - PII-safe)
-    const { error: insertError } = await supabase
+    // Use service role client for unauthenticated RUM collection
+    const { createClient } = await import('@supabase/supabase-js');
+    const serviceSupabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+    
+    const { error: insertError } = await serviceSupabase
       .from('rum_events')
       .insert([rumEvent]);
 
