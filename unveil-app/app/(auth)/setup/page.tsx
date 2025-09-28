@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/auth/AuthProvider';
 import { supabase } from '@/lib/supabase';
 import type { User } from '@/lib/supabase/types';
 import { trackUserInteraction } from '@/lib/performance-monitoring';
+import { SMS_NOTIF_CHECKBOX_COPY, PRIVACY_URL } from '@/lib/compliance/smsConsent';
 import {
   PageWrapper,
   CardContainer,
@@ -243,8 +244,9 @@ export default function AccountSetupPage() {
 
             {/* SMS Consent Checkbox */}
             <div className="space-y-3">
-              <label className="flex items-start gap-2 min-h-[44px] cursor-pointer">
+              <label htmlFor="smsConsent" className="flex items-start gap-2 min-h-[44px] cursor-pointer">
                 <input
+                  id="smsConsent"
                   type="checkbox"
                   checked={smsConsent}
                   onChange={(e) => {
@@ -257,16 +259,16 @@ export default function AccountSetupPage() {
                   className="mt-1 h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 focus:ring-offset-2 flex-shrink-0"
                 />
                 <span className="text-sm text-gray-700 leading-relaxed select-none">
-                  I consent to receive event notifications via SMS (RSVPs, reminders, updates). 
-                  Msg&amp;Data rates may apply. Reply STOP to opt out.{' '}
+                  {SMS_NOTIF_CHECKBOX_COPY.split('Privacy Policy')[0]}
                   <a 
-                    href="https://www.sendunveil.com/policies" 
+                    href={PRIVACY_URL}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-purple-600 underline hover:text-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-1 rounded-sm"
                   >
                     Privacy Policy
                   </a>
+                  {SMS_NOTIF_CHECKBOX_COPY.split('Privacy Policy')[1] || '.'}
                 </span>
               </label>
             </div>

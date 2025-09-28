@@ -1,12 +1,18 @@
 'use client';
 
 import { cn } from '@/lib/utils';
+import { SMS_AUTH_FOOTER_COPY, PRIVACY_URL } from '@/lib/compliance/smsConsent';
 
 interface SmsDisclosureProps {
   className?: string;
 }
 
 export function SmsDisclosure({ className }: SmsDisclosureProps) {
+  // Split the text at "Privacy Policy" to insert the link
+  const parts = SMS_AUTH_FOOTER_COPY.split('Privacy Policy');
+  const beforeLink = parts[0];
+  const afterLink = parts[1] || '';
+
   return (
     <p
       role="note"
@@ -16,11 +22,9 @@ export function SmsDisclosure({ className }: SmsDisclosureProps) {
         className,
       )}
     >
-      By continuing, you agree to receive SMS passcodes from Unveil for
-      authentication purposes. Msg&Data rates may apply. Reply STOP to
-      unsubscribe or HELP for help. See our{' '}
+      {beforeLink}
       <a
-        href="https://www.sendunveil.com/policies"
+        href={PRIVACY_URL}
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Privacy Policy"
@@ -28,7 +32,7 @@ export function SmsDisclosure({ className }: SmsDisclosureProps) {
       >
         Privacy Policy
       </a>
-      .
+      {afterLink}
     </p>
   );
 }
