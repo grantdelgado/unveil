@@ -12,6 +12,13 @@ const nextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256],
   },
   poweredByHeader: false,
+  // Redirects to app subdomain
+  async redirects() {
+    return [
+      { source: '/app', destination: 'https://app.sendunveil.com', permanent: false },
+      { source: '/login', destination: 'https://app.sendunveil.com', permanent: false },
+    ];
+  },
   // Prevent cross-imports from other workspace packages
   webpack: (config) => {
     config.resolve.alias = {

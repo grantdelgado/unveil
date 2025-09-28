@@ -47,11 +47,21 @@ function SimpleHeader() {
             </div>
             <span className="text-xl font-bold bg-gradient-to-r from-rose-500 to-purple-600 bg-clip-text text-transparent">Unveil</span>
           </Link>
-          <nav className="hidden md:flex items-center space-x-8">
-            <Link href="/" className="text-gray-700 hover:text-gray-900 font-medium">Home</Link>
-            <Link href="/how-it-works" className="text-gray-700 hover:text-gray-900 font-medium">How It Works</Link>
-            <Link href="/policies" className="text-gray-700 hover:text-gray-900 font-medium">Policies</Link>
-          </nav>
+          <div className="flex items-center space-x-4">
+            <nav className="hidden md:flex items-center space-x-8">
+              <Link href="/" className="text-gray-700 hover:text-gray-900 font-medium">Home</Link>
+              <Link href="/how-it-works" className="text-gray-700 hover:text-gray-900 font-medium">How It Works</Link>
+              <Link href="/policies" className="text-gray-700 hover:text-gray-900 font-medium">Policies</Link>
+            </nav>
+            <a
+              href="https://app.sendunveil.com"
+              className="inline-flex items-center gap-1 bg-gradient-to-r from-rose-500 to-purple-600 text-white font-medium px-4 py-2 rounded-full text-sm shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
+              id="cta-open-app-nav"
+            >
+              Open the App
+              <span className="text-xs">→</span>
+            </a>
+          </div>
         </div>
       </div>
     </header>

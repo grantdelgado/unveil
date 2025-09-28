@@ -29,14 +29,25 @@ export default function HomePage() {
           </div>
 
           {/* CTA Button */}
-          <div className="mb-12">
-            <Link 
-              href="/how-it-works" 
+          <div className="mb-8">
+            <a
+              href="https://app.sendunveil.com"
               className="inline-flex items-center gap-2 bg-gradient-to-r from-rose-500 to-purple-600 text-white font-medium px-8 py-4 rounded-full text-lg shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105"
+              id="cta-open-app-hero"
             >
-              Learn How It Works
+              Open the App
               <span>→</span>
-            </Link>
+            </a>
+          </div>
+          
+          {/* Helper copy for compliance */}
+          <div className="mb-12">
+            <p className="text-sm text-gray-500 max-w-xl mx-auto">
+              Use Unveil in your browser. Reply STOP to unsubscribe, HELP for help. See our{' '}
+              <Link href="/policies" className="text-rose-600 hover:text-rose-700 underline">
+                Privacy Policy
+              </Link>.
+            </p>
           </div>
 
           {/* Subtle brand accent line */}
