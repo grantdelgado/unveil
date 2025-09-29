@@ -57,17 +57,19 @@ function messageStateReducer(state: MessageState, action: MessageAction): Messag
       
       const oldestMessage = sortedMessages[sortedMessages.length - 1];
       
-      // Debug logging for cursor calculation
-      console.log('🔍 SET_INITIAL_MESSAGES reducer', {
-        originalCount: messages.length,
-        trimmed: shouldTrim,
-        finalCount: sortedMessages.length,
-        oldestMessage: oldestMessage ? {
-          id: oldestMessage.message_id,
-          created_at: oldestMessage.created_at,
-        } : null,
-        hasMore,
-      });
+      // Debug logging for cursor calculation (can be removed in production)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔍 SET_INITIAL_MESSAGES reducer', {
+          originalCount: messages.length,
+          trimmed: shouldTrim,
+          finalCount: sortedMessages.length,
+          oldestMessage: oldestMessage ? {
+            id: oldestMessage.message_id,
+            created_at: oldestMessage.created_at,
+          } : null,
+          hasMore,
+        });
+      }
       
       return {
         messages: sortedMessages,
@@ -255,18 +257,20 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
   // Extract values for backward compatibility
   const { messages, messageIds, compoundCursor, oldestMessageCursor, hasMore } = messageState;
 
-  // Debug logging for state changes
+  // Debug logging for state changes (development only)
   useEffect(() => {
-    console.log('🔍 messageState changed', {
-      messageCount: messages.length,
-      hasCompoundCursor: !!compoundCursor,
-      compoundCursor: compoundCursor ? {
-        created_at: compoundCursor.created_at,
-        id: compoundCursor.id,
-      } : null,
-      hasMore,
-      messageIdsSize: messageIds.size,
-    });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔍 messageState changed', {
+        messageCount: messages.length,
+        hasCompoundCursor: !!compoundCursor,
+        compoundCursor: compoundCursor ? {
+          created_at: compoundCursor.created_at,
+          id: compoundCursor.id,
+        } : null,
+        hasMore,
+        messageIdsSize: messageIds.size,
+      });
+    }
   }, [messages.length, compoundCursor, hasMore, messageIds.size]);
 
   // Enhanced de-duplication with Map keyed by eventId:userId:version
@@ -384,13 +388,15 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
       const adaptedMessages = messagesArray.map(mapRpcMessageToGuestMessage);
       
       // Use atomic reducer for thread-safe state management
-      console.log('🔍 About to dispatch SET_INITIAL_MESSAGES', {
-        rawCount: messagesArray.length,
-        adaptedCount: adaptedMessages.length,
-        hasMore: hasMoreMessages,
-        windowSize: INITIAL_WINDOW_SIZE,
-        sampleMessage: adaptedMessages[0]?.message_id,
-      });
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔍 About to dispatch SET_INITIAL_MESSAGES', {
+          rawCount: messagesArray.length,
+          adaptedCount: adaptedMessages.length,
+          hasMore: hasMoreMessages,
+          windowSize: INITIAL_WINDOW_SIZE,
+          sampleMessage: adaptedMessages[0]?.message_id,
+        });
+      }
       
       dispatch({ 
         type: 'SET_INITIAL_MESSAGES', 
