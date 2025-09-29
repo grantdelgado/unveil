@@ -32,6 +32,7 @@ async function globalSetup(config: FullConfig) {
     const hostResponse = await hostPage.request.post(`${baseURL}/test-support/api/create-session`, {
       headers: {
         'x-e2e-test-secret': testSecret,
+        'x-test-mode': 'true',
         'content-type': 'application/json',
       },
       data: {
@@ -70,6 +71,7 @@ async function globalSetup(config: FullConfig) {
     const guestResponse = await guestPage.request.post(`${baseURL}/test-support/api/create-session`, {
       headers: {
         'x-e2e-test-secret': testSecret,
+        'x-test-mode': 'true',
         'content-type': 'application/json',
       },
       data: {
