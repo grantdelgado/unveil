@@ -20,61 +20,26 @@ import {
   emitManagerReinit,
   emitSetAuth,
 } from '@/lib/telemetry/realtime';
+import { realtimeHealthMetrics } from './health-metrics';
 
-// Health metrics interface for non-blocking instrumentation
-interface HealthMetricsClient {
-  incrementActiveChannels: () => void;
-  decrementActiveChannels: () => void;  
-  incrementMessages: () => void;
-  incrementErrors: () => void;
+const INTERVAL_MS = 5000;
+
+// Factory function to create fresh pending updates
+function createPendingUpdates() {
+  return { channelDelta: 0, messageCount: 0, errorCount: 0 };
 }
 
-// Optimized health metrics with batching and error handling
-let realtimeHealthMetrics: HealthMetricsClient | null = null;
-if (typeof window !== 'undefined') {
-  // In-memory counters to reduce API calls
-  let pendingUpdates = {
-    channelDelta: 0,
-    messageCount: 0,
-    errorCount: 0,
-  };
-  
-  // Batch updates every 5 seconds to reduce network calls
-  const flushPendingUpdates = () => {
-    if (pendingUpdates.channelDelta !== 0 || pendingUpdates.messageCount > 0 || pendingUpdates.errorCount > 0) {
-      // Single batched API call instead of multiple calls
-      fetch('/api/health/realtime', {
-        method: 'PATCH',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(pendingUpdates),
-      }).catch((error) => {
-        if (process.env.NODE_ENV === 'development') {
-          console.warn('Health metrics: Batch update failed:', error.message);
-        }
-      });
-      
-      // Reset pending updates
-      pendingUpdates = { channelDelta: 0, messageCount: 0, errorCount: 0 };
+// Flush metrics helper function (PII-safe)
+function flushRealtimeMetrics(updates: { channelDelta: number; messageCount: number; errorCount: number }) {
+  fetch('/api/health/realtime', {
+    method: 'PATCH',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(updates),
+  }).catch((error) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('Health metrics: Batch update failed:', error.message);
     }
-  };
-  
-  // Batch flush every 5 seconds
-  setInterval(flushPendingUpdates, 5000);
-  
-  realtimeHealthMetrics = {
-    incrementActiveChannels: () => {
-      pendingUpdates.channelDelta += 1;
-    },
-    decrementActiveChannels: () => {
-      pendingUpdates.channelDelta -= 1;
-    },
-    incrementMessages: () => {
-      pendingUpdates.messageCount += 1;
-    },
-    incrementErrors: () => {
-      pendingUpdates.errorCount += 1;
-    },
-  };
+  });
 }
 
 interface SubscriptionContextType {
@@ -92,13 +57,14 @@ interface SubscriptionProviderProps {
 }
 
 /**
- * FIXED: Enhanced SubscriptionProvider with race condition protection
+ * FIXED: Enhanced SubscriptionProvider with race condition protection and proper interval lifecycle
  * 
  * Fixes:
  * - Eliminated rapid auth transition loops
  * - Proper initialization state management  
  * - Prevented manager operation race conditions
  * - Stabilized isReady state transitions
+ * - Fixed interval memory leak by mounting/unmounting with provider lifecycle
  */
 export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
   const [manager, setManager] = useState<SubscriptionManager | null>(null);
@@ -111,6 +77,10 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
   const initializationRef = useRef<Promise<void> | null>(null);
   const isInitializedRef = useRef(false);
   const tokenUpdateInFlight = useRef(false);
+  
+  // Interval and metrics management refs
+  const intervalRef = useRef<number | null>(null);
+  const pendingRef = useRef(createPendingUpdates());
   
   // Track auth state more precisely
   const lastAuthState = useRef<{
@@ -126,6 +96,56 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
   // Enhanced deduplication tracking
   const lastReinitAt = useRef<number>(0);
   const lastSessionId = useRef<string | null>(null);
+
+  // Set up batching interval with proper lifecycle management
+  useEffect(() => {
+    // Safety: clear any stray interval (HMR protection)
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
+    // Dev-only log for interval lifecycle
+    if (process.env.NODE_ENV === 'development') {
+      logger.info('[realtime] metrics interval starting');
+    }
+
+    // Start batching only when provider is mounted
+    const id = window.setInterval(() => {
+      // Optional: skip when tab hidden to reduce noise
+      if (typeof document !== 'undefined' && document.hidden) return;
+      
+      const { channelDelta, messageCount, errorCount } = pendingRef.current;
+      if (channelDelta === 0 && messageCount === 0 && errorCount === 0) return;
+      
+      // flush (PII-safe)
+      flushRealtimeMetrics({ channelDelta, messageCount, errorCount });
+      
+      // reset
+      pendingRef.current = createPendingUpdates();
+    }, INTERVAL_MS);
+    
+    intervalRef.current = id;
+
+    return () => {
+      // Dev-only log for interval lifecycle
+      if (process.env.NODE_ENV === 'development') {
+        logger.info('[realtime] metrics interval stopping');
+      }
+
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      
+      // Final flush on unmount (optional, PII-safe)
+      const { channelDelta, messageCount, errorCount } = pendingRef.current;
+      if (channelDelta || messageCount || errorCount) {
+        flushRealtimeMetrics({ channelDelta, messageCount, errorCount });
+        pendingRef.current = createPendingUpdates();
+      }
+    };
+  }, []);
 
   // Centralized token refresh handler with mutex
   const applyToken = useCallback(async (newToken: string): Promise<void> => {
@@ -226,7 +246,7 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
         if (managerRef.current) {
           try {
             managerRef.current.destroy();
-            realtimeHealthMetrics?.decrementActiveChannels();
+            realtimeHealthMetrics.decrementActiveChannels();
           } catch (error) {
             logger.error('❌ Error destroying existing manager:', error);
           }
@@ -241,7 +261,7 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
         }
         
         // Increment health metrics for new manager
-        realtimeHealthMetrics?.incrementActiveChannels();
+        realtimeHealthMetrics.incrementActiveChannels();
         
         // Update refs and state
         managerRef.current = newManager;
@@ -285,7 +305,7 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
     if (managerRef.current) {
       try {
         managerRef.current.destroy();
-        realtimeHealthMetrics?.decrementActiveChannels();
+        realtimeHealthMetrics.decrementActiveChannels();
       } catch (error) {
         logger.error('❌ Error destroying SubscriptionManager:', error);
       }
@@ -381,7 +401,7 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
       if (managerRef.current) {
         logger.realtime('🧹 Provider unmount cleanup');
         managerRef.current.destroy();
-        realtimeHealthMetrics?.decrementActiveChannels();
+        realtimeHealthMetrics.decrementActiveChannels();
         managerRef.current = null;
       }
     };

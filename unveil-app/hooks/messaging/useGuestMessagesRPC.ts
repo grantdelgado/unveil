@@ -491,28 +491,38 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
     };
   }, []);
 
+  // Keep the latest cursor in a ref to avoid stale closures
+  const latestCursorRef = useRef(messageState.compoundCursor);
+  useEffect(() => {
+    latestCursorRef.current = messageState.compoundCursor;
+  }, [messageState.compoundCursor]);
+
   /**
    * Fetch older messages for pagination using compound cursor
    */
   const fetchOlderMessages = useCallback(async () => {
-    // Get current state from messageState (avoid stale closure)
-    const currentCursor = messageState.compoundCursor;
+    // Always read the latest cursor from ref to avoid stale closures
+    const currentCursor = latestCursorRef.current;
     
-    // Debug logging for pagination issues
-    logger.info('🔍 fetchOlderMessages called', {
-      hasCompoundCursor: !!currentCursor,
-      compoundCursor: currentCursor,
-      isFetchingOlder,
-      eventId,
-      staleFromCallback: compoundCursor, // Show stale value for comparison
-    });
+    // Debug logging for pagination issues (dev only)
+    if (process.env.NODE_ENV === 'development') {
+      logger.info('🔍 fetchOlderMessages called', {
+        hasCompoundCursor: !!currentCursor,
+        before_created_at: currentCursor?.created_at,
+        before_id: currentCursor?.id,
+        isFetchingOlder,
+        eventId,
+      });
+    }
     
     if (!currentCursor || isFetchingOlder) {
-      logger.warn('🔍 fetchOlderMessages early return', {
-        reason: !currentCursor ? 'no_compound_cursor' : 'already_fetching',
-        compoundCursor: currentCursor,
-        isFetchingOlder,
-      });
+      if (process.env.NODE_ENV === 'development') {
+        logger.warn('🔍 fetchOlderMessages early return', {
+          reason: !currentCursor ? 'no_compound_cursor' : 'already_fetching',
+          compoundCursor: currentCursor,
+          isFetchingOlder,
+        });
+      }
       return;
     }
 
@@ -526,7 +536,7 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
     const paginationKey = `${eventId}:${userId}:${version}:${currentCursor.created_at}:${currentCursor.id}`;
 
     // Prevent duplicate pagination fetches
-    if (fetchInProgressMap.current.get(paginationKey)) {
+    if (fetchInProgressMap.current.has(paginationKey)) {
       logger.info('Skipping duplicate pagination fetch', { paginationKey });
       return;
     }
@@ -620,13 +630,9 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
     } finally {
       setIsFetchingOlder(false);
       // Clean up the specific pagination key
-      const userId = user?.id;
-      if (userId && currentCursor) {
-        const paginationKey = `${eventId}:${userId}:${version}:${currentCursor.created_at}:${currentCursor.id}`;
-        fetchInProgressMap.current.delete(paginationKey);
-      }
+      fetchInProgressMap.current.delete(paginationKey);
     }
-  }, [eventId, user?.id, version]);
+  }, [eventId, user?.id, version]); // intentionally NOT depending on messageState to avoid churn
 
   /**
    * Handle real-time message delivery updates (backup path for targeted messages)
