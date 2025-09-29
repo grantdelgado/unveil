@@ -109,13 +109,61 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
     null,
   );
 
+  // Compound cursor state for stable pagination
+  const [compoundCursor, setCompoundCursor] = useState<{
+    created_at: string;
+    id: string;
+  } | null>(null);
+
+  // Message deduplication set (per event, cleared on event change)
+  const messageIds = useRef<Set<string>>(new Set());
+
   // Enhanced de-duplication with Map keyed by eventId:userId:version
   const fetchInProgressMap = useRef<Map<string, boolean>>(new Map());
   const { user } = useAuth();
   const { version, manager } = useSubscriptionManager();
 
   /**
-   * Fetch initial window of recent messages using RPC (with deduplication)
+   * Clear pagination state when event changes
+   */
+  useEffect(() => {
+    messageIds.current.clear();
+    setCompoundCursor(null);
+    setOldestMessageCursor(null);
+    setHasMore(false);
+    setMessages([]);
+  }, [eventId]);
+
+  /**
+   * Merge messages with stable ordering and deduplication
+   */
+  const mergeMessagesStable = useCallback((existingMessages: GuestMessage[], newMessages: GuestMessage[]): GuestMessage[] => {
+    const combined = [...existingMessages];
+    
+    // Add new messages, deduplicating by ID
+    for (const newMsg of newMessages) {
+      if (!messageIds.current.has(newMsg.message_id)) {
+        messageIds.current.add(newMsg.message_id);
+        combined.push(newMsg);
+      }
+    }
+    
+    // Sort by (created_at DESC, id DESC) for stable ordering
+    combined.sort((a, b) => {
+      const timeA = new Date(a.created_at).getTime();
+      const timeB = new Date(b.created_at).getTime();
+      if (timeB !== timeA) {
+        return timeB - timeA; // DESC by created_at
+      }
+      // Tiebreaker: DESC by message_id (which should be UUID)
+      return a.message_id > b.message_id ? -1 : 1;
+    });
+    
+    return combined;
+  }, []);
+
+  /**
+   * Fetch initial window of recent messages using RPC (with compound cursor)
    */
   const fetchInitialMessages = useCallback(async () => {
     // Enhanced de-duplication with eventId:userId:version key
@@ -138,7 +186,7 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
       setLoading(true);
       setError(null);
 
-      logger.info('Fetching initial guest messages via V2', {
+      logger.info('Fetching initial guest messages with compound cursor support', {
         eventId,
         userId,
         version,
@@ -154,17 +202,7 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
         throw new Error('Authentication required');
       }
 
-      // Guest verification is handled by the RPC function
-
-      // Use RPC function to get all messages (announcements + deliveries + own messages)
-      // This ensures new guests see historical announcements
-      logger.info('Fetching guest messages via RPC v3 (stable)', {
-        eventId,
-        windowSize: INITIAL_WINDOW_SIZE,
-      });
-
       // CANONICAL RPC: Always use get_guest_event_messages (NOT v2/v3 directly)
-      // @deprecated Do NOT call get_guest_event_messages_v2 or get_guest_event_messages_v3 directly
       const { data, error: rpcError } = await supabase.rpc(
         'get_guest_event_messages',
         {
@@ -227,54 +265,58 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
       // Map RPC response to GuestMessage type with safe type adapter
       const adaptedMessages = messagesToShow.map(mapRpcMessageToGuestMessage);
       
-      // Deduplicate messages by message_id (in case RPC returns duplicates from multiple UNION branches)
-      const deduplicatedMessages = adaptedMessages.filter((message, index, array) => 
-        array.findIndex(m => m.message_id === message.message_id) === index
-      );
+      // Clear message ID set for initial fetch (start fresh)
+      messageIds.current.clear();
       
-      // V2: Trust RPC stable ordering (created_at DESC, id DESC) - reverse to oldest first for UI
-      const sortedMessages = deduplicatedMessages.reverse();
+      // Use stable merge with deduplication
+      const mergedMessages = mergeMessagesStable([], adaptedMessages);
       
-      logger.info('Using stable RPC ordering (v2)', {
+      logger.info('Initial messages loaded with compound cursor support', {
         eventId,
-        count: deduplicatedMessages.length,
-        firstMessage: deduplicatedMessages[0]?.created_at,
-        lastMessage: deduplicatedMessages[deduplicatedMessages.length - 1]?.created_at,
+        count: mergedMessages.length,
+        hasMore: hasMoreMessages,
+        firstMessage: mergedMessages[0]?.created_at,
+        lastMessage: mergedMessages[mergedMessages.length - 1]?.created_at,
       });
 
-      setMessages(sortedMessages);
+      setMessages(mergedMessages);
       setHasMore(hasMoreMessages);
 
-      // Set cursor for fetching older messages
-      if (sortedMessages.length > 0) {
-        const oldestMessage = sortedMessages[0];
+      // Set compound cursor for pagination (oldest message = last in DESC order)
+      if (mergedMessages.length > 0) {
+        const oldestMessage = mergedMessages[mergedMessages.length - 1];
+        setCompoundCursor({
+          created_at: oldestMessage.created_at,
+          id: oldestMessage.message_id,
+        });
+        // Keep legacy cursor for compatibility
         setOldestMessageCursor(oldestMessage.created_at);
       }
 
       // Log V2 read model metrics
       const sourceBreakdown = {
-        delivery: sortedMessages.filter(
+        delivery: mergedMessages.filter(
           (m) => m.delivery_status === 'delivered',
         ).length,
-        message: sortedMessages.filter((m) => m.message_type !== 'announcement')
+        message: mergedMessages.filter((m) => m.message_type !== 'announcement')
           .length,
-        catchup: sortedMessages.filter((m) => m.message_type === 'announcement')
+        catchup: mergedMessages.filter((m) => m.message_type === 'announcement')
           .length,
-        announcement: sortedMessages.filter(
+        announcement: mergedMessages.filter(
           (m) => m.message_type === 'announcement',
         ).length,
-        channel: sortedMessages.filter((m) => m.message_type === 'channel')
+        channel: mergedMessages.filter((m) => m.message_type === 'channel')
           .length,
-        direct: sortedMessages.filter((m) => m.message_type === 'direct')
+        direct: mergedMessages.filter((m) => m.message_type === 'direct')
           .length,
       };
 
-      logger.info('Successfully fetched guest messages', {
+      logger.info('Successfully fetched guest messages with compound cursor', {
         eventId,
-        count: sortedMessages.length,
+        count: mergedMessages.length,
         hasMore: hasMoreMessages,
-        firstMessageCreatedAt: sortedMessages[0]?.created_at,
-        lastMessageCreatedAt: sortedMessages[sortedMessages.length - 1]?.created_at,
+        firstMessageCreatedAt: mergedMessages[0]?.created_at,
+        lastMessageCreatedAt: mergedMessages[mergedMessages.length - 1]?.created_at,
         sourceBreakdown,
       });
     } catch (err) {
@@ -339,19 +381,19 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
   }, []);
 
   /**
-   * Fetch older messages for pagination using RPC
+   * Fetch older messages for pagination using compound cursor
    */
   const fetchOlderMessages = useCallback(async () => {
-    if (!oldestMessageCursor || isFetchingOlder) return;
+    if (!compoundCursor || isFetchingOlder) return;
 
-    // Enhanced de-duplication for pagination with cursor
+    // Enhanced de-duplication for pagination with compound cursor
     const userId = user?.id;
     if (!userId) {
       logger.warn('No user ID available for pagination de-duplication');
       return;
     }
 
-    const paginationKey = `${eventId}:${userId}:${version}:${oldestMessageCursor}`;
+    const paginationKey = `${eventId}:${userId}:${version}:${compoundCursor.created_at}:${compoundCursor.id}`;
 
     // Prevent duplicate pagination fetches
     if (fetchInProgressMap.current.get(paginationKey)) {
@@ -364,22 +406,22 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
       setIsFetchingOlder(true);
       setError(null);
 
-      logger.info('Fetching older guest messages via RPC v3 (stable)', {
+      logger.info('Fetching older guest messages with compound cursor', {
         eventId,
-        before: oldestMessageCursor,
+        beforeCreatedAt: compoundCursor.created_at,
+        beforeId: compoundCursor.id,
         paginationKey,
       });
 
-      // CANONICAL RPC: Always use get_guest_event_messages (NOT v2/v3 directly)
-      // @deprecated Do NOT call get_guest_event_messages_v2 or get_guest_event_messages_v3 directly
+      // CANONICAL RPC: Use compound cursor parameters for stable pagination
       const { data, error: rpcError } = await supabase.rpc(
         'get_guest_event_messages',
         {
           p_event_id: eventId,
           p_limit: OLDER_MESSAGES_BATCH_SIZE + 1,
-          p_before: oldestMessageCursor,
-          p_cursor_created_at: undefined,
-          p_cursor_id: undefined,
+          p_before: undefined, // Legacy param, use compound cursor instead
+          p_cursor_created_at: compoundCursor.created_at,
+          p_cursor_id: compoundCursor.id,
         },
       );
 
@@ -418,18 +460,20 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
       if (messagesToPrepend.length > 0) {
         // Map RPC response to GuestMessage type with safe type adapter
         const adaptedMessages = messagesToPrepend.map(mapRpcMessageToGuestMessage);
-        
-        // Reverse to chronological order and prepend to existing messages
-        const sortedOlderMessages = adaptedMessages.reverse();
 
-        // Use merge function with stable ordering (always true for v3)
+        // Use stable merge function with deduplication
         setMessages((prevMessages) => 
-          mergeMessages(prevMessages, sortedOlderMessages, true)
+          mergeMessagesStable(prevMessages, adaptedMessages)
         );
 
-        // Update cursor for next batch
-        const newOldestMessage = sortedOlderMessages[0];
-        setOldestMessageCursor(newOldestMessage.created_at);
+        // Update compound cursor with oldest message (last in DESC order)
+        const oldestNewMessage = adaptedMessages[adaptedMessages.length - 1];
+        setCompoundCursor({
+          created_at: oldestNewMessage.created_at,
+          id: oldestNewMessage.message_id,
+        });
+        // Keep legacy cursor for compatibility
+        setOldestMessageCursor(oldestNewMessage.created_at);
       }
 
       setHasMore(hasMoreOlderMessages);
@@ -451,12 +495,12 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
       setIsFetchingOlder(false);
       // Clean up the specific pagination key
       const userId = user?.id;
-      if (userId && oldestMessageCursor) {
-        const paginationKey = `${eventId}:${userId}:${version}:${oldestMessageCursor}`;
+      if (userId && compoundCursor) {
+        const paginationKey = `${eventId}:${userId}:${version}:${compoundCursor.created_at}:${compoundCursor.id}`;
         fetchInProgressMap.current.delete(paginationKey);
       }
     }
-  }, [eventId, oldestMessageCursor, isFetchingOlder]);
+  }, [eventId, user?.id, version, compoundCursor, isFetchingOlder, mergeMessagesStable]);
 
   /**
    * Handle real-time message delivery updates (backup path for targeted messages)
@@ -524,9 +568,9 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
           // 🔍 DIAGNOSTIC: Measure merge timing
           const mergeStartTime = performance.now();
 
-          // Use intelligent merge (may be duplicate if fast-path already handled it)
+          // Use stable merge with deduplication
           setMessages((prevMessages) =>
-            mergeMessages(prevMessages, [newMessage], true),
+            mergeMessagesStable(prevMessages, [newMessage]),
           );
 
           const mergeEndTime = performance.now();
@@ -556,7 +600,7 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
       // For UPDATE/DELETE events, we could implement more granular updates,
       // but for MVP, intelligent INSERT handling is the main improvement
     },
-    [eventId, fetchInitialMessages],
+    [eventId, fetchInitialMessages, mergeMessagesStable],
   );
 
   // Fetch initial messages

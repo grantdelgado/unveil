@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:ci": "mkdir -p .next && npx next build",
+    "bundle:check": "node scripts/check-first-load.js",
     "build:analyze": "ANALYZE=true next build",
     "build:check": "pnpm build && node scripts/performance-monitor.js",
     "build:budget": "node scripts/bundle-budget-checker.js",
