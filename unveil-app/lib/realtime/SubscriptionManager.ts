@@ -217,15 +217,21 @@ export class SubscriptionManager {
     );
 
     if (okToLog) {
-      const logFn = normalized.ignorable ? logger.warn : logger.error;
       const prefix = normalized.ignorable ? '⚠️' : '❌';
-      
-      logFn(`${prefix} ${normalized.summary}: ${subscriptionId}`, {
+      const logMessage = `${prefix} ${normalized.summary}: ${subscriptionId}`;
+      const logData = {
         kind: normalized.kind,
         ctx: normalized.ctx,
         raw: normalized.raw,
         ...additionalContext,
-      });
+      };
+      
+      // Direct method calls to avoid binding issues
+      if (normalized.ignorable) {
+        logger.warn(logMessage, logData);
+      } else {
+        logger.error(logMessage, logData);
+      }
     }
   }
 

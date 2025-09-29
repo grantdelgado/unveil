@@ -460,7 +460,22 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
    * Fetch older messages for pagination using compound cursor
    */
   const fetchOlderMessages = useCallback(async () => {
-    if (!compoundCursor || isFetchingOlder) return;
+    // Debug logging for pagination issues
+    logger.info('🔍 fetchOlderMessages called', {
+      hasCompoundCursor: !!compoundCursor,
+      compoundCursor,
+      isFetchingOlder,
+      eventId,
+    });
+    
+    if (!compoundCursor || isFetchingOlder) {
+      logger.warn('🔍 fetchOlderMessages early return', {
+        reason: !compoundCursor ? 'no_compound_cursor' : 'already_fetching',
+        compoundCursor,
+        isFetchingOlder,
+      });
+      return;
+    }
 
     // Enhanced de-duplication for pagination with compound cursor
     const userId = user?.id;

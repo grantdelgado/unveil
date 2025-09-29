@@ -364,11 +364,21 @@ class Logger {
   }
 
   error(message: string, error?: unknown, context?: string): void {
-    this.log('error', 'error', message, this.serializeError(error), context);
+    try {
+      this.log('error', 'error', message, this.serializeError(error), context);
+    } catch (logError) {
+      // Fallback logging if serialization fails
+      console.error('[Logger Error]', message, String(error));
+    }
   }
 
   warn(message: string, data?: unknown, context?: string): void {
-    this.log('warn', 'system', message, this.serializeError(data), context);
+    try {
+      this.log('warn', 'system', message, this.serializeError(data), context);
+    } catch (logError) {
+      // Fallback logging if serialization fails
+      console.warn('[Logger Warning]', message, String(data));
+    }
   }
 
   info(message: string, data?: unknown, context?: string): void {
