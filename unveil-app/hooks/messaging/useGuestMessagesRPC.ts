@@ -57,16 +57,13 @@ function messageStateReducer(state: MessageState, action: MessageAction): Messag
       
       const oldestMessage = sortedMessages[sortedMessages.length - 1];
       
-      // Debug logging for cursor calculation (can be removed in production)
+      // Use logger instead of console.log for consistent logging
       if (process.env.NODE_ENV === 'development') {
-        console.log('🔍 SET_INITIAL_MESSAGES reducer', {
+        logger.info('🔍 SET_INITIAL_MESSAGES reducer', {
           originalCount: messages.length,
           trimmed: shouldTrim,
           finalCount: sortedMessages.length,
-          oldestMessage: oldestMessage ? {
-            id: oldestMessage.message_id,
-            created_at: oldestMessage.created_at,
-          } : null,
+          hasOldestMessage: !!oldestMessage,
           hasMore,
         });
       }
@@ -257,21 +254,17 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
   // Extract values for backward compatibility
   const { messages, messageIds, compoundCursor, oldestMessageCursor, hasMore } = messageState;
 
-  // Debug logging for state changes (development only)
+  // Debug logging for state changes (development only, throttled)
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
-      console.log('🔍 messageState changed', {
+      logger.info('🔍 messageState changed', {
         messageCount: messages.length,
         hasCompoundCursor: !!compoundCursor,
-        compoundCursor: compoundCursor ? {
-          created_at: compoundCursor.created_at,
-          id: compoundCursor.id,
-        } : null,
         hasMore,
         messageIdsSize: messageIds.size,
       });
     }
-  }, [messages.length, compoundCursor, hasMore, messageIds.size]);
+  }, [messages.length, hasMore]); // Reduced dependencies to prevent excessive logging
 
   // Enhanced de-duplication with Map keyed by eventId:userId:version
   const fetchInProgressMap = useRef<Map<string, boolean>>(new Map());
@@ -389,12 +382,12 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
       
       // Use atomic reducer for thread-safe state management
       if (process.env.NODE_ENV === 'development') {
-        console.log('🔍 About to dispatch SET_INITIAL_MESSAGES', {
+        logger.info('🔍 About to dispatch SET_INITIAL_MESSAGES', {
           rawCount: messagesArray.length,
           adaptedCount: adaptedMessages.length,
           hasMore: hasMoreMessages,
           windowSize: INITIAL_WINDOW_SIZE,
-          sampleMessage: adaptedMessages[0]?.message_id,
+          hasMessages: adaptedMessages.length > 0,
         });
       }
       
@@ -633,7 +626,7 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
         fetchInProgressMap.current.delete(paginationKey);
       }
     }
-  }, [eventId, user?.id, version, messageState]);
+  }, [eventId, user?.id, version]);
 
   /**
    * Handle real-time message delivery updates (backup path for targeted messages)

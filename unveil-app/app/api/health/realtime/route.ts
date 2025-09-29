@@ -31,7 +31,41 @@ export async function GET() {
   }
 }
 
-// Only allow GET method
+/**
+ * Batch update endpoint for optimized health metrics
+ */
+export async function PATCH(request: Request) {
+  try {
+    const updates = await request.json();
+    const { channelDelta = 0, messageCount = 0, errorCount = 0 } = updates;
+
+    // Apply batched updates
+    if (channelDelta > 0) {
+      for (let i = 0; i < channelDelta; i++) {
+        realtimeHealthMetrics.incrementActiveChannels();
+      }
+    } else if (channelDelta < 0) {
+      for (let i = 0; i < Math.abs(channelDelta); i++) {
+        realtimeHealthMetrics.decrementActiveChannels();
+      }
+    }
+
+    for (let i = 0; i < messageCount; i++) {
+      realtimeHealthMetrics.incrementMessages();
+    }
+
+    for (let i = 0; i < errorCount; i++) {
+      realtimeHealthMetrics.incrementErrors();
+    }
+
+    return NextResponse.json({ success: true, applied: updates });
+  } catch (error) {
+    console.error('Batch health update error:', error);
+    return NextResponse.json({ error: 'Batch update failed' }, { status: 500 });
+  }
+}
+
+// Allow GET and PATCH methods
 export async function POST() {
-  return NextResponse.json({ error: 'Method not allowed' }, { status: 405 });
+  return NextResponse.json({ error: 'Use PATCH for batch updates' }, { status: 405 });
 }

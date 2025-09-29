@@ -29,40 +29,50 @@ interface HealthMetricsClient {
   incrementErrors: () => void;
 }
 
-// Import health metrics for instrumentation
+// Optimized health metrics with batching and error handling
 let realtimeHealthMetrics: HealthMetricsClient | null = null;
 if (typeof window !== 'undefined') {
-  // Lazy load health metrics only on client side
+  // In-memory counters to reduce API calls
+  let pendingUpdates = {
+    channelDelta: 0,
+    messageCount: 0,
+    errorCount: 0,
+  };
+  
+  // Batch updates every 5 seconds to reduce network calls
+  const flushPendingUpdates = () => {
+    if (pendingUpdates.channelDelta !== 0 || pendingUpdates.messageCount > 0 || pendingUpdates.errorCount > 0) {
+      // Single batched API call instead of multiple calls
+      fetch('/api/health/realtime', {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(pendingUpdates),
+      }).catch((error) => {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Health metrics: Batch update failed:', error.message);
+        }
+      });
+      
+      // Reset pending updates
+      pendingUpdates = { channelDelta: 0, messageCount: 0, errorCount: 0 };
+    }
+  };
+  
+  // Batch flush every 5 seconds
+  setInterval(flushPendingUpdates, 5000);
+  
   realtimeHealthMetrics = {
     incrementActiveChannels: () => {
-      // Increment counter via API call (non-blocking, with error logging)
-      fetch('/api/health/realtime/increment/channels', { method: 'POST' }).catch((error) => {
-        if (process.env.NODE_ENV === 'development') {
-          console.warn('Health metrics: Failed to increment channels:', error.message);
-        }
-      });
+      pendingUpdates.channelDelta += 1;
     },
     decrementActiveChannels: () => {
-      // Decrement counter via API call (non-blocking, with error logging)  
-      fetch('/api/health/realtime/increment/channels', { method: 'DELETE' }).catch((error) => {
-        if (process.env.NODE_ENV === 'development') {
-          console.warn('Health metrics: Failed to decrement channels:', error.message);
-        }
-      });
+      pendingUpdates.channelDelta -= 1;
     },
     incrementMessages: () => {
-      fetch('/api/health/realtime/increment/messages', { method: 'POST' }).catch((error) => {
-        if (process.env.NODE_ENV === 'development') {
-          console.warn('Health metrics: Failed to increment messages:', error.message);
-        }
-      });
+      pendingUpdates.messageCount += 1;
     },
     incrementErrors: () => {
-      fetch('/api/health/realtime/increment/errors', { method: 'POST' }).catch((error) => {
-        if (process.env.NODE_ENV === 'development') {
-          console.warn('Health metrics: Failed to increment errors:', error.message);
-        }
-      });
+      pendingUpdates.errorCount += 1;
     },
   };
 }
