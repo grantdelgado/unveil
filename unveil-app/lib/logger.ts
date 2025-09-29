@@ -366,7 +366,7 @@ class Logger {
   error(message: string, error?: unknown, context?: string): void {
     try {
       this.log('error', 'error', message, this.serializeError(error), context);
-    } catch (logError) {
+    } catch {
       // Fallback logging if serialization fails
       console.error('[Logger Error]', message, String(error));
     }
@@ -375,7 +375,7 @@ class Logger {
   warn(message: string, data?: unknown, context?: string): void {
     try {
       this.log('warn', 'system', message, this.serializeError(data), context);
-    } catch (logError) {
+    } catch {
       // Fallback logging if serialization fails
       console.warn('[Logger Warning]', message, String(data));
     }

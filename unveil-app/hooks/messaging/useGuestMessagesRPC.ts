@@ -43,7 +43,12 @@ function messageStateReducer(state: MessageState, action: MessageAction): Messag
     case 'SET_INITIAL_MESSAGES': {
       const { messages, hasMore } = action.payload;
       const messageIds = new Set(messages.map(m => m.message_id));
-      const sortedMessages = [...messages].sort((a, b) => {
+      
+      // Determine if we should trim messages (when hasMore is true, we got +1 message)
+      const shouldTrim = hasMore && messages.length > INITIAL_WINDOW_SIZE;
+      const messagesToKeep = shouldTrim ? messages.slice(0, INITIAL_WINDOW_SIZE) : messages;
+      
+      const sortedMessages = [...messagesToKeep].sort((a, b) => {
         const timeA = new Date(a.created_at).getTime();
         const timeB = new Date(b.created_at).getTime();
         if (timeB !== timeA) return timeB - timeA;
@@ -54,8 +59,9 @@ function messageStateReducer(state: MessageState, action: MessageAction): Messag
       
       // Debug logging for cursor calculation
       console.log('🔍 SET_INITIAL_MESSAGES reducer', {
-        messageCount: messages.length,
-        sortedCount: sortedMessages.length,
+        originalCount: messages.length,
+        trimmed: shouldTrim,
+        finalCount: sortedMessages.length,
         oldestMessage: oldestMessage ? {
           id: oldestMessage.message_id,
           created_at: oldestMessage.created_at,
@@ -65,7 +71,7 @@ function messageStateReducer(state: MessageState, action: MessageAction): Messag
       
       return {
         messages: sortedMessages,
-        messageIds,
+        messageIds: new Set(sortedMessages.map(m => m.message_id)), // Use trimmed messages for IDs
         compoundCursor: oldestMessage ? {
           created_at: oldestMessage.created_at,
           id: oldestMessage.message_id,
@@ -365,25 +371,24 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
 
       const messagesArray = Array.isArray(data) ? data : [];
       const hasMoreMessages = messagesArray.length > INITIAL_WINDOW_SIZE;
-      const messagesToShow = hasMoreMessages
-        ? messagesArray.slice(0, INITIAL_WINDOW_SIZE)
-        : messagesArray;
 
-      // PII-safe telemetry for v3 usage
+      // PII-safe telemetry for v3 usage  
       logger.info('🔧 📊 [TELEMETRY] messaging.rpc_v3_rows', {
-        count: messagesToShow.length,
+        count: messagesArray.length,
         window: INITIAL_WINDOW_SIZE,
         hadCursor: false, // Initial fetch doesn't use cursor
         eventId, // No PII - just event UUID
       });
 
-      // Map RPC response to GuestMessage type with safe type adapter
-      const adaptedMessages = messagesToShow.map(mapRpcMessageToGuestMessage);
+      // Map RPC response to GuestMessage type (let reducer handle trimming)
+      const adaptedMessages = messagesArray.map(mapRpcMessageToGuestMessage);
       
       // Use atomic reducer for thread-safe state management
       console.log('🔍 About to dispatch SET_INITIAL_MESSAGES', {
-        messageCount: adaptedMessages.length,
+        rawCount: messagesArray.length,
+        adaptedCount: adaptedMessages.length,
         hasMore: hasMoreMessages,
+        windowSize: INITIAL_WINDOW_SIZE,
         sampleMessage: adaptedMessages[0]?.message_id,
       });
       
@@ -491,18 +496,22 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
    * Fetch older messages for pagination using compound cursor
    */
   const fetchOlderMessages = useCallback(async () => {
+    // Get current state from messageState (avoid stale closure)
+    const currentCursor = messageState.compoundCursor;
+    
     // Debug logging for pagination issues
     logger.info('🔍 fetchOlderMessages called', {
-      hasCompoundCursor: !!compoundCursor,
-      compoundCursor,
+      hasCompoundCursor: !!currentCursor,
+      compoundCursor: currentCursor,
       isFetchingOlder,
       eventId,
+      staleFromCallback: compoundCursor, // Show stale value for comparison
     });
     
-    if (!compoundCursor || isFetchingOlder) {
+    if (!currentCursor || isFetchingOlder) {
       logger.warn('🔍 fetchOlderMessages early return', {
-        reason: !compoundCursor ? 'no_compound_cursor' : 'already_fetching',
-        compoundCursor,
+        reason: !currentCursor ? 'no_compound_cursor' : 'already_fetching',
+        compoundCursor: currentCursor,
         isFetchingOlder,
       });
       return;
@@ -515,7 +524,7 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
       return;
     }
 
-    const paginationKey = `${eventId}:${userId}:${version}:${compoundCursor.created_at}:${compoundCursor.id}`;
+    const paginationKey = `${eventId}:${userId}:${version}:${currentCursor.created_at}:${currentCursor.id}`;
 
     // Prevent duplicate pagination fetches
     if (fetchInProgressMap.current.get(paginationKey)) {
@@ -530,8 +539,8 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
 
       logger.info('Fetching older guest messages with compound cursor', {
         eventId,
-        beforeCreatedAt: compoundCursor.created_at,
-        beforeId: compoundCursor.id,
+        beforeCreatedAt: currentCursor.created_at,
+        beforeId: currentCursor.id,
         paginationKey,
       });
 
@@ -542,8 +551,8 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
           p_event_id: eventId,
           p_limit: OLDER_MESSAGES_BATCH_SIZE + 1,
           p_before: undefined, // Legacy param, use compound cursor instead
-          p_cursor_created_at: compoundCursor.created_at,
-          p_cursor_id: compoundCursor.id,
+          p_cursor_created_at: currentCursor.created_at,
+          p_cursor_id: currentCursor.id,
         },
       );
 
@@ -613,12 +622,12 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
       setIsFetchingOlder(false);
       // Clean up the specific pagination key
       const userId = user?.id;
-      if (userId && compoundCursor) {
-        const paginationKey = `${eventId}:${userId}:${version}:${compoundCursor.created_at}:${compoundCursor.id}`;
+      if (userId && currentCursor) {
+        const paginationKey = `${eventId}:${userId}:${version}:${currentCursor.created_at}:${currentCursor.id}`;
         fetchInProgressMap.current.delete(paginationKey);
       }
     }
-  }, [eventId, user?.id, version]);
+  }, [eventId, user?.id, version, messageState]);
 
   /**
    * Handle real-time message delivery updates (backup path for targeted messages)
