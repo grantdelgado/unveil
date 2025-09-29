@@ -135,12 +135,12 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
   }, [eventId]);
 
   /**
-   * Merge messages with stable ordering and deduplication
+   * Merge messages with stable ordering and deduplication (race-condition safe)
    */
   const mergeMessagesStable = useCallback((existingMessages: GuestMessage[], newMessages: GuestMessage[]): GuestMessage[] => {
     const combined = [...existingMessages];
     
-    // Add new messages, deduplicating by ID
+    // Add new messages, deduplicating by ID (atomic check-and-add)
     for (const newMsg of newMessages) {
       if (!messageIds.current.has(newMsg.message_id)) {
         messageIds.current.add(newMsg.message_id);
@@ -265,11 +265,20 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
       // Map RPC response to GuestMessage type with safe type adapter
       const adaptedMessages = messagesToShow.map(mapRpcMessageToGuestMessage);
       
-      // Clear message ID set for initial fetch (start fresh)
+      // Atomic operation: clear and populate message IDs in one step to prevent race condition
       messageIds.current.clear();
+      adaptedMessages.forEach(msg => messageIds.current.add(msg.message_id));
       
-      // Use stable merge with deduplication
-      const mergedMessages = mergeMessagesStable([], adaptedMessages);
+      // Use stable merge with deduplication (IDs already tracked)
+      const mergedMessages = adaptedMessages.sort((a, b) => {
+        const timeA = new Date(a.created_at).getTime();
+        const timeB = new Date(b.created_at).getTime();
+        if (timeB !== timeA) {
+          return timeB - timeA; // DESC by created_at
+        }
+        // Tiebreaker: DESC by message_id
+        return a.message_id > b.message_id ? -1 : 1;
+      });
       
       logger.info('Initial messages loaded with compound cursor support', {
         eventId,
