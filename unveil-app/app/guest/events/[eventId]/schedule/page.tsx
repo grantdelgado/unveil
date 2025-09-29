@@ -22,10 +22,15 @@ async function getScheduleData(eventId: string): Promise<{
   scheduleItems: ScheduleItem[];
   error: string | null;
 }> {
-  const supabase = await createServerSupabaseClient();
-  
-  // Check user authentication first
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  try {
+    const supabase = await createServerSupabaseClient();
+    if (!supabase) {
+      console.error('Schedule SSR: Failed to create Supabase client');
+      return { event: null, scheduleItems: [], error: 'Service unavailable' };
+    }
+    
+    // Check user authentication first
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) {
     redirect('/login');
   }
@@ -42,7 +47,7 @@ async function getScheduleData(eventId: string): Promise<{
     return { event: null, scheduleItems: [], error: 'Event not found' };
   }
 
-  // Verify user has access to this event (RLS enforcement)
+  // Verify user has access to this event (distinguish errors from no access)
   const { data: guestCheck, error: guestError } = await supabase
     .from('event_guests')
     .select('id')
@@ -51,8 +56,13 @@ async function getScheduleData(eventId: string): Promise<{
     .is('removed_at', null)
     .maybeSingle();
 
-  if (guestError || !guestCheck) {
-    console.error('Schedule SSR: Guest access denied:', guestError);
+  if (guestError) {
+    console.error('Schedule SSR: Database error checking guest access:', guestError);
+    return { event: null, scheduleItems: [], error: 'Database error occurred' };
+  }
+  
+  if (!guestCheck) {
+    console.warn('Schedule SSR: User not a guest of this event:', { eventId, userId: user.id });
     return { event: null, scheduleItems: [], error: 'Access denied' };
   }
 
@@ -68,11 +78,19 @@ async function getScheduleData(eventId: string): Promise<{
     return { event, scheduleItems: [], error: 'Failed to load schedule' };
   }
 
-  return { 
-    event, 
-    scheduleItems: scheduleItems || [], 
-    error: null 
-  };
+    return { 
+      event, 
+      scheduleItems: scheduleItems || [], 
+      error: null 
+    };
+  } catch (error) {
+    console.error('Schedule SSR: Unexpected error:', error);
+    return { 
+      event: null, 
+      scheduleItems: [], 
+      error: 'An unexpected error occurred' 
+    };
+  }
 }
 
 /**

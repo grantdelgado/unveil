@@ -57,7 +57,7 @@ describe('Message Concurrency Safety', () => {
       ];
       
       // First merge (initial fetch)
-      const result1 = mergeMessagesThreadSafe([], initialMessages);
+      const result1 = mergeMessagesThreadSafe([], initialMessages, new Set());
       expect(result1.messages).toHaveLength(2);
       expect(result1.updatedIds.size).toBe(2);
       
@@ -150,11 +150,11 @@ describe('Message Concurrency Safety', () => {
       ];
       
       // Arrival order 1: Set1 then Set2
-      let result1 = mergeMessagesThreadSafe([], messagesSet1);
+      let result1 = mergeMessagesThreadSafe([], messagesSet1, new Set());
       result1 = mergeMessagesThreadSafe(result1.messages, messagesSet2, result1.updatedIds);
       
       // Arrival order 2: Set2 then Set1
-      let result2 = mergeMessagesThreadSafe([], messagesSet2);
+      let result2 = mergeMessagesThreadSafe([], messagesSet2, new Set());
       result2 = mergeMessagesThreadSafe(result2.messages, messagesSet1, result2.updatedIds);
       
       // Both should result in same final order (D, C, B, A by timestamp)
@@ -180,7 +180,7 @@ describe('Message Concurrency Safety', () => {
       ];
       
       // Process in order: batch1, batch2
-      let result = mergeMessagesThreadSafe([], batch1);
+      let result = mergeMessagesThreadSafe([], batch1, new Set());
       result = mergeMessagesThreadSafe(result.messages, batch2, result.updatedIds);
       
       // Should be ordered by ID DESC (lexicographic)

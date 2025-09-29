@@ -137,14 +137,18 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
 
   /**
    * Merge messages with stable ordering and deduplication (thread-safe)
-   * Returns both the merged messages and updated ID set
+   * Takes current ID set as parameter to avoid stale closures
    */
-  const mergeMessagesStable = useCallback((existingMessages: GuestMessage[], newMessages: GuestMessage[]): { 
+  const mergeMessagesStable = useCallback((
+    existingMessages: GuestMessage[], 
+    newMessages: GuestMessage[],
+    currentIds: Set<string>
+  ): { 
     messages: GuestMessage[], 
     updatedIds: Set<string> 
   } => {
     const combined = [...existingMessages];
-    const updatedIds = new Set(messageIds);
+    const updatedIds = new Set(currentIds);
     
     // Add new messages, deduplicating by ID (atomic check-and-add)
     for (const newMsg of newMessages) {
@@ -166,7 +170,7 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
     });
     
     return { messages: combined, updatedIds };
-  }, [messageIds]);
+  }, []); // No dependencies - pure function
 
   /**
    * Fetch initial window of recent messages using RPC (with compound cursor)
@@ -272,7 +276,7 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
       const adaptedMessages = messagesToShow.map(mapRpcMessageToGuestMessage);
       
       // Use thread-safe merge with atomic ID management
-      const mergeResult = mergeMessagesStable([], adaptedMessages);
+      const mergeResult = mergeMessagesStable([], adaptedMessages, new Set());
       const mergedMessages = mergeResult.messages;
       
       // Update message IDs atomically
@@ -468,12 +472,10 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
         // Map RPC response to GuestMessage type with safe type adapter
         const adaptedMessages = messagesToPrepend.map(mapRpcMessageToGuestMessage);
 
-        // Use thread-safe merge function with atomic deduplication
-        setMessages((prevMessages) => {
-          const mergeResult = mergeMessagesStable(prevMessages, adaptedMessages);
-          setMessageIds(mergeResult.updatedIds);
-          return mergeResult.messages;
-        });
+        // Use thread-safe merge function with proper React state updates
+        const mergeResult = mergeMessagesStable(messages, adaptedMessages, messageIds);
+        setMessages(mergeResult.messages);
+        setMessageIds(mergeResult.updatedIds);
 
         // Update compound cursor with oldest message (last in DESC order)
         const oldestNewMessage = adaptedMessages[adaptedMessages.length - 1];
@@ -577,12 +579,10 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
           // 🔍 DIAGNOSTIC: Measure merge timing
           const mergeStartTime = performance.now();
 
-          // Use thread-safe merge with atomic deduplication
-          setMessages((prevMessages) => {
-            const mergeResult = mergeMessagesStable(prevMessages, [newMessage]);
-            setMessageIds(mergeResult.updatedIds);
-            return mergeResult.messages;
-          });
+          // Use thread-safe merge with proper React state updates
+          const mergeResult = mergeMessagesStable(messages, [newMessage], messageIds);
+          setMessages(mergeResult.messages);
+          setMessageIds(mergeResult.updatedIds);
 
           const mergeEndTime = performance.now();
           const totalTime = mergeEndTime - startTime;
@@ -684,12 +684,10 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
                     (payload.new as any).sender_user_id === user.id,
                 };
 
-                // Merge immediately for instant rendering with thread-safe deduplication
-                setMessages((prevMessages) => {
-                  const mergeResult = mergeMessagesStable(prevMessages, [fastMessage]);
-                  setMessageIds(mergeResult.updatedIds);
-                  return mergeResult.messages;
-                });
+                // Merge immediately for instant rendering with proper React state updates
+                const mergeResult = mergeMessagesStable(messages, [fastMessage], messageIds);
+                setMessages(mergeResult.messages);
+                setMessageIds(mergeResult.updatedIds);
 
                 logger.info('✅ Fast-path message rendered', {
                   messageId,

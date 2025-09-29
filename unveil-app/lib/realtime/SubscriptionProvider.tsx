@@ -35,18 +35,34 @@ if (typeof window !== 'undefined') {
   // Lazy load health metrics only on client side
   realtimeHealthMetrics = {
     incrementActiveChannels: () => {
-      // Increment counter via API call (non-blocking)
-      fetch('/api/health/realtime/increment/channels', { method: 'POST' }).catch(() => {});
+      // Increment counter via API call (non-blocking, with error logging)
+      fetch('/api/health/realtime/increment/channels', { method: 'POST' }).catch((error) => {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Health metrics: Failed to increment channels:', error.message);
+        }
+      });
     },
     decrementActiveChannels: () => {
-      // Decrement counter via API call (non-blocking)  
-      fetch('/api/health/realtime/increment/channels', { method: 'DELETE' }).catch(() => {});
+      // Decrement counter via API call (non-blocking, with error logging)  
+      fetch('/api/health/realtime/increment/channels', { method: 'DELETE' }).catch((error) => {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Health metrics: Failed to decrement channels:', error.message);
+        }
+      });
     },
     incrementMessages: () => {
-      fetch('/api/health/realtime/increment/messages', { method: 'POST' }).catch(() => {});
+      fetch('/api/health/realtime/increment/messages', { method: 'POST' }).catch((error) => {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Health metrics: Failed to increment messages:', error.message);
+        }
+      });
     },
     incrementErrors: () => {
-      fetch('/api/health/realtime/increment/errors', { method: 'POST' }).catch(() => {});
+      fetch('/api/health/realtime/increment/errors', { method: 'POST' }).catch((error) => {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Health metrics: Failed to increment errors:', error.message);
+        }
+      });
     },
   };
 }
