@@ -115,8 +115,9 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
     id: string;
   } | null>(null);
 
-  // Message deduplication set (per event, cleared on event change)
-  const messageIds = useRef<Set<string>>(new Set());
+  // Message deduplication state (per event, cleared on event change)
+  // Use useState instead of useRef for atomic updates
+  const [messageIds, setMessageIds] = useState<Set<string>>(new Set());
 
   // Enhanced de-duplication with Map keyed by eventId:userId:version
   const fetchInProgressMap = useRef<Map<string, boolean>>(new Map());
@@ -127,7 +128,7 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
    * Clear pagination state when event changes
    */
   useEffect(() => {
-    messageIds.current.clear();
+    setMessageIds(new Set<string>());
     setCompoundCursor(null);
     setOldestMessageCursor(null);
     setHasMore(false);
@@ -135,15 +136,20 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
   }, [eventId]);
 
   /**
-   * Merge messages with stable ordering and deduplication (race-condition safe)
+   * Merge messages with stable ordering and deduplication (thread-safe)
+   * Returns both the merged messages and updated ID set
    */
-  const mergeMessagesStable = useCallback((existingMessages: GuestMessage[], newMessages: GuestMessage[]): GuestMessage[] => {
+  const mergeMessagesStable = useCallback((existingMessages: GuestMessage[], newMessages: GuestMessage[]): { 
+    messages: GuestMessage[], 
+    updatedIds: Set<string> 
+  } => {
     const combined = [...existingMessages];
+    const updatedIds = new Set(messageIds);
     
     // Add new messages, deduplicating by ID (atomic check-and-add)
     for (const newMsg of newMessages) {
-      if (!messageIds.current.has(newMsg.message_id)) {
-        messageIds.current.add(newMsg.message_id);
+      if (!updatedIds.has(newMsg.message_id)) {
+        updatedIds.add(newMsg.message_id);
         combined.push(newMsg);
       }
     }
@@ -159,8 +165,8 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
       return a.message_id > b.message_id ? -1 : 1;
     });
     
-    return combined;
-  }, []);
+    return { messages: combined, updatedIds };
+  }, [messageIds]);
 
   /**
    * Fetch initial window of recent messages using RPC (with compound cursor)
@@ -265,20 +271,12 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
       // Map RPC response to GuestMessage type with safe type adapter
       const adaptedMessages = messagesToShow.map(mapRpcMessageToGuestMessage);
       
-      // Atomic operation: clear and populate message IDs in one step to prevent race condition
-      messageIds.current.clear();
-      adaptedMessages.forEach(msg => messageIds.current.add(msg.message_id));
+      // Use thread-safe merge with atomic ID management
+      const mergeResult = mergeMessagesStable([], adaptedMessages);
+      const mergedMessages = mergeResult.messages;
       
-      // Use stable merge with deduplication (IDs already tracked)
-      const mergedMessages = adaptedMessages.sort((a, b) => {
-        const timeA = new Date(a.created_at).getTime();
-        const timeB = new Date(b.created_at).getTime();
-        if (timeB !== timeA) {
-          return timeB - timeA; // DESC by created_at
-        }
-        // Tiebreaker: DESC by message_id
-        return a.message_id > b.message_id ? -1 : 1;
-      });
+      // Update message IDs atomically
+      setMessageIds(mergeResult.updatedIds);
       
       logger.info('Initial messages loaded with compound cursor support', {
         eventId,
@@ -470,10 +468,12 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
         // Map RPC response to GuestMessage type with safe type adapter
         const adaptedMessages = messagesToPrepend.map(mapRpcMessageToGuestMessage);
 
-        // Use stable merge function with deduplication
-        setMessages((prevMessages) => 
-          mergeMessagesStable(prevMessages, adaptedMessages)
-        );
+        // Use thread-safe merge function with atomic deduplication
+        setMessages((prevMessages) => {
+          const mergeResult = mergeMessagesStable(prevMessages, adaptedMessages);
+          setMessageIds(mergeResult.updatedIds);
+          return mergeResult.messages;
+        });
 
         // Update compound cursor with oldest message (last in DESC order)
         const oldestNewMessage = adaptedMessages[adaptedMessages.length - 1];
@@ -577,10 +577,12 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
           // 🔍 DIAGNOSTIC: Measure merge timing
           const mergeStartTime = performance.now();
 
-          // Use stable merge with deduplication
-          setMessages((prevMessages) =>
-            mergeMessagesStable(prevMessages, [newMessage]),
-          );
+          // Use thread-safe merge with atomic deduplication
+          setMessages((prevMessages) => {
+            const mergeResult = mergeMessagesStable(prevMessages, [newMessage]);
+            setMessageIds(mergeResult.updatedIds);
+            return mergeResult.messages;
+          });
 
           const mergeEndTime = performance.now();
           const totalTime = mergeEndTime - startTime;
@@ -682,10 +684,12 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
                     (payload.new as any).sender_user_id === user.id,
                 };
 
-                // Merge immediately for instant rendering with consistent deduplication
-                setMessages((prevMessages) =>
-                  mergeMessagesStable(prevMessages, [fastMessage]),
-                );
+                // Merge immediately for instant rendering with thread-safe deduplication
+                setMessages((prevMessages) => {
+                  const mergeResult = mergeMessagesStable(prevMessages, [fastMessage]);
+                  setMessageIds(mergeResult.updatedIds);
+                  return mergeResult.messages;
+                });
 
                 logger.info('✅ Fast-path message rendered', {
                   messageId,

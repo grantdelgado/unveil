@@ -14,13 +14,16 @@ interface TestMessage {
 
 /**
  * Merge messages with stable ordering and deduplication
- * This mirrors the logic from useGuestMessagesRPC
+ * This mirrors the logic from useGuestMessagesRPC (thread-safe version)
  */
 function mergeMessagesStable(
   existingMessages: TestMessage[], 
-  newMessages: TestMessage[]
-): TestMessage[] {
-  const messageIds = new Set<string>(existingMessages.map(m => m.message_id));
+  newMessages: TestMessage[],
+  existingIds: Set<string> = new Set()
+): { messages: TestMessage[], updatedIds: Set<string> } {
+  const messageIds = new Set(existingIds);
+  existingMessages.forEach(m => messageIds.add(m.message_id));
+  
   const combined = [...existingMessages];
   
   // Add new messages, deduplicating by ID
@@ -42,7 +45,7 @@ function mergeMessagesStable(
     return a.message_id > b.message_id ? -1 : 1;
   });
   
-  return combined;
+  return { messages: combined, updatedIds: messageIds };
 }
 
 describe('Compound Cursor Pagination', () => {
@@ -59,10 +62,10 @@ describe('Compound Cursor Pagination', () => {
       
       const result = mergeMessagesStable(existing, newMessages);
       
-      expect(result).toHaveLength(3);
-      expect(result[0].message_id).toBe('msg-3'); // Latest timestamp
-      expect(result[1].message_id).toBe('msg-2'); // Middle timestamp  
-      expect(result[2].message_id).toBe('msg-1'); // Earliest timestamp
+      expect(result.messages).toHaveLength(3);
+      expect(result.messages[0].message_id).toBe('msg-3'); // Latest timestamp
+      expect(result.messages[1].message_id).toBe('msg-2'); // Middle timestamp  
+      expect(result.messages[2].message_id).toBe('msg-1'); // Earliest timestamp
     });
 
     it('should handle same timestamp with ID tiebreaker', () => {
@@ -79,11 +82,11 @@ describe('Compound Cursor Pagination', () => {
       
       const result = mergeMessagesStable(existing, newMessages);
       
-      expect(result).toHaveLength(3);
+      expect(result.messages).toHaveLength(3);
       // All same timestamp, so should be ordered by ID DESC (lexicographic)
-      expect(result[0].message_id).toBe('uuid-bbbb');
-      expect(result[1].message_id).toBe('uuid-aaab'); 
-      expect(result[2].message_id).toBe('uuid-aaaa');
+      expect(result.messages[0].message_id).toBe('uuid-bbbb');
+      expect(result.messages[1].message_id).toBe('uuid-aaab'); 
+      expect(result.messages[2].message_id).toBe('uuid-aaaa');
     });
 
     it('should deduplicate by message_id', () => {
@@ -98,20 +101,20 @@ describe('Compound Cursor Pagination', () => {
       
       const result = mergeMessagesStable(existing, newMessages);
       
-      expect(result).toHaveLength(2); // Duplicate should be filtered out
-      expect(result.find(m => m.message_id === 'msg-1')?.content).toBe('Original');
-      expect(result.find(m => m.message_id === 'msg-2')?.content).toBe('New');
+      expect(result.messages).toHaveLength(2); // Duplicate should be filtered out
+      expect(result.messages.find(m => m.message_id === 'msg-1')?.content).toBe('Original');
+      expect(result.messages.find(m => m.message_id === 'msg-2')?.content).toBe('New');
     });
 
     it('should handle empty inputs gracefully', () => {
-      expect(mergeMessagesStable([], [])).toEqual([]);
+      expect(mergeMessagesStable([], []).messages).toEqual([]);
       
       const existing: TestMessage[] = [
         { message_id: 'msg-1', created_at: '2024-01-01T10:00:00Z', content: 'Existing' }
       ];
       
-      expect(mergeMessagesStable(existing, [])).toEqual(existing);
-      expect(mergeMessagesStable([], existing)).toEqual(existing);
+      expect(mergeMessagesStable(existing, []).messages).toEqual(existing);
+      expect(mergeMessagesStable([], existing).messages).toEqual(existing);
     });
 
     it('should handle pagination boundary correctly', () => {
@@ -130,10 +133,10 @@ describe('Compound Cursor Pagination', () => {
       
       const result = mergeMessagesStable(existing, newMessages);
       
-      expect(result).toHaveLength(5);
+      expect(result.messages).toHaveLength(5);
       
       // Should maintain stable ordering across the boundary
-      const elevenOClockMessages = result.filter(m => m.created_at === '2024-01-01T11:00:00Z');
+      const elevenOClockMessages = result.messages.filter(m => m.created_at === '2024-01-01T11:00:00Z');
       expect(elevenOClockMessages).toHaveLength(3);
       
       // Verify proper ID-based tiebreaker ordering for same timestamp
@@ -178,10 +181,10 @@ describe('Compound Cursor Pagination', () => {
       
       const result = mergeMessagesStable(existingMessages, realtimeMessage);
       
-      expect(result).toHaveLength(3);
-      expect(result[0].message_id).toBe('msg-3'); // Should be first (newest)
-      expect(result[1].message_id).toBe('msg-2');
-      expect(result[2].message_id).toBe('msg-1');
+      expect(result.messages).toHaveLength(3);
+      expect(result.messages[0].message_id).toBe('msg-3'); // Should be first (newest)
+      expect(result.messages[1].message_id).toBe('msg-2');
+      expect(result.messages[2].message_id).toBe('msg-1');
     });
 
     it('should ignore duplicate realtime messages', () => {
@@ -196,8 +199,8 @@ describe('Compound Cursor Pagination', () => {
       
       const result = mergeMessagesStable(existingMessages, duplicateMessage);
       
-      expect(result).toHaveLength(1);
-      expect(result[0].content).toBe('Original'); // Original should be preserved
+      expect(result.messages).toHaveLength(1);
+      expect(result.messages[0].content).toBe('Original'); // Original should be preserved
     });
   });
 });
