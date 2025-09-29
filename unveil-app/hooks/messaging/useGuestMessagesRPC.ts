@@ -52,6 +52,17 @@ function messageStateReducer(state: MessageState, action: MessageAction): Messag
       
       const oldestMessage = sortedMessages[sortedMessages.length - 1];
       
+      // Debug logging for cursor calculation
+      console.log('🔍 SET_INITIAL_MESSAGES reducer', {
+        messageCount: messages.length,
+        sortedCount: sortedMessages.length,
+        oldestMessage: oldestMessage ? {
+          id: oldestMessage.message_id,
+          created_at: oldestMessage.created_at,
+        } : null,
+        hasMore,
+      });
+      
       return {
         messages: sortedMessages,
         messageIds,
@@ -238,6 +249,20 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
   // Extract values for backward compatibility
   const { messages, messageIds, compoundCursor, oldestMessageCursor, hasMore } = messageState;
 
+  // Debug logging for state changes
+  useEffect(() => {
+    console.log('🔍 messageState changed', {
+      messageCount: messages.length,
+      hasCompoundCursor: !!compoundCursor,
+      compoundCursor: compoundCursor ? {
+        created_at: compoundCursor.created_at,
+        id: compoundCursor.id,
+      } : null,
+      hasMore,
+      messageIdsSize: messageIds.size,
+    });
+  }, [messages.length, compoundCursor, hasMore, messageIds.size]);
+
   // Enhanced de-duplication with Map keyed by eventId:userId:version
   const fetchInProgressMap = useRef<Map<string, boolean>>(new Map());
   const { user } = useAuth();
@@ -356,6 +381,12 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
       const adaptedMessages = messagesToShow.map(mapRpcMessageToGuestMessage);
       
       // Use atomic reducer for thread-safe state management
+      console.log('🔍 About to dispatch SET_INITIAL_MESSAGES', {
+        messageCount: adaptedMessages.length,
+        hasMore: hasMoreMessages,
+        sampleMessage: adaptedMessages[0]?.message_id,
+      });
+      
       dispatch({ 
         type: 'SET_INITIAL_MESSAGES', 
         payload: { messages: adaptedMessages, hasMore: hasMoreMessages } 
