@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase/client';
 import { logger } from '@/lib/logger';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { useSubscriptionManager } from '@/lib/realtime/SubscriptionProvider';
-import { mergeMessages, type GuestMessage } from '@/lib/utils/messageUtils';
+import { type GuestMessage } from '@/lib/utils/messageUtils';
 import { RealtimeFlags, RealtimeTunables } from '@/lib/config/realtime';
 import { normalizeRealtimeError, type RTErrorContext } from '@/lib/realtime/error-normalize';
 import { shouldLog } from '@/lib/realtime/log-sampler';
@@ -682,9 +682,9 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
                     (payload.new as any).sender_user_id === user.id,
                 };
 
-                // Merge immediately for instant rendering
+                // Merge immediately for instant rendering with consistent deduplication
                 setMessages((prevMessages) =>
-                  mergeMessages(prevMessages, [fastMessage], true),
+                  mergeMessagesStable(prevMessages, [fastMessage]),
                 );
 
                 logger.info('✅ Fast-path message rendered', {

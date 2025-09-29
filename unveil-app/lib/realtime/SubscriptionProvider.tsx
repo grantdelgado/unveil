@@ -200,6 +200,7 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
         if (managerRef.current) {
           try {
             managerRef.current.destroy();
+            realtimeHealthMetrics?.decrementActiveChannels();
           } catch (error) {
             logger.error('❌ Error destroying existing manager:', error);
           }
