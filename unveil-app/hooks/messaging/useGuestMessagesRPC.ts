@@ -116,8 +116,20 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
   } | null>(null);
 
   // Message deduplication state (per event, cleared on event change)
-  // Use useState instead of useRef for atomic updates
   const [messageIds, setMessageIds] = useState<Set<string>>(new Set());
+  
+  // Keep refs for current values to avoid stale closures in callbacks
+  const currentMessagesRef = useRef<GuestMessage[]>([]);
+  const currentMessageIdsRef = useRef<Set<string>>(new Set());
+  
+  // Sync refs with state
+  useEffect(() => {
+    currentMessagesRef.current = messages;
+  }, [messages]);
+  
+  useEffect(() => {
+    currentMessageIdsRef.current = messageIds;
+  }, [messageIds]);
 
   // Enhanced de-duplication with Map keyed by eventId:userId:version
   const fetchInProgressMap = useRef<Map<string, boolean>>(new Map());
@@ -472,8 +484,8 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
         // Map RPC response to GuestMessage type with safe type adapter
         const adaptedMessages = messagesToPrepend.map(mapRpcMessageToGuestMessage);
 
-        // Use thread-safe merge function with proper React state updates
-        const mergeResult = mergeMessagesStable(messages, adaptedMessages, messageIds);
+        // Use current refs to avoid stale state in callbacks
+        const mergeResult = mergeMessagesStable(currentMessagesRef.current, adaptedMessages, currentMessageIdsRef.current);
         setMessages(mergeResult.messages);
         setMessageIds(mergeResult.updatedIds);
 
@@ -511,7 +523,7 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
         fetchInProgressMap.current.delete(paginationKey);
       }
     }
-  }, [eventId, user?.id, version, compoundCursor, isFetchingOlder, mergeMessagesStable]);
+  }, [eventId, user?.id, version, compoundCursor, isFetchingOlder]);
 
   /**
    * Handle real-time message delivery updates (backup path for targeted messages)
@@ -579,8 +591,8 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
           // 🔍 DIAGNOSTIC: Measure merge timing
           const mergeStartTime = performance.now();
 
-          // Use thread-safe merge with proper React state updates
-          const mergeResult = mergeMessagesStable(messages, [newMessage], messageIds);
+          // Use current refs to avoid stale state in callbacks
+          const mergeResult = mergeMessagesStable(currentMessagesRef.current, [newMessage], currentMessageIdsRef.current);
           setMessages(mergeResult.messages);
           setMessageIds(mergeResult.updatedIds);
 
@@ -611,7 +623,7 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
       // For UPDATE/DELETE events, we could implement more granular updates,
       // but for MVP, intelligent INSERT handling is the main improvement
     },
-    [eventId, fetchInitialMessages, mergeMessagesStable],
+    [eventId, fetchInitialMessages],
   );
 
   // Fetch initial messages
@@ -684,8 +696,8 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
                     (payload.new as any).sender_user_id === user.id,
                 };
 
-                // Merge immediately for instant rendering with proper React state updates
-                const mergeResult = mergeMessagesStable(messages, [fastMessage], messageIds);
+                // Use current refs to avoid stale state in fast-path callbacks
+                const mergeResult = mergeMessagesStable(currentMessagesRef.current, [fastMessage], currentMessageIdsRef.current);
                 setMessages(mergeResult.messages);
                 setMessageIds(mergeResult.updatedIds);
 

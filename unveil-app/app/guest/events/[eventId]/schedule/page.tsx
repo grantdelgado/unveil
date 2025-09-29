@@ -22,18 +22,19 @@ async function getScheduleData(eventId: string): Promise<{
   scheduleItems: ScheduleItem[];
   error: string | null;
 }> {
-  try {
-    const supabase = await createServerSupabaseClient();
-    if (!supabase) {
-      console.error('Schedule SSR: Failed to create Supabase client');
-      return { event: null, scheduleItems: [], error: 'Service unavailable' };
-    }
-    
-    // Check user authentication first
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+  // Check authentication first (outside try-catch to allow redirect)
+  const supabase = await createServerSupabaseClient();
+  if (!supabase) {
+    console.error('Schedule SSR: Failed to create Supabase client');
+    return { event: null, scheduleItems: [], error: 'Service unavailable' };
+  }
+  
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) {
     redirect('/login');
   }
+
+  try {
 
   // Fetch event data (RLS will enforce access control)
   const { data: event, error: eventError } = await supabase

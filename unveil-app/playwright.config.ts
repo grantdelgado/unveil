@@ -82,13 +82,11 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: process.env.CI ? 'pnpm build && pnpm start' : 'pnpm dev',
+    command: process.env.CI 
+      ? 'NODE_ENV=test E2E_TEST_SECRET=test-secret-12345 pnpm build && NODE_ENV=test E2E_TEST_SECRET=test-secret-12345 pnpm start'
+      : 'NODE_ENV=test E2E_TEST_SECRET=test-secret-12345 pnpm dev',
     url: 'http://localhost:3000',
     timeout: 120_000,
     reuseExistingServer: !process.env.CI,
-    env: {
-      NODE_ENV: 'test',
-      E2E_TEST_SECRET: process.env.E2E_TEST_SECRET || 'test-secret-12345',
-    },
   },
 });
