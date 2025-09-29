@@ -21,6 +21,36 @@ import {
   emitSetAuth,
 } from '@/lib/telemetry/realtime';
 
+// Health metrics interface for non-blocking instrumentation
+interface HealthMetricsClient {
+  incrementActiveChannels: () => void;
+  decrementActiveChannels: () => void;  
+  incrementMessages: () => void;
+  incrementErrors: () => void;
+}
+
+// Import health metrics for instrumentation
+let realtimeHealthMetrics: HealthMetricsClient | null = null;
+if (typeof window !== 'undefined') {
+  // Lazy load health metrics only on client side
+  realtimeHealthMetrics = {
+    incrementActiveChannels: () => {
+      // Increment counter via API call (non-blocking)
+      fetch('/api/health/realtime/increment/channels', { method: 'POST' }).catch(() => {});
+    },
+    decrementActiveChannels: () => {
+      // Decrement counter via API call (non-blocking)  
+      fetch('/api/health/realtime/increment/channels', { method: 'DELETE' }).catch(() => {});
+    },
+    incrementMessages: () => {
+      fetch('/api/health/realtime/increment/messages', { method: 'POST' }).catch(() => {});
+    },
+    incrementErrors: () => {
+      fetch('/api/health/realtime/increment/errors', { method: 'POST' }).catch(() => {});
+    },
+  };
+}
+
 interface SubscriptionContextType {
   manager: SubscriptionManager | null;
   version: number;
@@ -183,6 +213,9 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
           await applyToken(session.access_token);
         }
         
+        // Increment health metrics for new manager
+        realtimeHealthMetrics?.incrementActiveChannels();
+        
         // Update refs and state
         managerRef.current = newManager;
         setManager(newManager);
@@ -225,6 +258,7 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
     if (managerRef.current) {
       try {
         managerRef.current.destroy();
+        realtimeHealthMetrics?.decrementActiveChannels();
       } catch (error) {
         logger.error('❌ Error destroying SubscriptionManager:', error);
       }
@@ -320,6 +354,7 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
       if (managerRef.current) {
         logger.realtime('🧹 Provider unmount cleanup');
         managerRef.current.destroy();
+        realtimeHealthMetrics?.decrementActiveChannels();
         managerRef.current = null;
       }
     };
