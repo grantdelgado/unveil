@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useReducer } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { logger } from '@/lib/logger';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { useSubscriptionManager } from '@/lib/realtime/SubscriptionProvider';
-import { mergeMessages, type GuestMessage } from '@/lib/utils/messageUtils';
+import { type GuestMessage } from '@/lib/utils/messageUtils';
 import { RealtimeFlags, RealtimeTunables } from '@/lib/config/realtime';
 import { normalizeRealtimeError, type RTErrorContext } from '@/lib/realtime/error-normalize';
 import { shouldLog } from '@/lib/realtime/log-sampler';
@@ -11,6 +11,143 @@ import { shouldLog } from '@/lib/realtime/log-sampler';
 // Configuration constants
 const INITIAL_WINDOW_SIZE = 30;
 const OLDER_MESSAGES_BATCH_SIZE = 20;
+
+// State management types for atomic message operations
+interface MessageState {
+  messages: GuestMessage[];
+  messageIds: Set<string>;
+  compoundCursor: { created_at: string; id: string } | null;
+  oldestMessageCursor: string | null;
+  hasMore: boolean;
+}
+
+type MessageAction = 
+  | { type: 'RESET_FOR_EVENT' }
+  | { type: 'SET_INITIAL_MESSAGES'; payload: { messages: GuestMessage[]; hasMore: boolean } }
+  | { type: 'ADD_PAGINATED_MESSAGES'; payload: { messages: GuestMessage[]; hasMore: boolean } }
+  | { type: 'ADD_REALTIME_MESSAGE'; payload: GuestMessage }
+  | { type: 'MERGE_MESSAGES'; payload: GuestMessage[] };
+
+// Atomic message state reducer (eliminates race conditions)
+function messageStateReducer(state: MessageState, action: MessageAction): MessageState {
+  switch (action.type) {
+    case 'RESET_FOR_EVENT':
+      return {
+        messages: [],
+        messageIds: new Set<string>(),
+        compoundCursor: null,
+        oldestMessageCursor: null,
+        hasMore: false,
+      };
+      
+    case 'SET_INITIAL_MESSAGES': {
+      const { messages, hasMore } = action.payload;
+      const messageIds = new Set(messages.map(m => m.message_id));
+      
+      // Determine if we should trim messages (when hasMore is true, we got +1 message)
+      const shouldTrim = hasMore && messages.length > INITIAL_WINDOW_SIZE;
+      const messagesToKeep = shouldTrim ? messages.slice(0, INITIAL_WINDOW_SIZE) : messages;
+      
+      const sortedMessages = [...messagesToKeep].sort((a, b) => {
+        const timeA = new Date(a.created_at).getTime();
+        const timeB = new Date(b.created_at).getTime();
+        if (timeB !== timeA) return timeB - timeA;
+        return a.message_id > b.message_id ? -1 : 1;
+      });
+      
+      const oldestMessage = sortedMessages[sortedMessages.length - 1];
+      
+      // Use logger instead of console.log for consistent logging
+      if (process.env.NODE_ENV === 'development') {
+        logger.info('🔍 SET_INITIAL_MESSAGES reducer', {
+          originalCount: messages.length,
+          trimmed: shouldTrim,
+          finalCount: sortedMessages.length,
+          hasOldestMessage: !!oldestMessage,
+          hasMore,
+        });
+      }
+      
+      return {
+        messages: sortedMessages,
+        messageIds: new Set(sortedMessages.map(m => m.message_id)), // Use trimmed messages for IDs
+        compoundCursor: oldestMessage ? {
+          created_at: oldestMessage.created_at,
+          id: oldestMessage.message_id,
+        } : null,
+        oldestMessageCursor: oldestMessage?.created_at || null,
+        hasMore,
+      };
+    }
+    
+    case 'ADD_PAGINATED_MESSAGES': {
+      const { messages: newMessages, hasMore } = action.payload;
+      const combined = [...state.messages];
+      const updatedIds = new Set(state.messageIds);
+      
+      // Add new messages with deduplication
+      for (const msg of newMessages) {
+        if (!updatedIds.has(msg.message_id)) {
+          updatedIds.add(msg.message_id);
+          combined.push(msg);
+        }
+      }
+      
+      // Sort combined list
+      combined.sort((a, b) => {
+        const timeA = new Date(a.created_at).getTime();
+        const timeB = new Date(b.created_at).getTime();
+        if (timeB !== timeA) return timeB - timeA;
+        return a.message_id > b.message_id ? -1 : 1;
+      });
+      
+      const oldestMessage = combined[combined.length - 1];
+      
+      return {
+        messages: combined,
+        messageIds: updatedIds,
+        compoundCursor: oldestMessage ? {
+          created_at: oldestMessage.created_at,
+          id: oldestMessage.message_id,
+        } : null,
+        oldestMessageCursor: oldestMessage?.created_at || null,
+        hasMore,
+      };
+    }
+    
+    case 'ADD_REALTIME_MESSAGE':
+    case 'MERGE_MESSAGES': {
+      const newMessages = action.type === 'ADD_REALTIME_MESSAGE' ? [action.payload] : action.payload;
+      const combined = [...state.messages];
+      const updatedIds = new Set(state.messageIds);
+      
+      // Add new messages with deduplication
+      for (const msg of newMessages) {
+        if (!updatedIds.has(msg.message_id)) {
+          updatedIds.add(msg.message_id);
+          combined.push(msg);
+        }
+      }
+      
+      // Sort combined list
+      combined.sort((a, b) => {
+        const timeA = new Date(a.created_at).getTime();
+        const timeB = new Date(b.created_at).getTime();
+        if (timeB !== timeA) return timeB - timeA;
+        return a.message_id > b.message_id ? -1 : 1;
+      });
+      
+      return {
+        ...state,
+        messages: combined,
+        messageIds: updatedIds,
+      };
+    }
+    
+    default:
+      return state;
+  }
+}
 
 /**
  * Log realtime error with normalization and sampling for guest messaging
@@ -100,14 +237,34 @@ interface UseGuestMessagesRPCProps {
 }
 
 export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
-  const [messages, setMessages] = useState<GuestMessage[]>([]);
+  // Atomic state management using reducer (eliminates race conditions)
+  const [messageState, dispatch] = useReducer(messageStateReducer, {
+    messages: [],
+    messageIds: new Set<string>(),
+    compoundCursor: null,
+    oldestMessageCursor: null,
+    hasMore: false,
+  });
+
+  // Separate loading/error state (not part of message state)
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(false);
   const [isFetchingOlder, setIsFetchingOlder] = useState(false);
-  const [oldestMessageCursor, setOldestMessageCursor] = useState<string | null>(
-    null,
-  );
+
+  // Extract values for backward compatibility
+  const { messages, messageIds, compoundCursor, oldestMessageCursor, hasMore } = messageState;
+
+  // Debug logging for state changes (development only, throttled)
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      logger.info('🔍 messageState changed', {
+        messageCount: messages.length,
+        hasCompoundCursor: !!compoundCursor,
+        hasMore,
+        messageIdsSize: messageIds.size,
+      });
+    }
+  }, [messages.length, hasMore]); // Reduced dependencies to prevent excessive logging
 
   // Enhanced de-duplication with Map keyed by eventId:userId:version
   const fetchInProgressMap = useRef<Map<string, boolean>>(new Map());
@@ -115,7 +272,16 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
   const { version, manager } = useSubscriptionManager();
 
   /**
-   * Fetch initial window of recent messages using RPC (with deduplication)
+   * Clear pagination state when event changes
+   */
+  useEffect(() => {
+    dispatch({ type: 'RESET_FOR_EVENT' });
+  }, [eventId]);
+
+  // Remove old merge function - now handled by reducer
+
+  /**
+   * Fetch initial window of recent messages using RPC (with compound cursor)
    */
   const fetchInitialMessages = useCallback(async () => {
     // Enhanced de-duplication with eventId:userId:version key
@@ -138,7 +304,7 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
       setLoading(true);
       setError(null);
 
-      logger.info('Fetching initial guest messages via V2', {
+      logger.info('Fetching initial guest messages with compound cursor support', {
         eventId,
         userId,
         version,
@@ -154,17 +320,7 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
         throw new Error('Authentication required');
       }
 
-      // Guest verification is handled by the RPC function
-
-      // Use RPC function to get all messages (announcements + deliveries + own messages)
-      // This ensures new guests see historical announcements
-      logger.info('Fetching guest messages via RPC v3 (stable)', {
-        eventId,
-        windowSize: INITIAL_WINDOW_SIZE,
-      });
-
       // CANONICAL RPC: Always use get_guest_event_messages (NOT v2/v3 directly)
-      // @deprecated Do NOT call get_guest_event_messages_v2 or get_guest_event_messages_v3 directly
       const { data, error: rpcError } = await supabase.rpc(
         'get_guest_event_messages',
         {
@@ -212,69 +368,66 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
 
       const messagesArray = Array.isArray(data) ? data : [];
       const hasMoreMessages = messagesArray.length > INITIAL_WINDOW_SIZE;
-      const messagesToShow = hasMoreMessages
-        ? messagesArray.slice(0, INITIAL_WINDOW_SIZE)
-        : messagesArray;
 
-      // PII-safe telemetry for v3 usage
+      // PII-safe telemetry for v3 usage  
       logger.info('🔧 📊 [TELEMETRY] messaging.rpc_v3_rows', {
-        count: messagesToShow.length,
+        count: messagesArray.length,
         window: INITIAL_WINDOW_SIZE,
         hadCursor: false, // Initial fetch doesn't use cursor
         eventId, // No PII - just event UUID
       });
 
-      // Map RPC response to GuestMessage type with safe type adapter
-      const adaptedMessages = messagesToShow.map(mapRpcMessageToGuestMessage);
+      // Map RPC response to GuestMessage type (let reducer handle trimming)
+      const adaptedMessages = messagesArray.map(mapRpcMessageToGuestMessage);
       
-      // Deduplicate messages by message_id (in case RPC returns duplicates from multiple UNION branches)
-      const deduplicatedMessages = adaptedMessages.filter((message, index, array) => 
-        array.findIndex(m => m.message_id === message.message_id) === index
-      );
-      
-      // V2: Trust RPC stable ordering (created_at DESC, id DESC) - reverse to oldest first for UI
-      const sortedMessages = deduplicatedMessages.reverse();
-      
-      logger.info('Using stable RPC ordering (v2)', {
-        eventId,
-        count: deduplicatedMessages.length,
-        firstMessage: deduplicatedMessages[0]?.created_at,
-        lastMessage: deduplicatedMessages[deduplicatedMessages.length - 1]?.created_at,
-      });
-
-      setMessages(sortedMessages);
-      setHasMore(hasMoreMessages);
-
-      // Set cursor for fetching older messages
-      if (sortedMessages.length > 0) {
-        const oldestMessage = sortedMessages[0];
-        setOldestMessageCursor(oldestMessage.created_at);
+      // Use atomic reducer for thread-safe state management
+      if (process.env.NODE_ENV === 'development') {
+        logger.info('🔍 About to dispatch SET_INITIAL_MESSAGES', {
+          rawCount: messagesArray.length,
+          adaptedCount: adaptedMessages.length,
+          hasMore: hasMoreMessages,
+          windowSize: INITIAL_WINDOW_SIZE,
+          hasMessages: adaptedMessages.length > 0,
+        });
       }
+      
+      dispatch({ 
+        type: 'SET_INITIAL_MESSAGES', 
+        payload: { messages: adaptedMessages, hasMore: hasMoreMessages } 
+      });
+      
+      logger.info('Initial messages loaded with atomic state management', {
+        eventId,
+        count: adaptedMessages.length,
+        hasMore: hasMoreMessages,
+        firstMessage: adaptedMessages[0]?.created_at,
+        lastMessage: adaptedMessages[adaptedMessages.length - 1]?.created_at,
+      });
 
       // Log V2 read model metrics
       const sourceBreakdown = {
-        delivery: sortedMessages.filter(
+        delivery: adaptedMessages.filter(
           (m) => m.delivery_status === 'delivered',
         ).length,
-        message: sortedMessages.filter((m) => m.message_type !== 'announcement')
+        message: adaptedMessages.filter((m) => m.message_type !== 'announcement')
           .length,
-        catchup: sortedMessages.filter((m) => m.message_type === 'announcement')
+        catchup: adaptedMessages.filter((m) => m.message_type === 'announcement')
           .length,
-        announcement: sortedMessages.filter(
+        announcement: adaptedMessages.filter(
           (m) => m.message_type === 'announcement',
         ).length,
-        channel: sortedMessages.filter((m) => m.message_type === 'channel')
+        channel: adaptedMessages.filter((m) => m.message_type === 'channel')
           .length,
-        direct: sortedMessages.filter((m) => m.message_type === 'direct')
+        direct: adaptedMessages.filter((m) => m.message_type === 'direct')
           .length,
       };
 
-      logger.info('Successfully fetched guest messages', {
+      logger.info('Successfully fetched guest messages with atomic state', {
         eventId,
-        count: sortedMessages.length,
+        count: adaptedMessages.length,
         hasMore: hasMoreMessages,
-        firstMessageCreatedAt: sortedMessages[0]?.created_at,
-        lastMessageCreatedAt: sortedMessages[sortedMessages.length - 1]?.created_at,
+        firstMessageCreatedAt: adaptedMessages[0]?.created_at,
+        lastMessageCreatedAt: adaptedMessages[adaptedMessages.length - 1]?.created_at,
         sourceBreakdown,
       });
     } catch (err) {
@@ -339,19 +492,38 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
   }, []);
 
   /**
-   * Fetch older messages for pagination using RPC
+   * Fetch older messages for pagination using compound cursor
    */
   const fetchOlderMessages = useCallback(async () => {
-    if (!oldestMessageCursor || isFetchingOlder) return;
+    // Get current state from messageState (avoid stale closure)
+    const currentCursor = messageState.compoundCursor;
+    
+    // Debug logging for pagination issues
+    logger.info('🔍 fetchOlderMessages called', {
+      hasCompoundCursor: !!currentCursor,
+      compoundCursor: currentCursor,
+      isFetchingOlder,
+      eventId,
+      staleFromCallback: compoundCursor, // Show stale value for comparison
+    });
+    
+    if (!currentCursor || isFetchingOlder) {
+      logger.warn('🔍 fetchOlderMessages early return', {
+        reason: !currentCursor ? 'no_compound_cursor' : 'already_fetching',
+        compoundCursor: currentCursor,
+        isFetchingOlder,
+      });
+      return;
+    }
 
-    // Enhanced de-duplication for pagination with cursor
+    // Enhanced de-duplication for pagination with compound cursor
     const userId = user?.id;
     if (!userId) {
       logger.warn('No user ID available for pagination de-duplication');
       return;
     }
 
-    const paginationKey = `${eventId}:${userId}:${version}:${oldestMessageCursor}`;
+    const paginationKey = `${eventId}:${userId}:${version}:${currentCursor.created_at}:${currentCursor.id}`;
 
     // Prevent duplicate pagination fetches
     if (fetchInProgressMap.current.get(paginationKey)) {
@@ -364,22 +536,22 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
       setIsFetchingOlder(true);
       setError(null);
 
-      logger.info('Fetching older guest messages via RPC v3 (stable)', {
+      logger.info('Fetching older guest messages with compound cursor', {
         eventId,
-        before: oldestMessageCursor,
+        beforeCreatedAt: currentCursor.created_at,
+        beforeId: currentCursor.id,
         paginationKey,
       });
 
-      // CANONICAL RPC: Always use get_guest_event_messages (NOT v2/v3 directly)
-      // @deprecated Do NOT call get_guest_event_messages_v2 or get_guest_event_messages_v3 directly
+      // CANONICAL RPC: Use compound cursor parameters for stable pagination
       const { data, error: rpcError } = await supabase.rpc(
         'get_guest_event_messages',
         {
           p_event_id: eventId,
           p_limit: OLDER_MESSAGES_BATCH_SIZE + 1,
-          p_before: oldestMessageCursor,
-          p_cursor_created_at: undefined,
-          p_cursor_id: undefined,
+          p_before: undefined, // Legacy param, use compound cursor instead
+          p_cursor_created_at: currentCursor.created_at,
+          p_cursor_id: currentCursor.id,
         },
       );
 
@@ -418,21 +590,19 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
       if (messagesToPrepend.length > 0) {
         // Map RPC response to GuestMessage type with safe type adapter
         const adaptedMessages = messagesToPrepend.map(mapRpcMessageToGuestMessage);
-        
-        // Reverse to chronological order and prepend to existing messages
-        const sortedOlderMessages = adaptedMessages.reverse();
 
-        // Use merge function with stable ordering (always true for v3)
-        setMessages((prevMessages) => 
-          mergeMessages(prevMessages, sortedOlderMessages, true)
-        );
-
-        // Update cursor for next batch
-        const newOldestMessage = sortedOlderMessages[0];
-        setOldestMessageCursor(newOldestMessage.created_at);
+        // Use atomic reducer for pagination updates
+        dispatch({ 
+          type: 'ADD_PAGINATED_MESSAGES', 
+          payload: { messages: adaptedMessages, hasMore: hasMoreOlderMessages } 
+        });
+      } else {
+        // No new messages, just update hasMore status
+        dispatch({ 
+          type: 'ADD_PAGINATED_MESSAGES', 
+          payload: { messages: [], hasMore: hasMoreOlderMessages } 
+        });
       }
-
-      setHasMore(hasMoreOlderMessages);
 
       logger.info('Successfully fetched older guest messages', {
         eventId,
@@ -451,12 +621,12 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
       setIsFetchingOlder(false);
       // Clean up the specific pagination key
       const userId = user?.id;
-      if (userId && oldestMessageCursor) {
-        const paginationKey = `${eventId}:${userId}:${version}:${oldestMessageCursor}`;
+      if (userId && currentCursor) {
+        const paginationKey = `${eventId}:${userId}:${version}:${currentCursor.created_at}:${currentCursor.id}`;
         fetchInProgressMap.current.delete(paginationKey);
       }
     }
-  }, [eventId, oldestMessageCursor, isFetchingOlder]);
+  }, [eventId, user?.id, version]);
 
   /**
    * Handle real-time message delivery updates (backup path for targeted messages)
@@ -524,10 +694,8 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
           // 🔍 DIAGNOSTIC: Measure merge timing
           const mergeStartTime = performance.now();
 
-          // Use intelligent merge (may be duplicate if fast-path already handled it)
-          setMessages((prevMessages) =>
-            mergeMessages(prevMessages, [newMessage], true),
-          );
+          // Use atomic reducer for realtime message updates
+          dispatch({ type: 'ADD_REALTIME_MESSAGE', payload: newMessage });
 
           const mergeEndTime = performance.now();
           const totalTime = mergeEndTime - startTime;
@@ -629,10 +797,8 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
                     (payload.new as any).sender_user_id === user.id,
                 };
 
-                // Merge immediately for instant rendering
-                setMessages((prevMessages) =>
-                  mergeMessages(prevMessages, [fastMessage], true),
-                );
+                // Use atomic reducer for fast-path realtime updates
+                dispatch({ type: 'ADD_REALTIME_MESSAGE', payload: fastMessage });
 
                 logger.info('✅ Fast-path message rendered', {
                   messageId,

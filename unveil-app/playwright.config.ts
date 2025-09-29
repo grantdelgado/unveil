@@ -15,6 +15,8 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: 'html',
+  /* Global setup for authenticated sessions */
+  globalSetup: require.resolve('./tests/global-setup.ts'),
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
@@ -48,7 +50,24 @@ export default defineConfig({
       use: { ...devices['Desktop Safari'] },
       dependencies: ['setup'],
     },
-    /* Test against mobile viewports. */
+    /* Test against mobile viewports with authentication */
+    {
+      name: 'mobile-guest-auth',
+      use: { 
+        ...devices['iPhone 12'],
+        storageState: '.auth/guest.json',
+      },
+      dependencies: ['setup'],
+    },
+    {
+      name: 'mobile-host-auth',
+      use: { 
+        ...devices['Pixel 5'],
+        storageState: '.auth/host.json',
+      },
+      dependencies: ['setup'],
+    },
+    /* Legacy mobile projects (unauthenticated) */
     {
       name: 'chromium-mobile',
       use: { ...devices['Pixel 7'] },
@@ -59,16 +78,6 @@ export default defineConfig({
       use: { ...devices['iPhone 14 Pro'] },
       dependencies: ['setup'],
     },
-    {
-      name: 'Mobile Chrome',
-      use: { ...devices['Pixel 5'] },
-      dependencies: ['setup'],
-    },
-    {
-      name: 'Mobile Safari',
-      use: { ...devices['iPhone 12'] },
-      dependencies: ['setup'],
-    },
   ],
 
   /* Run your local dev server before starting the tests */
@@ -77,5 +86,10 @@ export default defineConfig({
     url: 'http://localhost:3000',
     timeout: 120_000,
     reuseExistingServer: !process.env.CI,
+    env: {
+      // Use environment variables instead of command-line exposure
+      NODE_ENV: 'test',
+      E2E_TEST_SECRET: process.env.E2E_TEST_SECRET || 'test-secret-12345',
+    },
   },
 });

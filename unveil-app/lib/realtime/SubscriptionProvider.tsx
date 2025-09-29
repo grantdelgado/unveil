@@ -21,6 +21,62 @@ import {
   emitSetAuth,
 } from '@/lib/telemetry/realtime';
 
+// Health metrics interface for non-blocking instrumentation
+interface HealthMetricsClient {
+  incrementActiveChannels: () => void;
+  decrementActiveChannels: () => void;  
+  incrementMessages: () => void;
+  incrementErrors: () => void;
+}
+
+// Optimized health metrics with batching and error handling
+let realtimeHealthMetrics: HealthMetricsClient | null = null;
+if (typeof window !== 'undefined') {
+  // In-memory counters to reduce API calls
+  let pendingUpdates = {
+    channelDelta: 0,
+    messageCount: 0,
+    errorCount: 0,
+  };
+  
+  // Batch updates every 5 seconds to reduce network calls
+  const flushPendingUpdates = () => {
+    if (pendingUpdates.channelDelta !== 0 || pendingUpdates.messageCount > 0 || pendingUpdates.errorCount > 0) {
+      // Single batched API call instead of multiple calls
+      fetch('/api/health/realtime', {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(pendingUpdates),
+      }).catch((error) => {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Health metrics: Batch update failed:', error.message);
+        }
+      });
+      
+      // Reset pending updates
+      pendingUpdates = { channelDelta: 0, messageCount: 0, errorCount: 0 };
+    }
+  };
+  
+  // Batch flush every 5 seconds
+  setInterval(flushPendingUpdates, 5000);
+  
+  realtimeHealthMetrics = {
+    incrementActiveChannels: () => {
+      pendingUpdates.channelDelta += 1;
+    },
+    decrementActiveChannels: () => {
+      pendingUpdates.channelDelta -= 1;
+    },
+    incrementMessages: () => {
+      pendingUpdates.messageCount += 1;
+    },
+    incrementErrors: () => {
+      pendingUpdates.errorCount += 1;
+    },
+  };
+}
+
 interface SubscriptionContextType {
   manager: SubscriptionManager | null;
   version: number;
@@ -170,6 +226,7 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
         if (managerRef.current) {
           try {
             managerRef.current.destroy();
+            realtimeHealthMetrics?.decrementActiveChannels();
           } catch (error) {
             logger.error('❌ Error destroying existing manager:', error);
           }
@@ -182,6 +239,9 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
         if (session?.access_token) {
           await applyToken(session.access_token);
         }
+        
+        // Increment health metrics for new manager
+        realtimeHealthMetrics?.incrementActiveChannels();
         
         // Update refs and state
         managerRef.current = newManager;
@@ -225,6 +285,7 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
     if (managerRef.current) {
       try {
         managerRef.current.destroy();
+        realtimeHealthMetrics?.decrementActiveChannels();
       } catch (error) {
         logger.error('❌ Error destroying SubscriptionManager:', error);
       }
@@ -320,6 +381,7 @@ export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
       if (managerRef.current) {
         logger.realtime('🧹 Provider unmount cleanup');
         managerRef.current.destroy();
+        realtimeHealthMetrics?.decrementActiveChannels();
         managerRef.current = null;
       }
     };

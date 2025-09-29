@@ -1,100 +1,135 @@
-'use client';
+import { Suspense } from 'react';
+import { redirect } from 'next/navigation';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { ScheduleContent } from './ScheduleContent';
+import { ScheduleServerShell } from './ScheduleServerShell';
+import type { Database } from '@/app/reference/supabase.types';
 
-import { useParams } from 'next/navigation';
-import { useEventWithGuest } from '@/hooks/events';
-import {
-  PageWrapper,
-  CardContainer,
-  PageTitle,
-  SubTitle,
-  BackButton,
-  SkeletonLoader,
-} from '@/components/ui';
-import EventSchedule from '@/components/features/scheduling/EventSchedule';
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth/AuthProvider';
+// Types used in the getScheduleData function
+type Event = Database['public']['Tables']['events']['Row'];
+type ScheduleItem = Database['public']['Tables']['event_schedule_items']['Row'];
 
-export default function GuestEventSchedulePage() {
-  const params = useParams();
-  const router = useRouter();
-  const eventId = params.eventId as string;
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+interface PageProps {
+  params: Promise<{ eventId: string }>;
+}
 
-  // Use auth provider instead of direct Supabase client
-  const { session, loading: authLoading } = useAuth();
+/**
+ * Server-side data fetching for schedule page
+ * Uses server Supabase client with RLS enforcement
+ */
+async function getScheduleData(eventId: string): Promise<{
+  event: Event | null;
+  scheduleItems: ScheduleItem[];
+  error: string | null;
+}> {
+  // Check authentication first (outside try-catch to allow redirect)
+  const supabase = await createServerSupabaseClient();
+  if (!supabase) {
+    console.error('Schedule SSR: Failed to create Supabase client');
+    return { event: null, scheduleItems: [], error: 'Service unavailable' };
+  }
   
-  useEffect(() => {
-    if (!authLoading) {
-      if (!session?.user) {
-        router.push('/login');
-        return;
-      }
-      setCurrentUserId(session.user.id);
-    }
-  }, [session, authLoading, router]);
-
-  // Use the custom hook to fetch event and guest data
-  const { event, loading, error } = useEventWithGuest(eventId, currentUserId);
-
-  if (loading) {
-    return (
-      <PageWrapper>
-        <div className="max-w-4xl mx-auto space-y-6">
-          <SkeletonLoader variant="card" count={2} />
-        </div>
-      </PageWrapper>
-    );
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    redirect('/login');
   }
 
-  if (error || !event) {
-    return (
-      <PageWrapper>
-        <div className="max-w-4xl mx-auto">
-          <CardContainer className="p-8 text-center">
-            <div className="text-4xl mb-4">😔</div>
-            <PageTitle>Event Not Found</PageTitle>
-            <SubTitle>
-              {error?.message ||
-                'This event may have been moved or is no longer available.'}
-            </SubTitle>
-            <BackButton href="/select-event" className="mt-6">
-              Return to Your Events
-            </BackButton>
-          </CardContainer>
-        </div>
-      </PageWrapper>
-    );
+  try {
+
+  // Fetch event data (RLS will enforce access control)
+  const { data: event, error: eventError } = await supabase
+    .from('events')
+    .select('*')
+    .eq('id', eventId)
+    .single();
+
+  if (eventError) {
+    console.error('Schedule SSR: Event fetch error:', eventError);
+    return { event: null, scheduleItems: [], error: 'Event not found' };
   }
+
+  // Verify user has access to this event (distinguish errors from no access)
+  const { data: guestCheck, error: guestError } = await supabase
+    .from('event_guests')
+    .select('id')
+    .eq('event_id', eventId)
+    .eq('user_id', user.id)
+    .is('removed_at', null)
+    .maybeSingle();
+
+  if (guestError) {
+    console.error('Schedule SSR: Database error checking guest access:', guestError);
+    return { event: null, scheduleItems: [], error: 'Database error occurred' };
+  }
+  
+  if (!guestCheck) {
+    console.warn('Schedule SSR: User not a guest of this event:', { eventId, userId: user.id });
+    return { event: null, scheduleItems: [], error: 'Access denied' };
+  }
+
+  // Fetch schedule items
+  const { data: scheduleItems, error: scheduleError } = await supabase
+    .from('event_schedule_items')
+    .select('*')
+    .eq('event_id', eventId)
+    .order('start_at', { ascending: true });
+
+  if (scheduleError) {
+    console.error('Schedule SSR: Schedule items fetch error:', scheduleError);
+    return { event, scheduleItems: [], error: 'Failed to load schedule' };
+  }
+
+    return { 
+      event, 
+      scheduleItems: scheduleItems || [], 
+      error: null 
+    };
+  } catch (error) {
+    console.error('Schedule SSR: Unexpected error:', error);
+    return { 
+      event: null, 
+      scheduleItems: [], 
+      error: 'An unexpected error occurred' 
+    };
+  }
+}
+
+/**
+ * Server-rendered schedule page with streaming for fast first paint
+ */
+export default async function GuestEventSchedulePage({ params }: PageProps) {
+  const { eventId } = await params;
+  
+  // Server-side data fetch with error handling
+  const { event, scheduleItems, error } = await getScheduleData(eventId);
 
   return (
-    <PageWrapper centered={false}>
-      <div className="max-w-4xl mx-auto pt-4 pb-6">
-        {/* Header */}
-        <div className="mb-6">
-          <BackButton
-            href={`/guest/events/${eventId}/home`}
-            variant="subtle"
-            className="mb-4"
-          >
-            Back to Event
-          </BackButton>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            {event.title} Schedule
-          </h1>
-          <SubTitle>
-            A complete breakdown of celebration times and locations
-          </SubTitle>
-        </div>
-
-        {/* Event Schedule */}
-        <EventSchedule
-          eventId={eventId}
-          eventDate={event.event_date}
-          location={event.location}
-          timeZone={event.time_zone}
-        />
-      </div>
-    </PageWrapper>
+    <ScheduleServerShell 
+      event={error ? null : event}
+      error={error}
+      eventId={eventId}
+    >
+      {!error && event && (
+        <Suspense
+          fallback={
+            <div className="space-y-6">
+              <div className="bg-white rounded-2xl shadow-lg p-6 animate-pulse">
+                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+              </div>
+            </div>
+          }
+        >
+          <ScheduleContent
+            event={event}
+            scheduleItems={scheduleItems}
+            eventId={eventId}
+          />
+        </Suspense>
+      )}
+    </ScheduleServerShell>
   );
 }
+
+// Enable revalidation for balanced performance (30 seconds)
+export const revalidate = 30;
