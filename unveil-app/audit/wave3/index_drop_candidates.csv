@@ -1,0 +1,2 @@
+index_name,table_name,reason,evidence,rollback_stmt
+idx_events_creation_key_unique,events,Zero scans + idempotency feature unused,pg_stat shows 0 scans + creation_key only in migration docs,CREATE UNIQUE INDEX IF NOT EXISTS idx_events_creation_key_unique ON public.events USING btree (creation_key) WHERE (creation_key IS NOT NULL)
