@@ -1,0 +1,130 @@
+# CI Guard: Prevent rsvp_status usage after Phase 2 deployment
+# This check ensures no new code uses the removed rsvp_status column
+
+name: RSVP Status Usage Guard
+
+on:
+  pull_request:
+    paths:
+      - 'app/**'
+      - 'components/**' 
+      - 'hooks/**'
+      - 'lib/**'
+      - 'supabase/migrations/**'
+  push:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - 'components/**'
+      - 'hooks/**' 
+      - 'lib/**'
+      - 'supabase/migrations/**'
+
+jobs:
+  check-rsvp-status-usage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for rsvp_status usage
+        run: |
+          echo "🔍 Checking for rsvp_status usage in codebase..."
+          
+          # Search for rsvp_status usage in code files
+          if grep -r '\brsvp_status\b' app/ components/ hooks/ lib/ \
+            --include="*.ts" \
+            --include="*.tsx" \
+            --include="*.js" \
+            --include="*.jsx" \
+            --exclude-dir=node_modules \
+            --exclude="*-phase1-update.*" \
+            --exclude="*.test.*" \
+            --exclude="*.spec.*"; then
+            
+            echo ""
+            echo "❌ RSVP Status Usage Detected!"
+            echo ""
+            echo "The rsvp_status column has been removed from the database."
+            echo "Please use declined_at instead:"
+            echo ""
+            echo "✅ CORRECT:"
+            echo "  - Attending: declined_at IS NULL"
+            echo "  - Declined:  declined_at IS NOT NULL"
+            echo ""
+            echo "❌ INCORRECT:"
+            echo "  - rsvp_status === 'attending'"
+            echo "  - rsvp_status === 'declined'"
+            echo ""
+            echo "See audit/rsvp_status_onephase/safe_two_phase_plan.md for migration guide."
+            echo ""
+            exit 1
+          fi
+          
+          # Check for RSVP_STATUS constants usage
+          if grep -r '\bRSVP_STATUS\b' app/ components/ hooks/ lib/ \
+            --include="*.ts" \
+            --include="*.tsx" \
+            --include="*.js" \
+            --include="*.jsx" \
+            --exclude-dir=node_modules \
+            --exclude="*-phase1-update.*" \
+            --exclude="*.test.*" \
+            --exclude="*.spec.*"; then
+            
+            echo ""
+            echo "❌ RSVP_STATUS constant usage detected!"
+            echo "Please use declined_at logic instead of RSVP_STATUS constants."
+            echo ""
+            exit 1
+          fi
+          
+          # Check for rsvpStatuses in new code (should use explicit selection)
+          if grep -r '\brsvpStatuses\b' app/ components/ hooks/ lib/ \
+            --include="*.ts" \
+            --include="*.tsx" \
+            --include="*.js" \
+            --include="*.jsx" \
+            --exclude-dir=node_modules \
+            --exclude="*-phase1-update.*" \
+            --exclude="*.test.*" \
+            --exclude="*.spec.*" \
+            --exclude="**/types.ts" \
+            --exclude="**/messaging.ts"; then
+            
+            echo ""
+            echo "⚠️  rsvpStatuses usage detected in new code!"
+            echo "Consider using explicit guest selection instead of RSVP status filtering."
+            echo "This is not an error but should be reviewed."
+            echo ""
+          fi
+          
+          echo "✅ No problematic rsvp_status usage found!"
+
+      - name: Check migration files
+        run: |
+          echo "🔍 Checking migration files for proper rsvp_status handling..."
+          
+          # Ensure new migrations don't reference rsvp_status column
+          if find supabase/migrations/ -name "*.sql" -newer supabase/migrations/20251002000000_phase2_remove_rsvp_status_column.sql 2>/dev/null | \
+             xargs grep -l '\brsvp_status\b' 2>/dev/null; then
+            
+            echo ""
+            echo "❌ New migration files reference rsvp_status column!"
+            echo "The rsvp_status column was removed. Use declined_at instead."
+            echo ""
+            exit 1
+          fi
+          
+          echo "✅ Migration files look good!"
+
+      - name: Summary
+        run: |
+          echo ""
+          echo "🎉 RSVP Status Guard Passed!"
+          echo ""
+          echo "✅ No rsvp_status column references found"
+          echo "✅ No RSVP_STATUS constant usage found" 
+          echo "✅ Migration files are clean"
+          echo ""
+          echo "Remember: Use declined_at for RSVP logic!"

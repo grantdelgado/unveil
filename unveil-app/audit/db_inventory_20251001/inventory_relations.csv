@@ -1,0 +1,12 @@
+kind,schema,name,bytes_total,bytes_heap,est_rows
+r,public,message_deliveries,1155072,229376,1439
+r,public,user_link_audit,663552,475136,929
+r,public,event_guests,344064,65536,143
+r,public,messages,212992,24576,109
+r,public,scheduled_messages,155648,32768,44
+r,public,rum_events,90112,24576,120
+r,public,users,90112,16384,81
+r,public,events,57344,8192,3
+r,public,event_schedule_items,49152,8192,-1
+r,public,media,40960,0,-1
+v,public,rum_p75_7d,0,0,-1

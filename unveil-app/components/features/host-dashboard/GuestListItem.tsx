@@ -111,7 +111,8 @@ export const GuestListItem = memo<GuestListItemProps>(
                 <StatusChip 
                   status={getRSVPStatus({
                     declined_at: guest.declined_at,
-                    rsvp_status: guest.rsvp_status,
+                    // PHASE 1: Compute rsvp_status from declined_at
+                    rsvp_status: guest.declined_at ? 'declined' : 'attending',
                     last_invited_at: guest.last_invited_at,
                   })}
                 />

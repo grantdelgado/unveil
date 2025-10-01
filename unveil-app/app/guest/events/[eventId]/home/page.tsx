@@ -124,7 +124,8 @@ export default function GuestEventHomePage() {
     
     // Extract RSVP status from guest info
     const rsvpStatus = hasDeclined ? 'DECLINED' : 
-                      (guestInfo as { rsvp_status?: string })?.rsvp_status === 'attending' ? 'ACCEPTED' : 'PENDING';
+                      // PHASE 1: Use declined_at instead of rsvp_status
+                      !(guestInfo as { declined_at?: string | null })?.declined_at ? 'ACCEPTED' : 'PENDING';
     
     // Dev observability
     if (process.env.NODE_ENV === 'development') {

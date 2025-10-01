@@ -59,22 +59,17 @@ export function StatusChip({ status, className }: StatusChipProps) {
 // Helper function to determine RSVP status from guest data
 export function getRSVPStatus(guest: {
   declined_at?: string | null;
-  rsvp_status?: string | null;
+  rsvp_status?: string | null; // DEPRECATED: Phase 1 - will be removed in Phase 2
   last_invited_at?: string | null;
 }): RSVPStatus {
-  // If guest has declined, show declined status
+  // PHASE 1: Use declined_at as primary source of truth
   if (guest.declined_at) {
     return 'declined';
   }
   
-  // If guest has RSVP status of attending, show attending
-  if (guest.rsvp_status === 'attending') {
-    return 'attending';
-  }
-  
-  // If guest was invited but hasn't responded, show no response
+  // If guest has been invited and hasn't declined, they're attending
   if (guest.last_invited_at) {
-    return 'no_response';
+    return 'attending';
   }
   
   // If guest hasn't been invited yet, show pending

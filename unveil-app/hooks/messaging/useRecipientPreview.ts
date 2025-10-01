@@ -51,7 +51,8 @@ export function useRecipientPreview({
       guest_name: recipient.guest_name,
       phone: recipient.phone,
       a2p_notice_sent_at: null, // Not used in preview
-      rsvp_status: recipient.declined_at ? 'declined' : 'attending',
+      // PHASE 1: Use declined_at logic for RSVP status
+      rsvp_status: recipient.declined_at ? 'declined' : 'attending', // Computed from declined_at
       notes: null,
       guest_tags: recipient.guest_tags,
       created_at: null,
@@ -120,6 +121,7 @@ export function useRecipientPreview({
       (filter as any).includeDeclined === true;
 
     if (!includeDeclined) {
+      // PHASE 1: Use declined_at instead of rsvp_status for filtering
       filteredGuests = filteredGuests.filter((guest) => !guest.declined_at);
     }
 
@@ -134,7 +136,7 @@ export function useRecipientPreview({
       // Apply RSVP status filter
       if (filter.rsvpStatuses && filter.rsvpStatuses.length > 0) {
         filteredGuests = filteredGuests.filter((guest) => {
-          // RSVP-Lite: Map attendance status to filter
+          // PHASE 1: Map attendance status using declined_at logic
           const attendanceStatus = guest.declined_at ? 'declined' : 'attending';
           return filter.rsvpStatuses!.includes(attendanceStatus);
         });

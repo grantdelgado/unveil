@@ -1,0 +1,16 @@
+Area,CurrentBehavior,TargetBehavior,Gap,Risk,SuggestedChange,Effort,Impact,Confidence
+Database Model,Uses declined_at + sms_opt_out fields,Invited by default with opt-out mechanism,None - already matches,Low,None required,1,1,5
+Guest RSVP UI,Single Can't make it? button,Single opt-out action,None - already matches,Low,None required,1,1,5
+Guest Event Visibility,Declined guests still see event in /select-event,Event remains visible after opt-out,None - already matches,Low,None required,1,1,5
+Host Guest Filters,Attending/Declined filters based on declined_at,Binary attending/declined state,None - already matches,Low,None required,1,1,5
+Host Guest Counts,Uses useUnifiedGuestCounts with declined_at logic,Count attending vs declined,None - already matches,Low,None required,1,1,5
+Messaging Audience - Announcements,Excludes declined_at IS NOT NULL guests,Exclude opted-out from default recipients,None - already matches,Low,None required,1,1,5
+Messaging Audience - Channels,Uses tag filtering + declined_at exclusion,Exclude opted-out from tag-based recipients,None - already matches,Low,None required,1,1,5
+Messaging Audience - Direct,Explicit guest selection with opt-out filtering,Individual selection with opt-out respect,None - already matches,Low,None required,1,1,5
+SMS Opt-out Integration,sms_opt_out boolean excludes from messaging,Notification suppression separate from RSVP,None - already matches,Low,None required,1,1,5
+Atomic Decline Operation,guest_decline_event sets declined_at + sms_opt_out,Single action for decline + notification opt-out,None - already matches,Low,None required,1,1,5
+RLS Security,Proper access control with SECURITY DEFINER,Secure guest/host data access,None - already matches,Low,None required,1,1,5
+Search Path Security,SET search_path = public pg_temp in RPCs,Prevent SQL injection in SECURITY DEFINER,None - already matches,Low,None required,1,1,5
+Legacy rsvp_status Field,Still exists but being phased out,Remove after full RSVP-Lite adoption,Minor cleanup needed,Low,Remove field in future migration,2,1,4
+Test Coverage,Basic RSVP and messaging tests exist,Comprehensive opt-out model validation,Minor gaps in edge cases,Low,Add specific opt-out scenario tests,3,2,4
+Documentation,Some references to old RSVP model,Update to reflect opt-out semantics,Minor documentation drift,Low,Update docs and comments,2,1,4

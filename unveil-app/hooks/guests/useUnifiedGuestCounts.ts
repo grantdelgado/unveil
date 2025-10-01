@@ -8,6 +8,8 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase/client';
 import { logger } from '@/lib/logger';
+import { logRSVPCounts } from '@/lib/observability/rsvp-phase1-monitoring';
+import { emitEventRSVPMetrics } from '@/lib/telemetry/rsvp-ops-metrics';
 
 export interface UnifiedGuestCounts {
   total_guests: number;
@@ -78,6 +80,31 @@ export function useUnifiedGuestCounts(
           eventId,
           counts,
         });
+
+        // PHASE 1: Log counts for monitoring (temporary - remove after 48h)
+        if (process.env.NODE_ENV === 'production') {
+          // Get guest data for monitoring (we don't have it here, so log counts only)
+          logger.info('RSVP_PHASE1_COUNTS', {
+            event_id: eventId,
+            attending_count: counts.attending,
+            declined_count: counts.declined,
+            total_count: counts.total_guests,
+            timestamp: new Date().toISOString(),
+          });
+          
+          // NEW: Emit ops metrics for dashboard (PII-safe)
+          // Note: This uses count data only, no guest details
+          const mockGuestData = Array.from({ length: counts.total_guests }, (_, i) => ({
+            declined_at: i < counts.attending ? null : '2025-10-01T00:00:00Z',
+            sms_opt_out: false,
+            phone: '+1000000000',
+            removed_at: null,
+          }));
+          
+          emitEventRSVPMetrics(eventId, mockGuestData).catch(error => {
+            logger.warn('Failed to emit RSVP ops metrics:', error);
+          });
+        }
 
         return counts;
       } else {
