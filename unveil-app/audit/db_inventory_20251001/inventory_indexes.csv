@@ -1,0 +1,11 @@
+table_name,index_name,index_def,index_bytes
+message_deliveries,unique_message_guest_delivery,"CREATE UNIQUE INDEX unique_message_guest_delivery ON public.message_deliveries USING btree (message_id, guest_id)",122880
+message_deliveries,message_deliveries_user_message_created_id_desc_idx,"CREATE INDEX message_deliveries_user_message_created_id_desc_idx ON public.message_deliveries USING btree (user_id, message_id, created_at DESC, id DESC)",122880
+message_deliveries,message_deliveries_guest_created_id_desc_idx,"CREATE INDEX message_deliveries_guest_created_id_desc_idx ON public.message_deliveries USING btree (guest_id, created_at DESC, id DESC)",106496
+message_deliveries,message_deliveries_message_created_id_desc_idx,"CREATE INDEX message_deliveries_message_created_id_desc_idx ON public.message_deliveries USING btree (message_id, created_at DESC, id DESC)",106496
+message_deliveries,message_deliveries_user_created_id_desc_idx,"CREATE INDEX message_deliveries_user_created_id_desc_idx ON public.message_deliveries USING btree (user_id, created_at DESC, id DESC)",98304
+message_deliveries,idx_deliveries_message_guest,"CREATE INDEX idx_deliveries_message_guest ON public.message_deliveries USING btree (message_id, guest_id) WHERE (guest_id IS NOT NULL)",90112
+message_deliveries,message_deliveries_pkey,"CREATE UNIQUE INDEX message_deliveries_pkey ON public.message_deliveries USING btree (id)",90112
+message_deliveries,idx_md_user_event_created,"CREATE INDEX idx_md_user_event_created ON public.message_deliveries USING btree (user_id, created_at DESC) WHERE (user_id IS NOT NULL)",73728
+user_link_audit,user_link_audit_pkey,"CREATE UNIQUE INDEX user_link_audit_pkey ON public.user_link_audit USING btree (id)",57344
+user_link_audit,idx_user_link_audit_event_phone,"CREATE INDEX idx_user_link_audit_event_phone ON public.user_link_audit USING btree (event_id, normalized_phone)",40960

@@ -60,14 +60,17 @@ export function logRSVPCounts(eventId: string, guests: Array<{
     console.log('RSVP_PHASE1_COUNTS', JSON.stringify(counts));
     
     // Optional: Send to monitoring service
-    if (typeof window !== 'undefined' && (window as any).gtag) {
-      (window as any).gtag('event', 'rsvp_phase1_counts', {
-        event_id: eventId,
-        attending: attendingCount,
-        declined: declinedCount,
-        notify_eligible: notifyCount,
-        total: activeGuests.length,
-      });
+    if (typeof window !== 'undefined') {
+      const windowWithGtag = window as unknown as { gtag?: (...args: unknown[]) => void };
+      if (windowWithGtag.gtag) {
+        windowWithGtag.gtag('event', 'rsvp_phase1_counts', {
+          event_id: eventId,
+          attending: attendingCount,
+          declined: declinedCount,
+          notify_eligible: notifyCount,
+          total: activeGuests.length,
+        });
+      }
     }
   } catch (error) {
     console.warn('RSVP Phase 1 monitoring error:', error);

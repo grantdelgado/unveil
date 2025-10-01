@@ -1,0 +1,13 @@
+enum_name,value
+media_type_enum,image
+media_type_enum,video
+message_type_enum,direct
+message_type_enum,announcement
+message_type_enum,channel
+user_link_outcome_enum,linked
+user_link_outcome_enum,no_match
+user_link_outcome_enum,ambiguous
+user_link_outcome_enum,skipped
+user_role_enum,guest
+user_role_enum,host
+user_role_enum,admin

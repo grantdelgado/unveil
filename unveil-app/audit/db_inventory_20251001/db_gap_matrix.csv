@@ -1,0 +1,37 @@
+Object,Type,CurrentUsage,Evidence,Risk,SuggestedAction,Effort,Impact,Confidence
+message_deliveries,table,High,1439 rows + 7071 idx_scan + 15+ code refs,Low,Keep,1,1,5
+event_guests,table,High,143 rows + 17554 idx_scan + 15+ code refs,Low,Keep,1,1,5
+messages,table,High,109 rows + 14111 idx_scan + 10+ code refs,Low,Keep,1,1,5
+events,table,High,3 rows + 46769 idx_scan + 8+ code refs,Low,Keep,1,1,5
+users,table,High,81 rows + 8866 idx_scan + 6+ code refs,Low,Keep,1,1,5
+scheduled_messages,table,Med,44 rows + 90844 idx_scan + 3+ code refs,Low,Keep,1,2,4
+media,table,Low,0 rows + 312 idx_scan + 4+ code refs,Med,Keep,1,3,3
+rum_events,table,Low,120 rows + 10 idx_scan + 2+ code refs,Low,Consolidate,2,2,4
+event_schedule_items,table,Med,-1 rows + 328 idx_scan + 1+ code refs,Low,Keep,1,2,4
+user_link_audit,table,Med,929 rows + 73 idx_scan + 0 code refs,Med,Consolidate,3,2,3
+rum_p75_7d,view,Low,0 bytes + 2+ code refs,Low,Deprecate,2,1,4
+messages_2025_09_26,table,None,0 rows + 0 idx_scan + 0 code refs,Low,Drop,1,1,5
+messages_2025_09_27,table,None,0 rows + 0 idx_scan + 0 code refs,Low,Drop,1,1,5
+messages_2025_09_28,table,None,0 rows + 0 idx_scan + 0 code refs,Low,Drop,1,1,5
+messages_2025_09_29,table,None,0 rows + 0 idx_scan + 0 code refs,Low,Drop,1,1,5
+messages_2025_09_30,table,None,0 rows + 0 idx_scan + 0 code refs,Low,Drop,1,1,5
+messages_2025_10_01,table,None,0 rows + 0 idx_scan + 0 code refs,Low,Drop,1,1,5
+messages_2025_10_02,table,None,0 rows + 0 idx_scan + 0 code refs,Low,Drop,1,1,5
+messages_2025_10_03,table,None,0 rows + 0 idx_scan + 0 code refs,Low,Drop,1,1,5
+messages_2025_10_04,table,None,0 rows + 0 idx_scan + 0 code refs,Low,Drop,1,1,5
+idx_event_guests_declined_at_null,index,None,0 idx_scan,Low,Drop,1,1,5
+idx_event_guests_declined_at_not_null,index,None,0 idx_scan,Low,Drop,1,1,5
+oauth_clients_deleted_at_idx,index,None,0 idx_scan,Low,Drop,1,1,4
+users_instance_id_idx,index,None,0 idx_scan,Low,Drop,1,1,4
+refresh_tokens_instance_id_idx,index,None,0 idx_scan,Low,Drop,1,1,4
+instances_pkey,index,None,0 idx_scan,Low,Drop,1,1,4
+audit_log_entries_pkey,index,None,0 idx_scan,Low,Drop,1,1,4
+s3_multipart_uploads_pkey,index,None,0 idx_scan,Low,Drop,1,1,4
+schema_migrations_pkey,index,None,0 idx_scan,Med,Keep,1,3,3
+subscription_pk,index,None,0 idx_scan,Med,Keep,1,3,3
+sso_providers_resource_id_pattern_idx,index,None,0 idx_scan,Low,Drop,1,1,4
+secrets,table,None,0 rows + 0 idx_scan + 0 code refs,Low,Drop,1,1,4
+migrations,table,Low,26 rows + 2 idx_scan + 0 code refs,Low,Keep,1,1,4
+seed_files,table,None,0 rows + 2 idx_scan + 0 code refs,Low,Drop,1,1,4
+buckets,table,Low,2 rows + 44 idx_scan + 0 code refs,Med,Keep,1,3,3
+objects,table,Low,10 rows + 53 idx_scan + 0 code refs,Med,Keep,1,3,3

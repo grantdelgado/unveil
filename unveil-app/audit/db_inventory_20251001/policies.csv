@@ -1,0 +1,38 @@
+tablename,policyname,cmd,roles,using_clause,with_check
+event_guests,event_guests_delete_v2,DELETE,"{public}",false,
+event_guests,event_guests_host_backup,ALL,"{public}",is_event_host(event_id),
+event_guests,event_guests_insert_v2,INSERT,"{public}",,is_event_host(event_id) OR (user_id = auth.uid())
+event_guests,event_guests_no_delete_backup,DELETE,"{public}",false,
+event_guests,event_guests_select_v2,SELECT,"{public}",is_event_host(event_id) OR (user_id = auth.uid()),
+event_guests,event_guests_self_backup,ALL,"{public}",user_id = ( SELECT auth.uid() AS uid),
+event_guests,event_guests_update_v2,UPDATE,"{public}",is_event_host(event_id) OR (user_id = auth.uid()),is_event_host(event_id) OR (user_id = auth.uid())
+event_schedule_items,event_schedule_items_guest_select,SELECT,"{public}",is_event_guest(event_id) OR is_event_host(event_id),
+event_schedule_items,event_schedule_items_host_manage,ALL,"{public}",is_event_host(event_id),is_event_host(event_id)
+events,events_select_read_access,SELECT,"{public}",((host_user_id = ( SELECT auth.uid() AS uid)) OR is_event_guest(id)),
+events,events_unified_access,ALL,"{public}",((host_user_id = ( SELECT auth.uid() AS uid)) OR (is_event_guest(id) AND can_access_event(id))),
+events,hosts can update events sms_tag,UPDATE,"{public}",is_event_host(id),is_event_host(id)
+media,media_insert_event_participant,INSERT,"{authenticated}",,can_access_event(event_id)
+media,media_select_event_accessible,SELECT,"{authenticated}",can_access_event(event_id),
+media,media_update_own,UPDATE,"{public}",uploader_user_id = ( SELECT auth.uid() AS uid),
+message_deliveries,message_deliveries_insert_backup,INSERT,"{public}",,can_manage_message_delivery(message_id, scheduled_message_id)
+message_deliveries,message_deliveries_insert_v2,INSERT,"{public}",,can_manage_deliveries_v2(message_id)
+message_deliveries,message_deliveries_select_backup,SELECT,"{public}","CASE WHEN (user_id IS NOT NULL) THEN (user_id = ( SELECT auth.uid() AS uid)) WHEN (guest_id IS NOT NULL) THEN can_access_event(( SELECT eg.event_id FROM event_guests eg WHERE (eg.id = message_deliveries.guest_id))) ELSE false END",
+message_deliveries,message_deliveries_select_v2,SELECT,"{public}",can_access_delivery_v2(user_id, guest_id),
+message_deliveries,message_deliveries_update_backup,UPDATE,"{public}",can_manage_message_delivery(message_id, scheduled_message_id),can_manage_message_delivery(message_id, scheduled_message_id)
+message_deliveries,message_deliveries_update_v2,UPDATE,"{public}",can_manage_deliveries_v2(message_id),can_manage_deliveries_v2(message_id)
+messages,messages_delete_backup,DELETE,"{authenticated}",is_event_host(event_id),
+messages,messages_delete_v2,DELETE,"{authenticated}",is_event_host(event_id),
+messages,messages_insert_backup,INSERT,"{authenticated}",,is_event_host(event_id)
+messages,messages_insert_v2,INSERT,"{authenticated}",,is_event_host(event_id)
+messages,messages_select_backup,SELECT,"{public}",can_access_event(event_id),
+messages,messages_select_v2,SELECT,"{public}",can_access_event(event_id),
+messages,messages_update_backup,UPDATE,"{authenticated}",is_event_host(event_id),is_event_host(event_id)
+messages,messages_update_v2,UPDATE,"{authenticated}",is_event_host(event_id),is_event_host(event_id)
+rum_events,rum_events_insert_policy,INSERT,"{authenticated}",,true
+rum_events,rum_events_select_policy,SELECT,"{authenticated}",true,
+scheduled_messages,scheduled_messages_host_only_optimized,ALL,"{public}",can_write_event(event_id),can_write_event(event_id)
+user_link_audit,user_link_audit_host_access,SELECT,"{public}",is_event_host(event_id),
+users,allow_trigger_operations,ALL,"{postgres}",true,true
+users,users_insert_own,INSERT,"{public}",,id = ( SELECT auth.uid() AS uid)
+users,users_select_authenticated,SELECT,"{authenticated}",true,
+users,users_update_authenticated,UPDATE,"{authenticated}",true,true

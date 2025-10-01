@@ -84,14 +84,17 @@ export async function emitRSVPMetrics(metrics: RSVPMetrics): Promise<void> {
     }
     
     // Send to analytics if available (client-side)
-    if (typeof window !== 'undefined' && (window as any).gtag) {
-      (window as any).gtag('event', 'rsvp_metrics', {
-        event_id: metrics.event_id,
-        attending: metrics.attending_count,
-        declined: metrics.declined_count,
-        notify_eligible: metrics.notify_eligible_count,
-        total: metrics.total_active_guests,
-      });
+    if (typeof window !== 'undefined') {
+      const windowWithGtag = window as unknown as { gtag?: (...args: unknown[]) => void };
+      if (windowWithGtag.gtag) {
+        windowWithGtag.gtag('event', 'rsvp_metrics', {
+          event_id: metrics.event_id,
+          attending: metrics.attending_count,
+          declined: metrics.declined_count,
+          notify_eligible: metrics.notify_eligible_count,
+          total: metrics.total_active_guests,
+        });
+      }
     }
   } catch (error) {
     console.warn('Error emitting RSVP metrics:', error);
@@ -169,7 +172,7 @@ export function validateRSVPMetrics(metrics: RSVPMetrics): {
 /**
  * Get current RSVP metrics for an event (for ops dashboard)
  */
-export async function getCurrentRSVPMetrics(eventId: string): Promise<RSVPMetrics | null> {
+export async function getCurrentRSVPMetrics(): Promise<RSVPMetrics | null> {
   if (!METRICS_ENABLED) {
     return null;
   }
