@@ -271,3 +271,31 @@
 ---
 
 This audit confirms that Unveil is built on a solid, secure foundation with excellent architectural decisions. The remaining opportunities focus on performance optimization, testing enhancement, and UX polish rather than foundational fixes. The project is well-positioned for continued growth and optimization.
+
+---
+
+## Product Backlog Update
+*Added: September 29, 2025*
+
+### Guest UX & Host Tools Backlog Generated
+A comprehensive 20-feature backlog has been created based on codebase analysis:
+- **Evidence-based scoring**: All features scored on Impact × Effort × Confidence with codebase references
+- **4 Now candidates**: UI-only improvements ready for ≤1 week development
+- **Clear implementation paths**: Leveraging existing RPC functions, components, and hooks
+- **Mobile-first focus**: Touch targets, gestures, and responsive design considerations
+
+### Next Suggested PRs (Priority Order)
+
+#### Immediate (This Week)
+1. **Guest RSVP Decline Polish** — Enhance DeclineEventModal.tsx with better validation and error states
+2. **Host Audience Presets** — Add preset management to MessageComposer.tsx using existing useGuestSelection hook
+3. **Guest Home CTA Optimization** — Improve action prioritization logic in guest home page (lines 118-138)
+4. **Host Status Visual Enhancement** — Add status chips and improved filtering to GuestManagement.tsx
+
+#### Next Sprint (2-3 Weeks)
+1. **Message Pagination Fix** — Implement compound cursor in useGuestMessagesRPC.ts (addresses audit finding #5)
+2. **Guest Tagging System** — Complete tag creation and management UI in RecipientSelector.tsx
+3. **Mobile Navigation Enhancement** — Extend swipe gestures and improve touch targets across guest routes
+4. **Media Gallery Polish** — Add upload progress and responsive grid to GuestPhotoGallery.tsx
+
+All recommended features avoid database schema changes and leverage the strong existing architecture. Complete implementation guides available in `product/top_scopes_20250929.md`.

@@ -19,6 +19,7 @@ export function DeclineEventModal({
 }: DeclineEventModalProps) {
   const [reason, setReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Scroll lock effect
   useEffect(() => {
@@ -37,11 +38,14 @@ export function DeclineEventModal({
     if (isSubmitting) return;
 
     setIsSubmitting(true);
+    setError(null);
+    
     try {
       await onConfirm(reason.trim() || undefined);
       onClose();
     } catch (error) {
       console.error('Error declining event:', error);
+      setError(error instanceof Error ? error.message : 'Couldn\'t update RSVP. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -50,6 +54,7 @@ export function DeclineEventModal({
   const handleClose = useCallback(() => {
     if (isSubmitting) return;
     setReason('');
+    setError(null);
     onClose();
   }, [isSubmitting, onClose]);
 
@@ -100,14 +105,13 @@ export function DeclineEventModal({
             id="decline-modal-title"
             className="text-xl font-semibold text-stone-900"
           >
-            Can&apos;t make it to this event?
+            Decline RSVP?
           </h2>
           <p 
             id="decline-modal-description"
             className="text-sm text-stone-600 mt-1"
           >
-            You&apos;ll stop receiving day-of logistics unless the host includes
-            you.
+            We&apos;ll let the hosts know you can&apos;t make it. You can change this later.
           </p>
         </div>
 
@@ -155,11 +159,18 @@ export function DeclineEventModal({
 
         {/* Actions */}
         <div className="px-6 py-4 border-t border-stone-200 space-y-3">
+          {/* Error Display */}
+          {error && (
+            <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
+              {error}
+            </div>
+          )}
+          
           <button
             onClick={handleSubmit}
             disabled={isSubmitting}
             className={cn(
-              'w-full py-3 px-4 rounded-xl font-medium',
+              'w-full py-3 px-4 rounded-xl font-medium min-h-[44px]',
               'bg-stone-900 text-white',
               'hover:bg-stone-800 active:bg-stone-950',
               'focus:outline-none focus:ring-2 focus:ring-stone-500 focus:ring-offset-2',
@@ -173,7 +184,7 @@ export function DeclineEventModal({
                 Updating...
               </div>
             ) : (
-              'Mark as not attending'
+              'Decline'
             )}
           </button>
 
@@ -181,7 +192,7 @@ export function DeclineEventModal({
             onClick={handleClose}
             disabled={isSubmitting}
             className={cn(
-              'w-full py-3 px-4 rounded-xl font-medium',
+              'w-full py-3 px-4 rounded-xl font-medium min-h-[44px]',
               'bg-stone-100 text-stone-700',
               'hover:bg-stone-200 active:bg-stone-300',
               'focus:outline-none focus:ring-2 focus:ring-stone-300 focus:ring-offset-2',

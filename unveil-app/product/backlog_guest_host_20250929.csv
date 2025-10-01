@@ -1,0 +1,21 @@
+Category,Feature,Impact,Effort,Confidence,Priority,Dependencies,EvidencePaths,Notes
+Guest UX,RSVP Decline Experience Polish,5,2,5,Now,None,"DeclineEventModal.tsx, guest_decline_event RPC, useGuestDecline hook",Enhanced decline modal with better UX and error states
+Guest UX,Guest Home CTA Optimization,4,2,4,Now,None,app/guest/events/[eventId]/home/page.tsx:118-138,Improve what-to-do-now guidance and action prioritization
+Guest UX,Messages Timeline Polish,4,3,4,Soon,Compound cursor client update,"GuestMessaging.tsx, useGuestMessagesRPC.ts, get_guest_event_messages_v3 RPC",Fix pagination stability and enhance message readability
+Guest UX,Media Gallery Enhancement,4,4,3,Soon,Supabase Storage optimization,"GuestPhotoGallery.tsx, Supabase Storage CDN",Grid density options and upload preview improvements
+Guest UX,Mobile Navigation Enhancement,5,3,4,Soon,None,"MobileShell.tsx, TabNavigation.tsx with swipe support",Improve tab navigation and touch target compliance
+Guest UX,Schedule View Enhancement,3,4,4,Soon,Complete SSR implementation,"app/guest/events/[eventId]/schedule/page.tsx, ScheduleContent.tsx",Server-side rendering completion and timeline visualization
+Guest UX,Advanced RSVP Features,3,5,2,Later,Database schema changes,Conflicts with RSVP-Lite strategy,"Meal preferences, plus-one management - conflicts with current approach"
+Guest UX,Offline Experience,3,5,2,Later,Service worker implementation,Complex PWA patterns,Reading messages offline and sync when reconnected
+Guest UX,Push Notifications,4,5,2,Later,Service worker + permissions,Browser compatibility challenges,Real-time message and event update notifications
+Guest UX,Advanced Media Features,3,5,2,Later,Video encoding + storage,High complexity and costs,"Video support, advanced editing capabilities"
+Host Tools,Message Composer Audience Presets,5,2,5,Now,Local storage for presets,"MessageComposer.tsx, useGuestSelection.ts:47-50",Save and reuse audience selections for faster messaging
+Host Tools,RSVP Status Visual Enhancement,4,2,5,Now,None,"GuestManagement.tsx, useUnifiedGuestCounts.ts",Visual status chips and improved filtering interface
+Host Tools,Guest Tagging System,5,3,4,Soon,JSON field utilization,"RecipientSelector.tsx:287-299, event_guests table",Create and manage guest tags for organization and messaging
+Host Tools,Message History Search & Filters,4,3,4,Soon,Search backend or client-side search,"RecentMessages component, useMessages.ts",Search message content and filter by various criteria
+Host Tools,CSV Guest Export,3,3,5,Soon,CSV generation library,"useGuests.ts, GuestManagement.tsx",Export guest list with RSVP status and contact information
+Host Tools,Bulk Guest Actions,4,4,4,Soon,Bulk RPC creation or client batching,"GuestManagement.tsx:419, update_guest_invitation_tracking",Select multiple guests for bulk operations
+Host Tools,Advanced Analytics Dashboard,3,5,2,Later,Analytics backend infrastructure,Data aggregation and visualization system,Message engagement rates and guest interaction analytics
+Host Tools,Schedule Management,3,4,3,Later,Schedule CRUD implementation,event_schedule_items table exists,Create and manage event timeline items
+Host Tools,Media Moderation Tools,3,4,3,Later,Review queue workflow,Media table supports status field,Approve/hide media items with batch moderation
+Host Tools,Advanced Messaging Features,4,5,2,Later,Scheduled message infrastructure,Partial scheduled_messages implementation exists,"Message scheduling, templates, automated reminders"

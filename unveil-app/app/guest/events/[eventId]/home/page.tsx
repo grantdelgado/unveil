@@ -42,9 +42,8 @@ import {
   PhotoAlbumButton,
   DeclineBanner,
 } from '@/components/features/guest';
-import { MessageCircle, Camera } from 'lucide-react';
+import { Camera, Calendar, UserCheck, Edit } from 'lucide-react';
 import { useGuestDecline } from '@/hooks/guests';
-import { useErrorHandler } from '@/hooks/common';
 
 import {
   PageWrapper,
@@ -80,6 +79,7 @@ export default function GuestEventHomePage() {
   // RSVP-Lite state
   const [showDeclineModal, setShowDeclineModal] = useState(false);
   const [showDeclineBanner, setShowDeclineBanner] = useState(false);
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
 
   // Use auth provider instead of direct Supabase client
   const { session, loading: authLoading } = useAuth();
@@ -106,7 +106,6 @@ export default function GuestEventHomePage() {
     ?.declined_at;
 
   // RSVP-Lite decline functionality
-  const { handleError } = useErrorHandler();
   const { declineEvent } = useGuestDecline({
     eventId,
     onDeclineSuccess: () => {
@@ -114,28 +113,91 @@ export default function GuestEventHomePage() {
     },
   });
 
-  // Calculate primary CTA based on event features - Messages are visible above, so prioritize other actions
-  const primaryCTA = useMemo(() => {
-    // Priority: Photos > Schedule (Messages are already visible above)
-    if (event?.photo_album_url) {
-      return {
-        label: 'Upload Photos',
-        action: () => {
-          const albumUrl = validateAndNormalizeUrl(event.photo_album_url || '');
-          if (albumUrl) {
-            window.open(albumUrl, '_blank', 'noopener,noreferrer');
-          }
-        },
-        icon: 'camera',
-      };
+  // CTA resolver function based on RSVP state and event timing
+  const resolveGuestCTA = useMemo(() => {
+    if (!event) return null;
+    
+    const eventDate = new Date(event.event_date);
+    const now = new Date();
+    const isPastEvent = eventDate < now;
+    const isOngoing = Math.abs(eventDate.getTime() - now.getTime()) < (24 * 60 * 60 * 1000); // Within 24 hours
+    
+    // Extract RSVP status from guest info
+    const rsvpStatus = hasDeclined ? 'DECLINED' : 
+                      (guestInfo as { rsvp_status?: string })?.rsvp_status === 'attending' ? 'ACCEPTED' : 'PENDING';
+    
+    // Dev observability
+    if (process.env.NODE_ENV === 'development') {
+      console.log('cta_resolved', { 
+        state: rsvpStatus, 
+        isPastEvent, 
+        isOngoing, 
+        cta: 'calculating...' 
+      });
     }
     
-    return {
-      label: 'View Schedule',
-      action: () => router.push(`/guest/events/${eventId}/schedule`),
-      icon: 'calendar',
-    };
-  }, [event, eventId, router]);
+    // CTA mapping logic
+    switch (rsvpStatus) {
+      case 'PENDING':
+        return {
+          label: 'RSVP now',
+          action: () => {
+            // Scroll to RSVP section or open modal
+            const rsvpSection = document.getElementById('rsvp-section');
+            if (rsvpSection) {
+              rsvpSection.scrollIntoView({ behavior: 'smooth' });
+            }
+          },
+          icon: 'user-check',
+        };
+        
+      case 'ACCEPTED':
+        if (isPastEvent) {
+          return {
+            label: 'Share photos',
+            action: () => {
+              const albumUrl = validateAndNormalizeUrl(event.photo_album_url || '');
+              if (albumUrl) {
+                window.open(albumUrl, '_blank', 'noopener,noreferrer');
+              } else {
+                router.push(`/guest/events/${eventId}/media`);
+              }
+            },
+            icon: 'camera',
+          };
+        } else {
+          return {
+            label: 'View schedule',
+            action: () => router.push(`/guest/events/${eventId}/schedule`),
+            icon: 'calendar',
+          };
+        }
+        
+      case 'DECLINED':
+        if (!isPastEvent) {
+          return {
+            label: 'Change RSVP',
+            action: () => setShowDeclineModal(true),
+            icon: 'edit',
+          };
+        }
+        break;
+        
+      default:
+        return {
+          label: 'RSVP now',
+          action: () => {
+            const rsvpSection = document.getElementById('rsvp-section');
+            if (rsvpSection) {
+              rsvpSection.scrollIntoView({ behavior: 'smooth' });
+            }
+          },
+          icon: 'user-check',
+        };
+    }
+    
+    return null; // "You're all set" case
+  }, [event, hasDeclined, guestInfo, eventId, router, setShowDeclineModal]);
 
   // Calculate days until event for status chip
   const eventStatus = useMemo(() => {
@@ -161,16 +223,21 @@ export default function GuestEventHomePage() {
     const result = await declineEvent(reason);
     if (result.success) {
       setShowDeclineModal(false);
+      setShowSuccessToast(true);
+      // Auto-hide success toast after 3 seconds
+      setTimeout(() => setShowSuccessToast(false), 3000);
       console.log('✅ Marked as not attending');
     } else {
-      handleError(result.error || 'Something went wrong. Please try again.', { 
-        context: 'Decline event' 
-      });
+      throw new Error(result.error || 'Couldn\'t update RSVP. Please try again.');
     }
   };
 
   const handleDismissBanner = () => {
     setShowDeclineBanner(false);
+  };
+
+  const handleModalClose = () => {
+    setShowDeclineModal(false);
   };
 
   const handleRejoin = () => {
@@ -285,19 +352,26 @@ export default function GuestEventHomePage() {
         className="bg-[#FAFAFA]" 
         scrollable={true}
         footer={
-          !hasDeclined && (
+          resolveGuestCTA && (
             <div className="bg-white/95 backdrop-blur-sm border-t border-gray-200/50 px-6 py-4">
               <button
-                onClick={primaryCTA.action}
-                className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+                onClick={resolveGuestCTA.action}
+                className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 min-h-[44px]"
               >
-                {primaryCTA.icon === 'message' && <MessageCircle className="h-5 w-5" />}
-                {primaryCTA.icon === 'camera' && <div className="h-5 w-5"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" /><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" /></svg></div>}
-                {primaryCTA.icon === 'calendar' && <div className="h-5 w-5"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5a2.25 2.25 0 002.25-2.25m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5a2.25 2.25 0 012.25 2.25v7.5" /></svg></div>}
-                <span>{primaryCTA.label}</span>
+                {resolveGuestCTA.icon === 'user-check' && <UserCheck className="h-5 w-5" />}
+                {resolveGuestCTA.icon === 'camera' && <Camera className="h-5 w-5" />}
+                {resolveGuestCTA.icon === 'calendar' && <Calendar className="h-5 w-5" />}
+                {resolveGuestCTA.icon === 'edit' && <Edit className="h-5 w-5" />}
+                <span>{resolveGuestCTA.label}</span>
               </button>
             </div>
-          )
+          ) || (!resolveGuestCTA && (
+            <div className="bg-white/95 backdrop-blur-sm border-t border-gray-200/50 px-6 py-4">
+              <div className="w-full h-12 bg-gray-100 text-gray-600 font-medium rounded-lg flex items-center justify-center gap-2">
+                <span>You&apos;re all set 🎉</span>
+              </div>
+            </div>
+          ))
         }
       >
         {/* Clean Event Header */}
@@ -344,7 +418,7 @@ export default function GuestEventHomePage() {
               <div className="h-4 w-4"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5a2.25 2.25 0 002.25-2.25m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5a2.25 2.25 0 012.25 2.25v7.5" /></svg></div>
               <span className="text-sm font-medium">Schedule</span>
             </button>
-            {event?.photo_album_url && primaryCTA.icon !== 'camera' && (
+            {event?.photo_album_url && resolveGuestCTA?.icon !== 'camera' && (
               <button
                 onClick={() => {
                   const albumUrl = validateAndNormalizeUrl(event.photo_album_url || '');
@@ -359,13 +433,15 @@ export default function GuestEventHomePage() {
               </button>
             )}
             {!hasDeclined && (
-              <button
-                onClick={handleShowDeclineModal}
-                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap text-gray-600 hover:text-gray-800"
-              >
-                <div className="h-4 w-4"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></div>
-                <span className="text-sm font-medium">Can&apos;t make it?</span>
-              </button>
+              <div id="rsvp-section">
+                <button
+                  onClick={handleShowDeclineModal}
+                  className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap text-gray-600 hover:text-gray-800 min-h-[44px]"
+                >
+                  <div className="h-4 w-4"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></div>
+                  <span className="text-sm font-medium">Can&apos;t make it?</span>
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -574,10 +650,17 @@ export default function GuestEventHomePage() {
           </div>
         )}
 
+        {/* Success Toast */}
+        {showSuccessToast && (
+          <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg">
+            RSVP updated.
+          </div>
+        )}
+
         {/* Decline Modal */}
         <DeclineEventModal
           isOpen={showDeclineModal}
-          onClose={() => setShowDeclineModal(false)}
+          onClose={handleModalClose}
           onConfirm={handleDeclineConfirm}
           eventTitle={event?.title || 'this event'}
         />

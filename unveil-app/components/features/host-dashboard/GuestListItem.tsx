@@ -3,6 +3,7 @@
 import { memo, useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { isDeclined } from '@/lib/guests/attendance';
+import { StatusChip, getRSVPStatus } from './StatusChip';
 import { HeaderChip } from './HeaderChip';
 import type { OptimizedGuest } from './types';
 
@@ -94,16 +95,28 @@ export const GuestListItem = memo<GuestListItemProps>(
             <h3 className="text-base font-semibold text-gray-900 leading-tight truncate mb-1">
               {displayName}
             </h3>
-            <span
-              className={cn(
-                'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium uppercase tracking-wide',
-                isHost
-                  ? 'bg-purple-100 text-purple-800'
-                  : 'bg-gray-100 text-gray-600',
+            <div className="flex items-center gap-2 flex-wrap">
+              <span
+                className={cn(
+                  'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium uppercase tracking-wide',
+                  isHost
+                    ? 'bg-purple-100 text-purple-800'
+                    : 'bg-gray-100 text-gray-600',
+                )}
+              >
+                {guest.role}
+              </span>
+              {/* RSVP Status Chip */}
+              {!isHost && (
+                <StatusChip 
+                  status={getRSVPStatus({
+                    declined_at: guest.declined_at,
+                    rsvp_status: guest.rsvp_status,
+                    last_invited_at: guest.last_invited_at,
+                  })}
+                />
               )}
-            >
-              {guest.role}
-            </span>
+            </div>
           </div>
 
           {/* Right: Uniform Action/Status + Fixed Ellipsis Position */}

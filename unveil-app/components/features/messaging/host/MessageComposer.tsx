@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { GuestSelectionList } from './GuestSelectionList';
 import { SendFlowModal } from './SendFlowModal';
 import { MessageTypeSegmented } from './MessageTypeSegmented';
+import { AudiencePresets } from './AudiencePresets';
 // HostInclusionToggle removed - hosts are always included now
 import { useGuestSelection } from '@/hooks/messaging/useGuestSelection';
 import {
@@ -104,6 +105,9 @@ export function MessageComposer({
 
   // Selected tags for channel type
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  
+  // Track search query for presets
+  const [currentSearchQuery, setCurrentSearchQuery] = useState('');
 
   // Delivery mode state
   const [sendMode, setSendMode] = useState<'now' | 'schedule'>('now');
@@ -150,6 +154,12 @@ export function MessageComposer({
     preselectedGuestIds,
     // includeHosts removed - hosts are always included now
   });
+
+  // Wrapper for search query to track for presets
+  const handleSearchQueryChange = (query: string) => {
+    setCurrentSearchQuery(query);
+    setSearchQuery(query);
+  };
 
   // TODO(grant): Removed useScheduledMessages hook from composer to eliminate unnecessary scheduled message fetches and realtime subscriptions.
   // Only History tab should load scheduled messages. Composer uses direct createScheduledMessage service call.
@@ -983,13 +993,34 @@ export function MessageComposer({
               </div>
             ) : (
               <>
+                {/* Audience Presets */}
+                <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
+                  <div className="text-sm font-medium text-gray-700">
+                    Select Recipients
+                  </div>
+                  <AudiencePresets
+                    eventId={eventId}
+                    currentSelection={{
+                      selectedGuestIds,
+                      searchQuery: currentSearchQuery,
+                      filterOptions: {}, // Add filter options if needed
+                    }}
+                    onLoadPreset={(selection) => {
+                      // Apply the loaded preset selection
+                      setSelectedGuestIds(selection.selectedGuestIds);
+                      handleSearchQueryChange(selection.searchQuery || '');
+                      // Apply other filter options as needed
+                    }}
+                  />
+                </div>
+                
                 <GuestSelectionList
                   guests={filteredGuests}
                   selectedGuestIds={selectedGuestIds}
                   onToggleGuest={toggleGuestSelection}
                   onSelectAll={selectAllEligible}
                   onClearAll={clearAllSelection}
-                  onSearchChange={setSearchQuery}
+                  onSearchChange={handleSearchQueryChange}
                   totalSelected={totalSelected}
                   willReceiveMessage={willReceiveMessage}
                   loading={guestsLoading}

@@ -23,6 +23,7 @@ export interface OptimizedGuest {
   // RSVP-Lite fields
   declined_at: string | null;
   decline_reason: string | null;
+  rsvp_status: string | null;
   // New invitation tracking fields
   invited_at: string | null;
   last_invited_at: string | null;
