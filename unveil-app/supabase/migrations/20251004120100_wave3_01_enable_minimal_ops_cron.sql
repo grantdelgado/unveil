@@ -1,36 +1,31 @@
--- Migration: Wave 3 - Enable Minimal Ops Infrastructure
--- Purpose: Enable lightweight daily/weekly automation for database hygiene
+-- Migration: Wave 3 - Enable Minimal Ops Infrastructure (Manual Scheduling)
+-- Purpose: Document automation approach since pg_cron not available
 -- Date: 2025-10-04
 -- 
--- MINIMAL-KEEP APPROACH:
--- ✅ Daily index usage snapshots
--- ✅ Weekly audit purge (180-day retention)
--- ✅ Daily snapshot cleanup (90-day retention)
+-- NOTE: pg_cron extension not installed - using manual scheduling approach
+-- See 20251004120102_wave3_01_enable_minimal_ops_manual.sql for helper function
 
 BEGIN;
 
--- Enable daily index usage snapshots @3:05 AM
--- This builds 30-day trend data for future optimization
-SELECT cron.schedule(
-  'daily_index_usage_snapshot', 
-  '5 3 * * *', 
-  $$SELECT public.capture_index_usage_snapshot();$$
-);
+-- pg_cron not available - manual scheduling documented in helper function
+-- Use show_ops_schedule() to see recommended execution times
 
--- Enable weekly audit purge @3:15 AM Sunday (180-day retention)
--- Prevents unbounded growth of user_link_audit table
-SELECT cron.schedule(
-  'weekly_audit_purge', 
-  '15 3 * * 0',
-  $$SELECT public.run_user_link_audit_purge(180);$$
-);
+-- COMMENTED OUT - pg_cron not installed:
+-- SELECT cron.schedule('daily_index_usage_snapshot', '5 3 * * *', 
+--   $$SELECT public.capture_index_usage_snapshot();$$);
+-- SELECT cron.schedule('weekly_audit_purge', '15 3 * * 0',
+--   $$SELECT public.run_user_link_audit_purge(180);$$);
+-- SELECT cron.schedule('daily_ops_cleanup', '0 4 * * *',
+--   $$SELECT public.cleanup_index_snapshots(90);$$);
 
--- Enable daily ops cleanup @4:00 AM (90-day snapshot retention)
--- Keeps index_usage_snapshots table from growing unbounded
-SELECT cron.schedule(
-  'daily_ops_cleanup', 
-  '0 4 * * *',
-  $$SELECT public.cleanup_index_snapshots(90);$$
-);
+-- Instead, use manual execution:
+-- Daily: SELECT public.capture_index_usage_snapshot();
+-- Weekly: SELECT public.run_user_link_audit_purge(180);
+-- Daily: SELECT public.cleanup_index_snapshots(90);
+
+DO $$
+BEGIN
+  RAISE NOTICE 'Manual scheduling approach - use show_ops_schedule() for recommended execution times';
+END $$;
 
 COMMIT;
