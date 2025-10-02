@@ -58,10 +58,10 @@ export function UserAvatar({
   // Log avatar event (dev only)
   React.useEffect(() => {
     logAvatarEvent('avatar_render', {
-      usedImage: showImage,
+      usedImage: Boolean(showImage),
       paletteIdx: colors.idx,
       size,
-      hasName: !!name,
+      hasName: Boolean(name),
     });
   }, [showImage, colors.idx, size, name]);
 

@@ -1,0 +1,9 @@
+extension_name,extension_version,schema_name,extension_comment
+moddatetime,1.0,extensions,"functions for tracking last modification time"
+pg_graphql,1.5.11,graphql,"pg_graphql: GraphQL support"
+pg_stat_statements,1.10,extensions,"track planning and execution statistics of all SQL statements executed"
+pgcrypto,1.3,extensions,"cryptographic functions"
+pgjwt,0.2.0,extensions,"JSON Web Token API for Postgresql"
+plpgsql,1.0,pg_catalog,"PL/pgSQL procedural language"
+supabase_vault,0.3.1,vault,"Supabase Vault Extension"
+uuid-ossp,1.1,extensions,"generate universally unique identifiers (UUIDs)"

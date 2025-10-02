@@ -1,0 +1,7 @@
+relationship,orphan_count,status
+event_guests -> events,0,✅ CLEAN
+event_guests -> users,0,✅ CLEAN
+messages -> events,0,✅ CLEAN
+message_deliveries -> messages,0,✅ CLEAN
+message_deliveries -> event_guests,0,✅ CLEAN
+scheduled_messages -> events,0,✅ CLEAN

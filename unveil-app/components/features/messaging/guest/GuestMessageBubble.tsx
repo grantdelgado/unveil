@@ -83,7 +83,7 @@ export function GuestMessageBubble({
         <div className="flex items-center gap-2">
           {!isOwnMessage && (
             <UserAvatar
-              id={message.sender_user_id || message.sender_name || 'unknown'}
+              id={message.sender_name || 'unknown'}
               name={message.sender_name}
               size="sm"
             />

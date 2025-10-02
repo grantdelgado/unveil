@@ -1,0 +1,42 @@
+schema_name,table_name,policy_name,command_type,permissive,roles,using_clause,with_check_clause
+public,event_guests,event_guests_delete_v2,DELETE,PERMISSIVE,"{public}",false,
+public,event_guests,event_guests_host_backup,ALL,PERMISSIVE,"{public}",is_event_host(event_id),
+public,event_guests,event_guests_insert_v2,INSERT,PERMISSIVE,"{public}",,is_event_host(event_id) OR (user_id = auth.uid())
+public,event_guests,event_guests_no_delete_backup,DELETE,PERMISSIVE,"{public}",false,
+public,event_guests,event_guests_select_v2,SELECT,PERMISSIVE,"{public}",is_event_host(event_id) OR (user_id = auth.uid()),
+public,event_guests,event_guests_self_backup,ALL,PERMISSIVE,"{public}",user_id = ( SELECT auth.uid() AS uid),
+public,event_guests,event_guests_update_v2,UPDATE,PERMISSIVE,"{public}",is_event_host(event_id) OR (user_id = auth.uid()),is_event_host(event_id) OR (user_id = auth.uid())
+public,event_schedule_items,event_schedule_items_guest_select,SELECT,PERMISSIVE,"{public}",is_event_guest(event_id) OR is_event_host(event_id),
+public,event_schedule_items,event_schedule_items_host_manage,ALL,PERMISSIVE,"{public}",is_event_host(event_id),is_event_host(event_id)
+public,events,events_select_read_access,SELECT,PERMISSIVE,"{public}",host_user_id = ( SELECT auth.uid() AS uid) OR is_event_guest(id),
+public,events,events_unified_access,ALL,PERMISSIVE,"{public}",host_user_id = ( SELECT auth.uid() AS uid) OR (is_event_guest(id) AND can_access_event(id)),
+public,events,"hosts can update events sms_tag",UPDATE,PERMISSIVE,"{public}",is_event_host(id),is_event_host(id)
+public,media,media_insert_event_participant,INSERT,PERMISSIVE,"{authenticated}",,can_access_event(event_id)
+public,media,media_select_event_accessible,SELECT,PERMISSIVE,"{authenticated}",can_access_event(event_id),
+public,media,media_update_own,UPDATE,PERMISSIVE,"{public}",uploader_user_id = ( SELECT auth.uid() AS uid),
+public,message_deliveries,message_deliveries_insert_backup,INSERT,PERMISSIVE,"{public}",,can_manage_message_delivery(message_id, scheduled_message_id)
+public,message_deliveries,message_deliveries_insert_v2,INSERT,PERMISSIVE,"{public}",,can_manage_deliveries_v2(message_id)
+public,message_deliveries,message_deliveries_select_backup,SELECT,PERMISSIVE,"{public}","CASE WHEN (user_id IS NOT NULL) THEN (user_id = ( SELECT auth.uid() AS uid)) WHEN (guest_id IS NOT NULL) THEN can_access_event(( SELECT eg.event_id FROM event_guests eg WHERE (eg.id = message_deliveries.guest_id))) ELSE false END",
+public,message_deliveries,message_deliveries_select_v2,SELECT,PERMISSIVE,"{public}",can_access_delivery_v2(user_id, guest_id),
+public,message_deliveries,message_deliveries_update_backup,UPDATE,PERMISSIVE,"{public}",can_manage_message_delivery(message_id, scheduled_message_id),can_manage_message_delivery(message_id, scheduled_message_id)
+public,message_deliveries,message_deliveries_update_v2,UPDATE,PERMISSIVE,"{public}",can_manage_deliveries_v2(message_id),can_manage_deliveries_v2(message_id)
+public,messages,messages_delete_backup,DELETE,PERMISSIVE,"{authenticated}",is_event_host(event_id),
+public,messages,messages_delete_v2,DELETE,PERMISSIVE,"{authenticated}",is_event_host(event_id),
+public,messages,messages_insert_backup,INSERT,PERMISSIVE,"{authenticated}",,is_event_host(event_id)
+public,messages,messages_insert_v2,INSERT,PERMISSIVE,"{authenticated}",,is_event_host(event_id)
+public,messages,messages_select_backup,SELECT,PERMISSIVE,"{public}",can_access_event(event_id),
+public,messages,messages_select_v2,SELECT,PERMISSIVE,"{public}",can_access_event(event_id),
+public,messages,messages_update_backup,UPDATE,PERMISSIVE,"{authenticated}",is_event_host(event_id),is_event_host(event_id)
+public,messages,messages_update_v2,UPDATE,PERMISSIVE,"{authenticated}",is_event_host(event_id),is_event_host(event_id)
+public,rum_events,rum_events_insert_policy,INSERT,PERMISSIVE,"{authenticated}",,true
+public,rum_events,rum_events_select_policy,SELECT,PERMISSIVE,"{authenticated}",true,
+public,scheduled_messages,scheduled_messages_host_only_optimized,ALL,PERMISSIVE,"{public}",can_write_event(event_id),can_write_event(event_id)
+public,user_link_audit,user_link_audit_host_access,SELECT,PERMISSIVE,"{public}",is_event_host(event_id),
+public,users,allow_trigger_operations,ALL,PERMISSIVE,"{postgres}",true,true
+public,users,users_insert_own,INSERT,PERMISSIVE,"{public}",,id = ( SELECT auth.uid() AS uid)
+public,users,users_select_authenticated,SELECT,PERMISSIVE,"{authenticated}",true,
+public,users,users_update_authenticated,UPDATE,PERMISSIVE,"{authenticated}",true,true
+storage,objects,"Event images are publicly viewable",SELECT,PERMISSIVE,"{public}",bucket_id = 'event-images'::text,
+storage,objects,"Users can delete their own event images",DELETE,PERMISSIVE,"{authenticated}",bucket_id = 'event-images'::text AND (storage.foldername(name))[1] = (auth.uid())::text,
+storage,objects,"Users can update their own event images",UPDATE,PERMISSIVE,"{authenticated}",(storage.foldername(name))[1] = (auth.uid())::text,bucket_id = 'event-images'::text AND (storage.foldername(name))[1] = (auth.uid())::text
+storage,objects,"Users can upload event images to their own directory",INSERT,PERMISSIVE,"{authenticated}",,bucket_id = 'event-images'::text AND (storage.foldername(name))[1] = (auth.uid())::text

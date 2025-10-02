@@ -96,7 +96,7 @@ export const GuestListItem = memo<GuestListItemProps>(
             <UserAvatar
               id={guest.user_id || guest.id}
               name={displayName}
-              imageUrl={guest.users?.avatar_url}
+              imageUrl={null}
               size="md"
             />
             <div className="flex-1 min-w-0">

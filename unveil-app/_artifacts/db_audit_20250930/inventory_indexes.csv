@@ -1,0 +1,48 @@
+schema_name,table_name,index_name,index_definition,index_size,index_type
+public,users,users_pkey,"CREATE UNIQUE INDEX users_pkey ON public.users USING btree (id)","16 kB",UNIQUE
+public,users,users_phone_key,"CREATE UNIQUE INDEX users_phone_key ON public.users USING btree (phone)","16 kB",UNIQUE
+public,events,events_pkey,"CREATE UNIQUE INDEX events_pkey ON public.events USING btree (id)","16 kB",UNIQUE
+public,events,idx_events_host,"CREATE INDEX idx_events_host ON public.events USING btree (host_user_id)","16 kB",BTREE
+public,events,idx_events_creation_key_unique,"CREATE UNIQUE INDEX idx_events_creation_key_unique ON public.events USING btree (creation_key) WHERE (creation_key IS NOT NULL)","8192 bytes",UNIQUE
+public,event_guests,event_guests_pkey,"CREATE UNIQUE INDEX event_guests_pkey ON public.event_guests USING btree (id)","16 kB",UNIQUE
+public,event_guests,idx_event_guests_event_id,"CREATE INDEX idx_event_guests_event_id ON public.event_guests USING btree (event_id)","16 kB",BTREE
+public,event_guests,idx_event_guests_user_id,"CREATE INDEX idx_event_guests_user_id ON public.event_guests USING btree (user_id)","16 kB",BTREE
+public,event_guests,unique_event_guest_user,"CREATE UNIQUE INDEX unique_event_guest_user ON public.event_guests USING btree (event_id, user_id) WHERE (user_id IS NOT NULL)","16 kB",UNIQUE
+public,event_guests,event_guests_event_id_phone_active_key,"CREATE UNIQUE INDEX event_guests_event_id_phone_active_key ON public.event_guests USING btree (event_id, phone) WHERE ((phone IS NOT NULL) AND (removed_at IS NULL))","16 kB",UNIQUE
+public,event_guests,idx_event_guests_event_user_lookup,"CREATE INDEX idx_event_guests_event_user_lookup ON public.event_guests USING btree (event_id, user_id) WHERE ((user_id IS NOT NULL) AND (removed_at IS NULL))","16 kB",BTREE
+public,event_guests,idx_event_guests_phone_messaging,"CREATE INDEX idx_event_guests_phone_messaging ON public.event_guests USING btree (phone) WHERE ((phone IS NOT NULL) AND (removed_at IS NULL) AND (sms_opt_out = false))","16 kB",BTREE
+public,event_guests,idx_event_guests_event_phone,"CREATE INDEX idx_event_guests_event_phone ON public.event_guests USING btree (event_id, phone) WHERE ((phone IS NOT NULL) AND (removed_at IS NULL))","16 kB",BTREE
+public,event_guests,idx_event_guests_role,"CREATE INDEX idx_event_guests_role ON public.event_guests USING btree (role) WHERE (removed_at IS NULL)","16 kB",BTREE
+public,event_guests,idx_event_guests_invited_at,"CREATE INDEX idx_event_guests_invited_at ON public.event_guests USING btree (invited_at) WHERE ((invited_at IS NOT NULL) AND (removed_at IS NULL))","16 kB",BTREE
+public,event_guests,idx_event_guests_joined_at,"CREATE INDEX idx_event_guests_joined_at ON public.event_guests USING btree (joined_at) WHERE ((joined_at IS NOT NULL) AND (removed_at IS NULL))","16 kB",BTREE
+public,event_guests,idx_event_guests_event_declined,"CREATE INDEX idx_event_guests_event_declined ON public.event_guests USING btree (event_id, declined_at) WHERE ((declined_at IS NOT NULL) AND (removed_at IS NULL))","8192 bytes",BTREE
+public,event_guests,idx_event_guests_event_attending,"CREATE INDEX idx_event_guests_event_attending ON public.event_guests USING btree (event_id) WHERE ((declined_at IS NULL) AND (removed_at IS NULL) AND (role = 'guest'::text))","16 kB",BTREE
+public,messages,messages_pkey,"CREATE UNIQUE INDEX messages_pkey ON public.messages USING btree (id)","16 kB",UNIQUE
+public,messages,idx_messages_event,"CREATE INDEX idx_messages_event ON public.messages USING btree (event_id)","16 kB",BTREE
+public,messages,idx_messages_sender_user_id,"CREATE INDEX idx_messages_sender_user_id ON public.messages USING btree (sender_user_id)","16 kB",BTREE
+public,messages,idx_messages_event_type_created,"CREATE INDEX idx_messages_event_type_created ON public.messages USING btree (event_id, message_type, created_at DESC)","16 kB",BTREE
+public,messages,idx_messages_event_recent,"CREATE INDEX idx_messages_event_recent ON public.messages USING btree (event_id, created_at DESC) WHERE (created_at >= (now() - '7 days'::interval))","16 kB",BTREE
+public,messages,idx_messages_event_created_id,"CREATE INDEX idx_messages_event_created_id ON public.messages USING btree (event_id, created_at DESC, id DESC)","16 kB",BTREE
+public,messages,messages_event_created_id_desc_idx,"CREATE INDEX messages_event_created_id_desc_idx ON public.messages USING btree (event_id, created_at DESC, id DESC)","16 kB",BTREE
+public,messages,idx_messages_scheduled_message_id,"CREATE INDEX idx_messages_scheduled_message_id ON public.messages USING btree (scheduled_message_id) WHERE (scheduled_message_id IS NOT NULL)","16 kB",BTREE
+public,messages,idx_messages_event_host_lookup,"CREATE INDEX idx_messages_event_host_lookup ON public.messages USING btree (event_id, sender_user_id, created_at DESC)","16 kB",BTREE
+public,message_deliveries,message_deliveries_pkey,"CREATE UNIQUE INDEX message_deliveries_pkey ON public.message_deliveries USING btree (id)","88 kB",UNIQUE
+public,message_deliveries,idx_message_deliveries_message_id,"CREATE INDEX idx_message_deliveries_message_id ON public.message_deliveries USING btree (message_id)","40 kB",BTREE
+public,message_deliveries,idx_message_deliveries_guest_id_backfill,"CREATE INDEX idx_message_deliveries_guest_id_backfill ON public.message_deliveries USING btree (guest_id) WHERE (guest_id IS NOT NULL)","16 kB",BTREE
+public,message_deliveries,idx_message_deliveries_user_id,"CREATE INDEX idx_message_deliveries_user_id ON public.message_deliveries USING btree (user_id) WHERE (user_id IS NOT NULL)","16 kB",BTREE
+public,message_deliveries,unique_message_guest_delivery,"CREATE UNIQUE INDEX unique_message_guest_delivery ON public.message_deliveries USING btree (message_id, guest_id) WHERE (guest_id IS NOT NULL)","120 kB",UNIQUE
+public,message_deliveries,idx_deliveries_message_guest,"CREATE INDEX idx_deliveries_message_guest ON public.message_deliveries USING btree (message_id, guest_id) WHERE (guest_id IS NOT NULL)","88 kB",BTREE
+public,message_deliveries,message_deliveries_message_created_id_desc_idx,"CREATE INDEX message_deliveries_message_created_id_desc_idx ON public.message_deliveries USING btree (message_id, created_at DESC, id DESC)","104 kB",BTREE
+public,message_deliveries,message_deliveries_guest_created_id_desc_idx,"CREATE INDEX message_deliveries_guest_created_id_desc_idx ON public.message_deliveries USING btree (guest_id, created_at DESC, id DESC) WHERE (guest_id IS NOT NULL)","104 kB",BTREE
+public,message_deliveries,idx_md_user_event_created,"CREATE INDEX idx_md_user_event_created ON public.message_deliveries USING btree (user_id, created_at DESC, id DESC) WHERE (user_id IS NOT NULL)","72 kB",BTREE
+public,message_deliveries,message_deliveries_user_created_id_desc_idx,"CREATE INDEX message_deliveries_user_created_id_desc_idx ON public.message_deliveries USING btree (user_id, created_at DESC, id DESC) WHERE (user_id IS NOT NULL)","96 kB",BTREE
+public,message_deliveries,message_deliveries_user_message_created_id_desc_idx,"CREATE INDEX message_deliveries_user_message_created_id_desc_idx ON public.message_deliveries USING btree (user_id, message_id, created_at DESC, id DESC) WHERE (user_id IS NOT NULL)","120 kB",BTREE
+public,scheduled_messages,scheduled_messages_pkey,"CREATE UNIQUE INDEX scheduled_messages_pkey ON public.scheduled_messages USING btree (id)","16 kB",UNIQUE
+public,scheduled_messages,idx_scheduled_messages_event_id,"CREATE INDEX idx_scheduled_messages_event_id ON public.scheduled_messages USING btree (event_id)","16 kB",BTREE
+public,scheduled_messages,idx_scheduled_messages_processing,"CREATE INDEX idx_scheduled_messages_processing ON public.scheduled_messages USING btree (status, send_at) WHERE (status = ANY (ARRAY[('scheduled'::character varying)::text, ('sending'::character varying)::text]))","16 kB",BTREE
+public,scheduled_messages,idx_scheduled_messages_event_trigger,"CREATE INDEX idx_scheduled_messages_event_trigger ON public.scheduled_messages USING btree (event_id, trigger_source, trigger_ref_id) WHERE ((trigger_source = 'event_reminder'::text) AND (trigger_ref_id IS NOT NULL))","16 kB",BTREE
+public,scheduled_messages,scheduled_messages_unique_event_reminder,"CREATE UNIQUE INDEX scheduled_messages_unique_event_reminder ON public.scheduled_messages USING btree (event_id, trigger_ref_id) WHERE ((trigger_source = 'event_reminder'::text) AND (trigger_ref_id IS NOT NULL))","16 kB",UNIQUE
+public,media,media_pkey,"CREATE UNIQUE INDEX media_pkey ON public.media USING btree (id)","8192 bytes",UNIQUE
+public,media,idx_media_event,"CREATE INDEX idx_media_event ON public.media USING btree (event_id)","8192 bytes",BTREE
+public,media,idx_media_uploader_user_id,"CREATE INDEX idx_media_uploader_user_id ON public.media USING btree (uploader_user_id) WHERE (uploader_user_id IS NOT NULL)","8192 bytes",BTREE
+public,media,idx_media_event_created,"CREATE INDEX idx_media_event_created ON public.media USING btree (event_id, created_at DESC)","8192 bytes",BTREE

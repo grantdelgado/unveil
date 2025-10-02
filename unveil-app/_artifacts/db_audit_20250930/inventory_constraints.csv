@@ -1,0 +1,39 @@
+schema_name,table_name,constraint_name,constraint_type,columns,referenced_schema,referenced_table,referenced_columns,check_clause
+public,events,events_pkey,PRIMARY KEY,id,public,events,id,
+public,events,events_host_user_id_fkey,FOREIGN KEY,host_user_id,public,users,id,
+public,events,check_time_zone_format,CHECK,,public,events,time_zone,"time_zone IS NULL OR (time_zone ~ '^[A-Za-z_]+/[A-Za-z_]+$' AND length(time_zone) BETWEEN 3 AND 50)"
+public,events,events_sms_tag_20_char,CHECK,,public,events,sms_tag,"sms_tag IS NULL OR (char_length(sms_tag) BETWEEN 1 AND 20)"
+public,event_guests,event_guests_pkey,PRIMARY KEY,id,public,event_guests,id,
+public,event_guests,event_guests_event_id_fkey,FOREIGN KEY,event_id,public,events,id,
+public,event_guests,event_guests_user_id_fkey,FOREIGN KEY,user_id,public,users,id,
+public,event_guests,unique_event_guest_user,UNIQUE,"event_id, user_id",public,event_guests,"event_id, user_id",
+public,event_guests,event_guests_role_check,CHECK,,public,event_guests,role,"role = ANY (ARRAY['host'::text, 'guest'::text, 'admin'::text])"
+public,event_guests,phone_format_e164_nullable,CHECK,,public,event_guests,phone,"phone IS NULL OR phone ~ '^\\+[1-9]\\d{1,14}$'"
+public,event_guests,check_guest_tags_limit,CHECK,,public,event_guests,guest_tags,"array_length(guest_tags, 1) IS NULL OR array_length(guest_tags, 1) <= 10"
+public,event_guests,event_guests_preferred_communication_check,CHECK,,public,event_guests,preferred_communication,"preferred_communication::text = ANY (ARRAY['sms'::text, 'push'::text, 'none'::text])"
+public,messages,messages_pkey,PRIMARY KEY,id,public,messages,id,
+public,messages,messages_event_id_fkey,FOREIGN KEY,event_id,public,events,id,
+public,messages,messages_sender_user_id_fkey,FOREIGN KEY,sender_user_id,public,users,id,
+public,messages,messages_scheduled_message_id_fkey,FOREIGN KEY,scheduled_message_id,public,scheduled_messages,id,
+public,messages,check_delivered_count_non_negative,CHECK,,public,messages,delivered_count,"delivered_count >= 0"
+public,messages,check_failed_count_non_negative,CHECK,,public,messages,failed_count,"failed_count >= 0"
+public,message_deliveries,message_deliveries_pkey,PRIMARY KEY,id,public,message_deliveries,id,
+public,message_deliveries,message_deliveries_message_id_fkey,FOREIGN KEY,message_id,public,messages,id,
+public,message_deliveries,message_deliveries_guest_id_fkey,FOREIGN KEY,guest_id,public,event_guests,id,
+public,message_deliveries,message_deliveries_user_id_fkey,FOREIGN KEY,user_id,public,users,id,
+public,message_deliveries,message_deliveries_scheduled_message_id_fkey,FOREIGN KEY,scheduled_message_id,public,scheduled_messages,id,
+public,message_deliveries,message_deliveries_response_message_id_fkey,FOREIGN KEY,response_message_id,public,messages,id,
+public,message_deliveries,unique_message_guest_delivery,UNIQUE,"message_id, guest_id",public,message_deliveries,"message_id, guest_id",
+public,message_deliveries,message_deliveries_sms_status_check,CHECK,,public,message_deliveries,sms_status,"sms_status::text = ANY (ARRAY['pending'::text, 'sent'::text, 'delivered'::text, 'failed'::text, 'undelivered'::text])"
+public,message_deliveries,message_deliveries_push_status_check,CHECK,,public,message_deliveries,push_status,"push_status::text = ANY (ARRAY['pending'::text, 'sent'::text, 'delivered'::text, 'failed'::text, 'not_applicable'::text])"
+public,scheduled_messages,scheduled_messages_pkey,PRIMARY KEY,id,public,scheduled_messages,id,
+public,scheduled_messages,scheduled_messages_event_id_fkey,FOREIGN KEY,event_id,public,events,id,
+public,scheduled_messages,scheduled_messages_sender_user_id_fkey,FOREIGN KEY,sender_user_id,public,users,id,
+public,scheduled_messages,scheduled_messages_status_check,CHECK,,public,scheduled_messages,status,"status::text = ANY (ARRAY['scheduled'::text, 'sending'::text, 'sent'::text, 'failed'::text, 'cancelled'::text])"
+public,scheduled_messages,scheduled_messages_trigger_source_check,CHECK,,public,scheduled_messages,trigger_source,"trigger_source = ANY (ARRAY['manual'::text, 'event_reminder'::text])"
+public,users,users_pkey,PRIMARY KEY,id,public,users,id,
+public,users,users_phone_key,UNIQUE,phone,public,users,phone,
+public,media,media_pkey,PRIMARY KEY,id,public,media,id,
+public,media,media_event_id_fkey,FOREIGN KEY,event_id,public,events,id,
+public,media,media_uploader_user_id_fkey,FOREIGN KEY,uploader_user_id,public,users,id,
+public,media,media_media_type_check,CHECK,,public,media,media_type,"media_type = ANY (ARRAY['image'::text, 'video'::text])"

@@ -1,0 +1,13 @@
+schema_name,enum_name,enum_values,enum_comment
+auth,aal_level,"aal1, aal2, aal3",
+auth,code_challenge_method,"s256, plain",
+auth,factor_status,"unverified, verified",
+auth,factor_type,"totp, webauthn, phone",
+auth,oauth_registration_type,"dynamic, manual",
+auth,one_time_token_type,"confirmation_token, reauthentication_token, recovery_token, email_change_token_new, email_change_token_current, phone_change_token",
+public,media_type_enum,"image, video",
+public,message_type_enum,"direct, announcement, channel",
+public,user_link_outcome_enum,"linked, no_match, ambiguous, skipped",
+public,user_role_enum,"guest, host, admin",
+realtime,action,"INSERT, UPDATE, DELETE, TRUNCATE, ERROR",
+realtime,equality_op,"eq, neq, lt, lte, gt, gte, in",
