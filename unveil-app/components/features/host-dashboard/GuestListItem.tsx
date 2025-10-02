@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { isDeclined } from '@/lib/guests/attendance';
 import { StatusChip, getRSVPStatus } from './StatusChip';
 import { HeaderChip } from './HeaderChip';
+import { UserAvatar } from '@/components/common/UserAvatar';
 import type { OptimizedGuest } from './types';
 
 interface GuestListItemProps {

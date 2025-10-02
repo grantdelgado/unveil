@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { getInitialGrapheme, getAvatarColor, logAvatarEvent } from '@/lib/avatar';
 
@@ -87,13 +88,14 @@ export function UserAvatar({
       data-testid="user-avatar"
     >
       {showImage ? (
-        <img
-          src={imageUrl}
+        <Image
+          src={imageUrl!}
           alt={name ?? 'Avatar'}
           width={sizeConfig.pixels}
           height={sizeConfig.pixels}
           className="w-full h-full rounded-full object-cover"
           onError={handleImageError}
+          unoptimized
         />
       ) : (
         initial

@@ -5,7 +5,6 @@ import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import Image from 'next/image';
 import { UserAvatar } from '@/components/common/UserAvatar';
 import {
   PageWrapper,
