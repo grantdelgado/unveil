@@ -3,6 +3,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { formatBubbleTimeOnly, hasDateMismatch } from '@/lib/utils/date';
+import { UserAvatar } from '@/components/common/UserAvatar';
 import type { GuestMessage } from '@/lib/utils/messageUtils';
 
 interface GuestMessageBubbleProps {
@@ -80,6 +81,13 @@ export function GuestMessageBubble({
         )}
       >
         <div className="flex items-center gap-2">
+          {!isOwnMessage && (
+            <UserAvatar
+              id={message.sender_user_id || message.sender_name || 'unknown'}
+              name={message.sender_name}
+              size="sm"
+            />
+          )}
           <span className="text-gray-500">
             {getMessageTypeIcon()} {message.sender_name}
           </span>

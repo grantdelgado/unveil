@@ -1,11 +1,13 @@
 'use client';
 
 import { useRouter, usePathname } from 'next/navigation';
-import { IconButton } from '@/components/ui';
+import { UserAvatarButton } from '@/components/common/UserAvatar';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 export default function ProfileAvatar() {
   const router = useRouter();
   const pathname = usePathname();
+  const { user, loading } = useCurrentUser();
 
   // Hide profile button on auth pages, guest event pages and host event pages
   if (
@@ -16,18 +18,23 @@ export default function ProfileAvatar() {
     return null;
   }
 
+  // Show loading state or fallback if user data not available
+  if (loading || !user) {
+    return (
+      <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse" />
+    );
+  }
+
   return (
-    <IconButton
-      onClick={() => router.push('/profile')}
+    <UserAvatarButton
+      id={user.id}
+      name={user.fullName}
+      imageUrl={user.avatarUrl}
       size="md"
-      className="bg-white border border-gray-200 hover:ring-2 hover:ring-purple-200 hover:border-purple-300 shadow-sm hover:shadow-md"
-      aria-label="Profile"
-    >
-      {/* User icon with brand styling */}
-      <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
-        <circle cx="12" cy="8" r="4" fill="#6b7280" />
-        <ellipse cx="12" cy="17" rx="7" ry="4" fill="#9ca3af" />
-      </svg>
-    </IconButton>
+      onClick={() => router.push('/profile')}
+      buttonAriaLabel="Open account menu"
+      hasPopup={false}
+      className="shadow-sm hover:shadow-md"
+    />
   );
 }

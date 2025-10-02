@@ -88,24 +88,31 @@ export const GuestListItem = memo<GuestListItemProps>(
 
     return (
       <div className="relative p-4 bg-white border border-gray-100 rounded-lg hover:shadow-sm transition-all duration-200">
-        {/* Header: Name + Role Chip + Single Contextual Action */}
+        {/* Header: Avatar + Name + Role Chip + Single Contextual Action */}
         <div className="flex items-start justify-between gap-3 mb-3">
-          {/* Left: Name + Role */}
-          <div className="flex-1 min-w-0">
-            <h3 className="text-base font-semibold text-gray-900 leading-tight truncate mb-1">
-              {displayName}
-            </h3>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span
-                className={cn(
-                  'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium uppercase tracking-wide',
-                  isHost
-                    ? 'bg-purple-100 text-purple-800'
-                    : 'bg-gray-100 text-gray-600',
-                )}
-              >
-                {guest.role}
-              </span>
+          {/* Left: Avatar + Name + Role */}
+          <div className="flex items-start gap-3 flex-1 min-w-0">
+            <UserAvatar
+              id={guest.user_id || guest.id}
+              name={displayName}
+              imageUrl={guest.users?.avatar_url}
+              size="md"
+            />
+            <div className="flex-1 min-w-0">
+              <h3 className="text-base font-semibold text-gray-900 leading-tight truncate mb-1">
+                {displayName}
+              </h3>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span
+                  className={cn(
+                    'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium uppercase tracking-wide',
+                    isHost
+                      ? 'bg-purple-100 text-purple-800'
+                      : 'bg-gray-100 text-gray-600',
+                  )}
+                >
+                  {guest.role}
+                </span>
               {/* RSVP Status Chip */}
               {!isHost && (
                 <StatusChip 
@@ -117,6 +124,7 @@ export const GuestListItem = memo<GuestListItemProps>(
                   })}
                 />
               )}
+              </div>
             </div>
           </div>
 

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
+import { UserAvatar } from '@/components/common/UserAvatar';
 import {
   PageWrapper,
   CardContainer,
@@ -265,26 +266,14 @@ export default function ProfilePage() {
           <CardContainer maxWidth="xl">
             <div className="space-y-8">
               <div className="text-center space-y-4">
-                <div className="w-20 h-20 bg-gradient-to-r from-rose-400 to-purple-500 rounded-full flex items-center justify-center mx-auto">
-                  {userProfile.avatar_url ? (
-                    <Image
-                      src={userProfile.avatar_url}
-                      alt="Profile"
-                      width={80}
-                      height={80}
-                      className="w-full h-full rounded-full object-cover"
-                    />
-                  ) : (
-                    <svg
-                      width="32"
-                      height="32"
-                      fill="white"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle cx="12" cy="8" r="4" />
-                      <ellipse cx="12" cy="17" rx="7" ry="4" />
-                    </svg>
-                  )}
+                <div className="mx-auto">
+                  <UserAvatar
+                    id={userProfile.id}
+                    name={userProfile.full_name}
+                    imageUrl={userProfile.avatar_url}
+                    size="xl"
+                    ariaLabel="Your profile picture"
+                  />
                 </div>
                 <div className="space-y-2">
                   <PageTitle>Your Profile</PageTitle>

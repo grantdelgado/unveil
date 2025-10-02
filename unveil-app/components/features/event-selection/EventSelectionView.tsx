@@ -4,6 +4,8 @@ import { cn } from '@/lib/utils';
 import { SkeletonLoader } from '@/components/ui';
 import { MobileShell } from '@/components/layout';
 import { SupportFooter } from '@/components/shared';
+import { UserAvatarButton } from '@/components/common/UserAvatar';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 interface Event {
   event_id: string;
@@ -37,6 +39,7 @@ export function EventSelectionView({
   onProfile,
   onRefetch,
 }: EventSelectionViewProps) {
+  const { user: currentUser, loading: userLoading } = useCurrentUser();
   // Show loading while auth is being checked
   if (authLoading || (!isAuthenticated && !authLoading)) {
     return (
@@ -141,19 +144,20 @@ export function EventSelectionView({
           </h1>
           <p className="text-lg text-gray-600">Choose an event to continue.</p>
         </div>
-        <button
-          onClick={onProfile}
-          className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors flex-shrink-0"
-          aria-label="Profile settings"
-        >
-          <svg
-            className="w-6 h-6 text-gray-600"
-            fill="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-          </svg>
-        </button>
+        {userLoading || !currentUser ? (
+          <div className="w-12 h-12 rounded-full bg-gray-200 animate-pulse flex-shrink-0" />
+        ) : (
+          <UserAvatarButton
+            id={currentUser.id}
+            name={currentUser.fullName}
+            imageUrl={currentUser.avatarUrl}
+            size="lg"
+            onClick={onProfile}
+            buttonAriaLabel="Open profile settings"
+            hasPopup={false}
+            className="flex-shrink-0"
+          />
+        )}
       </div>
     </div>
   );

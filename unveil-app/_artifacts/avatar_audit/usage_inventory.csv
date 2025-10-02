@@ -1,0 +1,9 @@
+location,component,size_px,shape,shows_menu,data_source,has_image_url,has_initial_fallback,current_color_logic,a11y_label,notes
+components/features/auth/ProfileAvatar.tsx,ProfileAvatar,20,circular,yes,none,no,no,static_gray,Profile,Uses static SVG icon; no user data integration
+app/(auth)/profile/page.tsx,ProfileAvatar (large),80,circular,no,users.avatar_url + users.full_name,yes,no,gradient_rose_purple,Profile,Large profile display with gradient background
+components/ui/OptimizedImage.tsx,AvatarImage,40,circular,no,src_prop,yes,no,none,alt_prop,Generic avatar image component; no fallback logic
+components/features/messaging/common/MessageBubble.tsx,SenderDisplay,none,none,no,message.sender.full_name,no,no,none,none,Text-only sender name display with emoji icon
+components/features/messaging/guest/GuestMessageBubble.tsx,SenderDisplay,none,none,no,message.sender_name,no,no,none,none,Text-only sender name with message type badges
+components/features/host-dashboard/GuestListItem.tsx,GuestName,none,none,no,guest_display_name + users.full_name,no,no,none,none,Guest name display with role chips
+components/features/host-dashboard/NotificationCenter.tsx,GuestName,none,none,no,guest_display_name + users.full_name,no,no,none,none,Notification text with guest names
+hooks/messaging/useGuestMessagesRPC.ts,SenderData,none,none,no,sender_avatar_url,yes,no,none,none,RPC data includes avatar_url but not used in UI

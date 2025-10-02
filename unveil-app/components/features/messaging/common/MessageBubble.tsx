@@ -3,6 +3,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { formatMessageTimestamp } from '@/lib/utils/date';
+import { UserAvatar } from '@/components/common/UserAvatar';
 import type { Database } from '@/app/reference/supabase.types';
 
 type PublicUserProfile = Database['public']['Tables']['users']['Row'];
@@ -58,6 +59,14 @@ export function MessageBubble({
             isOwnMessage ? 'justify-end' : 'justify-start',
           )}
         >
+          {!isOwnMessage && (
+            <UserAvatar
+              id={message.sender.id}
+              name={message.sender.full_name}
+              imageUrl={message.sender.avatar_url}
+              size="sm"
+            />
+          )}
           <span className="text-gray-500">
             {getMessageTypeIcon()} {message.sender.full_name || 'Unknown User'}
           </span>
