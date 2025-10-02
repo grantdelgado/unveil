@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Associated Domains for Universal Links -->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:app.sendunveil.com</string>
+		<!-- Add additional domains if needed -->
+		<!-- <string>applinks:sendunveil.com</string> -->
+	</array>
+	
+	<!-- App Groups (for sharing data between app extensions) -->
+	<!-- Uncomment if you plan to add app extensions like widgets or share extensions -->
+	<!--
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.com.unveil.wedding</string>
+	</array>
+	-->
+	
+	<!-- Keychain Sharing (for secure credential storage) -->
+	<key>keychain-access-groups</key>
+	<array>
+		<string>$(AppIdentifierPrefix)com.unveil.wedding</string>
+	</array>
+	
+	<!-- Push Notifications -->
+	<key>aps-environment</key>
+	<string>production</string>
+	<!-- Use 'development' for development builds -->
+	<!-- <string>development</string> -->
+	
+	<!-- Background App Refresh -->
+	<key>com.apple.developer.background-tasks</key>
+	<array>
+		<string>com.unveil.wedding.refresh</string>
+	</array>
+	
+	<!-- Network Extensions (if needed for VPN or network filtering) -->
+	<!-- Uncomment only if you need special network capabilities -->
+	<!--
+	<key>com.apple.developer.networking.networkextension</key>
+	<array>
+		<string>packet-tunnel-provider</string>
+	</array>
+	-->
+	
+	<!-- Inter-App Audio (if you plan to add audio features) -->
+	<!-- Uncomment if you need audio session management -->
+	<!--
+	<key>inter-app-audio</key>
+	<true/>
+	-->
+	
+	<!-- HealthKit (if you plan to integrate health data) -->
+	<!-- Uncomment if you need health data access -->
+	<!--
+	<key>com.apple.developer.healthkit</key>
+	<true/>
+	<key>com.apple.developer.healthkit.access</key>
+	<array>
+		<string>health-records</string>
+	</array>
+	-->
+	
+	<!-- HomeKit (if you plan to integrate smart home features) -->
+	<!-- Uncomment if you need HomeKit integration -->
+	<!--
+	<key>com.apple.developer.homekit</key>
+	<true/>
+	-->
+	
+	<!-- SiriKit (if you plan to add Siri shortcuts) -->
+	<!-- Uncomment if you want Siri integration -->
+	<!--
+	<key>com.apple.developer.siri</key>
+	<true/>
+	-->
+	
+	<!-- Apple Pay (if you plan to add payment features) -->
+	<!-- Uncomment if you need Apple Pay integration -->
+	<!--
+	<key>com.apple.developer.in-app-payments</key>
+	<array>
+		<string>merchant.com.unveil.wedding</string>
+	</array>
+	-->
+	
+	<!-- iCloud (if you plan to use iCloud storage) -->
+	<!-- Uncomment if you need iCloud integration -->
+	<!--
+	<key>com.apple.developer.icloud-container-identifiers</key>
+	<array>
+		<string>iCloud.com.unveil.wedding</string>
+	</array>
+	<key>com.apple.developer.ubiquity-kvstore-identifier</key>
+	<string>$(TeamIdentifierPrefix)com.unveil.wedding</string>
+	<key>com.apple.developer.icloud-services</key>
+	<array>
+		<string>CloudDocuments</string>
+		<string>CloudKit</string>
+	</array>
+	-->
+	
+	<!-- App Sandbox (typically not needed for regular apps) -->
+	<!-- Only uncomment if you specifically need sandboxing -->
+	<!--
+	<key>com.apple.security.app-sandbox</key>
+	<true/>
+	<key>com.apple.security.network.client</key>
+	<true/>
+	<key>com.apple.security.network.server</key>
+	<true/>
+	-->
+	
+	<!-- Data Protection (recommended for sensitive data) -->
+	<key>com.apple.developer.default-data-protection</key>
+	<string>NSFileProtectionComplete</string>
+	
+	<!-- Wireless Accessory Configuration (if you plan to support accessories) -->
+	<!-- Uncomment if you need to configure wireless accessories -->
+	<!--
+	<key>com.apple.external-accessory.wireless-configuration</key>
+	<true/>
+	-->
+	
+	<!-- NFC (Near Field Communication) -->
+	<!-- Uncomment if you plan to add NFC features -->
+	<!--
+	<key>com.apple.developer.nfc.readersession.formats</key>
+	<array>
+		<string>NDEF</string>
+		<string>TAG</string>
+	</array>
+	-->
+	
+	<!-- ClassKit (for educational apps) -->
+	<!-- Uncomment if this becomes an educational tool -->
+	<!--
+	<key>com.apple.developer.ClassKit-environment</key>
+	<string>production</string>
+	-->
+	
+	<!-- Hotspot Configuration (if you need WiFi management) -->
+	<!-- Uncomment if you need to configure WiFi hotspots -->
+	<!--
+	<key>com.apple.developer.networking.HotspotConfiguration</key>
+	<true/>
+	-->
+	
+	<!-- Personal VPN (if you need VPN capabilities) -->
+	<!-- Uncomment if you need VPN functionality -->
+	<!--
+	<key>com.apple.developer.networking.vpn.api</key>
+	<array>
+		<string>allow-vpn</string>
+	</array>
+	-->
+	
+	<!-- Maps (if you plan to add detailed map features) -->
+	<!-- Uncomment if you need advanced Maps integration -->
+	<!--
+	<key>com.apple.developer.maps</key>
+	<true/>
+	-->
+	
+	<!-- WeatherKit (if you plan to show weather information) -->
+	<!-- Uncomment if you need weather data -->
+	<!--
+	<key>com.apple.developer.weatherkit</key>
+	<true/>
+	-->
+	
+</dict>
+</plist>

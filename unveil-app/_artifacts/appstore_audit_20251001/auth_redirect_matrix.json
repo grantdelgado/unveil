@@ -1,0 +1,224 @@
+{
+  "supabase_redirect_uris": {
+    "production": {
+      "base_url": "https://app.sendunveil.com",
+      "auth_callback": "https://app.sendunveil.com/auth/callback",
+      "login_redirect": "https://app.sendunveil.com/login",
+      "logout_redirect": "https://app.sendunveil.com/",
+      "password_reset": "https://app.sendunveil.com/reset-password"
+    },
+    "development": {
+      "base_url": "http://localhost:3000",
+      "auth_callback": "http://localhost:3000/auth/callback", 
+      "login_redirect": "http://localhost:3000/login",
+      "logout_redirect": "http://localhost:3000/",
+      "password_reset": "http://localhost:3000/reset-password"
+    }
+  },
+  "universal_links_compatibility": {
+    "auth_callback": {
+      "web_url": "https://app.sendunveil.com/auth/callback",
+      "universal_link_compatible": true,
+      "notes": "Standard OAuth callback - works with Universal Links",
+      "ios_handling": "WKWebView can handle Supabase auth redirects",
+      "configuration_needed": "Add /auth/callback to apple-app-site-association"
+    },
+    "login_redirect": {
+      "web_url": "https://app.sendunveil.com/login", 
+      "universal_link_compatible": true,
+      "notes": "Login page accessible via Universal Links",
+      "ios_handling": "Direct app navigation to login screen",
+      "configuration_needed": "Already included in high-priority routes"
+    },
+    "logout_redirect": {
+      "web_url": "https://app.sendunveil.com/",
+      "universal_link_compatible": true, 
+      "notes": "Landing page with auth redirect logic",
+      "ios_handling": "App handles authentication state on landing",
+      "configuration_needed": "Root path already configured"
+    },
+    "password_reset": {
+      "web_url": "https://app.sendunveil.com/reset-password",
+      "universal_link_compatible": true,
+      "notes": "Password reset page (future feature)",
+      "ios_handling": "Standard web view handling",
+      "configuration_needed": "Add to medium-priority routes if implemented"
+    }
+  },
+  "custom_scheme_fallbacks": {
+    "auth_callback": {
+      "web_url": "https://app.sendunveil.com/auth/callback",
+      "custom_scheme": "unveil://auth/callback",
+      "fallback_needed": true,
+      "notes": "Critical for OAuth flow completion",
+      "implementation": "Handle OAuth state parameter in native app"
+    },
+    "login_redirect": {
+      "web_url": "https://app.sendunveil.com/login",
+      "custom_scheme": "unveil://login", 
+      "fallback_needed": false,
+      "notes": "Universal Links should be sufficient",
+      "implementation": "Optional fallback for edge cases"
+    },
+    "logout_redirect": {
+      "web_url": "https://app.sendunveil.com/",
+      "custom_scheme": "unveil://home",
+      "fallback_needed": false,
+      "notes": "Landing page accessible via Universal Links",
+      "implementation": "Standard app launch handling"
+    },
+    "password_reset": {
+      "web_url": "https://app.sendunveil.com/reset-password",
+      "custom_scheme": "unveil://reset-password",
+      "fallback_needed": false,
+      "notes": "Future feature - low priority",
+      "implementation": "Implement when password reset is added"
+    }
+  },
+  "deep_link_auth_flow": {
+    "scenario_1": {
+      "description": "User clicks deep link while unauthenticated",
+      "flow": [
+        "User clicks: https://app.sendunveil.com/guest/events/123...",
+        "App opens via Universal Link",
+        "App detects no auth session", 
+        "Store intended destination in session storage",
+        "Navigate to login screen",
+        "User completes OTP authentication",
+        "usePostAuthRedirect reads stored destination",
+        "Redirect to original deep link target"
+      ],
+      "compatibility": "✅ Compatible - existing logic supports this",
+      "code_reference": "hooks/usePostAuthRedirect.ts lines 35, 87-96"
+    },
+    "scenario_2": {
+      "description": "User clicks deep link while authenticated",
+      "flow": [
+        "User clicks: https://app.sendunveil.com/host/events/123.../dashboard",
+        "App opens via Universal Link",
+        "App detects valid auth session",
+        "Navigate directly to requested route",
+        "RLS policies validate user access to event"
+      ],
+      "compatibility": "✅ Compatible - standard authenticated routing",
+      "code_reference": "middleware.ts auth protection logic"
+    },
+    "scenario_3": {
+      "description": "Supabase OAuth callback handling",
+      "flow": [
+        "User completes OTP verification",
+        "Supabase redirects to /auth/callback with tokens",
+        "App handles OAuth callback via Universal Link",
+        "Tokens extracted and session established",
+        "usePostAuthRedirect determines next destination"
+      ],
+      "compatibility": "⚠️ Needs verification - OAuth callback in native context",
+      "code_reference": "Supabase Auth configuration needed"
+    }
+  },
+  "ios_specific_considerations": {
+    "wkwebview_cookies": {
+      "issue": "WKWebView cookie handling differs from Safari",
+      "impact": "May affect Supabase session persistence",
+      "mitigation": "Configure WKWebView to share cookies with app",
+      "testing_needed": true
+    },
+    "oauth_redirect_handling": {
+      "issue": "OAuth redirects must work within app context",
+      "impact": "Critical for authentication flow completion", 
+      "mitigation": "Ensure Supabase redirects work in WKWebView",
+      "testing_needed": true
+    },
+    "app_backgrounding": {
+      "issue": "Auth state during app background/foreground cycles",
+      "impact": "Session may expire while app backgrounded",
+      "mitigation": "Implement proper session refresh on app foreground",
+      "testing_needed": true
+    },
+    "universal_link_precedence": {
+      "issue": "Universal Links vs custom scheme priority",
+      "impact": "Determines which handler is called first",
+      "mitigation": "Implement both with proper fallback logic",
+      "testing_needed": false
+    }
+  },
+  "required_configurations": {
+    "supabase_dashboard": {
+      "redirect_urls": [
+        "https://app.sendunveil.com/auth/callback",
+        "https://app.sendunveil.com/**",
+        "unveil://auth/callback",
+        "unveil://**"
+      ],
+      "site_url": "https://app.sendunveil.com",
+      "additional_redirect_urls": [
+        "http://localhost:3000/auth/callback",
+        "http://localhost:3000/**"
+      ],
+      "configuration_note": "Add custom scheme URLs to Supabase Dashboard > Authentication > URL Configuration",
+      "priority_order": [
+        "https://app.sendunveil.com/auth/callback (PRIMARY)",
+        "unveil://auth/callback (iOS fallback)",
+        "unveil://** (iOS wildcard)"
+      ]
+    },
+    "apple_app_site_association": {
+      "additional_paths_needed": [
+        "/auth/callback",
+        "/auth/*"
+      ],
+      "current_coverage": "Basic app routes covered",
+      "missing_coverage": "OAuth callback paths"
+    },
+    "ios_info_plist": {
+      "associated_domains": [
+        "applinks:app.sendunveil.com"
+      ],
+      "url_schemes": [
+        {
+          "name": "com.unveil.wedding",
+          "schemes": ["unveil"]
+        }
+      ]
+    }
+  },
+  "testing_checklist": {
+    "universal_links": [
+      "Test auth callback Universal Link handling",
+      "Verify session persistence across app launches", 
+      "Test deep link → auth → original destination flow",
+      "Validate Universal Links work with app installed",
+      "Test Universal Links fallback to Safari when app not installed"
+    ],
+    "custom_schemes": [
+      "Test custom scheme OAuth callback",
+      "Verify custom scheme fallback when Universal Links fail",
+      "Test malformed custom scheme URL handling",
+      "Validate custom scheme security (URL validation)"
+    ],
+    "authentication_flows": [
+      "OTP verification in native context",
+      "Session refresh in WKWebView",
+      "Auth state during app backgrounding/foregrounding",
+      "Logout and re-authentication flows",
+      "Multiple auth sessions (edge case)"
+    ]
+  },
+  "security_considerations": {
+    "url_validation": {
+      "requirement": "Validate all incoming deep link URLs",
+      "implementation": "Whitelist valid route patterns",
+      "code_location": "Native app URL handler"
+    },
+    "oauth_state_validation": {
+      "requirement": "Validate OAuth state parameter",
+      "implementation": "Supabase handles state validation",
+      "code_location": "Auth callback handler"
+    },
+    "session_hijacking_prevention": {
+      "requirement": "Prevent session token exposure in URLs",
+      "implementation": "Supabase uses secure token handling",
+      "code_location": "OAuth callback processing"
+    }
+  }
+}

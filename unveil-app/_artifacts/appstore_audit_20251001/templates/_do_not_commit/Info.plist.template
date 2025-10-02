@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Basic App Information -->
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleDisplayName</key>
+	<string>Unveil</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_name)</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.unveil.wedding</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>Unveil</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	
+	<!-- iOS Version Support -->
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>MinimumOSVersion</key>
+	<string>13.0</string>
+	
+	<!-- App Transport Security -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<false/>
+		<key>NSExceptionDomains</key>
+		<dict>
+			<!-- Supabase Domain -->
+			<key>wvhtbqvnamerdkkjknuv.supabase.co</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<false/>
+				<key>NSExceptionMinimumTLSVersion</key>
+				<string>TLSv1.2</string>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+			</dict>
+			<!-- App Domain -->
+			<key>app.sendunveil.com</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<false/>
+				<key>NSExceptionMinimumTLSVersion</key>
+				<string>TLSv1.2</string>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+			</dict>
+			<!-- Twilio API (if direct calls needed) -->
+			<key>api.twilio.com</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<false/>
+				<key>NSExceptionMinimumTLSVersion</key>
+				<string>TLSv1.2</string>
+			</dict>
+		</dict>
+	</dict>
+	
+	<!-- Universal Links Configuration -->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:app.sendunveil.com</string>
+	</array>
+	
+	<!-- Custom URL Scheme -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.unveil.wedding</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>unveil</string>
+			</array>
+		</dict>
+	</array>
+	
+	<!-- Device Capabilities -->
+	<key>UIRequiredDeviceCapabilities</key>
+	<array>
+		<string>armv7</string>
+	</array>
+	
+	<!-- Supported Interface Orientations -->
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	
+	<!-- Status Bar Configuration -->
+	<key>UIStatusBarHidden</key>
+	<false/>
+	<key>UIStatusBarStyle</key>
+	<string>UIStatusBarStyleDefault</string>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<true/>
+	
+	<!-- Launch Screen -->
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreen</string>
+	
+	<!-- Privacy Usage Descriptions -->
+	<!-- Camera Access (for photo/video capture) -->
+	<key>NSCameraUsageDescription</key>
+	<string>Unveil uses the camera to capture and share photos and videos at your wedding events.</string>
+	
+	<!-- Photo Library Access (for selecting existing photos) -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Unveil accesses your photo library to let you select and share existing photos at wedding events.</string>
+	
+	<!-- Photo Library Add Usage (for saving photos) -->
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Unveil can save wedding photos and videos to your photo library for safekeeping.</string>
+	
+	<!-- Microphone Access (for video recording) -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Unveil uses the microphone to record audio when capturing videos at wedding events.</string>
+	
+	<!-- Contacts Access (for guest management - future feature) -->
+	<key>NSContactsUsageDescription</key>
+	<string>Unveil can access your contacts to help you easily invite guests to wedding events.</string>
+	
+	<!-- Background Modes (for push notifications) -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>background-processing</string>
+		<string>remote-notification</string>
+	</array>
+	
+	<!-- Scene Configuration (iOS 13+) -->
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<false/>
+		<key>UISceneConfigurations</key>
+		<dict>
+			<key>UIWindowSceneSessionRoleApplication</key>
+			<array>
+				<dict>
+					<key>UISceneConfigurationName</key>
+					<string>Default Configuration</string>
+					<key>UISceneDelegateClassName</key>
+					<string>SceneDelegate</string>
+				</dict>
+			</array>
+		</dict>
+	</dict>
+	
+	<!-- App Icons -->
+	<key>CFBundleIcons</key>
+	<dict>
+		<key>CFBundlePrimaryIcon</key>
+		<dict>
+			<key>CFBundleIconFiles</key>
+			<array>
+				<string>AppIcon29x29</string>
+				<string>AppIcon40x40</string>
+				<string>AppIcon60x60</string>
+			</array>
+			<key>CFBundleIconName</key>
+			<string>AppIcon</string>
+		</dict>
+	</dict>
+	
+	<!-- iTunes File Sharing (disabled for privacy) -->
+	<key>UIFileSharingEnabled</key>
+	<false/>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<false/>
+	
+	<!-- Prevent Backup of App Data (for sensitive data) -->
+	<key>NSAppDataBackupExcluded</key>
+	<true/>
+	
+	<!-- App Category -->
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.lifestyle</string>
+	
+	<!-- Accessibility -->
+	<key>UIAccessibilityEnabled</key>
+	<true/>
+	
+	<!-- Localization -->
+	<key>CFBundleAllowMixedLocalizations</key>
+	<true/>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+	</array>
+	
+	<!-- WKWebView Configuration -->
+	<key>WKAppBoundDomains</key>
+	<array>
+		<string>app.sendunveil.com</string>
+		<string>wvhtbqvnamerdkkjknuv.supabase.co</string>
+	</array>
+	
+	<!-- Prevent Screenshots (optional - for sensitive content) -->
+	<!-- Uncomment if you want to prevent screenshots in sensitive areas -->
+	<!--
+	<key>UIApplicationSupportsSecureScreenshots</key>
+	<false/>
+	-->
+	
+	<!-- App Store Configuration -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	
+</dict>
+</plist>

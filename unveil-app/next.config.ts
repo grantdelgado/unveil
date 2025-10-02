@@ -175,6 +175,20 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        // Apple App Site Association for Universal Links
+        source: '/.well-known/apple-app-site-association',
+        headers: [
+          {
+            key: 'Content-Type',
+            value: 'application/json',
+          },
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=86400', // 24 hours
+          },
+        ],
+      },
+      {
         // Static assets optimization
         source: '/icons/(.*)',
         headers: [

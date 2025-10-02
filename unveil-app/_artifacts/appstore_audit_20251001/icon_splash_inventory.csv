@@ -1,0 +1,43 @@
+File Path,Size (px),Type,Usage,iOS Required,Status,Priority,Notes
+/apple-icon.png,Unknown,PNG,Apple touch icon,Yes,Present but unverified,High,Need to verify actual size
+/icon.png,Unknown,PNG,Favicon,No,Present,Low,Served from app directory
+/icon-192.png,192x192,PNG,PWA icon,No,Present,Medium,Good for PWA but not iOS native
+/icon-512.png,512x512,PNG,PWA icon large,No,Present,Medium,Good for PWA but not iOS native
+/icon-512-maskable.png,512x512,PNG,PWA maskable,No,Present,Low,iOS doesn't use maskable icons
+/public/icons/icon-128x128.png,128x128,PNG,Generic icon,No,Present,Low,Not iOS standard size
+/public/icons/icon-128x128.svg,128x128,SVG,Generic icon,No,Present,Low,SVG not used for iOS app icons
+/public/icons/icon-144x144.png,144x144,PNG,Generic icon,No,Present,Low,Not iOS standard size
+/public/icons/icon-144x144.svg,144x144,SVG,Generic icon,No,Present,Low,SVG not used for iOS app icons
+/public/icons/icon-152x152.png,152x152,PNG,Generic icon,No,Present,Low,Close to iOS 180x180 but not exact
+/public/icons/icon-152x152.svg,152x152,SVG,Generic icon,No,Present,Low,SVG not used for iOS app icons
+/public/icons/icon-16x16.png,16x16,PNG,Favicon,No,Present,Low,Too small for iOS
+/public/icons/icon-16x16.svg,16x16,SVG,Favicon,No,Present,Low,Too small for iOS
+/public/icons/icon-192x192.png,192x192,PNG,PWA icon,No,Present,Medium,Good for PWA
+/public/icons/icon-192x192.svg,192x192,SVG,PWA icon,No,Present,Low,SVG not used for iOS
+/public/icons/icon-32x32.png,32x32,PNG,Favicon,No,Present,Low,Too small for iOS
+/public/icons/icon-32x32.svg,32x32,SVG,Favicon,No,Present,Low,Too small for iOS
+/public/icons/icon-384x384.png,384x384,PNG,PWA icon,No,Present,Medium,Good for PWA
+/public/icons/icon-384x384.svg,384x384,SVG,PWA icon,No,Present,Low,SVG not used for iOS
+/public/icons/icon-512x512.png,512x512,PNG,PWA icon large,No,Present,Medium,Good for PWA
+/public/icons/icon-512x512.svg,512x512,SVG,PWA icon large,No,Present,Low,SVG not used for iOS
+/public/icons/icon-72x72.png,72x72,PNG,Generic icon,No,Present,Low,Not iOS standard size
+/public/icons/icon-72x72.svg,72x72,SVG,Generic icon,No,Present,Low,SVG not used for iOS
+/public/icons/icon-96x96.png,96x96,PNG,Generic icon,No,Present,Low,Not iOS standard size
+/public/icons/icon-96x96.svg,96x96,SVG,Generic icon,No,Present,Low,SVG not used for iOS
+MISSING: icon-29x29.png,29x29,PNG,iOS Settings,Yes,Missing,High,Required for iOS Settings app
+MISSING: icon-40x40.png,40x40,PNG,iOS Spotlight,Yes,Missing,High,Required for iOS Spotlight search
+MISSING: icon-58x58.png,58x58,PNG,iOS Settings @2x,Yes,Missing,High,Required for iOS Settings @2x
+MISSING: icon-60x60.png,60x60,PNG,iOS App @1x,Yes,Missing,Medium,Required for iOS App @1x (rare)
+MISSING: icon-80x80.png,80x80,PNG,iOS Spotlight @2x,Yes,Missing,High,Required for iOS Spotlight @2x
+MISSING: icon-87x87.png,87x87,PNG,iOS Settings @3x,Yes,Missing,Medium,Required for iOS Settings @3x
+MISSING: icon-120x120.png,120x120,PNG,iOS App @2x,Yes,Missing,High,Required for iOS App @2x (common)
+MISSING: icon-180x180.png,180x180,PNG,iOS App @3x,Yes,Missing,High,Required for iOS App @3x (common)
+MISSING: icon-1024x1024.png,1024x1024,PNG,iOS App Store,Yes,Missing,High,Required for App Store listing
+MISSING: launch-1125x2436.png,1125x2436,PNG,iPhone X launch,Yes,Missing,Medium,Launch screen for iPhone X/XS
+MISSING: launch-1242x2208.png,1242x2208,PNG,iPhone Plus launch,Yes,Missing,Medium,Launch screen for iPhone Plus
+MISSING: launch-750x1334.png,750x1334,PNG,iPhone launch,Yes,Missing,Medium,Launch screen for iPhone 6/7/8
+MISSING: launch-828x1792.png,828x1792,PNG,iPhone XR launch,Yes,Missing,Medium,Launch screen for iPhone XR
+MISSING: launch-1536x2048.png,1536x2048,PNG,iPad launch,Yes,Missing,Low,Launch screen for iPad
+MISSING: launch-1668x2224.png,1668x2224,PNG,iPad Pro launch,Yes,Missing,Low,Launch screen for iPad Pro 10.5"
+MISSING: launch-2048x2732.png,2048x2732,PNG,iPad Pro launch,Yes,Missing,Low,Launch screen for iPad Pro 12.9"
+/public/manifest.json,N/A,JSON,Legacy manifest,No,Present,Low,Duplicate of webmanifest - can remove

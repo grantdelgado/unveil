@@ -1,0 +1,27 @@
+Data Category,Collection Method,Storage Location,Purpose,Retention Period,RLS Protected,Third Party Sharing,User Control,GDPR Basis,iOS Privacy Label
+Phone Numbers,User Input + SMS Verification,Supabase users.phone,Authentication & SMS delivery,Account lifetime,Yes - users table RLS,Twilio (SMS delivery only),Cannot delete (auth requirement),Legitimate Interest,Data Linked to You
+Full Names,User Input (Setup),Supabase users.full_name,Profile display & personalization,Account lifetime,Yes - users table RLS,None,Can update via profile,Consent,Data Linked to You
+Email Addresses,Optional User Input,Supabase users.email,Optional contact method,Account lifetime,Yes - users table RLS,None,Can update/remove via profile,Consent,Data Linked to You
+Avatar Images,Optional User Upload,Supabase Storage + users.avatar_url,Profile personalization,Account lifetime,Yes - users table RLS,None,Can update/remove via profile,Consent,Data Linked to You
+Event Titles,Host Input,Supabase events.title,Event identification,Event lifetime,Yes - events table RLS,None,Host can modify,Legitimate Interest,Data Linked to You
+Event Descriptions,Host Input,Supabase events.description,Event information,Event lifetime,Yes - events table RLS,None,Host can modify,Legitimate Interest,Data Linked to You
+Event Locations,Host Input,Supabase events.location,Event coordination,Event lifetime,Yes - events table RLS,None,Host can modify,Legitimate Interest,Data Linked to You
+Event Dates,Host Input,Supabase events.event_date,Event scheduling,Event lifetime,Yes - events table RLS,None,Host can modify,Legitimate Interest,Data Linked to You
+Guest Names,Host Input or User Profile,Supabase event_guests.guest_name,Guest identification,Event lifetime,Yes - event_guests table RLS,None,Host can modify,Legitimate Interest,Data Linked to You
+Guest Phone Numbers,Host Input or User Profile,Supabase event_guests.phone,Guest communication,Event lifetime,Yes - event_guests table RLS,Twilio (SMS delivery only),Host can modify,Legitimate Interest,Data Linked to You
+RSVP Status,Guest Input,Supabase event_guests.rsvp_status,Event planning,Event lifetime,Yes - event_guests table RLS,None,Guest can update,Legitimate Interest,Data Linked to You
+Message Content,User Input,Supabase messages.content,Event communication,Event lifetime,Yes - messages table RLS,None,Cannot delete (audit trail),Legitimate Interest,Data Linked to You
+Message Metadata,System Generated,Supabase messages (timestamps etc),Message delivery tracking,Event lifetime,Yes - messages table RLS,None,System managed,Legitimate Interest,Data Linked to You
+Photo Uploads,User Upload,Supabase Storage + media table,Memory sharing,Event lifetime,Yes - media table RLS,None,Uploader can delete,Consent,Data Linked to You
+Video Uploads,User Upload,Supabase Storage + media table,Memory sharing,Event lifetime,Yes - media table RLS,None,Uploader can delete,Consent,Data Linked to You
+Media Captions,User Input,Supabase media.caption,Content description,Event lifetime,Yes - media table RLS,None,Uploader can modify,Consent,Data Linked to You
+SMS Delivery Status,Twilio Webhooks,Supabase message_deliveries,Delivery confirmation,Event lifetime,Yes - message_deliveries RLS,Twilio (status reporting),System managed,Legitimate Interest,Data Linked to You
+SMS Consent Timestamp,System Generated,Supabase users.sms_consent_given_at,Compliance tracking,Account lifetime,Yes - users table RLS,None,Cannot modify (audit),Legal Obligation,Data Linked to You
+SMS Consent IP Address,System Captured,Supabase users.sms_consent_ip_address,Compliance tracking,Account lifetime,Yes - users table RLS,None,Cannot modify (audit),Legal Obligation,Data Linked to You
+SMS Consent User Agent,System Captured,Supabase users.sms_consent_user_agent,Compliance tracking,Account lifetime,Yes - users table RLS,None,Cannot modify (audit),Legal Obligation,Data Linked to You
+Authentication Tokens,Supabase Auth,Supabase Auth (encrypted),Session management,Session lifetime,Yes - Supabase Auth RLS,None,System managed,Legitimate Interest,Data Not Linked to You
+Session Data,Browser/App Storage,Local device storage,App functionality,Session lifetime,N/A (local only),None,User can clear,Legitimate Interest,Data Not Linked to You
+Device Information,System Captured,Local logs only,Error debugging,30 days max,N/A (not stored in DB),None,Not stored persistently,Legitimate Interest,Data Not Linked to You
+Usage Analytics (Non-PII),System Generated,Local telemetry,Performance monitoring,30 days max,N/A (UUIDs only),None,Automatic (no PII),Legitimate Interest,Data Not Linked to You
+Error Logs (Redacted),System Generated,Sentry (redacted),Bug fixing,90 days,N/A (PII redacted),Sentry (no PII),System managed,Legitimate Interest,Data Not Linked to You
+Performance Metrics,System Generated,Local telemetry,App optimization,30 days max,N/A (aggregated only),None,Automatic (no PII),Legitimate Interest,Data Not Linked to You

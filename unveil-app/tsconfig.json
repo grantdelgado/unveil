@@ -43,6 +43,7 @@
     "**/*.test.tsx",
     "vitest.config.ts",
     "vitest.messaging-hooks.config.ts",
-    "playwright.config.ts"
+    "playwright.config.ts",
+    "_artifacts/**/templates/**/*"
   ]
 }

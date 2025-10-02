@@ -1,0 +1,37 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "TEAMID.com.unveil.wedding",
+        "paths": [
+          "/",
+          "/select-event",
+          "/login",
+          "/setup",
+          "/profile",
+          "/auth/callback",
+          "/auth/*",
+          "/guest/events/*",
+          "/guest/events/*/home",
+          "/guest/events/*/schedule",
+          "/host/events/create",
+          "/host/events/*/dashboard",
+          "/host/events/*/details",
+          "/host/events/*/edit",
+          "/host/events/*/guests",
+          "/host/events/*/messages",
+          "/host/events/*/messages/compose",
+          "/host/events/*/messages/analytics",
+          "/host/events/*/schedule"
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": ["TEAMID.com.unveil.wedding"]
+  },
+  "activitycontinuation": {
+    "apps": ["TEAMID.com.unveil.wedding"]
+  }
+}
