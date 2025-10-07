@@ -66,6 +66,9 @@
     "test:email-smoke": "pnpm exec playwright test tests/e2e/email-optional.smoke.spec.ts --project=chromium-mobile --project=webkit-mobile"
   },
   "dependencies": {
+    "@capacitor/cli": "^7.4.3",
+    "@capacitor/core": "^7.4.3",
+    "@capacitor/ios": "^7.4.3",
     "@hookform/resolvers": "^5.2.1",
     "@sentry/nextjs": "^9.42.1",
     "@supabase/ssr": "^0.6.1",
