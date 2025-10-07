@@ -4,7 +4,6 @@ const config: CapacitorConfig = {
   appId: 'com.unveil.wedding',
   appName: 'Unveil',
   webDir: 'out', // Next.js static export directory
-  bundledWebRuntime: false,
   
   // Server Configuration (for development)
   server: {
@@ -19,10 +18,7 @@ const config: CapacitorConfig = {
     scrollEnabled: true,
     allowsLinkPreview: false,
     backgroundColor: '#FFF5E5',
-    keyboardDisplayRequiresUserAction: false,
-    preferredContentMode: 'mobile',
     limitsNavigationsToAppBoundDomains: true,
-    handleApplicationURL: true,
   },
   
   // Plugin Configuration
