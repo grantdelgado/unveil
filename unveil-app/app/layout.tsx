@@ -3,7 +3,7 @@ import localFont from 'next/font/local';
 import './globals.css';
 
 import { APP_CONFIG } from '@/lib/constants';
-import { ProvidersStep2 } from './Providers-step2';
+import { ProvidersStep3 } from './Providers-step3';
 
 const inter = localFont({
   src: [
@@ -49,9 +49,9 @@ export default function SmokeLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} antialiased font-sans touch-manipulation`}>
-        <ProvidersStep2>
+        <ProvidersStep3>
           {children}
-        </ProvidersStep2>
+        </ProvidersStep3>
       </body>
     </html>
   );
