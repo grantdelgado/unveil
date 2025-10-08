@@ -1,0 +1,54 @@
+{
+	"appId": "com.unveil.wedding",
+	"appName": "Unveil",
+	"webDir": "out",
+	"server": {
+		"url": "http://localhost:3000",
+		"cleartext": true,
+		"allowNavigation": [
+			"localhost"
+		]
+	},
+	"ios": {
+		"scheme": "Unveil",
+		"contentInset": "automatic",
+		"scrollEnabled": true,
+		"allowsLinkPreview": false,
+		"backgroundColor": "#FFF5E5",
+		"limitsNavigationsToAppBoundDomains": false,
+		"webContentsDebuggingEnabled": true,
+		"allowsInlineMediaPlayback": true,
+		"mediaPlaybackRequiresUserAction": false,
+		"preferredContentMode": "mobile",
+		"allowsBackForwardNavigationGestures": false,
+		"handleApplicationURL": false,
+		"inspectable": true,
+		"allowsAirPlayForMediaPlayback": false,
+		"suppressesIncrementalRendering": false
+	},
+	"plugins": {
+		"App": {
+			"launchShowDuration": 0,
+			"launchAutoHide": true,
+			"backgroundColor": "#FFF5E5"
+		},
+		"SplashScreen": {
+			"launchShowDuration": 2000,
+			"launchAutoHide": true,
+			"backgroundColor": "#FFF5E5",
+			"showSpinner": false,
+			"spinnerColor": "#E15B50"
+		},
+		"StatusBar": {
+			"style": "LIGHT",
+			"backgroundColor": "#E15B50",
+			"overlaysWebView": false
+		},
+		"Keyboard": {
+			"resize": "body",
+			"style": "DARK",
+			"resizeOnFullScreen": true
+		}
+	},
+	"packageClassList": []
+}

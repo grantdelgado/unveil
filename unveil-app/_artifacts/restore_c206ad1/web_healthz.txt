@@ -1,0 +1,1 @@
+{"activeChannels":0,"totalConnects":0,"totalDisconnects":0,"totalMessages":0,"totalErrors":0,"uptimeMs":78,"lastActivityMs":78,"recentActivityRate":0,"healthScore":100,"timestamp":"2025-10-08T04:42:59.371Z","status":"healthy"}
