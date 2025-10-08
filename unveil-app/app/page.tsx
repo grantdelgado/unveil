@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from './Providers-step3';
+import { useAuth } from './Providers';
 import { LoadingSpinner } from '@/components/ui';
 import { UnveilHeader } from '@/components/shared';
 import { isIOSWebView, safeNavigate, ensureDOMReady, debugWebView, getIOSVersion } from '@/lib/ios-webview-compat';
