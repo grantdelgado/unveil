@@ -1,0 +1,16 @@
+🚀 Running iOS speedup optimizations and verification...
+[22:52:59] 🚀 Starting iOS Speedup Optimization
+[22:52:59] Build log: _artifacts/ios_builds/speedup_20251007_225259.log
+[22:52:59] Timing log: _artifacts/ios_builds/timing_20251007_225259.txt
+[22:52:59] Dry run: false
+[22:52:59] Hard reset: false
+[22:52:59] Purge derived data: false
+[22:52:59] 🧹 CLEANUP PHASE: Removing build artifacts and caches
+[22:52:59] 🧽 Cleaning iOS build products
+[22:52:59] Executing: xcodebuild clean -workspace ios/App/App.xcworkspace -scheme App -configuration Debug
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild clean -workspace ios/App/App.xcworkspace -scheme App -configuration Debug
+
+2025-10-07 22:53:02.145 xcodebuild[89725:883571] Writing error result bundle to /var/folders/cl/fm16jmzd6_z619p8j8wff4b40000gn/T/ResultBundle_2025-07-10_22-53-0002.xcresult
+xcodebuild: error: The workspace named "App" does not contain a scheme named "App". The "-list" option can be used to find the names of the schemes in the workspace.
+make: *** [ios-verify] Error 65
