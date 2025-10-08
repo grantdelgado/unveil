@@ -215,10 +215,10 @@ log "✅ Capacitor sync completed"
 log "🎯 Determining build target..."
 
 if [[ "$HAS_XCWORKSPACE" = true ]] && [[ -f "ios/App/App.xcworkspace/contents.xcworkspacedata" ]]; then
-    BUILD_TARGET="-workspace ios/App/App.xcworkspace -scheme App"
+    BUILD_TARGET="-workspace ios/App/App.xcworkspace -scheme \"Unveil (Dev)\""
     log "✅ Using workspace build target: App.xcworkspace"
 elif [[ "$HAS_XCODEPROJ" = true ]]; then
-    BUILD_TARGET="-project ios/App/App.xcodeproj -scheme App"
+    BUILD_TARGET="-project ios/App/App.xcodeproj -scheme \"Unveil (Dev)\""
     log "✅ Using project build target: App.xcodeproj"
 else
     fail "No valid Xcode project or workspace found"
@@ -250,6 +250,40 @@ else
     else
         fail "No iPhone simulators available. Install iOS Simulator in Xcode."
     fi
+fi
+
+# ============================================================================
+# WEB TARGET PREFLIGHT CHECK
+# ============================================================================
+
+log "🔍 Running web target preflight check..."
+
+# Determine the target URL for preflight
+TARGET_URL="${CAP_SERVER_URL:-}"
+if [[ -z "$TARGET_URL" ]]; then
+    # Try to extract from capacitor.config.ts as fallback
+    if [[ -f "capacitor.config.ts" ]]; then
+        TARGET_URL=$(grep -o "url:\s*['\"][^'\"]*['\"]" capacitor.config.ts | head -1 | sed "s/url:\s*['\"]//g" | sed "s/['\"]//g" || echo "")
+    fi
+fi
+
+if [[ -n "$TARGET_URL" ]]; then
+    log "📡 Target URL: $TARGET_URL"
+    echo "Capacitor App URL: $TARGET_URL" > "$BUILD_LOG_DIR/last_app_url.txt"
+    
+    # Run preflight check
+    if command -v npx >/dev/null 2>&1; then
+        if npx tsx scripts/check-web-target.ts --timeout=3000 2>&1 | tee -a "$BUILD_LOG"; then
+            log "✅ Web target preflight passed"
+        else
+            fail "Web target preflight failed. Check the URL and try again."
+        fi
+    else
+        log "⚠️  npx not found, skipping preflight check"
+    fi
+else
+    log "ℹ️  No target URL configured, using static assets"
+    echo "Static assets (no server URL)" > "$BUILD_LOG_DIR/last_app_url.txt"
 fi
 
 # ============================================================================
@@ -294,11 +328,26 @@ fi
 # FINAL STATUS REPORT
 # ============================================================================
 
+log "🧪 Running smoke test for deterministic first paint..."
+if have npx && [ -f "tests/smoke-healthz.spec.ts" ]; then
+    if npx playwright test tests/smoke-healthz.spec.ts --reporter=line 2>&1 | tee -a "$BUILD_LOG"; then
+        log "✅ Smoke test passed - first paint is working"
+        SMOKE_STATUS="PASSED"
+    else
+        log "⚠️  Smoke test failed - check for CSR bailouts or rendering issues"
+        SMOKE_STATUS="FAILED"
+    fi
+else
+    log "⚠️  Smoke test skipped - Playwright not available or test file missing"
+    SMOKE_STATUS="SKIPPED"
+fi
+
 log "📊 FINAL STATUS REPORT:"
 log "   Build Log: $BUILD_LOG"
 log "   iOS Project: $([ "$HAS_XCWORKSPACE" = true ] && echo "Workspace" || echo "Project") build target"
 log "   Simulator: $DESTINATION"
 log "   Repairs Applied: $([ "$REPAIRS_NEEDED" = true ] && echo "Yes" || echo "No")"
+log "   Smoke Test: $SMOKE_STATUS"
 log "   Status: SUCCESS"
 
 log "🚀 Next steps:"

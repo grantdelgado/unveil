@@ -5,11 +5,6 @@ import './globals.css';
 import { APP_CONFIG } from '@/lib/constants';
 import { Providers } from './Providers';
 
-// Load auth debug utilities in development
-if (process.env.NODE_ENV === 'development') {
-  import('@/lib/auth/debugAuth');
-}
-
 const inter = localFont({
   src: [
     {
@@ -22,17 +17,13 @@ const inter = localFont({
     },
   ],
   variable: '--font-inter',
-  display: 'swap', // Prevent layout shift
-  preload: true, // Preload critical font for LCP text
+  display: 'swap',
+  preload: true,
   fallback: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NODE_ENV === 'production'
-      ? process.env.NEXT_PUBLIC_APP_URL || 'https://app.sendunveil.com'
-      : 'http://localhost:3000',
-  ),
+  metadataBase: new URL('https://app.sendunveil.com'),
   title: APP_CONFIG.name,
   description: APP_CONFIG.description,
   applicationName: 'Unveil Wedding App',
@@ -68,7 +59,7 @@ export const metadata: Metadata = {
     siteName: 'Unveil Wedding App',
     title: 'Unveil - Your Wedding Memories',
     description: 'Beautifully preserve and share your wedding memories',
-    url: process.env.NEXT_PUBLIC_APP_URL || 'https://app.sendunveil.com',
+    url: 'https://app.sendunveil.com',
     images: [
       {
         url: '/icons/og-image.png',
@@ -85,8 +76,8 @@ export const metadata: Metadata = {
     images: ['/icons/twitter-image.png'],
   },
   icons: {
-    icon: '/icon.png', // served from app/icon.png
-    apple: '/apple-icon.png', // served from app/apple-icon.png
+    icon: '/icon.png',
+    apple: '/apple-icon.png',
     other: [
       {
         rel: 'mask-icon',
@@ -107,7 +98,16 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 };
 
-export default function RootLayout({
+/**
+ * 🚀 iOS-OPTIMIZED LAYOUT: Deterministic First Paint
+ * 
+ * This layout uses static imports only for iOS Capacitor builds:
+ * - No next/dynamic imports that cause CSR bailouts
+ * - Deterministic first paint within 2-3 seconds
+ * - Minimal JavaScript bundle for critical rendering path
+ * - Compatible with iOS WebView constraints
+ */
+export default function IOSRootLayout({
   children,
 }: {
   children: React.ReactNode;

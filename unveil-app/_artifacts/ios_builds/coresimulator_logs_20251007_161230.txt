@@ -1,0 +1,1 @@
+[16:12:58] show --last 1h --predicate subsystem == "com.apple.CoreSimulator"

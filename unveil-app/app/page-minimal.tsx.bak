@@ -1,0 +1,187 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { webViewLogger } from '@/lib/webview-logger';
+import { isIOSWebView, getIOSVersion } from '@/lib/ios-webview-compat';
+
+export default function IOSHomePage() {
+  const [status, setStatus] = useState('Initializing iOS app...');
+  const [debugInfo, setDebugInfo] = useState<any>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const initializeApp = async () => {
+      try {
+        await webViewLogger.info('iOS HomePage: Starting initialization');
+        
+        // Detect environment
+        const iosVersion = getIOSVersion();
+        const isWebView = isIOSWebView();
+        const hasCapacitor = typeof window !== 'undefined' && !!(window as any).Capacitor;
+        
+        const info = {
+          iosVersion,
+          isWebView,
+          hasCapacitor,
+          userAgent: typeof window !== 'undefined' ? navigator.userAgent : 'N/A',
+          location: typeof window !== 'undefined' ? window.location.href : 'N/A',
+          timestamp: new Date().toISOString(),
+        };
+        
+        setDebugInfo(info);
+        await webViewLogger.info(`Environment detected: iOS ${iosVersion}, WebView: ${isWebView}, Capacitor: ${hasCapacitor}`);
+        
+        setStatus('Environment detected, checking authentication...');
+        
+        // Simple auth check without complex providers
+        try {
+          const { supabase } = await import('@/lib/supabase');
+          const { data: { session }, error } = await supabase.auth.getSession();
+          
+          if (error) {
+            await webViewLogger.error(`Auth check failed: ${error.message}`);
+            setStatus(`Auth error: ${error.message}`);
+          } else if (session) {
+            await webViewLogger.info('User is authenticated');
+            setStatus('User authenticated - redirecting to select event...');
+            
+            // Direct navigation
+            setTimeout(() => {
+              if (isMounted) {
+                window.location.href = '/select-event';
+              }
+            }, 1000);
+          } else {
+            await webViewLogger.info('User not authenticated');
+            setStatus('User not authenticated - redirecting to login...');
+            
+            // Direct navigation
+            setTimeout(() => {
+              if (isMounted) {
+                window.location.href = '/login';
+              }
+            }, 1000);
+          }
+        } catch (authError: any) {
+          await webViewLogger.error(`Auth module failed: ${authError.message}`);
+          setStatus(`Auth module error: ${authError.message}`);
+          
+          // Fallback to login
+          setTimeout(() => {
+            if (isMounted) {
+              window.location.href = '/login';
+            }
+          }, 2000);
+        }
+        
+      } catch (error: any) {
+        await webViewLogger.error(`App initialization failed: ${error.message}`);
+        setStatus(`Initialization error: ${error.message}`);
+      }
+    };
+
+    // Start initialization
+    initializeApp();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  return (
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #fef7f0 0%, #f5f5f4 100%)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '20px',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+    }}>
+      <div style={{
+        background: 'white',
+        borderRadius: '16px',
+        padding: '32px',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+        textAlign: 'center',
+        maxWidth: '400px',
+        width: '100%'
+      }}>
+        <div style={{
+          width: '64px',
+          height: '64px',
+          background: '#e15b50',
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          margin: '0 auto 24px',
+          color: 'white',
+          fontSize: '24px',
+          fontWeight: 'bold'
+        }}>
+          U
+        </div>
+        
+        <h1 style={{color: '#1f2937', marginBottom: '16px'}}>
+          Unveil iOS
+        </h1>
+        
+        <div style={{
+          width: '32px',
+          height: '32px',
+          border: '3px solid #f3f4f6',
+          borderTop: '3px solid #e15b50',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite',
+          margin: '0 auto 16px'
+        }} />
+        
+        <p style={{color: '#6b7280', marginBottom: '16px', fontSize: '14px'}}>
+          {status}
+        </p>
+        
+        {debugInfo && (
+          <div style={{
+            background: '#f8fafc',
+            borderRadius: '8px',
+            padding: '16px',
+            margin: '16px 0',
+            fontSize: '11px',
+            color: '#64748b',
+            textAlign: 'left'
+          }}>
+            <div><strong>iOS Version:</strong> {debugInfo.iosVersion}</div>
+            <div><strong>WebView:</strong> {debugInfo.isWebView ? 'Yes' : 'No'}</div>
+            <div><strong>Capacitor:</strong> {debugInfo.hasCapacitor ? 'Yes' : 'No'}</div>
+            <div><strong>Location:</strong> {debugInfo.location}</div>
+            <div style={{marginTop: '8px'}}>
+              <button
+                onClick={() => window.location.href = '/login'}
+                style={{
+                  background: '#e15b50',
+                  color: 'white',
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  fontSize: '12px',
+                  cursor: 'pointer'
+                }}
+              >
+                Force Go to Login
+              </button>
+            </div>
+          </div>
+        )}
+        
+        <style jsx>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    </div>
+  );
+}

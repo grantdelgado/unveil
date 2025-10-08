@@ -1,0 +1,7 @@
+Preflight Check: FAILED
+Timestamp: 2025-10-07T22:29:42.527Z
+Target URL: http://localhost:9999
+Response: Not reachable
+Timeout: 2000ms
+Environment: development
+Error: URL is not reachable within 2000ms

@@ -6,6 +6,7 @@ import eslintConfigPrettier from 'eslint-config-prettier';
 // Import custom ESLint rules
 import canonicalMessagingRpc from './eslint-rules/canonical-messaging-rpc.js';
 import messagingHooks from './eslint-rules/messaging-hooks.js';
+import noRootDynamicImports from './eslint-rules/no-root-dynamic-imports.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -17,6 +18,20 @@ const compat = new FlatCompat({
 const eslintConfig = [
   ...compat.extends('next/core-web-vitals', 'next/typescript'),
   eslintConfigPrettier,
+  {
+    plugins: {
+      'custom': {
+        rules: {
+          ...canonicalMessagingRpc,
+          ...messagingHooks,
+          ...noRootDynamicImports,
+        },
+      },
+    },
+    rules: {
+      'custom/no-root-dynamic-imports': 'warn', // Temporarily warn instead of error
+    },
+  },
   {
     // Global rules to prevent usage of deprecated patterns
     rules: {
@@ -145,6 +160,19 @@ const eslintConfig = [
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unused-vars': 'off',
       '@typescript-eslint/ban-ts-comment': 'off',
+    },
+  },
+  {
+    files: ['app/layout.tsx', 'app/Providers.tsx', 'lib/providers/**/*.tsx'],
+    plugins: {
+      'unveil': {
+        rules: {
+          'no-root-dynamic-imports': noRootDynamicImports,
+        },
+      },
+    },
+    rules: {
+      'unveil/no-root-dynamic-imports': 'error',
     },
   },
 ];

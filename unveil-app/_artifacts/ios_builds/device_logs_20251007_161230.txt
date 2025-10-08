@@ -1,0 +1,36 @@
+Timestamp                       Thread     Type        Activity             PID    TTL  
+2025-10-07 15:29:53.679258-0500 0xe62e     Error       0x0                  2759   0    launchd_sim: [UIKitApplication:com.unveil.wedding[985a][rb-legacy]:] Unknown key for plist importer (key: _ResourceCoalition type: string)
+2025-10-07 15:29:53.679377-0500 0xe62e     Default     0x0                  2759   0    launchd_sim: [user/501/UIKitApplication:com.unveil.wedding[985a][rb-legacy]:] internal event: WILL_SPAWN, code = 0
+2025-10-07 15:29:53.679380-0500 0xe62e     Default     0x0                  2759   0    launchd_sim: [user/501/UIKitApplication:com.unveil.wedding[985a][rb-legacy]:] service state: spawn scheduled
+2025-10-07 15:29:53.679381-0500 0xe62e     Default     0x0                  2759   0    launchd_sim: [user/501/UIKitApplication:com.unveil.wedding[985a][rb-legacy]:] service state: spawning
+2025-10-07 15:29:53.679387-0500 0xe62e     Default     0x0                  2759   0    launchd_sim: [user/501/UIKitApplication:com.unveil.wedding[985a][rb-legacy]:] launching: launch job demand
+2025-10-07 15:29:53.680212-0500 0xe62e     Default     0x0                  2759   0    launchd_sim: [user/501/UIKitApplication:com.unveil.wedding[985a][rb-legacy] [3249]:] xpcproxy_sim spawned with pid 3249
+2025-10-07 15:29:53.680226-0500 0xe62e     Default     0x0                  2759   0    launchd_sim: [user/501/UIKitApplication:com.unveil.wedding[985a][rb-legacy] [3249]:] internal event: SPAWNED, code = 0
+2025-10-07 15:29:53.680227-0500 0xe62e     Default     0x0                  2759   0    launchd_sim: [user/501/UIKitApplication:com.unveil.wedding[985a][rb-legacy] [3249]:] service state: xpcproxy
+2025-10-07 15:29:53.680318-0500 0xe62e     Default     0x0                  2759   0    launchd_sim: [user/501/UIKitApplication:com.unveil.wedding[985a][rb-legacy] [3249]:] internal event: SOURCE_ATTACH, code = 0
+2025-10-07 15:29:54.205089-0500 0xe6af     Default     0x0                  2759   0    launchd_sim: [user/501/UIKitApplication:com.unveil.wedding[985a][rb-legacy] [3249]:] service state: running
+2025-10-07 15:29:54.205109-0500 0xe6af     Default     0x0                  2759   0    launchd_sim: [user/501/UIKitApplication:com.unveil.wedding[985a][rb-legacy] [3249]:] internal event: INIT, code = 0
+2025-10-07 15:29:54.205111-0500 0xe6af     Default     0x0                  2759   0    launchd_sim: [user/501/UIKitApplication:com.unveil.wedding[985a][rb-legacy] [3249]:] job state = running
+2025-10-07 15:29:54.205166-0500 0xe6af     Default     0x0                  2759   0    launchd_sim: [user/501/UIKitApplication:com.unveil.wedding[985a][rb-legacy] [3249]:] Successfully spawned App[3249] because launch job demand
+2025-10-07 16:06:00.343998-0500 0x1053d    Error       0x0                  14496  0    launchd_sim: [UIKitApplication:com.unveil.wedding[dd43][rb-legacy]:] Unknown key for plist importer (key: _ResourceCoalition type: string)
+2025-10-07 16:06:00.344009-0500 0x1053d    Error       0x0                  14496  0    launchd_sim: [UIKitApplication:com.unveil.wedding[dd43][rb-legacy]:] Service tried to set environment variable with reserved name: TERM
+2025-10-07 16:06:00.344189-0500 0x1053d    Default     0x0                  14496  0    launchd_sim: [user/501/UIKitApplication:com.unveil.wedding[dd43][rb-legacy]:] internal event: WILL_SPAWN, code = 0
+2025-10-07 16:06:00.344190-0500 0x1053d    Default     0x0                  14496  0    launchd_sim: [user/501/UIKitApplication:com.unveil.wedding[dd43][rb-legacy]:] service state: spawn scheduled
+2025-10-07 16:06:00.344191-0500 0x1053d    Default     0x0                  14496  0    launchd_sim: [user/501/UIKitApplication:com.unveil.wedding[dd43][rb-legacy]:] service state: spawning
+2025-10-07 16:06:00.344197-0500 0x1053d    Default     0x0                  14496  0    launchd_sim: [user/501/UIKitApplication:com.unveil.wedding[dd43][rb-legacy]:] launching: launch job demand
+2025-10-07 16:06:00.344692-0500 0x1053d    Default     0x0                  14496  0    launchd_sim: [user/501/UIKitApplication:com.unveil.wedding[dd43][rb-legacy] [23642]:] xpcproxy_sim spawned with pid 23642
+2025-10-07 16:06:00.344700-0500 0x1053d    Default     0x0                  14496  0    launchd_sim: [user/501/UIKitApplication:com.unveil.wedding[dd43][rb-legacy] [23642]:] internal event: SPAWNED, code = 0
+2025-10-07 16:06:00.344702-0500 0x1053d    Default     0x0                  14496  0    launchd_sim: [user/501/UIKitApplication:com.unveil.wedding[dd43][rb-legacy] [23642]:] service state: xpcproxy
+2025-10-07 16:06:00.344734-0500 0x1053d    Default     0x0                  14496  0    launchd_sim: [user/501/UIKitApplication:com.unveil.wedding[dd43][rb-legacy] [23642]:] internal event: SOURCE_ATTACH, code = 0
+2025-10-07 16:06:00.555280-0500 0x1053d    Default     0x0                  14496  0    launchd_sim: [user/501/UIKitApplication:com.unveil.wedding[dd43][rb-legacy] [23642]:] service state: running
+2025-10-07 16:06:00.555285-0500 0x1053d    Default     0x0                  14496  0    launchd_sim: [user/501/UIKitApplication:com.unveil.wedding[dd43][rb-legacy] [23642]:] internal event: INIT, code = 0
+2025-10-07 16:06:00.555286-0500 0x1053d    Default     0x0                  14496  0    launchd_sim: [user/501/UIKitApplication:com.unveil.wedding[dd43][rb-legacy] [23642]:] job state = running
+2025-10-07 16:06:00.555308-0500 0x1053d    Default     0x0                  14496  0    launchd_sim: [user/501/UIKitApplication:com.unveil.wedding[dd43][rb-legacy] [23642]:] Successfully spawned App[23642] because launch job demand
+2025-10-07 16:12:13.474849-0500 0x14868    Default     0x0                  14496  0    launchd_sim: [user/501/UIKitApplication:com.unveil.wedding[dd43][rb-legacy] [23642]:] exited due to SIGKILL, ran for 373117ms
+2025-10-07 16:12:13.474853-0500 0x14868    Default     0x0                  14496  0    launchd_sim: [user/501/UIKitApplication:com.unveil.wedding[dd43][rb-legacy] [23642]:] service state: exited
+2025-10-07 16:12:13.474855-0500 0x14868    Default     0x0                  14496  0    launchd_sim: [user/501/UIKitApplication:com.unveil.wedding[dd43][rb-legacy] [23642]:] internal event: EXITED, code = 0
+2025-10-07 16:12:13.474855-0500 0x14868    Default     0x0                  14496  0    launchd_sim: [user/501/UIKitApplication:com.unveil.wedding[dd43][rb-legacy] [23642]:] job state = exited
+2025-10-07 16:12:13.474915-0500 0x14868    Default     0x0                  14496  0    launchd_sim: [user/501/UIKitApplication:com.unveil.wedding[dd43][rb-legacy] [23642]:] service state: not running
+2025-10-07 16:12:13.480508-0500 0x1486e    Default     0x0                  14496  0    launchd_sim: [user/501/UIKitApplication:com.unveil.wedding[dd43][rb-legacy]:] removing job: caller = runningboardd
+2025-10-07 16:12:13.480528-0500 0x1486e    Default     0x0                  14496  0    launchd_sim: [user/501/UIKitApplication:com.unveil.wedding[dd43][rb-legacy]:] internal event: PETRIFIED, code = 0
+2025-10-07 16:12:13.480529-0500 0x1486e    Default     0x0                  14496  0    launchd_sim: [user/501/UIKitApplication:com.unveil.wedding[dd43][rb-legacy]:] job state = removed

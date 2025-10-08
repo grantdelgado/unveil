@@ -82,23 +82,31 @@
 				<key>NSIncludesSubdomains</key>
 				<true/>
 			</dict>
-			<!-- App Domain -->
+			<!-- Production App Domain -->
 			<key>app.sendunveil.com</key>
 			<dict>
-				<key>NSExceptionAllowsInsecureHTTPLoads</key>
-				<false/>
-				<key>NSExceptionMinimumTLSVersion</key>
-				<string>TLSv1.2</string>
 				<key>NSIncludesSubdomains</key>
 				<true/>
+				<key>NSExceptionMinimumTLSVersion</key>
+				<string>TLSv1.2</string>
+				<key>NSRequiresCertificateTransparency</key>
+				<false/>
 			</dict>
-			<!-- Local development -->
+			<!-- Development - localhost -->
 			<key>localhost</key>
 			<dict>
+				<key>NSIncludesSubdomains</key>
+				<true/>
 				<key>NSExceptionAllowsInsecureHTTPLoads</key>
 				<true/>
-				<key>NSExceptionMinimumTLSVersion</key>
-				<string>TLSv1.0</string>
+			</dict>
+			<!-- Development - 127.0.0.1 -->
+			<key>127.0.0.1</key>
+			<dict>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
 			</dict>
 		</dict>
 	</dict>

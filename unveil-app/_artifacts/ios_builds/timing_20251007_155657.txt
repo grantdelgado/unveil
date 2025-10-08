@@ -1,0 +1,56 @@
+Build Timing Summary
+
+SwiftCompile (10 tasks) | 9.395 seconds
+
+CompileStoryboard (2 tasks) | 7.016 seconds
+
+CompileAssetCatalogVariant (1 task) | 6.255 seconds
+
+CompileC (27 tasks) | 1.550 seconds
+
+ScanDependencies (27 tasks) | 1.522 seconds
+
+SwiftEmitModule (2 tasks) | 1.156 seconds
+
+GenerateAssetSymbols (1 task) | 1.032 seconds
+
+SwiftDriver (2 tasks) | 0.753 seconds
+
+Ld (5 tasks) | 0.662 seconds
+
+PhaseScriptExecution (2 tasks) | 0.437 seconds
+
+CodeSign (6 tasks) | 0.083 seconds
+
+ExtractAppIntentsMetadata (2 tasks) | 0.074 seconds
+
+RegisterExecutionPolicyException (4 tasks) | 0.055 seconds
+
+CpHeader (27 tasks) | 0.039 seconds
+
+GenerateTAPI (2 tasks) | 0.039 seconds
+
+AppIntentsSSUTraining (2 tasks) | 0.035 seconds
+
+CopySwiftLibs (1 task) | 0.029 seconds
+
+ProcessInfoPlistFile (4 tasks) | 0.023 seconds
+
+Copy (13 tasks) | 0.023 seconds
+
+WriteAuxiliaryFile (61 tasks) | 0.014 seconds
+
+Touch (4 tasks) | 0.009 seconds
+
+CpResource (6 tasks) | 0.007 seconds
+
+LinkStoryboards (1 task) | 0.006 seconds
+
+ProcessProductPackagingDER (1 task) | 0.006 seconds
+
+Libtool (1 task) | 0.004 seconds
+Overall build time: 14s
+Build completed at: Tue Oct  7 15:57:52 CDT 2025
+Simulator: iPhone 17 Pro
+UDID: 93C13956-615F-473A-BF55-925075B4469A
+State: Shutdown
