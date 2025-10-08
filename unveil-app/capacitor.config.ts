@@ -24,19 +24,7 @@ const config: CapacitorConfig = {
     scrollEnabled: true,
     allowsLinkPreview: false,
     backgroundColor: '#FFF5E5',
-    limitsNavigationsToAppBoundDomains: false, // Allow external navigation for debugging
-    webContentsDebuggingEnabled: true, // Enable Safari Web Inspector
-    allowsInlineMediaPlayback: true,
-    mediaPlaybackRequiresUserAction: false,
-    // iOS 26.0 WebView optimizations
-    preferredContentMode: 'mobile',
-    allowsBackForwardNavigationGestures: false,
-    handleApplicationURL: false,
-    inspectable: true,
-    // iOS 26.0 specific settings
-    allowsAirPlayForMediaPlayback: false,
-    suppressesIncrementalRendering: false,
-    // Enhanced debugging for iOS 26.0
+    limitsNavigationsToAppBoundDomains: false,
     webContentsDebuggingEnabled: true,
   },
   

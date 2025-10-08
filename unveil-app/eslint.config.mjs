@@ -29,7 +29,7 @@ const eslintConfig = [
       },
     },
     rules: {
-      'custom/no-root-dynamic-imports': 'warn', // Temporarily warn instead of error
+      'custom/no-root-dynamic-imports': 'warn',
     },
   },
   {
@@ -164,15 +164,8 @@ const eslintConfig = [
   },
   {
     files: ['app/layout.tsx', 'app/Providers.tsx', 'lib/providers/**/*.tsx'],
-    plugins: {
-      'unveil': {
-        rules: {
-          'no-root-dynamic-imports': noRootDynamicImports,
-        },
-      },
-    },
     rules: {
-      'unveil/no-root-dynamic-imports': 'error',
+      'custom/no-root-dynamic-imports': 'error',
     },
   },
 ];
