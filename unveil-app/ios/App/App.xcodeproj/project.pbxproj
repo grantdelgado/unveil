@@ -620,6 +620,8 @@
 				<string>$(inherited) "-D" "COCOAPODS" "-DDEBUG"</string>
 				<key>PRODUCT_BUNDLE_IDENTIFIER</key>
 				<string>com.unveil.wedding</string>
+				<key>DEVELOPMENT_TEAM</key>
+				<string>4YMP78MK33</string>
 				<key>PRODUCT_NAME</key>
 				<string>$(TARGET_NAME)</string>
 				<key>SWIFT_ACTIVE_COMPILATION_CONDITIONS</key>
@@ -656,6 +658,8 @@
 				<string>1.0</string>
 				<key>PRODUCT_BUNDLE_IDENTIFIER</key>
 				<string>com.unveil.wedding</string>
+				<key>DEVELOPMENT_TEAM</key>
+				<string>4YMP78MK33</string>
 				<key>PRODUCT_NAME</key>
 				<string>$(TARGET_NAME)</string>
 				<key>SWIFT_ACTIVE_COMPILATION_CONDITIONS</key>
