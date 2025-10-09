@@ -41,6 +41,7 @@
     "test:rls": "npx tsx scripts/test-rls-policies.ts",
     "test:dev-auth": "npx tsx scripts/test-dev-auth.ts",
     "test:auth-flow": "npx tsx scripts/test-auth-flow.ts",
+    "validate:aasa": "node scripts/verify-aasa.mjs",
     "db:test": "supabase db reset --local && npm run dev-setup",
     "setup:sms": "node scripts/setup-sms.js",
     "test-users:create": "npx tsx scripts/test-user-manager.ts create",
