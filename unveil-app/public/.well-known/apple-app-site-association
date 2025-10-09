@@ -3,7 +3,7 @@
     "apps": [],
     "details": [
       {
-        "appID": "TEAMID.com.unveil.wedding",
+        "appID": "4YMP78MK33.com.unveil.wedding",
         "paths": [
           "/",
           "/select-event",
@@ -29,9 +29,9 @@
     ]
   },
   "webcredentials": {
-    "apps": ["TEAMID.com.unveil.wedding"]
+    "apps": ["4YMP78MK33.com.unveil.wedding"]
   },
   "activitycontinuation": {
-    "apps": ["TEAMID.com.unveil.wedding"]
+    "apps": ["4YMP78MK33.com.unveil.wedding"]
   }
 }
