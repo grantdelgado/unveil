@@ -14,7 +14,7 @@ export default function MessageAnalyticsPage() {
   const eventId = params?.eventId as string;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
+    <div className="min-h-100dvh bg-gray-50 p-4 sm:p-6">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">

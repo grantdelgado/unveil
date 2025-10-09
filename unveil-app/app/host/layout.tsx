@@ -9,7 +9,7 @@ const LeanHostProvider = dynamic(
   { 
     ssr: false,
     loading: () => (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-100dvh">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
       </div>
     )
@@ -35,7 +35,7 @@ export default function HostLayout({ children }: HostLayoutProps) {
     <LeanHostProvider>
       <Suspense
         fallback={
-          <div className="flex items-center justify-center min-h-screen">
+          <div className="flex items-center justify-center min-h-100dvh">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
           </div>
         }

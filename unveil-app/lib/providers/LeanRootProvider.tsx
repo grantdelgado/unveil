@@ -11,7 +11,7 @@ const ReactQueryProvider = dynamic(
   { 
     ssr: false,
     loading: () => (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-100dvh">
         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
       </div>
     )
@@ -23,7 +23,7 @@ const AuthProvider = dynamic(
   { 
     ssr: false,
     loading: () => (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-100dvh">
         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div>
       </div>
     )

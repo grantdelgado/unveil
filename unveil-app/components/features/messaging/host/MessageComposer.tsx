@@ -862,7 +862,7 @@ export function MessageComposer({
 
   return (
     <div
-      className={cn('min-h-screen bg-gray-50', className)}
+      className={cn('min-h-100dvh bg-gray-50', className)}
       style={{ minHeight: '100svh' }}
     >
       {/* Wider container for better desktop experience */}
