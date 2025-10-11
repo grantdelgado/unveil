@@ -71,7 +71,7 @@ export function EventSelectionView({
 
     return (
       <MobileShell header={header} footer={footer}>
-        <div className="max-w-md mx-auto px-4 py-8 w-full">
+        <div className="max-w-md mx-auto px-4 py-8 pb-20 w-full">
           <SkeletonLoader variant="card" count={3} />
         </div>
       </MobileShell>
@@ -94,7 +94,7 @@ export function EventSelectionView({
 
     return (
       <MobileShell header={header} footer={footer}>
-        <div className="max-w-md mx-auto px-4 py-8 w-full flex items-center justify-center">
+        <div className="max-w-md mx-auto px-4 py-8 pb-20 w-full flex items-center justify-center">
           <div className="text-center space-y-4">
             <div className="text-6xl">⚠️</div>
             <p className="text-gray-600 break-words">
@@ -167,7 +167,7 @@ export function EventSelectionView({
   return (
     <div id="select-event">
       <MobileShell header={header} footer={footer} className="scroll-container">
-        <div className="max-w-md mx-auto px-4 py-8 w-full space-y-8">
+        <div className="max-w-md mx-auto px-4 py-8 pb-20 w-full space-y-8">
           {/* Events List */}
           <div className="space-y-8">
             {/* Upcoming Host Events */}

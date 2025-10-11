@@ -18,8 +18,8 @@ export default function SupportFooter() {
   };
 
   return (
-    <div className="max-w-md mx-auto w-full">
-      <div className="text-center text-sm text-gray-600 pb-6 px-4">
+    <div className="max-w-md mx-auto w-full bg-white/95 backdrop-blur-sm border-t border-gray-200/50">
+      <div className="text-center text-sm text-gray-600 py-4 px-4">
         Need help? Reach out to{' '}
         <span className="text-gray-900">{SUPPORT_EMAIL}</span>
         <button
@@ -53,7 +53,7 @@ export default function SupportFooter() {
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2 2z"
               />
             </svg>
           )}
