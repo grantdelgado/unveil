@@ -96,7 +96,7 @@ export const GuestControlPanel = memo<GuestControlPanelProps>(
                 <span className="text-gray-400 text-lg">🔍</span>
               </div>
               <input
-                type="text"
+                type="search"
                 placeholder="Search guests by name, email, or phone..."
                 value={searchTerm}
                 onChange={(e) => onSearchChange(e.target.value)}

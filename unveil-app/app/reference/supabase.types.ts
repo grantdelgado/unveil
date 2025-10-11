@@ -813,7 +813,7 @@ export type Database = {
         Returns: number
       }
       get_event_guests_with_display_names: {
-        Args: { p_event_id: string; p_limit?: number; p_offset?: number }
+        Args: { p_event_id: string; p_limit?: number; p_offset?: number; p_search_term?: string }
         Returns: {
           created_at: string
           decline_reason: string

@@ -13,6 +13,7 @@ import { useEventRoleTotals } from '@/hooks/guests/useEventRoleTotals';
 import { useSimpleGuestStore } from '@/hooks/guests/useSimpleGuestStore';
 import { useUnifiedGuestCounts } from '@/hooks/guests';
 import { GuestsFlags } from '@/lib/config/guests';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 
 // Local components
 import { SecondaryButton, PrimaryButton } from '@/components/ui';
@@ -44,6 +45,23 @@ function GuestManagementContent({
   const [filterByRSVP, setFilterByRSVP] = useState<
     'all' | 'attending' | 'declined' | 'not_invited' | 'invited'
   >('all');
+  
+  // Debounce search term to prevent excessive API calls
+  const debouncedSearchTerm = useDebouncedValue(searchTerm, GuestsFlags.searchDebounceMs);
+  
+  // Track if we're actively searching (search term exists but hasn't been debounced yet)
+  const isSearching = searchTerm !== debouncedSearchTerm && searchTerm !== '';
+  
+  // Log search changes (PII-safe)
+  useEffect(() => {
+    if (searchTerm) {
+      console.info('ui.guests.search_change', {
+        q_len: searchTerm.length,
+        event_id: eventId,
+        server_search_enabled: GuestsFlags.serverSearchEnabled,
+      });
+    }
+  }, [searchTerm, eventId]);
   const [invitingGuestId, setInvitingGuestId] = useState<string | null>(null);
   const [showBulkInviteModal, setShowBulkInviteModal] = useState(false);
   const [roleActionLoading, setRoleActionLoading] = useState<string | null>(null);
@@ -78,7 +96,7 @@ function GuestManagementContent({
     hasMore, 
     isPaging, 
     loadNextPage 
-  } = useSimpleGuestStore(eventId);
+  } = useSimpleGuestStore(eventId, debouncedSearchTerm);
 
   // Use unified counts for consistency with dashboard
   const { counts: unifiedCounts, refresh: refreshCounts } =
@@ -373,12 +391,12 @@ function GuestManagementContent({
     };
   }, [hasMore, isPaging, loading, loadNextPage]);
 
-  // Reset pagination when filter or search changes
+  // Reset pagination when filter changes (search is handled by the hook automatically)
   useEffect(() => {
     if (GuestsFlags.paginationEnabled) {
       refreshGuests(); // This will reset to page 1
     }
-  }, [filterByRSVP, searchTerm, refreshGuests]); // Reset when filter or search changes
+  }, [filterByRSVP, refreshGuests]); // Only reset on filter changes, not search
 
   // Segment guests by role for hosts summary and list organization
   const { hosts, regularGuests } = useMemo(() => {
@@ -405,8 +423,8 @@ function GuestManagementContent({
 
       let filtered = guestList;
 
-      // Apply search filter
-      if (searchTerm) {
+      // Apply client-side search filter only if server-side search is disabled
+      if (!GuestsFlags.serverSearchEnabled && searchTerm) {
         const searchLower = searchTerm.toLowerCase();
         filtered = filtered.filter((guest) => {
           const displayName = guest.guest_display_name?.toLowerCase() || '';
@@ -423,7 +441,7 @@ function GuestManagementContent({
         });
       }
 
-      // Apply invitation status filter
+      // Apply invitation status filter (always client-side for now)
       if (filterByRSVP !== 'all') {
         filtered = filtered.filter((guest) => {
           const hasDeclined = !!guest.declined_at;
@@ -612,17 +630,21 @@ function GuestManagementContent({
       {filteredHosts.length === 0 && filteredRegularGuests.length === 0 ? (
         <div className="bg-white rounded-lg p-8 text-center shadow-sm border border-gray-100">
           <div className="text-6xl mb-4">
-            {searchTerm || filterByRSVP !== 'all' ? '🔍' : '👥'}
+            {isSearching ? '⏳' : (searchTerm || filterByRSVP !== 'all' ? '🔍' : '👥')}
           </div>
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            {searchTerm || filterByRSVP !== 'all'
-              ? 'No matching guests'
-              : 'No guests yet'}
+            {isSearching 
+              ? 'Searching...'
+              : (searchTerm || filterByRSVP !== 'all'
+                ? 'No matching guests'
+                : 'No guests yet')}
           </h3>
           <p className="text-gray-600 mb-6">
-            {searchTerm || filterByRSVP !== 'all'
-              ? 'Try adjusting your search or filter to find guests.'
-              : 'Get started by adding guests individually or importing from a CSV file.'}
+            {isSearching
+              ? 'Looking for matching guests...'
+              : (searchTerm || filterByRSVP !== 'all'
+                ? 'Try adjusting your search or filter to find guests.'
+                : 'Get started by adding guests individually or importing from a CSV file.')}
           </p>
           {!searchTerm && filterByRSVP === 'all' && (
             <div className="flex flex-col sm:flex-row gap-3 justify-center">

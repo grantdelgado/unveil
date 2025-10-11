@@ -87,7 +87,7 @@ interface SimpleGuestStoreReturn {
  * Simplified guest store with reliable data fetching
  * Prioritizes stability over real-time features for MVP
  */
-export function useSimpleGuestStore(eventId: string): SimpleGuestStoreReturn {
+export function useSimpleGuestStore(eventId: string, searchTerm?: string): SimpleGuestStoreReturn {
   const [guests, setGuests] = useState<SimpleGuest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -120,7 +120,7 @@ export function useSimpleGuestStore(eventId: string): SimpleGuestStoreReturn {
   );
 
   // Fetch guests from database with pagination support
-  const fetchGuestsCore = useCallback(async (page: number = 1, isAppending: boolean = false) => {
+  const fetchGuestsCore = useCallback(async (page: number = 1, isAppending: boolean = false, searchTermOverride?: string) => {
     if (!eventId) {
       logger.warn('useSimpleGuestStore: No eventId provided');
       setGuests([]);
@@ -141,13 +141,31 @@ export function useSimpleGuestStore(eventId: string): SimpleGuestStoreReturn {
       // Compute pagination parameters based on feature flag
       const limit = GuestsFlags.paginationEnabled ? GuestsFlags.pageSize : null;
       const offset = GuestsFlags.paginationEnabled ? (page - 1) * GuestsFlags.pageSize : 0;
+      
+      // Use provided search term or the hook's search term
+      const currentSearchTerm = searchTermOverride !== undefined ? searchTermOverride : searchTerm;
+      
+      // Prepare search parameter for server-side search
+      const searchParam = GuestsFlags.serverSearchEnabled && currentSearchTerm ? currentSearchTerm : undefined;
 
       logger.info('Fetching guests for event', { 
         eventId, 
         page, 
         limit, 
         offset, 
-        paginationEnabled: GuestsFlags.paginationEnabled 
+        searchTerm: currentSearchTerm,
+        searchParam,
+        paginationEnabled: GuestsFlags.paginationEnabled,
+        serverSearchEnabled: GuestsFlags.serverSearchEnabled
+      });
+      
+      // PII-safe API logging
+      console.info('api.guests.search', {
+        q_len: currentSearchTerm?.length || 0,
+        page,
+        limit,
+        offset,
+        server_search_enabled: GuestsFlags.serverSearchEnabled,
       });
 
       // Use RPC function to get guests with computed display names
@@ -155,6 +173,7 @@ export function useSimpleGuestStore(eventId: string): SimpleGuestStoreReturn {
         'get_event_guests_with_display_names',
         {
           p_event_id: eventId,
+          p_search_term: searchParam,
           p_limit: limit ?? undefined,
           p_offset: offset,
         },
@@ -257,6 +276,15 @@ export function useSimpleGuestStore(eventId: string): SimpleGuestStoreReturn {
         count: processedGuests.length,
         totalInStore: isAppending ? 'appending' : processedGuests.length,
       });
+      
+      // PII-safe API response logging
+      console.info('api.guests.search_response', {
+        q_len: currentSearchTerm?.length || 0,
+        page,
+        returned: processedGuests.length,
+        has_more: GuestsFlags.paginationEnabled ? processedGuests.length === GuestsFlags.pageSize : false,
+        server_search_enabled: GuestsFlags.serverSearchEnabled,
+      });
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Unknown error occurred';
@@ -278,7 +306,7 @@ export function useSimpleGuestStore(eventId: string): SimpleGuestStoreReturn {
         setIsPaging(false);
       }
     }
-  }, [eventId]);
+  }, [eventId, searchTerm]);
 
   // Create request manager for this event
   const requestManager = useMemo(
@@ -308,13 +336,13 @@ export function useSimpleGuestStore(eventId: string): SimpleGuestStoreReturn {
     }
   }, [eventId, currentPage, hasMore, isPaging, loading, fetchGuestsCore]);
 
-  // Initial fetch on mount and when eventId changes
+  // Initial fetch on mount and when eventId or searchTerm changes
   useEffect(() => {
     let isMounted = true;
 
     const loadGuests = async () => {
       if (isMounted) {
-        // Reset pagination state on eventId change
+        // Reset pagination state on eventId or searchTerm change
         setCurrentPage(1);
         setHasMore(true);
         setIsPaging(false);
@@ -327,7 +355,7 @@ export function useSimpleGuestStore(eventId: string): SimpleGuestStoreReturn {
     return () => {
       isMounted = false;
     };
-  }, [eventId]); // Only depend on eventId, not fetchGuests
+  }, [eventId, searchTerm]); // Depend on both eventId and searchTerm
 
   // Set up a very conservative polling mechanism (only every 5 minutes when needed)
   useEffect(() => {
@@ -418,9 +446,9 @@ export function useSimpleGuestStore(eventId: string): SimpleGuestStoreReturn {
 /**
  * Hook for components that only need guest list data
  */
-export function useSimpleGuestList(eventId: string) {
+export function useSimpleGuestList(eventId: string, searchTerm?: string) {
   const { guests, loading, error, refreshGuests } =
-    useSimpleGuestStore(eventId);
+    useSimpleGuestStore(eventId, searchTerm);
 
   return {
     guests: guests || [],
@@ -433,8 +461,8 @@ export function useSimpleGuestList(eventId: string) {
 /**
  * Hook for components that only need status counts
  */
-export function useSimpleGuestStatusCounts(eventId: string) {
-  const { statusCounts, loading, error } = useSimpleGuestStore(eventId);
+export function useSimpleGuestStatusCounts(eventId: string, searchTerm?: string) {
+  const { statusCounts, loading, error } = useSimpleGuestStore(eventId, searchTerm);
 
   return {
     statusCounts,

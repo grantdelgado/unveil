@@ -825,7 +825,12 @@ export type Database = {
         }[]
       }
       get_event_guests_with_display_names: {
-        Args: { p_event_id: string; p_limit?: number; p_offset?: number }
+        Args: {
+          p_event_id: string
+          p_limit?: number
+          p_offset?: number
+          p_search_term?: string
+        }
         Returns: {
           created_at: string
           decline_reason: string
@@ -847,7 +852,6 @@ export type Database = {
           preferred_communication: string
           removed_at: string
           role: string
-          rsvp_status: string
           sms_opt_out: boolean
           updated_at: string
           user_avatar_url: string
