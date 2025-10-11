@@ -3,6 +3,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Megaphone, Tags, MessageSquare } from 'lucide-react';
+import type { EventCapabilities } from '@/hooks/useEventCapabilities';
 
 type MessageType = 'announcement' | 'channel' | 'direct';
 
@@ -10,6 +11,7 @@ interface MessageTypeSegmentedProps {
   value: MessageType;
   onChange: (value: MessageType) => void;
   className?: string;
+  capabilities?: EventCapabilities;
 }
 
 const messageTypeConfig = {
@@ -34,6 +36,7 @@ export function MessageTypeSegmented({
   value,
   onChange,
   className,
+  capabilities,
 }: MessageTypeSegmentedProps) {
   const handleKeyDown = (event: React.KeyboardEvent, type: MessageType) => {
     if (event.key === 'Enter' || event.key === ' ') {
@@ -61,6 +64,12 @@ export function MessageTypeSegmented({
         {(Object.keys(messageTypeConfig) as MessageType[]).map((type) => {
           const config = messageTypeConfig[type];
           const isActive = value === type;
+          
+          // Check capabilities for message types
+          const isDisabled = capabilities ? (
+            (type === 'announcement' && !capabilities.canSendAnnouncements) ||
+            (type === 'channel' && !capabilities.canSendChannels)
+          ) : false;
 
           return (
             <button
@@ -68,28 +77,34 @@ export function MessageTypeSegmented({
               type="button"
               role="tab"
               aria-selected={isActive}
-              aria-label={`${config.label}: ${config.description}`}
+              aria-label={`${config.label}: ${config.description}${isDisabled ? ' (Not available)' : ''}`}
               onClick={() => {
-                onChange(type);
-                // Dev-only observability
-                if (process.env.NODE_ENV === 'development') {
-                  console.log('ui:typeSelector:changed', { type });
+                if (!isDisabled) {
+                  onChange(type);
+                  // Dev-only observability
+                  if (process.env.NODE_ENV === 'development') {
+                    console.log('ui:typeSelector:changed', { type });
+                  }
                 }
               }}
-              onKeyDown={(e) => handleKeyDown(e, type)}
+              onKeyDown={(e) => !isDisabled && handleKeyDown(e, type)}
+              disabled={isDisabled}
               className={cn(
                 // Base styles - pill shape with adequate touch target
                 'inline-flex h-11 items-center justify-center gap-2 px-4 rounded-full transition-all duration-200',
                 'text-center touch-manipulation whitespace-nowrap font-medium text-sm',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2',
                 // State styles
-                isActive
+                isDisabled
+                  ? 'bg-gray-100 text-gray-400 border-2 border-gray-200 cursor-not-allowed'
+                  : isActive
                   ? 'bg-purple-600 text-white border-2 border-purple-600 shadow-sm'
                   : 'bg-white text-gray-700 border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50',
               )}
-              tabIndex={0}
+              tabIndex={isDisabled ? -1 : 0}
             >
               <span>{config.label}</span>
+              {isDisabled && <span className="text-xs">🔒</span>}
             </button>
           );
         })}

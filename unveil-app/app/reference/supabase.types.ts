@@ -774,6 +774,10 @@ export type Database = {
         Args: { p_scheduled_message_id: string }
         Returns: number
       }
+      demote_host_to_guest: {
+        Args: { p_event_id: string; p_user_id: string }
+        Returns: undefined
+      }
       detect_duplicate_events: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -803,6 +807,10 @@ export type Database = {
           total_guests: number
           total_invited: number
         }[]
+      }
+      get_event_host_count: {
+        Args: { p_event_id: string }
+        Returns: number
       }
       get_event_guests_with_display_names: {
         Args: { p_event_id: string; p_limit?: number; p_offset?: number }
@@ -1099,6 +1107,10 @@ export type Database = {
       normalize_phone_number: {
         Args: { input_phone: string }
         Returns: string
+      }
+      promote_guest_to_host: {
+        Args: { p_event_id: string; p_user_id: string }
+        Returns: undefined
       }
       resolve_event_from_message_v2: {
         Args: { p_message_id: string }

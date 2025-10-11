@@ -15,6 +15,7 @@ import {
   createScheduledMessage,
 } from '@/lib/services/messaging';
 import { updateScheduledMessage } from '@/lib/services/messaging-client';
+import { useEventCapabilities } from '@/hooks/useEventCapabilities';
 import type { Database } from '@/app/reference/supabase.types';
 
 type ScheduledMessage = Database['public']['Tables']['scheduled_messages']['Row'];
@@ -73,6 +74,12 @@ export function MessageComposer({
   preselectedGuestIds,
   editingMessage,
 }: MessageComposerProps) {
+  // Get capabilities for current user (assume host for message composer)
+  const capabilities = useEventCapabilities({
+    eventId,
+    userRole: 'host', // Message composer is host-only
+  });
+
   const [message, setMessage] = useState('');
   const [eventDetails, setEventDetails] = useState<{
     title: string;
@@ -877,6 +884,7 @@ export function MessageComposer({
             <MessageTypeSegmented
               value={messageType}
               onChange={handleMessageTypeChange}
+              capabilities={capabilities}
             />
           </div>
         </div>

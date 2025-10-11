@@ -38,7 +38,6 @@ export type Database = {
           preferred_communication: string | null
           removed_at: string | null
           role: string
-          rsvp_status: string | null
           sms_opt_out: boolean | null
           updated_at: string | null
           user_id: string | null
@@ -66,7 +65,6 @@ export type Database = {
           preferred_communication?: string | null
           removed_at?: string | null
           role?: string
-          rsvp_status?: string | null
           sms_opt_out?: boolean | null
           updated_at?: string | null
           user_id?: string | null
@@ -94,7 +92,6 @@ export type Database = {
           preferred_communication?: string | null
           removed_at?: string | null
           role?: string
-          rsvp_status?: string | null
           sms_opt_out?: boolean | null
           updated_at?: string | null
           user_id?: string | null
@@ -418,6 +415,36 @@ export type Database = {
           },
         ]
       }
+      rum_events: {
+        Row: {
+          build_id: string | null
+          device: string
+          id: number
+          metric: string
+          route: string
+          ts: string
+          value: number
+        }
+        Insert: {
+          build_id?: string | null
+          device: string
+          id?: number
+          metric: string
+          route: string
+          ts?: string
+          value: number
+        }
+        Update: {
+          build_id?: string | null
+          device?: string
+          id?: number
+          metric?: string
+          route?: string
+          ts?: string
+          value?: number
+        }
+        Relationships: []
+      }
       scheduled_messages: {
         Row: {
           content: string
@@ -631,7 +658,29 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      low_usage_indexes_30d: {
+        Row: {
+          index_name: string | null
+          last_snapshot: string | null
+          max_scans_30d: number | null
+          recommendation: string | null
+          snapshot_count_30d: number | null
+          table_name: string | null
+        }
+        Relationships: []
+      }
+      rum_p75_7d: {
+        Row: {
+          avg_value: number | null
+          max_value: number | null
+          metric: string | null
+          min_value: number | null
+          n: number | null
+          p75: number | null
+          route: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       add_or_restore_guest: {
@@ -715,9 +764,17 @@ export type Database = {
         Args: { e: string }
         Returns: boolean
       }
+      capture_index_usage_snapshot: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       check_phone_exists_for_event: {
         Args: { p_event_id: string; p_phone: string }
         Returns: boolean
+      }
+      cleanup_index_snapshots: {
+        Args: { retain_days?: number }
+        Returns: number
       }
       create_event_with_host_atomic: {
         Args: { event_data: Json }
@@ -732,6 +789,10 @@ export type Database = {
       current_announcement_audience_count: {
         Args: { p_scheduled_message_id: string }
         Returns: number
+      }
+      demote_host_to_guest: {
+        Args: { p_event_id: string; p_user_id: string }
+        Returns: undefined
       }
       detect_duplicate_events: {
         Args: Record<PropertyKey, never>
@@ -799,6 +860,10 @@ export type Database = {
           user_updated_at: string
         }[]
       }
+      get_event_host_count: {
+        Args: { p_event_id: string }
+        Returns: number
+      }
       get_event_reminder_status: {
         Args: { p_event_id: string; p_timeline_id: string }
         Returns: Json
@@ -811,7 +876,51 @@ export type Database = {
         Args: { p_guest_name: string; p_user_full_name: string }
         Returns: string
       }
+      get_guest_event_messages: {
+        Args: {
+          p_before?: string
+          p_cursor_created_at?: string
+          p_cursor_id?: string
+          p_event_id: string
+          p_limit?: number
+        }
+        Returns: {
+          channel_tags: string[]
+          content: string
+          created_at: string
+          delivery_status: string
+          is_catchup: boolean
+          is_own_message: boolean
+          message_id: string
+          message_type: string
+          sender_avatar_url: string
+          sender_name: string
+          source: string
+        }[]
+      }
       get_guest_event_messages_v2: {
+        Args: {
+          p_before?: string
+          p_cursor_created_at?: string
+          p_cursor_id?: string
+          p_event_id: string
+          p_limit?: number
+        }
+        Returns: {
+          channel_tags: string[]
+          content: string
+          created_at: string
+          delivery_status: string
+          is_catchup: boolean
+          is_own_message: boolean
+          message_id: string
+          message_type: string
+          sender_avatar_url: string
+          sender_name: string
+          source: string
+        }[]
+      }
+      get_guest_event_messages_v3: {
         Args: {
           p_before?: string
           p_cursor_created_at?: string
@@ -1015,6 +1124,23 @@ export type Database = {
         Args: { input_phone: string }
         Returns: string
       }
+      promote_guest_to_host: {
+        Args: { p_event_id: string; p_user_id: string }
+        Returns: undefined
+      }
+      prune_old_message_partitions: {
+        Args: { dry_run?: boolean; retain_days?: number }
+        Returns: {
+          action_taken: string
+          partition_age_days: number
+          partition_name: string
+          rows_affected: number
+        }[]
+      }
+      purge_user_link_audit: {
+        Args: { retain_days?: number }
+        Returns: number
+      }
       resolve_event_from_message_v2: {
         Args: { p_message_id: string }
         Returns: string
@@ -1051,6 +1177,19 @@ export type Database = {
         Returns: {
           rolled_back_count: number
           sample_records: Json
+        }[]
+      }
+      run_user_link_audit_purge: {
+        Args: { retain_days?: number }
+        Returns: undefined
+      }
+      show_ops_schedule: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          frequency: string
+          job_name: string
+          next_recommended_run: string
+          sql_command: string
         }[]
       }
       soft_delete_guest: {

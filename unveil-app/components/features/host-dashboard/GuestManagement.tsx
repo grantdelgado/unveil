@@ -6,6 +6,9 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useHostGuestDecline } from '@/hooks/guests';
 import { supabase } from '@/lib/supabase/client';
 import { sendSingleGuestInvite } from '@/lib/services/singleInvite';
+import { useEventCapabilities } from '@/hooks/useEventCapabilities';
+import { useAuth } from '@/lib/auth/AuthProvider';
+import { useEventRoleTotals } from '@/hooks/guests/useEventRoleTotals';
 
 import { useSimpleGuestStore } from '@/hooks/guests/useSimpleGuestStore';
 import { useUnifiedGuestCounts } from '@/hooks/guests';
@@ -43,9 +46,29 @@ function GuestManagementContent({
   >('all');
   const [invitingGuestId, setInvitingGuestId] = useState<string | null>(null);
   const [showBulkInviteModal, setShowBulkInviteModal] = useState(false);
+  const [roleActionLoading, setRoleActionLoading] = useState<string | null>(null);
   
   // Infinite scroll ref
   const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  // Get current user and capabilities
+  const { session } = useAuth();
+  const currentUserId = session?.user?.id;
+  
+  // Determine current user's role (assume host for guest management page)
+  const currentUserRole = 'host' as const;
+  
+  const capabilities = useEventCapabilities({
+    eventId,
+    userRole: currentUserRole,
+  });
+
+  // Get accurate total counts for section headers
+  const { 
+    hostsTotal, 
+    guestsTotal, 
+    refetch: refetchTotals 
+  } = useEventRoleTotals(eventId);
 
   // Data hooks with pagination support
   const { 
@@ -78,6 +101,141 @@ function GuestManagementContent({
   const handleSendInvitations = useCallback(() => {
     setShowBulkInviteModal(true);
   }, []);
+
+  // Role management handlers
+  const handlePromoteToHost = useCallback(async (userId: string) => {
+    if (!capabilities.canPromoteGuests) {
+      showError('You do not have permission to promote guests');
+      return;
+    }
+
+    // Log action attempt (PII-safe)
+    console.info('ui.roles.action_clicked', {
+      action: 'promote',
+      target_user_id: userId,
+    });
+
+    setRoleActionLoading(userId);
+    
+    try {
+      const response = await fetch('/api/roles/promote', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          eventId,
+          userId, // This should be guest.user_id, not guest.id
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        // Handle specific error codes with appropriate user messages
+        if (response.status === 401) {
+          throw new Error('You need to be logged in to change roles');
+        } else if (response.status === 403) {
+          throw new Error("You don't have permission to change roles");
+        } else if (response.status === 409) {
+          // 409 should not happen in promote, but handle gracefully
+          throw new Error('Role conflict - please refresh and try again');
+        } else if (result.error === 'invalid_phone_unrelated') {
+          // Phone validation should not occur in promote
+          throw new Error("Couldn't make host. Please try again.");
+        } else if (result.error === 'user_not_guest') {
+          throw new Error('User is not a member of this event');
+        } else {
+          throw new Error(result.message || result.error || 'Failed to promote guest');
+        }
+      }
+
+      showSuccess('Guest successfully promoted to host');
+      refreshGuests();
+      refreshCounts();
+      refetchTotals(); // Update section header counts
+      onGuestUpdated?.();
+
+      // Log success (PII-safe)
+      console.info('ui.roles.promote', {
+        event_id: eventId,
+        target_user_id: userId,
+      });
+
+    } catch (error) {
+      console.error('Failed to promote guest:', error);
+      showError(error instanceof Error ? error.message : 'Failed to promote guest');
+    } finally {
+      setRoleActionLoading(null);
+    }
+  }, [eventId, capabilities.canPromoteGuests, showError, showSuccess, refreshGuests, refreshCounts, refetchTotals, onGuestUpdated]);
+
+  const handleDemoteFromHost = useCallback(async (userId: string) => {
+    if (!capabilities.canDemoteHosts) {
+      showError('You do not have permission to demote hosts');
+      return;
+    }
+
+    // Prevent self-demotion
+    if (userId === currentUserId) {
+      showError('You cannot demote yourself');
+      return;
+    }
+
+    // Log action attempt (PII-safe)
+    console.info('ui.roles.action_clicked', {
+      action: 'demote',
+      target_user_id: userId,
+    });
+
+    setRoleActionLoading(userId);
+    
+    try {
+      const response = await fetch('/api/roles/demote', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          eventId,
+          userId, // This should be guest.user_id, not guest.id
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        // Handle specific error codes with appropriate user messages
+        if (response.status === 401) {
+          throw new Error('You need to be logged in to change roles');
+        } else if (response.status === 403) {
+          throw new Error("You don't have permission to change roles");
+        } else if (response.status === 409) {
+          throw new Error('You must keep at least one host');
+        } else {
+          throw new Error(result.message || result.error || 'Failed to demote host');
+        }
+      }
+
+      showSuccess('Host successfully demoted to guest');
+      refreshGuests();
+      refreshCounts();
+      refetchTotals(); // Update section header counts
+      onGuestUpdated?.();
+
+      // Log success (PII-safe)
+      console.info('ui.roles.demote', {
+        event_id: eventId,
+        target_user_id: userId,
+      });
+
+    } catch (error) {
+      console.error('Failed to demote host:', error);
+      showError(error instanceof Error ? error.message : 'Failed to demote host');
+    } finally {
+      setRoleActionLoading(null);
+    }
+  }, [eventId, currentUserId, capabilities.canDemoteHosts, showError, showSuccess, refreshGuests, refreshCounts, refetchTotals, onGuestUpdated]);
 
   // Handler for bulk invite success
   const handleBulkInviteSuccess = useCallback(() => {
@@ -222,56 +380,91 @@ function GuestManagementContent({
     }
   }, [filterByRSVP, searchTerm, refreshGuests]); // Reset when filter or search changes
 
-  // Simplified filtering (server now handles alphabetical ordering)
-  const filteredGuests = useMemo(() => {
-    if (!guests || !Array.isArray(guests)) return [];
+  // Segment guests by role for hosts summary and list organization
+  const { hosts, regularGuests } = useMemo(() => {
+    if (!guests || !Array.isArray(guests)) return { hosts: [], regularGuests: [] };
+    
+    const hosts = guests.filter(guest => guest.role === 'host');
+    const regularGuests = guests.filter(guest => guest.role !== 'host');
+    
+    // Log segment counts (PII-safe)
+    console.info('ui.guests.segment_counts', {
+      hosts: hosts.length,
+      guests: regularGuests.length,
+    });
+    
+    return { hosts, regularGuests };
+  }, [guests]);
 
-    let filtered = guests;
+  // Note: Removed old filteredGuests logic - now using segmented filtering approach
 
-    // Apply search filter
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
-      filtered = filtered.filter((guest) => {
-        const displayName = guest.guest_display_name?.toLowerCase() || '';
-        const guestName = guest.guest_name?.toLowerCase() || '';
-        const phone = guest.phone?.toLowerCase() || '';
-        const userFullName = guest.users?.full_name?.toLowerCase() || '';
+  // Apply filtering to segmented lists
+  const { filteredHosts, filteredRegularGuests } = useMemo(() => {
+    const applyFilters = (guestList: typeof guests) => {
+      if (!guestList || !Array.isArray(guestList)) return [];
 
-        return (
-          displayName.includes(searchLower) ||
-          guestName.includes(searchLower) ||
-          phone.includes(searchLower) ||
-          userFullName.includes(searchLower)
-        );
+      let filtered = guestList;
+
+      // Apply search filter
+      if (searchTerm) {
+        const searchLower = searchTerm.toLowerCase();
+        filtered = filtered.filter((guest) => {
+          const displayName = guest.guest_display_name?.toLowerCase() || '';
+          const guestName = guest.guest_name?.toLowerCase() || '';
+          const phone = guest.phone?.toLowerCase() || '';
+          const userFullName = guest.users?.full_name?.toLowerCase() || '';
+
+          return (
+            displayName.includes(searchLower) ||
+            guestName.includes(searchLower) ||
+            phone.includes(searchLower) ||
+            userFullName.includes(searchLower)
+          );
+        });
+      }
+
+      // Apply invitation status filter
+      if (filterByRSVP !== 'all') {
+        filtered = filtered.filter((guest) => {
+          const hasDeclined = !!guest.declined_at;
+          const hasBeenInvited = !!guest.last_invited_at;
+
+          switch (filterByRSVP) {
+            case 'declined':
+              return hasDeclined;
+            case 'invited':
+              return hasBeenInvited && !hasDeclined;
+            case 'not_invited':
+              return !hasBeenInvited && !hasDeclined;
+            case 'attending':
+              return !hasDeclined;
+            default:
+              return true;
+          }
+        });
+      }
+
+      return filtered;
+    };
+
+    return {
+      filteredHosts: applyFilters(hosts),
+      filteredRegularGuests: applyFilters(regularGuests),
+    };
+  }, [hosts, regularGuests, searchTerm, filterByRSVP]);
+
+  // Log section counts when rendered (PII-safe)
+  useEffect(() => {
+    if (hostsTotal > 0 || guestsTotal > 0) {
+      console.info('ui.guests.section_counts_rendered', {
+        hosts_total: hostsTotal,
+        guests_total: guestsTotal,
+        hosts_filtered: filteredHosts.length,
+        guests_filtered: filteredRegularGuests.length,
+        has_filters: !!(searchTerm || filterByRSVP !== 'all'),
       });
     }
-
-    // Apply invitation status filter
-    if (filterByRSVP !== 'all') {
-      filtered = filtered.filter((guest) => {
-        // Determine guest status based on timestamps
-        const hasDeclined = !!guest.declined_at;
-        const hasBeenInvited = !!guest.last_invited_at;
-
-        switch (filterByRSVP) {
-          case 'declined':
-            return hasDeclined;
-          case 'invited':
-            return hasBeenInvited && !hasDeclined;
-          case 'not_invited':
-            return !hasBeenInvited && !hasDeclined;
-          case 'attending':
-            return !hasDeclined; // Legacy attending = not declined
-          default:
-            return true;
-        }
-      });
-    }
-
-    // No client-side sorting needed - server returns guests in alphabetical order
-    // Hosts appear first, then guests alphabetically by display name
-    return filtered;
-  }, [guests, searchTerm, filterByRSVP]);
+  }, [hostsTotal, guestsTotal, filteredHosts.length, filteredRegularGuests.length, searchTerm, filterByRSVP]);
 
   // Note: RSVP updates now handled through decline/clear decline actions only
   // Legacy RSVP dropdown removed as part of RSVP-Lite hard cutover
@@ -415,11 +608,8 @@ function GuestManagementContent({
         hasGuests={guests.length > 0}
       />
 
-      {/* Bulk Actions (if applicable) */}
-      {/* Note: Bulk actions removed as part of RSVP-Lite hard cutover */}
-
-      {/* Guest List */}
-      {filteredGuests.length === 0 ? (
+      {/* Segmented Guest List */}
+      {filteredHosts.length === 0 && filteredRegularGuests.length === 0 ? (
         <div className="bg-white rounded-lg p-8 text-center shadow-sm border border-gray-100">
           <div className="text-6xl mb-4">
             {searchTerm || filterByRSVP !== 'all' ? '🔍' : '👥'}
@@ -454,18 +644,78 @@ function GuestManagementContent({
           )}
         </div>
       ) : (
-        <div className="space-y-1">
-          {/* Guest items - reduced spacing between cards */}
-          {filteredGuests.map((guest) => (
-            <GuestListItem
-              key={guest.id}
-              guest={guest}
-              onRemove={() => handleRemoveGuestWithFeedback(guest.id)}
-              onClearDecline={handleClearGuestDecline}
-              onInvite={handleInviteGuest}
-              inviteLoading={invitingGuestId === guest.id}
-            />
-          ))}
+        <div className="space-y-4">
+          {/* Hosts Section */}
+          {filteredHosts.length > 0 && (
+            <div id="hosts-section">
+              {/* Sticky Header */}
+              <div 
+                className="sticky top-0 bg-white/80 backdrop-blur-sm border-b border-gray-200 px-4 py-3 z-10"
+                role="heading"
+                aria-level={2}
+              >
+                <h2 className="text-lg font-semibold text-gray-900">
+                  HOSTS ({searchTerm || filterByRSVP !== 'all' ? `${filteredHosts.length} of ${hostsTotal}` : hostsTotal})
+                </h2>
+              </div>
+              
+              {/* Host Items */}
+              <div className="space-y-1 pt-2">
+                {filteredHosts.map((guest) => (
+                  <GuestListItem
+                    key={guest.id}
+                    guest={guest}
+                    onRemove={() => handleRemoveGuestWithFeedback(guest.id)}
+                    onClearDecline={handleClearGuestDecline}
+                    onInvite={handleInviteGuest}
+                    inviteLoading={invitingGuestId === guest.id}
+                    onPromoteToHost={handlePromoteToHost}
+                    onDemoteFromHost={handleDemoteFromHost}
+                    roleActionLoading={roleActionLoading === guest.user_id}
+                    eventId={eventId}
+                    currentUserRole={currentUserRole}
+                    currentUserId={currentUserId}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Guests Section */}
+          {filteredRegularGuests.length > 0 && (
+            <div id="guests-section">
+              {/* Sticky Header */}
+              <div 
+                className="sticky top-0 bg-white/80 backdrop-blur-sm border-b border-gray-200 px-4 py-3 z-10"
+                role="heading"
+                aria-level={2}
+              >
+                <h2 className="text-lg font-semibold text-gray-900">
+                  GUESTS ({searchTerm || filterByRSVP !== 'all' ? `${filteredRegularGuests.length} of ${guestsTotal}` : guestsTotal})
+                </h2>
+              </div>
+              
+              {/* Guest Items */}
+              <div className="space-y-1 pt-2">
+                {filteredRegularGuests.map((guest) => (
+                  <GuestListItem
+                    key={guest.id}
+                    guest={guest}
+                    onRemove={() => handleRemoveGuestWithFeedback(guest.id)}
+                    onClearDecline={handleClearGuestDecline}
+                    onInvite={handleInviteGuest}
+                    inviteLoading={invitingGuestId === guest.id}
+                    onPromoteToHost={handlePromoteToHost}
+                    onDemoteFromHost={handleDemoteFromHost}
+                    roleActionLoading={roleActionLoading === guest.user_id}
+                    eventId={eventId}
+                    currentUserRole={currentUserRole}
+                    currentUserId={currentUserId}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
           
           {/* Infinite scroll loading sentinel */}
           {GuestsFlags.paginationEnabled && hasMore && (
