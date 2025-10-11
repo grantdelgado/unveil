@@ -1,6 +1,7 @@
 'use client';
 
 import { fromUTCToEventZone, getTimezoneLabel } from '@/lib/utils/timezone';
+import { ScheduleItemCard } from '@/components/features/scheduling/ScheduleItemCard';
 import type { Database } from '@/app/reference/supabase.types';
 
 type Event = Database['public']['Tables']['events']['Row'];
@@ -134,56 +135,29 @@ export function ScheduleContent({ event, scheduleItems }: ScheduleContentProps) 
           <div key={date} className="bg-white rounded-2xl shadow-lg overflow-hidden">
             {/* Date Header */}
             <div className="bg-gradient-to-r from-purple-50 to-rose-50 p-6 border-b">
-              <h3 className="text-xl font-bold text-gray-900">{dayOfWeek}</h3>
-              <p className="text-gray-700">{formattedDate}</p>
+              <h3 className="font-semibold text-[15px] tracking-tight text-foreground">{dayOfWeek}</h3>
+              <p className="text-gray-700 text-sm">{formattedDate}</p>
             </div>
 
             {/* Schedule Items */}
-            <div className="divide-y divide-gray-100">
-              {items.map((item) => {
-                const eventTimeData = fromUTCToEventZone(
-                  item.start_at,
-                  effectiveTimeZone,
-                );
-
-                return (
-                  <div key={item.id} className="p-6 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-start space-x-4">
-                      {/* Time Badge */}
-                      <div className="flex-shrink-0">
-                        <div className="px-3 py-2 bg-purple-100 border border-purple-200 rounded-lg">
-                          <p className="text-purple-800 text-sm font-medium">
-                            {eventTimeData?.time || 'Time TBD'}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Event Details */}
-                      <div className="flex-1 min-w-0">
-                        <h4 className="text-lg font-semibold text-gray-900 mb-1">
-                          {item.title}
-                        </h4>
-                        
-                        <div className="flex flex-wrap gap-3 text-sm text-gray-600">
-                          {item.location && (
-                            <div className="flex items-center space-x-1">
-                              <span>📍</span>
-                              <span>{item.location}</span>
-                            </div>
-                          )}
-                          
-                          {item.attire && (
-                            <div className="flex items-center space-x-1">
-                              <span>👔</span>
-                              <span>{item.attire}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="p-6 space-y-6">
+              {items.map((item, index) => (
+                <div
+                  key={item.id}
+                  className="animate-slide-up"
+                  style={{
+                    animationDelay: `${index * 0.04}s`,
+                    animationFillMode: 'both'
+                  }}
+                >
+                  <ScheduleItemCard
+                    item={item}
+                    eventId={event.id}
+                    eventTimeZone={effectiveTimeZone}
+                    isHost={false}
+                  />
+                </div>
+              ))}
             </div>
           </div>
         );

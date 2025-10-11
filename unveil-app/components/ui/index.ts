@@ -40,4 +40,7 @@ export * from './inputs';
 export { useToast } from './useToast';
 export { ToastProvider, useToast as useEnhancedToast } from './Toast';
 
+// Tooltip component
+export { Tooltip } from './Tooltip';
+
 // Note: Typography, Button, and Loading components are exported above
