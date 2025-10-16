@@ -70,7 +70,14 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!data || data.length === 0) {
+    // Type assertion for the backfill result
+    const backfillResults = data as Array<{
+      details: string;
+      total_eligible_count: number;
+      updated_count: number;
+    }> | null;
+
+    if (!backfillResults || backfillResults.length === 0) {
       return NextResponse.json(
         {
           error: 'No results returned from backfill function',
