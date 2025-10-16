@@ -89,11 +89,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const result = data[0] as {
-      updated_count: number;
-      total_eligible_count: number;
-      details: string;
-    };
+    const result = backfillResults[0];
 
     console.log('✅ Backfill completed:', {
       updated_count: result.updated_count,
