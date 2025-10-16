@@ -21,6 +21,7 @@ interface ConfirmBulkInviteModalProps {
   eventId: string;
   eligibleCount: number;
   excludedReasons?: string[]; // Keep for interface compatibility but not used in UI
+  isEventPublic?: boolean; // Whether the event is visible to invited guests
 }
 
 /**
@@ -33,6 +34,7 @@ export function ConfirmBulkInviteModal({
   onSuccess,
   eventId,
   eligibleCount,
+  isEventPublic = true,
   // excludedReasons not used in current UI implementation
 }: ConfirmBulkInviteModalProps) {
   const [isLoading, setIsLoading] = useState(false);
@@ -243,6 +245,24 @@ export function ConfirmBulkInviteModal({
             </p>
           )}
         </div>
+
+        {/* Warning when event is not published */}
+        {!isEventPublic && eligibleCount > 0 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+            <div className="flex items-start gap-3">
+              <span className="text-amber-600 text-xl flex-shrink-0">⚠️</span>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-amber-900 mb-1">
+                  Event is hidden from guests
+                </p>
+                <p className="text-sm text-amber-800">
+                  Invited guests won&apos;t be able to see this event until you make it visible. 
+                  You can update visibility in Event Settings.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Error display */}
         {error && (

@@ -29,9 +29,17 @@ export function EventSummaryCard({ event, className }: EventSummaryCardProps) {
       <div className="space-y-4">
         {/* Event Title and Basic Info */}
         <div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">
-            {event.title}
-          </h2>
+          <div className="flex items-start justify-between gap-2 mb-2">
+            <h2 className="text-xl font-bold text-gray-900">
+              {event.title}
+            </h2>
+            {!event.is_public && (
+              <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-amber-800 bg-amber-50 border border-amber-200 rounded-md flex-shrink-0">
+                <span className="text-sm">🔒</span>
+                Hidden from guests
+              </span>
+            )}
+          </div>
 
           <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
             <div className="flex items-center gap-1.5">

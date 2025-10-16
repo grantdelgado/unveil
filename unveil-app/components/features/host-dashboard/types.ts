@@ -63,6 +63,7 @@ export interface LoadingStates {
 // Component props interfaces
 export interface GuestManagementProps {
   eventId: string;
+  isEventPublic?: boolean; // Whether the event is visible to invited guests
   onGuestUpdated?: () => void;
   onImportGuests?: () => void;
   onAddIndividualGuest?: () => void;

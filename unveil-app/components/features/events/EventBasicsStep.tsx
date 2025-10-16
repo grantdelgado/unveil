@@ -44,50 +44,29 @@ export function EventBasicsStep({
         <MicroCopy>This will be the main title for your wedding hub</MicroCopy>
       </div>
 
-      {/* Date and Time Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Event Date */}
-        <div className="space-y-2">
-          <label
-            htmlFor="event_date"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Wedding Date <span className="text-red-500">*</span>
-          </label>
-          <TextInput
-            type="date"
-            id="event_date"
-            value={formData.event_date}
-            onChange={(e: ChangeEvent<HTMLInputElement>) =>
-              onUpdate('event_date', e.target.value)
-            }
-            disabled={disabled}
-            error={errors.event_date}
-            min={new Date().toISOString().split('T')[0]}
-            className="text-[16px] min-h-[44px]"
-          />
-        </div>
-
-        {/* Event Time */}
-        <div className="space-y-2">
-          <label
-            htmlFor="event_time"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Wedding Time <span className="text-red-500">*</span>
-          </label>
-          <TextInput
-            type="time"
-            id="event_time"
-            value={formData.event_time}
-            onChange={(e: ChangeEvent<HTMLInputElement>) =>
-              onUpdate('event_time', e.target.value)
-            }
-            disabled={disabled}
-            error={errors.event_time}
-            className="text-[16px] min-h-[44px]"
-          />
-        </div>
+      {/* Wedding Date */}
+      <div className="space-y-2">
+        <label
+          htmlFor="event_date"
+          className="block text-sm font-medium text-gray-700"
+        >
+          Wedding Date <span className="text-red-500">*</span>
+        </label>
+        <TextInput
+          type="date"
+          id="event_date"
+          value={formData.event_date}
+          onChange={(e: ChangeEvent<HTMLInputElement>) =>
+            onUpdate('event_date', e.target.value)
+          }
+          disabled={disabled}
+          error={errors.event_date}
+          min={new Date().toISOString().split('T')[0]}
+          className="text-[16px] min-h-[44px]"
+        />
+        <MicroCopy>
+          You&apos;ll be able to add ceremony, reception, and other events with specific times after creating your Wedding Hub.
+        </MicroCopy>
       </div>
 
       {/* Event Tag for SMS */}
@@ -161,12 +140,12 @@ export function EventBasicsStep({
               htmlFor="is_public"
               className="text-base font-medium text-gray-700"
             >
-              Publish your wedding hub now?
+              Make your wedding hub visible to invited guests?
             </label>
             <MicroCopy>
-              Guests will be able to see your wedding hub as soon as they log in
-              with their invited phone number. You can also choose to add guests
-              before publishing.
+              When enabled, invited guests will see this event after logging in. 
+              If disabled, you can still invite them now—but they won&apos;t see 
+              anything until you publish.
             </MicroCopy>
           </div>
         </div>

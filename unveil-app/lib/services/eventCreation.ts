@@ -13,6 +13,7 @@ export interface EventCreationInput {
   header_image?: File;
   creation_key?: string; // Idempotency key to prevent duplicate events
   sms_tag: string; // Required SMS tag for event identification
+  // Note: start_time and time_zone will be handled at sub-event level (ceremony, reception, etc.)
 }
 
 export interface EventCreationResult {
@@ -307,6 +308,7 @@ export class EventCreationService {
     creationKey: string,
   ): Promise<EventCreationResult> {
     // Prepare event data
+    // Note: start_time and time_zone will be handled at sub-event level (ceremony, reception, etc.)
           const eventData = {
         title: input.title.trim(),
         event_date: input.event_date,
@@ -393,6 +395,7 @@ export class EventCreationService {
       }
 
       // Step 2: Create event record
+      // Note: start_time and time_zone will be handled at sub-event level (ceremony, reception, etc.)
       const eventData: EventInsert = {
         title: input.title.trim(),
         event_date: input.event_date,
@@ -526,7 +529,7 @@ export class EventCreationService {
         phone: hostProfile.phone, // Use actual host phone number from profile
         guest_name: hostProfile.full_name || 'Host',
         role: 'host',
-        rsvp_status: 'attending',
+        // rsvp_status removed - column doesn't exist in current schema (RSVP-Lite uses declined_at instead)
         preferred_communication: 'sms',
         sms_opt_out: false, // Hosts should be opted into SMS for their own events
       };

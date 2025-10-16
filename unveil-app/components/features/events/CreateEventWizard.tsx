@@ -16,16 +16,14 @@ import {
 } from '@/components/ui';
 
 import { EventBasicsStep } from './EventBasicsStep';
-import { EventImageStep } from './EventImageStep';
 import { EventReviewStep } from './EventReviewStep';
 import type { EventFormData, EventFormErrors } from './types';
 
-type WizardStep = 'basics' | 'image' | 'review';
+type WizardStep = 'basics' | 'review';
 
 const STEP_CONFIG = {
-  basics: { title: 'Event Details', icon: '📅', step: 1 },
-  image: { title: 'Header Image', icon: '🖼️', step: 2 },
-  review: { title: 'Review & Create', icon: '✅', step: 3 },
+  basics: { title: 'Event Details', icon: '📅' },
+  review: { title: 'Review Your Details', icon: '✅' },
 };
 
 export default function CreateEventWizard() {
@@ -38,15 +36,10 @@ export default function CreateEventWizard() {
   const [formData, setFormData] = useState<EventFormData>({
     title: '',
     event_date: '',
-    event_time: '15:00',
     location: '',
     is_public: true,
     sms_tag: '',
   });
-
-  // Image state
-  const [headerImage, setHeaderImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>('');
 
   // UI state
   const [errors, setErrors] = useState<EventFormErrors>({});
@@ -93,22 +86,12 @@ export default function CreateEventWizard() {
           }
         }
 
-        if (!formData.event_time) {
-          newErrors.event_time = 'Event time is required';
-        }
-
         if (!formData.sms_tag.trim()) {
           newErrors.sms_tag = 'Event tag is required';
         } else if (formData.sms_tag.length > 20) {
           newErrors.sms_tag = 'Event tag must be 20 characters or less';
         } else if (!/^[a-zA-Z0-9+\s]*$/.test(formData.sms_tag)) {
           newErrors.sms_tag = 'Event tag can only contain letters, numbers, spaces, and +';
-        }
-        break;
-
-      case 'image':
-        if (headerImage && headerImage.size > 10 * 1024 * 1024) {
-          newErrors.image = 'Image must be smaller than 10MB';
         }
         break;
 
@@ -119,7 +102,7 @@ export default function CreateEventWizard() {
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [currentStep, formData, headerImage]);
+  }, [currentStep, formData]);
 
   // Navigate between steps
   const goToStep = useCallback(
@@ -133,7 +116,7 @@ export default function CreateEventWizard() {
   );
 
   const goToNextStep = useCallback(() => {
-    const stepOrder: WizardStep[] = ['basics', 'image', 'review'];
+    const stepOrder: WizardStep[] = ['basics', 'review'];
     const currentIndex = stepOrder.indexOf(currentStep);
     if (currentIndex < stepOrder.length - 1) {
       goToStep(stepOrder[currentIndex + 1]);
@@ -141,7 +124,7 @@ export default function CreateEventWizard() {
   }, [currentStep, goToStep]);
 
   const goToPrevStep = useCallback(() => {
-    const stepOrder: WizardStep[] = ['basics', 'image', 'review'];
+    const stepOrder: WizardStep[] = ['basics', 'review'];
     const currentIndex = stepOrder.indexOf(currentStep);
     if (currentIndex > 0) {
       setCurrentStep(stepOrder[currentIndex - 1]);
@@ -190,7 +173,6 @@ export default function CreateEventWizard() {
         event_date: formData.event_date,
         location: formData.location || undefined,
         is_public: formData.is_public,
-        header_image: headerImage || undefined,
         creation_key: creationKeyRef.current, // Include idempotency key
         sms_tag: formData.sms_tag.trim(),
       };
@@ -237,48 +219,29 @@ export default function CreateEventWizard() {
       setIsLoading(false);
       submissionInProgressRef.current = false; // Reset for retry
     }
-  }, [formData, headerImage, validateCurrentStep, router]);
+  }, [formData, validateCurrentStep, router]);
 
   // Get current step info
   const currentStepConfig = STEP_CONFIG[currentStep];
-  const totalSteps = Object.keys(STEP_CONFIG).length;
 
   return (
     <PageWrapper centered={false}>
       <div className="max-w-2xl mx-auto">
         {/* Header */}
-        <CardContainer maxWidth="xl" className="mb-6">
-          <div className="text-center space-y-4">
+        <CardContainer maxWidth="xl" className="mb-4">
+          <div className="text-center space-y-3">
             <PageTitle>Create Your Wedding Hub</PageTitle>
             <SubTitle>
-              Set up your wedding communication center in just a few steps
+              {currentStep === 'basics' 
+                ? 'Set up your wedding communication center' 
+                : 'Review your details before publishing'}
             </SubTitle>
-
-            {/* Progress indicator */}
-            <div className="flex items-center justify-center space-x-2 pt-4">
-              <div className="flex items-center space-x-1">
-                <span className="text-2xl">{currentStepConfig.icon}</span>
-                <span className="text-sm font-medium text-gray-600">
-                  Step {currentStepConfig.step} of {totalSteps}
-                </span>
-              </div>
-            </div>
-
-            {/* Progress bar */}
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div
-                className="bg-pink-500 h-2 rounded-full transition-all duration-300"
-                style={{
-                  width: `${(currentStepConfig.step / totalSteps) * 100}%`,
-                }}
-              />
-            </div>
           </div>
         </CardContainer>
 
         {/* Step Content */}
         <CardContainer maxWidth="xl">
-          <div className="space-y-6">
+          <div className="space-y-5">
             <SectionTitle className="flex items-center gap-2">
               <span className="text-2xl">{currentStepConfig.icon}</span>
               {currentStepConfig.title}
@@ -294,22 +257,9 @@ export default function CreateEventWizard() {
               />
             )}
 
-            {currentStep === 'image' && (
-              <EventImageStep
-                headerImage={headerImage}
-                imagePreview={imagePreview}
-                onImageChange={setHeaderImage}
-                onPreviewChange={setImagePreview}
-                error={errors.image}
-                disabled={isLoading}
-              />
-            )}
-
             {currentStep === 'review' && (
               <EventReviewStep
                 formData={formData}
-                headerImage={headerImage}
-                imagePreview={imagePreview}
               />
             )}
 

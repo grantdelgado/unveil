@@ -432,11 +432,12 @@ export function EventDetailsEditor({
                     htmlFor="is_public"
                     className="text-base font-medium text-gray-700"
                   >
-                    Show event to invited guests
+                    Make your wedding hub visible to invited guests?
                   </label>
                   <MicroCopy>
-                    Invited guests who sign in with their phone number can find
-                    this event and will be added automatically.
+                    When enabled, invited guests will see this event after logging in. 
+                    If disabled, you can still invite them now—but they won&apos;t see 
+                    anything until you publish.
                   </MicroCopy>
                   <div
                     className={cn(

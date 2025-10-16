@@ -15,6 +15,18 @@ export interface EventTimeZoneInfo {
 }
 
 /**
+ * Gets the user's browser timezone
+ * @returns IANA timezone identifier (e.g., "America/Los_Angeles")
+ */
+export function getBrowserTimezone(): string {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone;
+  } catch {
+    return 'America/Los_Angeles'; // Safe fallback to Pacific Time
+  }
+}
+
+/**
  * Validates if a string is a valid IANA timezone identifier
  */
 export function isValidTimezone(timeZone: string): boolean {

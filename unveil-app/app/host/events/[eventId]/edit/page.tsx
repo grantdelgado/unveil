@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase/client';
 // Note: Media functionality now handled via domain hooks
 import { cn } from '@/lib/utils';
 import { formatEventDateTime } from '@/lib/utils/date';
+import { fromUTCToEventZone, toUTCFromEventZone, getBrowserTimezone } from '@/lib/utils/timezone';
 import type { Database } from '@/app/reference/supabase.types';
 import {
   PageWrapper,
@@ -30,6 +31,7 @@ interface FormErrors {
   title?: string;
   event_date?: string;
   event_time?: string;
+  time_zone?: string;
   location?: string;
   image?: string;
 }
@@ -47,6 +49,7 @@ export default function EditEventPage() {
     title: '',
     event_date: '',
     event_time: '',
+    time_zone: '',
     location: '',
     description: '',
     is_public: true,
@@ -94,15 +97,29 @@ export default function EditEventPage() {
 
         setOriginalEvent(eventData);
 
-        // Parse event_date into date and time components
-        const eventDateTime = new Date(eventData.event_date);
-        const dateStr = eventDateTime.toISOString().split('T')[0];
-        const timeStr = eventDateTime.toTimeString().slice(0, 5);
+        // Extract date and time from start_time (if available) or fall back to event_date
+        let dateStr: string;
+        let timeStr: string;
+        
+        if (eventData.start_time) {
+          // Use start_time and convert from UTC to event timezone
+          const localTime = fromUTCToEventZone(
+            eventData.start_time,
+            eventData.time_zone || 'UTC',
+          );
+          dateStr = localTime?.date || eventData.event_date;
+          timeStr = localTime?.time || '17:00';
+        } else {
+          // Legacy: fall back to event_date only (no time component)
+          dateStr = eventData.event_date;
+          timeStr = '17:00'; // Default to 5 PM for legacy events
+        }
 
         setFormData({
           title: eventData.title,
           event_date: dateStr,
           event_time: timeStr,
+          time_zone: eventData.time_zone || getBrowserTimezone(),
           location: eventData.location || '',
           description: eventData.description || '',
           is_public: eventData.is_public ?? true,
@@ -313,13 +330,25 @@ export default function EditEventPage() {
         }
       }
 
-      // Combine date and time
-      const eventDateTime = `${formData.event_date}T${formData.event_time}:00`;
+      // Calculate start_time in UTC from local date/time/timezone
+      const startTimeUTC = toUTCFromEventZone(
+        formData.event_date,
+        formData.event_time,
+        formData.time_zone,
+      );
+
+      if (!startTimeUTC) {
+        setFormMessage('Invalid date, time, or timezone combination. Please check your inputs.');
+        setIsLoading(false);
+        return;
+      }
 
       // Update the event
       const eventData: EventUpdate = {
         title: formData.title.trim(),
-        event_date: eventDateTime,
+        event_date: formData.event_date, // Keep as date string for backward compat
+        start_time: startTimeUTC, // Store full datetime in UTC
+        time_zone: formData.time_zone,
         location: formData.location.trim() || null,
         description: formData.description.trim() || null,
         header_image_url: headerImageUrl,

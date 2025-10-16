@@ -33,6 +33,7 @@ import type { GuestManagementProps, GuestStatusCounts } from './types';
  */
 function GuestManagementContent({
   eventId,
+  isEventPublic = true,
   onGuestUpdated,
   onImportGuests,
   onAddIndividualGuest,
@@ -766,6 +767,7 @@ function GuestManagementContent({
         onSuccess={handleBulkInviteSuccess}
         eventId={eventId}
         eligibleCount={simplifiedCounts.not_invited}
+        isEventPublic={isEventPublic}
         excludedReasons={[
           'Guests without valid phone numbers',
           'Guests who opted out of SMS',

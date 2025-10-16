@@ -7,7 +7,6 @@
 export interface EventFormData {
   title: string;
   event_date: string;
-  event_time: string;
   location: string;
   is_public: boolean;
   sms_tag: string;
@@ -16,7 +15,6 @@ export interface EventFormData {
 export interface EventFormErrors {
   title?: string;
   event_date?: string;
-  event_time?: string;
   location?: string;
   image?: string;
   general?: string;

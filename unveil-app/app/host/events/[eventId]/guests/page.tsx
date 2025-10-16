@@ -284,6 +284,7 @@ export default function EventGuestsPage() {
         >
           <LazyGuestManagement
             eventId={eventId}
+            isEventPublic={event?.is_public ?? true}
             onGuestUpdated={handleDataRefresh}
             onImportGuests={() => setShowCSVImport(true)}
             onAddIndividualGuest={() => setShowAddIndividualGuest(true)}

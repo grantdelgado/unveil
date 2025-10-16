@@ -1,0 +1,37 @@
+FK Index Health Check - Baseline Before Migration
+=================================================
+Date: 2025-10-14
+Migration: 20251014173731_add_fk_indexes.sql (NOT YET DEPLOYED)
+
+1. Unindexed FK Count: 5 (expected before migration)
+
+2. Baseline Query Plan - Scheduled Messages Join:
+Query: SELECT sm.id, sm.content, sm.send_at, u.full_name
+       FROM scheduled_messages sm
+       JOIN users u ON u.id = sm.sender_user_id
+       WHERE sm.status = 'scheduled' AND sm.send_at > NOW()
+       ORDER BY sm.send_at LIMIT 10;
+
+Plan:
+Limit  (cost=0.27..4.76 rows=1 width=70) (actual time=0.643..0.644 rows=0 loops=1)
+  Buffers: shared hit=1
+  ->  Nested Loop  (cost=0.27..4.76 rows=1 width=70) (actual time=0.642..0.643 rows=0 loops=1)
+        Buffers: shared hit=1
+        ->  Index Scan using idx_scheduled_messages_processing on scheduled_messages sm  (cost=0.13..2.35 rows=1 width=73) (actual time=0.641..0.642 rows=0 loops=1)
+              Index Cond: (((status)::text = 'scheduled'::text) AND (send_at > now()))
+              Buffers: shared hit=1
+        ->  Index Scan using users_pkey on users u  (cost=0.14..2.36 rows=1 width=29) (never executed)
+              Index Cond: (id = sm.sender_user_id)
+
+Planning Time: 6.491 ms
+Execution Time: 0.706 ms
+
+Analysis:
+- Currently using nested loop join
+- The join on sm.sender_user_id = u.id uses users_pkey (good)
+- Missing index on scheduled_messages.sender_user_id would help if there were multiple scheduled messages
+- After adding idx_scheduled_messages__sender_user_id, we should see improved performance for queries filtering by sender
+
+Expected Improvement:
+- Better selectivity when filtering scheduled_messages by sender_user_id
+- Potential for hash joins or merge joins with larger result sets

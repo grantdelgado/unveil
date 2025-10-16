@@ -32,6 +32,7 @@ export const Typography = TypographyComponents;
 
 // Input components
 export { PhoneNumberInput, TextInput, OTPInput } from './UnveilInput';
+export { TimezoneSelect } from './TimezoneSelect';
 
 // Modern focused input components (recommended)
 export * from './inputs';
