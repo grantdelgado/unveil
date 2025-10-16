@@ -63,7 +63,7 @@ async function processDueScheduledMessages(
 
   try {
     // Fetch messages ready to send with FOR UPDATE SKIP LOCKED for concurrency safety
-    const { data: readyMessages, error: fetchError } = await supabase.rpc(
+    const { data, error: fetchError } = await supabase.rpc(
       'get_scheduled_messages_for_processing',
       {
         p_limit: maxMessages,
@@ -76,6 +76,21 @@ async function processDueScheduledMessages(
         `Failed to fetch scheduled messages: ${fetchError.message}`,
       );
     }
+
+    // Type assertion for the RPC result
+    const readyMessages = data as Array<{
+      id: string;
+      event_id: string;
+      content: string;
+      send_at: string;
+      sender_user_id: string;
+      event_title: string;
+      event_sms_tag: string;
+      message_type: string;
+      target_all_guests: boolean;
+      target_guest_ids: string[] | null;
+      target_guest_tags: string[] | null;
+    }> | null;
 
     if (!readyMessages || readyMessages.length === 0) {
       logger.api('No scheduled messages ready for processing', { jobId });
