@@ -77,7 +77,7 @@ async function processDueScheduledMessages(
       );
     }
 
-    // Type assertion for the RPC result
+    // Type assertion for the RPC result with all required fields
     const readyMessages = data as Array<{
       id: string;
       event_id: string;
@@ -90,6 +90,12 @@ async function processDueScheduledMessages(
       target_all_guests: boolean;
       target_guest_ids: string[] | null;
       target_guest_tags: string[] | null;
+      send_via_sms: boolean | null;
+      send_via_push: boolean | null;
+      recipient_count: number | null;
+      scheduled_tz: string | null;
+      scheduled_local: string | null;
+      idempotency_key: string | null;
     }> | null;
 
     if (!readyMessages || readyMessages.length === 0) {
@@ -853,10 +859,16 @@ async function resolveScheduledMessageRecipients(
 
     if (error) throw error;
 
+    // Type assertion for RPC result
+    const recipientResults = recipients as Array<{
+      guest_id: string;
+      phone: string;
+      display_name: string;
+    }> | null;
+
     // Convert to format expected by SMS sender
     const guestIds =
-      recipients?.map((r: Record<string, unknown>) => r.guest_id as string) ||
-      [];
+      recipientResults?.map((r) => r.guest_id) || [];
 
     if (guestIds.length === 0) {
       return [];
@@ -982,13 +994,21 @@ export async function GET(request: NextRequest) {
       const cronSecret = process.env.CRON_SECRET;
 
       // Check for pending scheduled messages (no processing)
-      const { data: pendingMessages } = await supabase.rpc(
+      const { data } = await supabase.rpc(
         'get_scheduled_messages_for_processing',
         {
           p_limit: 10,
           p_current_time: new Date().toISOString(),
         },
       );
+
+      // Type assertion for diagnostic query
+      const pendingMessages = data as Array<{
+        id: string;
+        send_at: string;
+        status: string | null;
+        recipient_count: number | null;
+      }> | null;
 
       return NextResponse.json({
         success: true,

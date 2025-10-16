@@ -243,9 +243,13 @@ export function useGuests(eventId?: string): UseGuestsReturn {
       } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
+      // RSVP-Lite: rsvp_status column removed, use declined_at instead
+      // This function is deprecated - use useHostGuestDecline hook instead
       const { data, error } = await supabase
         .from('event_guests')
-        .update({ rsvp_status: status })
+        .update({ 
+          declined_at: status === 'declined' ? new Date().toISOString() : null 
+        })
         .eq('id', id)
         .select('*')
         .single();

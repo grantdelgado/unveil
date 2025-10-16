@@ -4,9 +4,16 @@ import { logError, type AppError } from '@/lib/error-handling';
 import { withErrorHandling } from '@/lib/error-handling';
 import type { Database } from '@/app/reference/supabase.types';
 
-// Type definitions based on MCP schema
-type GetUserEventsReturn =
-  Database['public']['Functions']['get_user_events']['Returns'][0];
+// Type definitions for get_user_events RPC
+type GetUserEventsReturn = {
+  id: string;
+  title: string;
+  event_date: string;
+  location: string;
+  role: string;
+  rsvp_status: string;
+  is_host: boolean;
+};
 
 interface UserEvent {
   event_id: string;
@@ -14,7 +21,6 @@ interface UserEvent {
   event_date: string;
   location: string | null;
   user_role: string;
-
   is_primary_host: boolean;
 }
 
@@ -90,12 +96,15 @@ export function useUserEvents(): UseUserEventsReturn {
       }
 
       // Fetch events using the RLS function
-      const { data: userEvents, error: eventsError } =
+      const { data, error: eventsError } =
         await supabase.rpc('get_user_events');
 
       if (eventsError) {
         throw new Error(eventsError.message || 'Failed to load your events');
       }
+
+      // Type assertion for RPC result
+      const userEvents = data as GetUserEventsReturn[] | null;
 
       // Store raw events - sorting will be handled by memoized logic
       setRawEvents(userEvents || []);

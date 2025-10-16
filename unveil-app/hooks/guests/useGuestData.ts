@@ -5,6 +5,7 @@ import { logger } from '@/lib/logger';
 import { useEventSubscription } from '@/hooks/realtime';
 import { useDebounce } from '@/hooks/common';
 import type { Database } from '@/app/reference/supabase.types';
+import type { GetEventGuestsWithDisplayNamesResult } from '@/lib/types/rpc-results';
 
 // Optimized guest type - compatible with existing components
 export type OptimizedGuest = {
@@ -114,7 +115,7 @@ export function useGuestData({
       const limit = enablePagination ? pageSize : null;
 
       // Use RPC function to get guests with computed display names
-      const { data: guestData, error: guestError } = await supabase.rpc(
+      const { data, error: guestError } = await supabase.rpc(
         'get_event_guests_with_display_names',
         {
           p_event_id: eventId,
@@ -124,6 +125,9 @@ export function useGuestData({
       );
 
       if (guestError) throw guestError;
+
+      // Type assertion for RPC result
+      const guestData = data as GetEventGuestsWithDisplayNamesResult[] | null;
 
       // Get total count for pagination
       const { count } = await supabase

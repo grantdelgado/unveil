@@ -25,11 +25,12 @@ export function QuickActions({ eventId }: QuickActionsProps) {
   useEffect(() => {
     async function fetchQuickStats() {
       try {
-        // Get guest stats
+        // Get guest stats (RSVP-Lite: use declined_at instead of rsvp_status)
         const { data: guestData } = await supabase
           .from('event_guests')
-          .select('rsvp_status')
-          .eq('event_id', eventId);
+          .select('declined_at')
+          .eq('event_id', eventId)
+          .is('removed_at', null);
 
         // Get recent message count
         const { data: messageData } = await supabase
@@ -42,10 +43,9 @@ export function QuickActions({ eventId }: QuickActionsProps) {
           );
 
         const totalGuests = guestData?.length || 0;
+        // RSVP-Lite: pending = not declined (declined_at is null)
         const pendingRSVPs =
-          guestData?.filter(
-            (p) => !p.rsvp_status || p.rsvp_status === 'pending',
-          ).length || 0;
+          guestData?.filter((p) => !p.declined_at).length || 0;
         const recentMessages = messageData?.length || 0;
 
         setStats({

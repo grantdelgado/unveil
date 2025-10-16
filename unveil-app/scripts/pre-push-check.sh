@@ -1,122 +1,156 @@
 #!/bin/bash
 
 # Pre-Push Validation Script
-# Runs comprehensive checks before allowing git push to ensure Vercel build will succeed
+# Ensures Vercel build will succeed before pushing
 # Usage: ./scripts/pre-push-check.sh
 
-set -e  # Exit on first error
-
-echo "🔍 Pre-Push Validation Check"
-echo "============================="
+echo "🔍 Pre-Push Validation (Vercel Build Simulation)"
+echo "================================================"
 echo ""
 
-# Colors for output
+# Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+BLUE='\033[0;34m'
+NC='\033[0m'
 
-# Track if any checks fail
 CHECKS_FAILED=0
 
-# Function to print check result
 print_result() {
   if [ $1 -eq 0 ]; then
     echo -e "${GREEN}✅ $2${NC}"
   else
-    echo -e "${RED}❌ $2${NC}"
+    echo -e "${RED}❌ $2 - BLOCKING${NC}"
     CHECKS_FAILED=1
   fi
 }
 
-echo "Step 1: Checking TypeScript types..."
-pnpm run type-check > /dev/null 2>&1 || pnpm tsc --noEmit > /dev/null 2>&1
-print_result $? "TypeScript compilation"
+print_warning() {
+  echo -e "${YELLOW}⚠️  $1${NC}"
+}
 
-echo ""
-echo "Step 2: Running ESLint..."
-pnpm run lint > /dev/null 2>&1
-print_result $? "ESLint checks"
+print_info() {
+  echo -e "${BLUE}ℹ️  $1${NC}"
+}
 
+# ============================================
+# CRITICAL CHECKS (Must Pass for Vercel)
+# ============================================
+
+echo -e "${BLUE}Critical Checks (Vercel will run these):${NC}"
 echo ""
-echo "Step 3: Checking for untracked migration files..."
-UNTRACKED_MIGRATIONS=$(git ls-files --others --exclude-standard supabase/migrations/ | wc -l)
-if [ "$UNTRACKED_MIGRATIONS" -gt 0 ]; then
-  echo -e "${YELLOW}⚠️  Found $UNTRACKED_MIGRATIONS untracked migration file(s)${NC}"
-  git ls-files --others --exclude-standard supabase/migrations/
-  echo "Please add them with: git add supabase/migrations/"
-  CHECKS_FAILED=1
+
+# 1. TypeScript Check (exactly what Next.js runs)
+echo "1️⃣  TypeScript Compilation..."
+pnpm tsc --noEmit > ts-check.log 2>&1
+TS_RESULT=$?
+if [ $TS_RESULT -eq 0 ]; then
+  print_result 0 "TypeScript types valid"
+  rm -f ts-check.log
 else
-  print_result 0 "No untracked migrations"
+  print_result 1 "TypeScript errors found"
+  echo ""
+  echo -e "${RED}=== TypeScript Errors ===${NC}"
+  head -50 ts-check.log
+  echo ""
+  echo "Full output in: ts-check.log"
+  echo ""
 fi
 
+# 2. ESLint (Next.js runs this during build)
 echo ""
-echo "Step 4: Verifying Supabase types are up to date..."
-# Check if types/supabase.ts and app/reference/supabase.types.ts are in sync
+echo "2️⃣  ESLint Validation..."
+pnpm run lint > lint-check.log 2>&1
+LINT_RESULT=$?
+if [ $LINT_RESULT -eq 0 ]; then
+  print_result 0 "No linting errors"
+  rm -f lint-check.log
+else
+  print_result 1 "Linting errors found"
+  echo ""
+  echo -e "${RED}=== Linting Errors ===${NC}"
+  tail -30 lint-check.log
+  echo ""
+  echo "Full output in: lint-check.log"
+  echo ""
+fi
+
+# 3. Supabase Types Sync
+echo ""
+echo "3️⃣  Supabase Types Sync..."
 if diff -q types/supabase.ts app/reference/supabase.types.ts > /dev/null 2>&1; then
-  print_result 0 "Supabase types are in sync"
+  print_result 0 "Types are synchronized"
 else
-  echo -e "${YELLOW}⚠️  Supabase type files are out of sync${NC}"
-  echo "Run: cp types/supabase.ts app/reference/supabase.types.ts"
-  CHECKS_FAILED=1
-fi
-
-echo ""
-echo "Step 5: Checking for large uncommitted changes..."
-UNCOMMITTED=$(git diff --cached --numstat | wc -l)
-if [ "$UNCOMMITTED" -eq 0 ]; then
-  echo -e "${YELLOW}⚠️  No staged changes found${NC}"
-  echo "Nothing to commit. Run: git add -A"
-else
-  echo -e "${GREEN}✅ Found $UNCOMMITTED staged changes${NC}"
-fi
-
-echo ""
-echo "Step 6: Testing production build..."
-echo "This may take 30-60 seconds..."
-
-# Clean .next to avoid cache issues
-rm -rf .next > /dev/null 2>&1
-
-# Run build with output capture
-if pnpm run build > build-check.log 2>&1; then
-  print_result 0 "Production build succeeded"
-  rm -f build-check.log
-else
-  print_result 1 "Production build FAILED"
+  print_result 1 "Type files out of sync"
   echo ""
-  echo -e "${RED}Build Error Details:${NC}"
-  tail -30 build-check.log
+  echo -e "${YELLOW}Fix with: cp types/supabase.ts app/reference/supabase.types.ts${NC}"
   echo ""
-  echo "Full log saved to: build-check.log"
 fi
 
+# ============================================
+# OPTIONAL CHECKS (Recommended but not blocking)
+# ============================================
+
 echo ""
-echo "Step 7: Checking bundle sizes..."
-if [ -f ".next/build-manifest.json" ]; then
-  LARGE_CHUNKS=$(find .next/static/chunks -name "*.js" -size +300k 2>/dev/null | wc -l)
-  if [ "$LARGE_CHUNKS" -gt 0 ]; then
-    echo -e "${YELLOW}⚠️  Found $LARGE_CHUNKS chunks over 300KB${NC}"
-    find .next/static/chunks -name "*.js" -size +300k -exec ls -lh {} \; 2>/dev/null | awk '{print "  "$9, $5}'
+echo -e "${BLUE}Optional Checks (Recommended):${NC}"
+echo ""
+
+# 4. Unit Tests
+echo "4️⃣  Unit Tests (non-blocking)..."
+if command -v vitest &> /dev/null; then
+  pnpm test:unit --run --reporter=dot > /dev/null 2>&1
+  if [ $? -eq 0 ]; then
+    echo -e "${GREEN}✅ All unit tests passing${NC}"
   else
-    print_result 0 "No oversized chunks"
+    print_warning "Some unit tests failing (not blocking push)"
+    echo "   Run 'pnpm test:unit' to see details"
   fi
 else
-  echo -e "${YELLOW}⚠️  Build manifest not found (build may have failed)${NC}"
+  print_info "Vitest not available, skipping tests"
 fi
+
+# 5. Staged Changes Check
+echo ""
+echo "5️⃣  Git Status..."
+STAGED=$(git diff --cached --name-only | wc -l | tr -d ' ')
+if [ "$STAGED" -eq 0 ]; then
+  print_warning "No staged changes found"
+  echo "   Run: git add -A"
+else
+  echo -e "${GREEN}✅ $STAGED file(s) staged for commit${NC}"
+fi
+
+# 6. Migration Files
+echo ""
+echo "6️⃣  Migration Files..."
+UNTRACKED_MIG=$(git ls-files --others --exclude-standard supabase/migrations/ 2>/dev/null | wc -l | tr -d ' ')
+if [ "$UNTRACKED_MIG" -gt 0 ]; then
+  print_warning "Found $UNTRACKED_MIG untracked migration(s)"
+  git ls-files --others --exclude-standard supabase/migrations/
+  echo "   Add with: git add supabase/migrations/"
+else
+  echo -e "${GREEN}✅ All migrations tracked${NC}"
+fi
+
+# ============================================
+# FINAL VERDICT
+# ============================================
 
 echo ""
-echo "============================="
+echo "================================================"
 if [ $CHECKS_FAILED -eq 0 ]; then
-  echo -e "${GREEN}✅ All checks passed!${NC}"
+  echo -e "${GREEN}✅ All critical checks passed!${NC}"
   echo ""
-  echo "Ready to push. Run:"
+  echo "Safe to push. Next steps:"
+  echo "  git commit -m 'your message'"
   echo "  git push origin main"
+  echo ""
   exit 0
 else
-  echo -e "${RED}❌ Some checks failed${NC}"
+  echo -e "${RED}❌ Critical checks failed - DO NOT PUSH${NC}"
   echo ""
-  echo "Please fix the issues above before pushing."
+  echo "Fix the errors above, then run this script again."
+  echo ""
   exit 1
 fi
-

@@ -8,6 +8,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { logger } from '@/lib/logger';
+import type { GetEventGuestsWithDisplayNamesResult } from '@/lib/types/rpc-results';
 import { createEventRequestManager } from '@/lib/utils/requestThrottling';
 import { calculateAttendanceCounts } from '@/lib/guests/attendance';
 import { GuestsFlags } from '@/lib/config/guests';
@@ -169,7 +170,7 @@ export function useSimpleGuestStore(eventId: string, searchTerm?: string): Simpl
       });
 
       // Use RPC function to get guests with computed display names
-      const { data: guestData, error: guestError } = await supabase.rpc(
+      const { data, error: guestError } = await supabase.rpc(
         'get_event_guests_with_display_names',
         {
           p_event_id: eventId,
@@ -182,6 +183,9 @@ export function useSimpleGuestStore(eventId: string, searchTerm?: string): Simpl
       if (guestError) {
         throw new Error(`Failed to fetch guests: ${guestError.message}`);
       }
+
+      // Type assertion for RPC result
+      const guestData = data as GetEventGuestsWithDisplayNamesResult[] | null;
 
       // Process and normalize the data - now matches the RPC function exactly
       const processedGuests = (guestData || []).map((guest) => ({

@@ -76,21 +76,25 @@ export async function resolveMessageRecipients(
 
     if (error) throw error;
 
+    // Type assertion for RPC result
+    const recipientResults = recipients as Array<{
+      guest_id: string;
+      can_receive_sms: boolean;
+      sms_opt_out: boolean;
+      phone: string;
+      display_name: string;
+    }> | null;
+
     // Map the enhanced RPC response to guest IDs
-    const guestIds =
-      recipients?.map((r: Record<string, unknown>) => r.guest_id as string) ||
-      [];
+    const guestIds = recipientResults?.map((r) => r.guest_id) || [];
 
     // Log recipient details for debugging (but don't expose sensitive data)
     console.log('Resolved recipients:', {
       eventId,
-      totalRecipients: recipients?.length || 0,
+      totalRecipients: recipientResults?.length || 0,
       smsEligible:
-        recipients?.filter((r: Record<string, unknown>) => r.can_receive_sms)
-          .length || 0,
-      optedOut:
-        recipients?.filter((r: Record<string, unknown>) => r.sms_opt_out)
-          .length || 0,
+        recipientResults?.filter((r) => r.can_receive_sms).length || 0,
+      optedOut: recipientResults?.filter((r) => r.sms_opt_out).length || 0,
     });
 
     return { guestIds, recipientCount: guestIds.length };

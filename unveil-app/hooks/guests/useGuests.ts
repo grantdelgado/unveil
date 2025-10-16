@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { logger } from '@/lib/logger';
 import type { OptimizedGuest } from '@/hooks/guests/useGuestData';
+import type { GetEventGuestsWithDisplayNamesResult } from '@/lib/types/rpc-results';
 
 interface UseGuestsOptions {
   eventId: string;
@@ -50,7 +51,7 @@ export function useGuests({
       const limit = enablePagination ? pageSize : null;
 
       // Use RPC function to get guests with computed display names
-      const { data: guestData, error } = await supabase.rpc(
+      const { data, error } = await supabase.rpc(
         'get_event_guests_with_display_names',
         {
           p_event_id: eventId,
@@ -63,6 +64,9 @@ export function useGuests({
         logger.databaseError('Error fetching guests', error);
         throw error;
       }
+
+      // Type assertion for RPC result
+      const guestData = data as GetEventGuestsWithDisplayNamesResult[] | null;
 
       // Get total count for pagination
       const { count } = await supabase

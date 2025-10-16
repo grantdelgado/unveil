@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase/client';
 import type { EventDetailsFormData } from '@/lib/validation/events';
+import type { GetEventGuestsWithDisplayNamesResult } from '@/lib/types/rpc-results';
 
 // Get event by ID with host information
 export async function getEventById(eventId: string) {
@@ -66,8 +67,11 @@ export async function getEventGuests(eventId: string) {
 
     if (error) throw error;
 
+    // Type assertion for RPC result
+    const guestData = data as GetEventGuestsWithDisplayNamesResult[] | null;
+
     // Transform to include users object for compatibility
-    const transformedData = (data || []).map((guest) => ({
+    const transformedData = (guestData || []).map((guest) => ({
       ...guest,
       users: guest.user_id
         ? {

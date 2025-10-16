@@ -189,9 +189,15 @@ export async function POST(request: NextRequest) {
       );
 
       if (recipientsError) throw recipientsError;
-      guestIds =
-        recipients?.map((r: Record<string, unknown>) => r.guest_id as string) ||
-        [];
+      
+      // Type assertion for RPC result
+      const recipientResults = recipients as Array<{
+        guest_id: string;
+        phone: string;
+        display_name: string;
+      }> | null;
+      
+      guestIds = recipientResults?.map((r) => r.guest_id) || [];
     }
 
     if (guestIds.length === 0) {

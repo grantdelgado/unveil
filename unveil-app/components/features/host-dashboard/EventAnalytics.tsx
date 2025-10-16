@@ -112,7 +112,8 @@ function EventAnalyticsComponent({ eventId }: EventAnalyticsProps) {
           setTimeout(() => {
             const stats = guests.reduce(
               (acc, guest) => {
-                const status = guest.rsvp_status || 'pending';
+                // RSVP-Lite: declined_at null = attending, else = declined  
+                const status = guest.declined_at ? 'declined' : 'attending';
                 acc.total++;
                 acc[status as keyof typeof acc] =
                   (acc[status as keyof typeof acc] || 0) + 1;

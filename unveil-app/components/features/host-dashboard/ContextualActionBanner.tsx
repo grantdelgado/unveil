@@ -37,16 +37,19 @@ export function ContextualActionBanner({
   useEffect(() => {
     const fetchGuestStats = async () => {
       try {
+        // RSVP-Lite: use declined_at instead of rsvp_status
         const { data, error } = await supabase
           .from('event_guests')
-          .select('rsvp_status')
-          .eq('event_id', eventId);
+          .select('declined_at')
+          .eq('event_id', eventId)
+          .is('removed_at', null);
 
         if (error) throw error;
 
         const stats = data?.reduce(
           (acc, guest) => {
-            const status = guest.rsvp_status || 'pending';
+            // RSVP-Lite: declined_at null = attending, else = declined
+            const status = guest.declined_at ? 'declined' : 'attending';
             acc[status as keyof Omit<GuestStats, 'total'>] =
               (acc[status as keyof Omit<GuestStats, 'total'>] || 0) + 1;
             acc.total += 1;
