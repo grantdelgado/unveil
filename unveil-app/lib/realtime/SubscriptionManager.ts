@@ -477,6 +477,13 @@ export class SubscriptionManager {
       this.subscriptions.set(subscriptionId, subscription);
       config.onStatusChange?.('connecting');
 
+      // PII-safe telemetry for subscription creation
+      logger.info('[TELEMETRY] realtime.subscription_created', {
+        table: config.table,
+        event: config.event,
+        totalActive: this.subscriptions.size,
+      });
+
       // Return cleanup function
       return unsubscribeFn;
     } catch (error) {
@@ -623,7 +630,15 @@ export class SubscriptionManager {
       logger.warn(`⚠️ Error during unsubscribe: ${subscriptionId}`, error);
     }
 
+    // PII-safe telemetry for subscription removal
+    const tableBeforeDelete = subscription?.config?.table;
     this.subscriptions.delete(subscriptionId);
+    
+    logger.info('[TELEMETRY] realtime.subscription_removed', {
+      table: tableBeforeDelete,
+      totalActive: this.subscriptions.size,
+    });
+    
     logger.realtime(`✅ Unsubscribed: ${subscriptionId}`);
   }
 

@@ -75,20 +75,27 @@ Unveil is a production-ready wedding event management application that enables h
 
 ## 📚 Documentation
 
-All documentation has been consolidated and organized in the **[`/docs`](./docs/)** folder:
+All documentation has been consolidated and organized in the **[`/docs`](./docs/)** folder.
 
-| **Document**                                            | **Purpose**                                         |
-| ------------------------------------------------------- | --------------------------------------------------- |
-| **📋 System Overview**     | High-level platform overview and current status     |
-| **🏗️ Architecture**           | Complete technical architecture and design patterns |
-| **🔧 Development Guide** | Workflow, coding standards, and team guidelines     |
-| **📋 MVP Features**           | Current scope, included/excluded features, roadmap  |
-| **🛡️ Security**                   | Security implementation and best practices          |
-| **🎨 Design System**         | UI components and design patterns                   |
-| **⚙️ Deployment**               | Production environment setup procedures             |
-| **📋 Release Checklist** | Comprehensive deployment checklist                  |
+### 🎯 Start Here (Canonical Reference)
 
-**👉 [Browse All Documentation](./docs/)**
+**📘 [Engineering Context](./docs/context/unveil-product-eng-context.md)** — **SINGLE SOURCE OF TRUTH**
+
+This is the authoritative reference for AI tools (Cursor, MCP), new engineers, and all development work.
+
+### Key Documentation
+
+| **Document**                                                                       | **Purpose**                                         |
+| ---------------------------------------------------------------------------------- | --------------------------------------------------- |
+| **📘 [Engineering Context](./docs/context/unveil-product-eng-context.md)**        | Canonical source of truth for all engineering       |
+| **📋 [System Overview](./docs/project/SYSTEM_OVERVIEW.md)**                        | High-level platform overview and current status     |
+| **🏗️ [Architecture](./docs/architecture/ARCHITECTURE.md)**                        | Complete technical architecture and design patterns |
+| **🔧 [Development Guide](./docs/development/DEVELOPMENT_GUIDE.md)**                | Workflow, coding standards, and team guidelines     |
+| **🛡️ [Security](./docs/architecture/SECURITY.md)**                                | Security implementation and RLS best practices      |
+| **🎨 [Design System](./docs/architecture/DESIGN_SYSTEM.md)**                      | UI components and design patterns                   |
+| **⚙️ [Deployment](./docs/development/DEPLOYMENT.md)**                             | Production environment setup procedures             |
+
+**👉 [Browse All Documentation](./docs/)** | **📦 [Historical Archives](./docs/_archive/)**
 
 ---
 

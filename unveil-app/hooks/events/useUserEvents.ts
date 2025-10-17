@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { logError, type AppError } from '@/lib/error-handling';
 import { withErrorHandling } from '@/lib/error-handling';
+import { logger } from '@/lib/logger';
 import type { Database } from '@/app/reference/supabase.types';
 
 // Type definitions for get_user_events RPC
@@ -95,7 +96,8 @@ export function useUserEvents(): UseUserEventsReturn {
         throw new Error('Authentication required');
       }
 
-      // Fetch events using the RLS function
+      // Fetch events using the RLS function with telemetry
+      const startedAt = performance.now();
       const { data, error: eventsError } =
         await supabase.rpc('get_user_events');
 
@@ -105,6 +107,14 @@ export function useUserEvents(): UseUserEventsReturn {
 
       // Type assertion for RPC result
       const userEvents = data as GetUserEventsReturn[] | null;
+
+      // PII-safe telemetry for user events fetch
+      logger.info('[TELEMETRY] events.user_events_count', {
+        count: userEvents?.length ?? 0,
+        duration_ms: Math.round(performance.now() - startedAt),
+        hostCount: userEvents?.filter(e => e.role === 'host').length ?? 0,
+        guestCount: userEvents?.filter(e => e.role === 'guest').length ?? 0,
+      });
 
       // Store raw events - sorting will be handled by memoized logic
       setRawEvents(userEvents || []);

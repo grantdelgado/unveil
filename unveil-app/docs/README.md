@@ -4,42 +4,65 @@
 
 Welcome to the centralized documentation hub for Unveil, a modern wedding planning app built with Next.js, Supabase, and TypeScript. This documentation is organized for easy navigation and covers all aspects of the project from high-level planning to detailed implementation.
 
+## 🎯 Canonical Documentation (START HERE)
+
+### **For AI Tools, Cursor, & New Engineers**
+**📘 [Engineering Context](/docs/context/unveil-product-eng-context.md)** — **SINGLE SOURCE OF TRUTH**
+
+This is the authoritative reference for:
+- Complete system architecture overview
+- Database schema quick reference
+- RLS security patterns
+- Frontend architecture and patterns
+- Common pitfalls and solutions
+- Development workflows
+
+**All other documentation links to this canonical source.**
+
+---
+
 ## 🗂️ Documentation Structure
 
 ```
 docs/
 ├── README.md                    # This file - main documentation index
+├── context/                     # 🎯 CANONICAL REFERENCE
+│   └── unveil-product-eng-context.md  # Single source of truth
 ├── project/                     # 📋 Project-level documentation
 ├── architecture/                # 🏗️ System architecture and design
 ├── development/                 # 👨‍💻 Developer guides and procedures
 ├── audits/                      # 🔍 System audits and analysis reports
-├── implementations/             # ⚙️ Feature implementation documentation
 ├── guest-management/            # 👥 Guest management system documentation
+├── database/                    # 🗄️ Database guides and references
+├── features/                    # ✨ Feature documentation
 ├── phases/                      # 📈 Development phase summaries
-├── performance/                 # ⚡ Performance optimization documentation
-└── archive/                     # 📚 Historical documentation
+├── archive/                     # 📚 Legacy documentation
+└── _archive/                    # 🗄️ Historical reports (2024-2025)
+    ├── reports_2024-2025/       # Archived reports and audits
+    ├── rls_historical/          # Historical RLS documentation
+    └── database_fixes_2024-2025/  # Completed database fixes
 ```
 
 ## 🚀 Quick Start
 
 ### For New Developers
 
-1. **Start here:** `project/SYSTEM_OVERVIEW.md` - Get the big picture
-2. **Setup:** `development/DEVELOPMENT_GUIDE.md` - Environment and workflow
-3. **Architecture:** `architecture/ARCHITECTURE.md` - System design
-4. **Performance:** `../performance/README.md` - Performance optimization
+1. **Start here:** [`context/unveil-product-eng-context.md`](./context/unveil-product-eng-context.md) - **CANONICAL REFERENCE**
+2. **Setup:** [`development/DEVELOPMENT_GUIDE.md`](./development/DEVELOPMENT_GUIDE.md) - Environment and workflow
+3. **Architecture:** [`architecture/ARCHITECTURE.md`](./architecture/ARCHITECTURE.md) - System design
+4. **Security:** [`architecture/SECURITY.md`](./architecture/SECURITY.md) - RLS and security patterns
 
 ### For Project Managers
 
-1. **Features:** `project/MVP_FEATURES.md` - Core functionality specifications
-2. **Releases:** `project/RELEASE_CHECKLIST.md` - Deployment procedures
-3. **Status:** `project/REFACTORING_SUMMARY.md` - Recent improvements
+1. **Overview:** [`project/SYSTEM_OVERVIEW.md`](./project/SYSTEM_OVERVIEW.md) - High-level platform overview
+2. **Features:** [`project/MVP_FEATURES.md`](./project/MVP_FEATURES.md) - Core functionality specifications
+3. **Releases:** [`project/RELEASE_CHECKLIST.md`](./project/RELEASE_CHECKLIST.md) - Deployment procedures
 
 ### For Technical Leads
 
-1. **Architecture:** `architecture/` - System design and patterns
-2. **Security:** `architecture/SECURITY.md` - Security implementation
-3. **Performance:** `../performance/documentation/` - Optimization documentation
+1. **Context:** [`context/unveil-product-eng-context.md`](./context/unveil-product-eng-context.md) - Complete technical reference
+2. **Architecture:** [`architecture/`](./architecture/) - System design and patterns
+3. **Security:** [`architecture/SECURITY.md`](./architecture/SECURITY.md) - Security implementation
 
 ## 📋 Project Documentation
 
@@ -140,13 +163,32 @@ Performance documentation is maintained in a separate, comprehensive system:
 
 **⚡ View Performance Documentation Center**
 
-## 📚 Historical Documentation
+## 📚 Historical Documentation & Archives
 
 **Archived documentation from previous project phases**
 
-The archive contains comprehensive historical documentation organized by category, including legacy architecture decisions, completed refactoring projects, and evolutionary project planning.
+### Active Historical Archives
 
-**📚 View Archive Index**
+- **📦 Legacy Project Docs:** [`archive/project-docs-legacy/`](./archive/project-docs-legacy/) - Pre-consolidation documentation
+- **🗄️ Reports Archive (2024-2025):** [`_archive/reports_2024-2025/`](./_archive/reports_2024-2025/) - Historical reports and audits
+- **🔒 RLS Historical:** [`_archive/rls_historical/`](./_archive/rls_historical/) - Historical RLS documentation
+- **🗄️ Database Fixes:** [`_archive/database_fixes_2024-2025/`](./_archive/database_fixes_2024-2025/) - Completed database fixes
+
+### Archive Policy
+
+**When to Use Archives:**
+- Understanding historical decisions and context
+- Reviewing past optimization initiatives
+- Tracking codebase evolution over time
+- Learning from past architectural choices
+
+**When NOT to Use Archives:**
+- ❌ Current development decisions (use `/docs/context/unveil-product-eng-context.md`)
+- ❌ Active architectural patterns (use `/docs/architecture/`)
+- ❌ Current schema reference (use `/supabase/migrations/`)
+- ❌ Active RLS policies (use `/docs/architecture/SECURITY.md`)
+
+**All archived files are preserved for historical reference only. Always use the canonical context document for current information.**
 
 ## 🎯 Current Project Status
 

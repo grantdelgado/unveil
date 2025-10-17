@@ -321,6 +321,7 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
       }
 
       // CANONICAL RPC: Always use get_guest_event_messages (NOT v2/v3 directly)
+      const startedAt = performance.now();
       const { data, error: rpcError } = await supabase.rpc(
         'get_guest_event_messages',
         {
@@ -369,12 +370,13 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
       const messagesArray = Array.isArray(data) ? data : [];
       const hasMoreMessages = messagesArray.length > INITIAL_WINDOW_SIZE;
 
-      // PII-safe telemetry for v3 usage  
-      logger.info('🔧 📊 [TELEMETRY] messaging.rpc_v3_rows', {
+      // PII-safe telemetry for v3 initial fetch with duration
+      logger.info('[TELEMETRY] messaging.rpc_v3_rows', {
+        event: eventId?.slice(0, 8),
         count: messagesArray.length,
-        window: INITIAL_WINDOW_SIZE,
-        hadCursor: false, // Initial fetch doesn't use cursor
-        eventId, // No PII - just event UUID
+        hasMore: hasMoreMessages,
+        duration_ms: Math.round(performance.now() - startedAt),
+        cursor: 'initial',
       });
 
       // Map RPC response to GuestMessage type (let reducer handle trimming)
@@ -554,6 +556,7 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
       });
 
       // CANONICAL RPC: Use compound cursor parameters for stable pagination
+      const startedAt = performance.now();
       const { data, error: rpcError } = await supabase.rpc(
         'get_guest_event_messages',
         {
@@ -589,12 +592,13 @@ export function useGuestMessagesRPC({ eventId }: UseGuestMessagesRPCProps) {
         ? messagesArray.slice(0, OLDER_MESSAGES_BATCH_SIZE)
         : messagesArray;
 
-      // PII-safe telemetry for v3 pagination
-      logger.info('🔧 📊 [TELEMETRY] messaging.rpc_v3_pagination', {
-        count: messagesToPrepend.length,
-        window: OLDER_MESSAGES_BATCH_SIZE,
-        hadCursor: Boolean(oldestMessageCursor),
-        eventId, // No PII - just event UUID
+      // PII-safe telemetry for v3 pagination with duration
+      logger.info('[TELEMETRY] messaging.rpc_v3_rows', {
+        event: eventId?.slice(0, 8),
+        count: messagesArray.length,
+        hasMore: hasMoreOlderMessages,
+        duration_ms: Math.round(performance.now() - startedAt),
+        cursor: 'compound',
       });
 
       if (messagesToPrepend.length > 0) {
