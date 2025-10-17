@@ -146,11 +146,20 @@ export function GuestMessaging({
 
     // Development observability (PII-safe)
     if (process.env.NODE_ENV === 'development') {
+      // Log message ordering details for debugging (no PII)
+      const orderingInfo = messages.slice(0, 5).map(msg => ({
+        id: msg.message_id.slice(0, 8),
+        created_at: msg.created_at,
+        type: msg.message_type,
+        contentLength: msg.content?.length || 0,
+      }));
+      
       console.log('GuestMessaging render:', {
-        phase: 'headers',
+        phase: 'date-grouping',
         tz: localTz,
         groups: Object.keys(groups).length,
-        items: messages.length
+        totalMessages: messages.length,
+        sampleOrder: orderingInfo, // First 5 messages to verify ordering
       });
     }
 
@@ -413,22 +422,31 @@ export function GuestMessaging({
                       {formatEventDateHeader(dateKey, null)}
                     </div>
                   </div>
-                  {/* Messages for this date */}
+                  {/* Messages for this date - sorted chronologically within day (oldest first) */}
                   <div className="space-y-3 md:space-y-4">
-                    {dayMessages.map((message) => {
-                      // Find the original message object from the messages array
-                      const originalMessage = messages.find(m => m.message_id === message.id);
-                      if (!originalMessage) return null;
-                      
-                      return (
-                        <GuestMessageBubble
-                          key={originalMessage.message_id}
-                          message={originalMessage}
-                          eventTimezone={eventTimezone}
-                          className="animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
-                        />
-                      );
-                    })}
+                    {dayMessages
+                      .sort((a, b) => {
+                        // Sort messages within day chronologically (oldest first for natural reading order)
+                        const timeA = new Date(a.created_at).getTime();
+                        const timeB = new Date(b.created_at).getTime();
+                        if (timeA !== timeB) return timeA - timeB;  // ASC
+                        return a.id < b.id ? -1 : 1;  // ASC (stable tie-breaker)
+                      })
+                      .map((message) => {
+                        // Find the original message object from the messages array
+                        const originalMessage = messages.find(m => m.message_id === message.id);
+                        if (!originalMessage) return null;
+                        
+                        return (
+                          <GuestMessageBubble
+                            key={originalMessage.message_id}
+                            message={originalMessage}
+                            eventTimezone={eventTimezone}
+                            className="animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
+                          />
+                        );
+                      })
+                    }
                   </div>
                 </div>
               ))}
