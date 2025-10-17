@@ -4,9 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { createClient } from '@/lib/supabase/client';
-
-const supabase = createClient();
+import { supabase } from '@/lib/supabase/client';
 
 describe('Role Management Comprehensive Tests', () => {
   let testEventId: string;
