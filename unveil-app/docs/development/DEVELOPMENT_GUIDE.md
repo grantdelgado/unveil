@@ -199,6 +199,12 @@ Follow **Conventional Commits** specification:
 - Proper logout and session cleanup
 - Secure password reset flows
 
+### Twilio Webhook Verification
+
+- The SMS delivery webhook verifies the `X-Twilio-Signature` header using `TWILIO_AUTH_TOKEN`.
+- Missing or invalid signatures return a 403 response.
+- Local testing requires a public URL (ngrok or `DEV_TUNNEL_URL`) and a Twilio Console webhook pointed at `/api/webhooks/twilio`.
+
 ---
 
 **Note:** This document focuses on team workflow and processes. Technical architecture, component patterns, and coding conventions are defined in the Cursor AI rules for consistent code generation.

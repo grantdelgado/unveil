@@ -47,6 +47,7 @@ const mockTwilioClient = {
 
 vi.mock('twilio', () => ({
   default: vi.fn(() => mockTwilioClient),
+  validateRequest: vi.fn(() => true),
 }));
 
 // Environment setup is now handled by __tests__/_setup/env.ts

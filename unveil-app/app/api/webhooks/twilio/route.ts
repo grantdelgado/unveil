@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase/admin';
+import { verifyTwilioRequest } from '@/lib/sms/twilio-verify';
 
 /**
  * Twilio Webhook Handler for SMS Delivery Status Updates
@@ -21,13 +22,39 @@ export async function POST(request: NextRequest) {
 
     // Parse form data from Twilio webhook
     const formData = await request.formData();
+    const formParams: Record<string, string> = {};
+    formData.forEach((value, key) => {
+      formParams[key] = value.toString();
+    });
 
-    const messageSid = formData.get('MessageSid')?.toString();
-    const messageStatus = formData.get('MessageStatus')?.toString();
-    const toNumber = formData.get('To')?.toString();
+    const verification = verifyTwilioRequest({
+      reqHeaders: request.headers,
+      pathname: request.nextUrl.pathname,
+      search: request.nextUrl.search,
+      requestUrl: request.url,
+      formParams,
+    });
+
+    if (verification.reason === 'missing_auth_token') {
+      return NextResponse.json(
+        { error: 'TWILIO_AUTH_TOKEN is not set' },
+        { status: 500 },
+      );
+    }
+
+    if (!verification.isValid) {
+      return NextResponse.json(
+        { error: 'Invalid signature' },
+        { status: 403 },
+      );
+    }
+
+    const messageSid = formParams.MessageSid;
+    const messageStatus = formParams.MessageStatus;
+    const toNumber = formParams.To;
     // const fromNumber = formData.get('From')?.toString(); // Unused for now
-    const errorCode = formData.get('ErrorCode')?.toString();
-    const errorMessage = formData.get('ErrorMessage')?.toString();
+    const errorCode = formParams.ErrorCode;
+    const errorMessage = formParams.ErrorMessage;
 
     // Validate required parameters
     if (!messageSid || !messageStatus) {
