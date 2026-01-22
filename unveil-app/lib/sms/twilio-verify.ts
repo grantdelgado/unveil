@@ -48,9 +48,12 @@ function buildCanonicalUrl(input: VerifyTwilioRequestInput): string {
   const proto = normalizeForwardedValue(
     getHeaderValue(input.reqHeaders, 'x-forwarded-proto'),
   );
-  const host = normalizeForwardedValue(
+  const forwardedHost = normalizeForwardedValue(
     getHeaderValue(input.reqHeaders, 'x-forwarded-host'),
   );
+  const host =
+    forwardedHost ||
+    normalizeForwardedValue(getHeaderValue(input.reqHeaders, 'host'));
   const search = input.search || '';
 
   if (proto && host) {
@@ -61,7 +64,7 @@ function buildCanonicalUrl(input: VerifyTwilioRequestInput): string {
     try {
       const parsed = new URL(input.requestUrl);
       if (parsed.protocol && parsed.host) {
-        return parsed.toString();
+        return `${parsed.origin}${input.pathname}${search}`;
       }
     } catch {
       // Fall through to public base URL.
