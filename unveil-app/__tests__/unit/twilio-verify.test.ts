@@ -1,14 +1,15 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
+
+vi.mock('@/lib/utils/url', () => ({
+  getPublicBaseUrl: () => 'https://public.example.com',
+}));
+
 import { validateRequest } from 'twilio';
 import { verifyTwilioRequest } from '@/lib/sms/twilio-verify';
 
 const validateRequestMock = validateRequest as unknown as ReturnType<
   typeof vi.fn
 >;
-
-vi.mock('@/lib/utils/url', () => ({
-  getPublicBaseUrl: () => 'https://public.example.com',
-}));
 
 describe('verifyTwilioRequest', () => {
   const originalToken = process.env.TWILIO_AUTH_TOKEN;
