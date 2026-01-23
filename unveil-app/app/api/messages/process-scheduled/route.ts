@@ -349,6 +349,7 @@ async function processDueScheduledMessages(
           const smsResult = await sendBulkSMS(smsMessages);
           smsDelivered = smsResult.sent;
           smsFailed = smsResult.failed;
+          const smsResults = smsResult.results || [];
 
           // Worker parity hardening: Log SMS formatting results for scheduled messages
           if (process.env.NODE_ENV !== 'production') {
@@ -413,7 +414,10 @@ async function processDueScheduledMessages(
           // Create delivery tracking records with proper message_id
           if (resolvedRecipients.length > 0 && messageRecord) {
             // Create delivery records using idempotent upsert
-            const upsertPromises = resolvedRecipients.map(async (guest) => {
+            const upsertPromises = resolvedRecipients.map(async (guest, index) => {
+              const smsResultForGuest = smsResults[index];
+              const smsProviderId =
+                smsResultForGuest?.messageSid || smsResultForGuest?.messageId;
               const { data: deliveryId, error } = await supabase.rpc(
                 'upsert_message_delivery',
                 {
@@ -423,6 +427,7 @@ async function processDueScheduledMessages(
                   p_user_id: undefined, // RPC doesn't return user_id, will be handled by the function
                   p_sms_status: 'sent', // Will be updated by webhook
                   p_push_status: 'not_applicable',
+                  p_sms_provider_id: smsProviderId,
                 },
               );
 
@@ -590,18 +595,30 @@ function generateJobId(): string {
 /**
  * Helper function to check if request is authorized
  */
-function isRequestAuthorized(request: NextRequest): boolean {
+function getCronAuthResult(
+  request: NextRequest,
+): { authorized: boolean; reason?: string } {
   const authHeader = request.headers.get('authorization');
   const cronHeader = request.headers.get('x-cron-key');
-  const vercelCronHeader = request.headers.get('x-vercel-cron-signature');
   const cronSecret = process.env.CRON_SECRET;
 
-  // Accept Bearer token, X-CRON-KEY header, or Vercel cron signature
-  return Boolean(
-    (cronSecret && authHeader === `Bearer ${cronSecret}`) ||
-      (cronSecret && cronHeader === cronSecret) ||
-      vercelCronHeader, // Vercel automatically adds this header for cron requests
-  );
+  if (!cronSecret) {
+    return { authorized: false, reason: 'missing_cron_secret' };
+  }
+
+  if (authHeader === `Bearer ${cronSecret}`) {
+    return { authorized: true };
+  }
+
+  if (cronHeader === cronSecret) {
+    return { authorized: true };
+  }
+
+  if (!authHeader && !cronHeader) {
+    return { authorized: false, reason: 'missing_credentials' };
+  }
+
+  return { authorized: false, reason: 'invalid_credentials' };
 }
 
 /**
@@ -638,17 +655,13 @@ export async function POST(request: NextRequest) {
     );
 
     // Verify the request is authorized (internal calls only)
-    if (!isRequestAuthorized(request)) {
-      const authHeader = request.headers.get('authorization');
-      const cronHeader = request.headers.get('x-cron-key');
-      const vercelCronHeader = request.headers.get('x-vercel-cron-signature');
-      const cronSecret = process.env.CRON_SECRET;
-
+    const authResult = getCronAuthResult(request);
+    if (!authResult.authorized) {
+      logger.api('[TELEMETRY] cron.auth_reject', {
+        reason: authResult.reason || 'unknown',
+      });
       logger.api('Unauthorized request to scheduled messages processor', {
-        hasAuthHeader: !!authHeader,
-        hasCronHeader: !!cronHeader,
-        hasVercelCronHeader: !!vercelCronHeader,
-        hasCronSecret: !!cronSecret,
+        reason: authResult.reason,
         isDryRun,
         jobId,
       });
@@ -926,14 +939,16 @@ export async function GET(request: NextRequest) {
     // If processing is requested, perform it
     if (shouldProcess) {
       // Require authentication for processing
-      if (!isRequestAuthorized(request)) {
+      const authResult = getCronAuthResult(request);
+      if (!authResult.authorized) {
+        logger.api('[TELEMETRY] cron.auth_reject', {
+          reason: authResult.reason || 'unknown',
+        });
         logger.api('Unauthorized processing request to scheduled messages', {
           isCron,
           cronMode,
           isStatusOnly,
-          hasVercelSignature: !!request.headers.get('x-vercel-cron-signature'),
-          hasCronKey: !!request.headers.get('x-cron-key'),
-          userAgent: request.headers.get('user-agent'),
+          reason: authResult.reason,
         });
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }

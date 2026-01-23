@@ -70,7 +70,6 @@ export async function POST(request: NextRequest) {
     logger.api('Processing Twilio delivery status', {
       messageSid: messageSid.slice(0, 10) + '...',
       status: messageStatus,
-      to: toNumber ? toNumber.slice(0, 6) + '...' : 'unknown',
       errorCode,
       hasError: !!errorCode,
     });
@@ -90,8 +89,21 @@ export async function POST(request: NextRequest) {
       .select();
 
     if (updateError) {
+      logger.apiError('Error updating delivery record', updateError);
+      return NextResponse.json(
+        { error: 'Failed to update delivery record' },
+        { status: 500 },
+      );
+    }
+
+    if (!updatedRecords || updatedRecords.length === 0) {
       // If no record found with sms_provider_id, try to find by phone number
-      if (updateError.message.includes('0 rows') && toNumber) {
+      if (toNumber) {
+        logger.api('[TELEMETRY] twilio.webhook_fallback_phone_match', {
+          messageSid: messageSid.slice(0, 10) + '...',
+          status: internalStatus,
+        });
+
         const { data: phoneRecords, error: phoneError } = await supabase
           .from('message_deliveries')
           .update({
@@ -124,15 +136,12 @@ export async function POST(request: NextRequest) {
         } else {
           logger.apiError('No delivery record found for message', {
             messageSid: messageSid.slice(0, 10) + '...',
-            phone: toNumber ? toNumber.slice(0, 6) + '...' : 'unknown',
           });
         }
       } else {
-        logger.apiError('Error updating delivery record', updateError);
-        return NextResponse.json(
-          { error: 'Failed to update delivery record' },
-          { status: 500 },
-        );
+        logger.apiError('No delivery record found for message', {
+          messageSid: messageSid.slice(0, 10) + '...',
+        });
       }
     } else {
       logger.api('Successfully updated delivery record', {
@@ -153,23 +162,24 @@ export async function POST(request: NextRequest) {
         messageSid: messageSid.slice(0, 10) + '...',
         errorCode,
         errorMessage,
-        phone: toNumber.slice(0, 6) + '...',
       });
 
       // Auto-sync opt-out status for carrier-level blocks
       try {
-        const { error: syncError } = await supabase.rpc('handle_sms_delivery_error', {
-          p_phone: toNumber,
-          p_error_code: errorCode,
-          p_error_message: errorMessage || undefined,
-        });
+        const { error: syncError } = await supabase.rpc(
+          'handle_sms_delivery_error',
+          {
+            p_phone: toNumber,
+            p_error_code: errorCode,
+            p_error_message: errorMessage || undefined,
+          },
+        );
 
         if (syncError) {
           logger.apiError('Failed to sync SMS opt-out status', syncError);
         } else {
           logger.api('SMS error auto-sync completed', {
             errorCode,
-            phone: toNumber.slice(0, 6) + '...',
           });
         }
       } catch (syncError) {
@@ -180,9 +190,12 @@ export async function POST(request: NextRequest) {
     // Handle successful delivery - clear carrier opt-out markers
     if (messageStatus === 'delivered' && toNumber) {
       try {
-        const { error: successError } = await supabase.rpc('handle_sms_delivery_success', {
-          p_phone: toNumber,
-        });
+        const { error: successError } = await supabase.rpc(
+          'handle_sms_delivery_success',
+          {
+            p_phone: toNumber,
+          },
+        );
 
         if (successError) {
           logger.apiError('Failed to handle SMS delivery success', successError);

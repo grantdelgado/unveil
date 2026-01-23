@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { NextRequest } from 'next/server';
 import { GET, POST } from '@/app/api/messages/process-scheduled/route';
 
@@ -14,39 +14,80 @@ vi.mock('@/lib/sms', () => ({
   sendBulkSMS: vi.fn(),
 }));
 
+const createBaseFromChain = (insertResult = { data: { id: 'msg-record-123' }, error: null }) => ({
+  update: vi.fn(() => ({
+    eq: vi.fn(() => ({
+      eq: vi.fn(() => ({ error: null })),
+    })),
+  })),
+  insert: vi.fn(() => ({
+    select: vi.fn(() => ({
+      single: vi.fn(() => insertResult),
+    })),
+  })),
+});
+
+const createEventGuestsChain = (data: any[], count = data.length) => ({
+  select: vi.fn(() => ({
+    eq: vi.fn(() => ({
+      in: vi.fn(() => ({
+        is: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            not: vi.fn(() => ({
+              neq: vi.fn(() => Promise.resolve({ data, error: null })),
+            })),
+          })),
+        })),
+      })),
+      is: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          not: vi.fn(() => ({
+            neq: vi.fn(() => Promise.resolve({ data, error: null })),
+          })),
+        })),
+      })),
+      not: vi.fn(() => ({
+        neq: vi.fn(() => Promise.resolve({ count, data: null, error: null })),
+      })),
+    })),
+  })),
+});
+
+const mockSupabase = vi.hoisted(() => ({
+  rpc: vi.fn(),
+  from: vi.fn(),
+}));
+
+vi.mock('@/lib/supabase/admin', () => ({
+  supabase: mockSupabase,
+}));
+
 describe('Scheduled Messages Cron Integration Tests', () => {
-  let mockSupabase: any;
+  let randomSpy: ReturnType<typeof vi.spyOn> | null = null;
 
   beforeEach(() => {
     vi.clearAllMocks();
     process.env.CRON_SECRET = 'integration-test-secret';
     process.env.SCHEDULED_MAX_PER_TICK = '50';
     process.env.NODE_ENV = 'test';
+    randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0.123456);
 
     // Create detailed mock for Supabase
-    mockSupabase = {
-      rpc: vi.fn(),
-      from: vi.fn(() => ({
-        update: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            eq: vi.fn(() => ({ error: null })),
-          })),
-        })),
-        insert: vi.fn(() => ({
-          select: vi.fn(() => ({
-            single: vi.fn(() => ({
-              data: { id: 'msg-record-123' },
-              error: null,
-            })),
-          })),
-        })),
-      })),
-    };
+    mockSupabase.rpc.mockReset();
+    mockSupabase.from.mockReset();
+    mockSupabase.rpc.mockResolvedValue({ data: null, error: null });
+    mockSupabase.from.mockImplementation((table: string) => {
+      if (table === 'event_guests') {
+        return createEventGuestsChain([]);
+      }
 
-    // Mock the Supabase module
-    vi.doMock('@/lib/supabase/admin', () => ({
-      supabase: mockSupabase,
-    }));
+      return createBaseFromChain();
+    });
+  });
+
+  afterEach(() => {
+    randomSpy?.mockRestore();
+    randomSpy = null;
   });
 
   describe('Full Processing Flow Integration', () => {
@@ -86,28 +127,24 @@ describe('Scheduled Messages Cron Integration Tests', () => {
 
       // Mock SMS service
       const { sendBulkSMS } = await import('@/lib/sms');
-      (sendBulkSMS as any).mockResolvedValue({ sent: 3, failed: 0 });
+      (sendBulkSMS as any).mockResolvedValue({
+        sent: 3,
+        failed: 0,
+        results: [
+          { success: true, messageId: 'SM111', messageSid: 'SM111' },
+          { success: true, messageId: 'SM222', messageSid: 'SM222' },
+          { success: true, messageId: 'SM333', messageSid: 'SM333' },
+        ],
+      });
 
       // Mock the recipient resolution function by setting up the from() chain
-      const mockFromChain = {
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            in: vi.fn(() => ({
-              is: vi.fn(() => ({
-                eq: vi.fn(() => ({
-                  not: vi.fn(() => ({
-                    neq: vi.fn(() => ({
-                      data: mockResolvedRecipients,
-                      error: null,
-                    })),
-                  })),
-                })),
-              })),
-            })),
-          })),
-        })),
-      };
-      mockSupabase.from.mockReturnValue(mockFromChain);
+      mockSupabase.from.mockImplementation((table: string) => {
+        if (table === 'event_guests') {
+          return createEventGuestsChain(mockResolvedRecipients);
+        }
+
+        return createBaseFromChain();
+      });
 
       // Create cron request
       const request = new NextRequest(
@@ -115,7 +152,7 @@ describe('Scheduled Messages Cron Integration Tests', () => {
         {
           method: 'GET',
           headers: {
-            'x-vercel-cron-signature': 'test-cron-signature',
+            'x-cron-key': 'integration-test-secret',
           },
         },
       );
@@ -184,6 +221,7 @@ describe('Scheduled Messages Cron Integration Tests', () => {
         p_user_id: undefined,
         p_sms_status: 'sent',
         p_push_status: 'not_applicable',
+        p_sms_provider_id: 'SM111',
       });
     });
 
@@ -200,16 +238,18 @@ describe('Scheduled Messages Cron Integration Tests', () => {
         },
       ];
 
-      mockSupabase.rpc.mockResolvedValueOnce({
-        data: mockScheduledMessages,
-        error: null,
-      });
+      mockSupabase.rpc
+        .mockResolvedValueOnce({
+          data: mockScheduledMessages,
+          error: null,
+        })
+        .mockResolvedValue({ data: 'delivery-123', error: null });
 
       const request1 = new NextRequest(
         'http://localhost:3000/api/messages/process-scheduled',
         {
           method: 'GET',
-          headers: { 'x-vercel-cron-signature': 'test-sig-1' },
+          headers: { 'x-cron-key': 'integration-test-secret' },
         },
       );
 
@@ -223,7 +263,7 @@ describe('Scheduled Messages Cron Integration Tests', () => {
         'http://localhost:3000/api/messages/process-scheduled',
         {
           method: 'GET',
-          headers: { 'x-vercel-cron-signature': 'test-sig-2' },
+          headers: { 'x-cron-key': 'integration-test-secret' },
         },
       );
 
@@ -263,25 +303,13 @@ describe('Scheduled Messages Cron Integration Tests', () => {
         error: null,
       });
 
-      const mockFromChain = {
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            in: vi.fn(() => ({
-              is: vi.fn(() => ({
-                eq: vi.fn(() => ({
-                  not: vi.fn(() => ({
-                    neq: vi.fn(() => ({
-                      data: mockResolvedRecipients,
-                      error: null,
-                    })),
-                  })),
-                })),
-              })),
-            })),
-          })),
-        })),
-      };
-      mockSupabase.from.mockReturnValue(mockFromChain);
+      mockSupabase.from.mockImplementation((table: string) => {
+        if (table === 'event_guests') {
+          return createEventGuestsChain(mockResolvedRecipients);
+        }
+
+        return createBaseFromChain();
+      });
 
       // Mock SMS service with partial failure
       const { sendBulkSMS } = await import('@/lib/sms');
@@ -291,7 +319,7 @@ describe('Scheduled Messages Cron Integration Tests', () => {
         'http://localhost:3000/api/messages/process-scheduled',
         {
           method: 'GET',
-          headers: { 'x-vercel-cron-signature': 'test-sig' },
+          headers: { 'x-cron-key': 'integration-test-secret' },
         },
       );
 
@@ -356,7 +384,7 @@ describe('Scheduled Messages Cron Integration Tests', () => {
         'http://localhost:3000/api/messages/process-scheduled',
         {
           method: 'GET',
-          headers: { 'x-vercel-cron-signature': 'test-sig' },
+          headers: { 'x-cron-key': 'integration-test-secret' },
         },
       );
 
@@ -386,26 +414,28 @@ describe('Scheduled Messages Cron Integration Tests', () => {
       });
 
       // Mock message insert failure
-      const mockFromChain = {
-        update: vi.fn(() => ({
-          eq: vi.fn(() => ({ eq: vi.fn(() => ({ error: null })) })),
-        })),
-        insert: vi.fn(() => ({
-          select: vi.fn(() => ({
-            single: vi.fn(() => ({
-              data: null,
-              error: { message: 'Insert failed' },
-            })),
-          })),
-        })),
-      };
-      mockSupabase.from.mockReturnValue(mockFromChain);
+      mockSupabase.from.mockImplementation((table: string) => {
+        if (table === 'event_guests') {
+          return createEventGuestsChain([
+            { id: 'guest-1', phone: '+1234567890', guest_name: 'Test Guest' },
+          ]);
+        }
+
+        if (table === 'messages') {
+          return createBaseFromChain({
+            data: null,
+            error: new Error('Insert failed'),
+          });
+        }
+
+        return createBaseFromChain();
+      });
 
       const request = new NextRequest(
         'http://localhost:3000/api/messages/process-scheduled',
         {
           method: 'GET',
-          headers: { 'x-vercel-cron-signature': 'test-sig' },
+          headers: { 'x-cron-key': 'integration-test-secret' },
         },
       );
 
