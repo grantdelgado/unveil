@@ -85,6 +85,7 @@ afterAll(() => {
 
 // Export centralized mocks
 export { mockSupabaseClient, mockTwilioClient };
+export const supabase = mockSupabaseClient;
 
 // Re-export helpers from centralized mock
 export {

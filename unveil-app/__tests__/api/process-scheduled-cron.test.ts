@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { NextRequest } from 'next/server';
 import { GET, POST } from '@/app/api/messages/process-scheduled/route';
 
@@ -33,12 +33,20 @@ vi.mock('@/lib/sms', () => ({
 }));
 
 describe('Scheduled Messages Cron Processing', () => {
+  let randomSpy: ReturnType<typeof vi.spyOn> | null = null;
+
   beforeEach(() => {
     vi.clearAllMocks();
     // Set default environment variables
     process.env.CRON_SECRET = 'test-secret-key';
     process.env.SCHEDULED_MAX_PER_TICK = '100';
     process.env.NODE_ENV = 'test';
+    randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0.123456);
+  });
+
+  afterEach(() => {
+    randomSpy?.mockRestore();
+    randomSpy = null;
   });
 
   describe('GET handler', () => {
@@ -69,9 +77,9 @@ describe('Scheduled Messages Cron Processing', () => {
       expect(data.jobId).toMatch(/^job_\d+_[a-z0-9]{6}$/);
     });
 
-    it('should return status only when no cron headers are present', async () => {
+    it('should return status only when status param is present', async () => {
       const request = new NextRequest(
-        'http://localhost:3000/api/messages/process-scheduled',
+        'http://localhost:3000/api/messages/process-scheduled?status=1',
         {
           method: 'GET',
         },
@@ -83,9 +91,7 @@ describe('Scheduled Messages Cron Processing', () => {
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
       expect(data.stats).toBeDefined();
-      expect(data.stats.message).toBe(
-        'Use useMessages hook for real-time message data',
-      );
+      expect(data.stats.message).toBe('Development diagnostic endpoint');
     });
 
     it('should require authentication for cron processing', async () => {
@@ -164,7 +170,7 @@ describe('Scheduled Messages Cron Processing', () => {
       (supabase.rpc as any) = mockRpc;
 
       const request = new NextRequest(
-        'http://localhost:3000/api/messages/process-scheduled',
+        'http://localhost:3000/api/messages/process-scheduled?status=1',
         {
           method: 'GET',
         },
