@@ -62,6 +62,7 @@ export interface SMSMessage {
 export interface SMSResult {
   success: boolean;
   messageId?: string;
+  messageSid?: string;
   error?: string;
   status?: string;
   shouldRetry?: boolean;
@@ -177,7 +178,6 @@ export async function sendSMS({
 }: SMSMessage): Promise<SMSResult> {
   try {
     logger.info('Starting SMS send process', {
-      phone: to.slice(0, 6) + '...',
       eventId,
       messageType,
       hasGuestId: !!guestId,
@@ -195,21 +195,22 @@ export async function sendSMS({
         : await composeSmsText(eventId, guestId, message, { eventSmsTag, eventTitle });
       
       logger.info('🔧 SMS SIMULATION MODE - No actual SMS sent', {
-        phone: to.slice(0, 6) + '...',
-        messagePreview: formattedSms.text.substring(0, 100) + '...',
+        eventId,
+        guestId,
+        messageType,
+        messageLength: message.length,
         originalLength: message.length,
         finalLength: formattedSms.length,
         segments: formattedSms.segments,
         includedStopNotice: formattedSms.includedStopNotice,
-        eventId,
-        guestId,
-        messageType,
       });
 
       // Mark A2P notice as sent if it was included (even in simulation)
       if (formattedSms.includedStopNotice && guestId) {
         await markA2pNoticeSent(eventId, guestId);
       }
+
+      const simulatedSid = `sim_${Date.now()}`;
 
       // Log to database for tracking (use original message for consistency)
       await logSMSToDatabase({
@@ -218,13 +219,13 @@ export async function sendSMS({
         phoneNumber: to,
         content: message,
         messageType,
-        twilioSid: `sim_${Date.now()}`,
+        twilioSid: simulatedSid,
         status: 'sent',
       });
-
       return {
         success: true,
-        messageId: `sim_${Date.now()}`,
+        messageId: simulatedSid,
+        messageSid: simulatedSid,
         status: 'sent',
       };
     }
@@ -250,13 +251,6 @@ export async function sendSMS({
     if (!formattedPhone) {
       throw new Error('Invalid phone number format');
     }
-
-    logger.info('Phone formatting completed', {
-      original: to.slice(0, 6) + '...',
-      formatted: formattedPhone.slice(0, 6) + '...',
-    });
-
-
 
     // Format SMS with appropriate formatter based on message type
     const formattedSms = messageType === 'welcome' 
@@ -305,14 +299,9 @@ export async function sendSMS({
       reason: formattedSms.reason,
     });
 
-    // Redact phone number for logging (show first 3 and last 4 characters)
-    const redactedPhone =
-      formattedPhone.length > 7
-        ? `${formattedPhone.slice(0, 3)}...${formattedPhone.slice(-4)}`
-        : '***redacted***';
-
-    logger.sms(`Sending SMS to ${redactedPhone}`, {
-      messagePreview: formattedSms.text.substring(0, 50) + '...',
+    logger.sms('Sending SMS via Twilio', {
+      eventId,
+      messageType,
       finalLength: formattedSms.length,
       segments: formattedSms.segments,
     });
@@ -348,7 +337,6 @@ export async function sendSMS({
     logger.info('Twilio API success', {
       sid: twilioMessage.sid,
       status: twilioMessage.status,
-      phone: redactedPhone,
     });
 
     logger.sms(`SMS sent successfully. SID: ${twilioMessage.sid}`);
@@ -372,6 +360,7 @@ export async function sendSMS({
     return {
       success: true,
       messageId: twilioMessage.sid,
+      messageSid: twilioMessage.sid,
       status: twilioMessage.status,
     };
   } catch (error) {
@@ -379,7 +368,6 @@ export async function sendSMS({
 
     logger.smsError('Failed to send SMS', {
       error: errorMessage,
-      phone: to.slice(0, 6) + '...',
       eventId,
     });
 
@@ -586,47 +574,31 @@ export async function sendEventAnnouncement(
  */
 function formatPhoneNumber(phone: string): string | null {
   if (!phone || typeof phone !== 'string') {
-    logger.warn('Invalid phone input for formatting', { phone });
+    logger.warn('Invalid phone input for formatting');
     return null;
   }
 
   // Remove all non-digits
   const digits = phone.replace(/\D/g, '');
 
-  logger.debug('Processing phone number', {
-    original: phone.slice(0, 6) + '...',
-    digits: digits.slice(0, 6) + '...',
-    length: digits.length,
-  });
-
   // Handle US numbers
   if (digits.length === 10) {
     const formatted = `+1${digits}`;
-    logger.debug('Formatted 10-digit US number', {
-      formatted: formatted.slice(0, 6) + '...',
-    });
     return formatted;
   }
 
   if (digits.length === 11 && digits.startsWith('1')) {
     const formatted = `+${digits}`;
-    logger.debug('Formatted 11-digit US number', {
-      formatted: formatted.slice(0, 6) + '...',
-    });
     return formatted;
   }
 
   // If it already has country code
   if (digits.length > 10 && !digits.startsWith('1')) {
     const formatted = `+${digits}`;
-    logger.debug('Formatted international number', {
-      formatted: formatted.slice(0, 6) + '...',
-    });
     return formatted;
   }
 
   logger.warn('Unable to format phone number', {
-    digits,
     length: digits.length,
   });
   return null;
@@ -760,7 +732,6 @@ async function logSMSToDatabase(logData: {
     // This is a stub for future implementation
     logger.sms('SMS Log', {
       event: logData.eventId,
-      phone: logData.phoneNumber.slice(-4), // Only log last 4 digits for privacy
       status: logData.status,
       type: logData.messageType,
       sid: logData.twilioSid,

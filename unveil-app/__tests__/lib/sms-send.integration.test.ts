@@ -72,6 +72,7 @@ describe('SMS Send Integration', () => {
 
       expect(result.success).toBe(true);
       expect(result.messageId).toBe('SM1234567890abcdef1234567890abcdef');
+      expect(result.messageSid).toBe('SM1234567890abcdef1234567890abcdef');
     });
 
     it('should not include STOP notice for subsequent SMS to same guest', async () => {
@@ -265,7 +266,10 @@ describe('SMS Send Integration', () => {
       expect(logger.info).toHaveBeenCalledWith(
         '🔧 SMS SIMULATION MODE - No actual SMS sent',
         expect.objectContaining({
-          messagePreview: expect.stringContaining('[SimTest]\nSimulation test message'),
+          eventId: 'event-123',
+          guestId: 'guest-456',
+          messageType: 'custom',
+          messageLength: expect.any(Number),
           includedStopNotice: true,
         })
       );
@@ -365,7 +369,6 @@ describe('SMS Send Integration', () => {
         'Failed to send SMS',
         expect.objectContaining({
           error: 'Twilio API error',
-          phone: '+12345...', // Redacted phone
           eventId: 'event-123',
         })
       );

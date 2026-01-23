@@ -42,7 +42,7 @@ describe('Scheduled Messages Cron Processing', () => {
   });
 
   describe('GET handler', () => {
-    it('should process messages when cron headers are present', async () => {
+    it('should process messages when cron auth headers are present', async () => {
       // Mock RPC to return no messages (empty processing)
       const mockRpc = vi.fn().mockResolvedValue({ data: [], error: null });
       const { supabase } = await import('@/lib/supabase/admin');
@@ -53,7 +53,7 @@ describe('Scheduled Messages Cron Processing', () => {
         {
           method: 'GET',
           headers: {
-            'x-vercel-cron-signature': 'test-signature',
+            'x-cron-key': 'test-secret-key',
             'user-agent': 'vercel-cron/1.0',
           },
         },
@@ -333,7 +333,7 @@ describe('Scheduled Messages Cron Processing', () => {
       expect(response.status).toBe(200);
     });
 
-    it('should accept Vercel cron signature', async () => {
+    it('should reject Vercel cron signature without cron secret', async () => {
       const mockRpc = vi.fn().mockResolvedValue({ data: [], error: null });
       const { supabase } = await import('@/lib/supabase/admin');
       (supabase.rpc as any) = mockRpc;
@@ -349,12 +349,12 @@ describe('Scheduled Messages Cron Processing', () => {
       );
 
       const response = await POST(request);
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(401);
     });
   });
 
   describe('Cron Detection', () => {
-    it('should detect Vercel cron signature', async () => {
+    it('should reject processing when only Vercel signature is present', async () => {
       const mockRpc = vi.fn().mockResolvedValue({ data: [], error: null });
       const { supabase } = await import('@/lib/supabase/admin');
       (supabase.rpc as any) = mockRpc;
@@ -372,8 +372,8 @@ describe('Scheduled Messages Cron Processing', () => {
       const response = await GET(request);
       const data = await response.json();
 
-      expect(response.status).toBe(200);
-      expect(data.totalProcessed).toBeDefined(); // Indicates processing occurred
+      expect(response.status).toBe(401);
+      expect(data.error).toBe('Unauthorized');
     });
 
     it('should detect vercel-cron user agent', async () => {

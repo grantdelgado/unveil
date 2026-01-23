@@ -86,7 +86,15 @@ describe('Scheduled Messages Cron Integration Tests', () => {
 
       // Mock SMS service
       const { sendBulkSMS } = await import('@/lib/sms');
-      (sendBulkSMS as any).mockResolvedValue({ sent: 3, failed: 0 });
+      (sendBulkSMS as any).mockResolvedValue({
+        sent: 3,
+        failed: 0,
+        results: [
+          { success: true, messageId: 'SM111', messageSid: 'SM111' },
+          { success: true, messageId: 'SM222', messageSid: 'SM222' },
+          { success: true, messageId: 'SM333', messageSid: 'SM333' },
+        ],
+      });
 
       // Mock the recipient resolution function by setting up the from() chain
       const mockFromChain = {
@@ -115,7 +123,7 @@ describe('Scheduled Messages Cron Integration Tests', () => {
         {
           method: 'GET',
           headers: {
-            'x-vercel-cron-signature': 'test-cron-signature',
+            'x-cron-key': 'integration-test-secret',
           },
         },
       );
@@ -184,6 +192,7 @@ describe('Scheduled Messages Cron Integration Tests', () => {
         p_user_id: undefined,
         p_sms_status: 'sent',
         p_push_status: 'not_applicable',
+        p_sms_provider_id: 'SM111',
       });
     });
 
@@ -209,7 +218,7 @@ describe('Scheduled Messages Cron Integration Tests', () => {
         'http://localhost:3000/api/messages/process-scheduled',
         {
           method: 'GET',
-          headers: { 'x-vercel-cron-signature': 'test-sig-1' },
+          headers: { 'x-cron-key': 'integration-test-secret' },
         },
       );
 
@@ -223,7 +232,7 @@ describe('Scheduled Messages Cron Integration Tests', () => {
         'http://localhost:3000/api/messages/process-scheduled',
         {
           method: 'GET',
-          headers: { 'x-vercel-cron-signature': 'test-sig-2' },
+          headers: { 'x-cron-key': 'integration-test-secret' },
         },
       );
 
@@ -291,7 +300,7 @@ describe('Scheduled Messages Cron Integration Tests', () => {
         'http://localhost:3000/api/messages/process-scheduled',
         {
           method: 'GET',
-          headers: { 'x-vercel-cron-signature': 'test-sig' },
+          headers: { 'x-cron-key': 'integration-test-secret' },
         },
       );
 
@@ -356,7 +365,7 @@ describe('Scheduled Messages Cron Integration Tests', () => {
         'http://localhost:3000/api/messages/process-scheduled',
         {
           method: 'GET',
-          headers: { 'x-vercel-cron-signature': 'test-sig' },
+          headers: { 'x-cron-key': 'integration-test-secret' },
         },
       );
 
@@ -405,7 +414,7 @@ describe('Scheduled Messages Cron Integration Tests', () => {
         'http://localhost:3000/api/messages/process-scheduled',
         {
           method: 'GET',
-          headers: { 'x-vercel-cron-signature': 'test-sig' },
+          headers: { 'x-cron-key': 'integration-test-secret' },
         },
       );
 

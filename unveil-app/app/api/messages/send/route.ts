@@ -348,6 +348,7 @@ export async function POST(request: NextRequest) {
           const smsResult = await sendBulkSMS(smsMessages);
           smsDelivered = smsResult.sent;
           smsFailed = smsResult.failed;
+          const smsResults = smsResult.results || [];
 
           logger.api(`SMS delivery completed:`, {
             attempted: smsMessages.length,
@@ -359,7 +360,7 @@ export async function POST(request: NextRequest) {
           // Create delivery records for all guests with valid phone numbers
           deliveryRecords = validGuestsWithPhones
             .filter((guest) => guest.id) // Ensure guest.id exists
-            .map((guest) => ({
+            .map((guest, index) => ({
               message_id: messageData.id,
               guest_id: guest.id as string, // Type assertion safe after filter
               user_id: guest.user_id, // CRITICAL FIX: Link to user account for guest message visibility
@@ -367,6 +368,8 @@ export async function POST(request: NextRequest) {
                 ?.phone || guest.phone) as string,
               sms_status: 'sent', // Will be updated by webhook
               push_status: 'not_applicable',
+              sms_provider_id:
+                smsResults[index]?.messageSid || smsResults[index]?.messageId,
             }));
 
           // DEBUG: Log delivery record creation for troubleshooting
