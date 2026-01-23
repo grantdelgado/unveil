@@ -326,7 +326,11 @@ export async function POST(request: NextRequest) {
             return effectivePhone && effectivePhone.trim();
           });
 
-          const smsMessages = validGuestsWithPhones.map((guest) => ({
+          const smsEligibleGuests = validGuestsWithPhones.filter(
+            (guest) => guest.id,
+          );
+
+          const smsMessages = smsEligibleGuests.map((guest) => ({
             to: ((guest.users as { id?: string; phone?: string })?.phone ||
               guest.phone) as string,
             message: content,
@@ -358,9 +362,7 @@ export async function POST(request: NextRequest) {
           });
 
           // Create delivery records for all guests with valid phone numbers
-          deliveryRecords = validGuestsWithPhones
-            .filter((guest) => guest.id) // Ensure guest.id exists
-            .map((guest, index) => ({
+          deliveryRecords = smsEligibleGuests.map((guest, index) => ({
               message_id: messageData.id,
               guest_id: guest.id as string, // Type assertion safe after filter
               user_id: guest.user_id, // CRITICAL FIX: Link to user account for guest message visibility
