@@ -60,7 +60,7 @@
     "script:backfill-user-ids": "npx tsx scripts/backfill-user-ids.ts",
     "test:user-id-trigger": "npx tsx scripts/test-user-id-trigger.ts",
     "validate:sms-schema": "npx tsx scripts/validate-sms-schema.ts",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "next build --no-lint && tsc -p tsconfig.json --noEmit",
     "precommit": "pnpm typecheck && pnpm lint --max-warnings=0 && pnpm test && pnpm check:email && pnpm build",
     "e2e": "pnpm exec playwright test --project=chromium-mobile --project=webkit-mobile",
     "ci:full": "pnpm typecheck && pnpm lint --max-warnings=0 && pnpm test && pnpm check:email && pnpm e2e",

@@ -325,6 +325,9 @@ Twilio -> /api/webhooks/twilio
 - Add a log redaction helper for phone numbers and integrate with logger.
 - Gate RUM ingestion with basic rate limiting/sampling.
 
+## Typecheck Note
+`pnpm typecheck` now runs `next build --no-lint` first so `.next/types` exists for App Router route types. This keeps typechecking deterministic on a fresh checkout without requiring a prior manual build.
+
 ## Appendix: File Inventory + Repro Commands
 ### Files Reviewed (non-exhaustive)
 - `app/layout.tsx`, `middleware.ts`, `next.config.ts`
