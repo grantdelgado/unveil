@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
+import { flags } from '@/config/flags';
 
 import {
   fromUTCToEventZone,
@@ -630,35 +631,38 @@ export function SendFlowModal({
                 📱 Delivery Method
               </h3>
               <div className="space-y-3">
-                <label
-                  className={cn(
-                    'flex items-center space-x-3 p-3 border rounded-lg cursor-pointer transition-all',
-                    sendOptions.sendViaPush
-                      ? 'border-purple-300 bg-purple-50'
-                      : 'border-gray-200 hover:bg-gray-50',
-                  )}
-                >
-                  <input
-                    type="checkbox"
-                    checked={sendOptions.sendViaPush}
-                    onChange={(e) =>
-                      setSendOptions((prev) => ({
-                        ...prev,
-                        sendViaPush: e.target.checked,
-                      }))
-                    }
-                    className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
-                  />
-                  <div className="flex-1">
-                    <div className="text-sm font-medium text-gray-900">
-                      Push Notification
+                {/* Push notifications - hidden until fully implemented */}
+                {flags.features.pushNotificationsEnabled && (
+                  <label
+                    className={cn(
+                      'flex items-center space-x-3 p-3 border rounded-lg cursor-pointer transition-all',
+                      sendOptions.sendViaPush
+                        ? 'border-purple-300 bg-purple-50'
+                        : 'border-gray-200 hover:bg-gray-50',
+                    )}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={sendOptions.sendViaPush}
+                      onChange={(e) =>
+                        setSendOptions((prev) => ({
+                          ...prev,
+                          sendViaPush: e.target.checked,
+                        }))
+                      }
+                      className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                    />
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-gray-900">
+                        Push Notification
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Instant delivery, works in app
+                      </div>
                     </div>
-                    <div className="text-xs text-gray-500">
-                      Instant delivery, works in app
-                    </div>
-                  </div>
-                  <span className="text-lg">🔔</span>
-                </label>
+                    <span className="text-lg">🔔</span>
+                  </label>
+                )}
 
                 <label
                   className={cn(
@@ -691,9 +695,13 @@ export function SendFlowModal({
                 </label>
               </div>
 
-              {!sendOptions.sendViaPush && !sendOptions.sendViaSms && (
+              {/* Show error when no delivery method selected */}
+              {/* When push is hidden, only check SMS; when push is visible, check both */}
+              {(flags.features.pushNotificationsEnabled
+                ? !sendOptions.sendViaPush && !sendOptions.sendViaSms
+                : !sendOptions.sendViaSms) && (
                 <div className="mt-2 text-xs text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">
-                  ❌ Please select at least one delivery method
+                  ❌ Please select {flags.features.pushNotificationsEnabled ? 'at least one delivery method' : 'SMS delivery'}
                 </div>
               )}
             </div>

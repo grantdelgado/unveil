@@ -94,6 +94,17 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   compress: true,
   async headers() {
+    // CSP is stricter in production (no unsafe-eval)
+    // Development needs unsafe-eval for hot reloading
+    const isDev = process.env.NODE_ENV === 'development';
+    
+    // Build script-src based on environment
+    // Production: Remove unsafe-eval for better XSS protection
+    // Development: Keep unsafe-eval for hot reload, debugging
+    const scriptSrc = isDev
+      ? "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com"
+      : "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com";
+
     return [
       {
         // Apply security headers to all routes
@@ -109,11 +120,13 @@ const nextConfig: NextConfig = {
             value: 'prefetch',
           },
           // Content Security Policy
+          // Note: unsafe-inline for styles is required for Tailwind and most CSS-in-JS
+          // Note: unsafe-inline for scripts is kept for Next.js inline scripts (nonces would be better but require middleware)
           {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com",
+              scriptSrc,
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: blob: https://wvhtbqvnamerdkkjknuv.supabase.co https://avatars.githubusercontent.com",
