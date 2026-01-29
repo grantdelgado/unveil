@@ -38,7 +38,10 @@ export function SendConfirmationModal({
   isLoading = false,
   className,
 }: SendConfirmationModalProps) {
-  const [sendViaPush, setSendViaPush] = useState(true);
+  // Initialize sendViaPush based on feature flag - if push is disabled, default to false
+  // This prevents sending push notifications when the feature is hidden from the UI
+  const pushEnabled = flags.features.pushNotificationsEnabled;
+  const [sendViaPush, setSendViaPush] = useState(pushEnabled);
   const [sendViaSms, setSendViaSms] = useState(true);
   const [showFullMessage, setShowFullMessage] = useState(false);
   const [hasConfirmedLargeGroup, setHasConfirmedLargeGroup] = useState(false);
@@ -61,7 +64,7 @@ export function SendConfirmationModal({
     if (validRecipientCount === 0) return false;
     if (messageContent.trim().length === 0) return false;
     // When push is hidden (disabled), only require SMS; when push is visible, require at least one
-    const hasValidDeliveryMethod = flags.features.pushNotificationsEnabled
+    const hasValidDeliveryMethod = pushEnabled
       ? (sendViaPush || sendViaSms)
       : sendViaSms;
     if (!hasValidDeliveryMethod) return false;
@@ -74,6 +77,7 @@ export function SendConfirmationModal({
     sendViaSms,
     isLargeGroup,
     hasConfirmedLargeGroup,
+    pushEnabled,
   ]);
 
   // Early return after all hooks have been called
@@ -228,7 +232,7 @@ export function SendConfirmationModal({
             </h3>
             <div className="space-y-3">
               {/* Push notifications - hidden until fully implemented */}
-              {flags.features.pushNotificationsEnabled && (
+              {pushEnabled && (
                 <label
                   className={cn(
                     'flex items-center space-x-3 p-3 border rounded-lg cursor-pointer transition-all',
@@ -283,11 +287,11 @@ export function SendConfirmationModal({
 
             {/* Show error when no delivery method selected */}
             {/* When push is hidden, only check SMS; when push is visible, check both */}
-            {(flags.features.pushNotificationsEnabled
+            {(pushEnabled
               ? !sendViaPush && !sendViaSms
               : !sendViaSms) && (
               <div className="mt-2 text-xs text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">
-                ❌ Please select {flags.features.pushNotificationsEnabled ? 'at least one delivery method' : 'SMS delivery'}
+                ❌ Please select {pushEnabled ? 'at least one delivery method' : 'SMS delivery'}
               </div>
             )}
           </div>

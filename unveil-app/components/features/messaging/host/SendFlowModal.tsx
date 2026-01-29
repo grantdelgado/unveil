@@ -91,8 +91,12 @@ export function SendFlowModal({
   className,
 }: SendFlowModalProps) {
   const [currentState, setCurrentState] = useState<ModalState>('review');
+  // Read feature flag once at component level for consistent behavior
+  // Initialize sendViaPush based on feature flag - if push is disabled, default to false
+  // This prevents sending push notifications when the feature is hidden from the UI
+  const pushEnabled = flags.features.pushNotificationsEnabled;
   const [sendOptions, setSendOptions] = useState<SendOptions>({
-    sendViaPush: true,
+    sendViaPush: pushEnabled,
     sendViaSms: true,
   });
   const [sendResult, setSendResult] = useState<SendResult | null>(null);
@@ -221,7 +225,7 @@ export function SendFlowModal({
     if (validRecipientCount === 0) return false;
     if (messageContent.trim().length === 0) return false;
     // When push is hidden (disabled), only require SMS; when push is visible, require at least one
-    const hasValidDeliveryMethod = flags.features.pushNotificationsEnabled
+    const hasValidDeliveryMethod = pushEnabled
       ? (sendOptions.sendViaPush || sendOptions.sendViaSms)
       : sendOptions.sendViaSms;
     if (!hasValidDeliveryMethod) return false;
@@ -243,6 +247,7 @@ export function SendFlowModal({
     sendMode,
     scheduledAtUtc,
     scheduleFreshness.isTooSoon,
+    pushEnabled,
   ]);
 
   // Reset state when modal opens/closes
@@ -636,7 +641,7 @@ export function SendFlowModal({
               </h3>
               <div className="space-y-3">
                 {/* Push notifications - hidden until fully implemented */}
-                {flags.features.pushNotificationsEnabled && (
+                {pushEnabled && (
                   <label
                     className={cn(
                       'flex items-center space-x-3 p-3 border rounded-lg cursor-pointer transition-all',
@@ -701,11 +706,11 @@ export function SendFlowModal({
 
               {/* Show error when no delivery method selected */}
               {/* When push is hidden, only check SMS; when push is visible, check both */}
-              {(flags.features.pushNotificationsEnabled
+              {(pushEnabled
                 ? !sendOptions.sendViaPush && !sendOptions.sendViaSms
                 : !sendOptions.sendViaSms) && (
                 <div className="mt-2 text-xs text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">
-                  ❌ Please select {flags.features.pushNotificationsEnabled ? 'at least one delivery method' : 'SMS delivery'}
+                  ❌ Please select {pushEnabled ? 'at least one delivery method' : 'SMS delivery'}
                 </div>
               )}
             </div>

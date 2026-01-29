@@ -149,11 +149,13 @@ export async function POST(request: NextRequest) {
     await logOTPResendAttempt(normalizedPhone, clientIP, true);
 
     // Return generic success message to avoid phone enumeration
+    // NOTE: Do NOT include `remaining` in the response - it enables phone enumeration
+    // by allowing attackers to distinguish valid vs invalid phone numbers based on
+    // different rate limit counts
     return NextResponse.json(
       {
         success: true,
         message: 'If your number is registered, a verification code was sent.',
-        remaining: phoneRateLimit.remaining,
       },
       { status: 200 },
     );
