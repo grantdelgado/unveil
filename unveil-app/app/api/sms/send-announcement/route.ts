@@ -7,18 +7,20 @@ export async function POST(request: NextRequest) {
   try {
     // Create authenticated Supabase client from request cookies
     const supabase = createApiSupabaseClient(request);
+    
+    // Use getUser() instead of getSession() to validate JWT server-side
+    // getSession() only reads cookies without validation, making it insecure
     const {
-      data: { session },
-    } = await supabase.auth.getSession();
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
-    if (!session?.user) {
+    if (authError || !user) {
       return NextResponse.json(
-        { error: 'Authorization required' },
+        { error: 'Authentication required' },
         { status: 401 },
       );
     }
-
-    const user = session.user;
     const { eventId, message, targetGuestIds } = await request.json();
 
     // Validate required fields
