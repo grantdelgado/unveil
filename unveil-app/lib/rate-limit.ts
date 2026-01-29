@@ -56,16 +56,33 @@ const RATE_LIMIT_CONFIGS = {
   // OTP-specific rate limits (stricter)
   otp: {
     perPhone: { requests: 3, window: '10m' as const }, // 3 OTPs per phone per 10 minutes
+    perPhoneCooldown: { requests: 1, window: '30s' as const }, // 30 second cooldown between requests
     perIp: { requests: 10, window: '10m' as const }, // 10 OTPs per IP per 10 minutes
   },
 } as const;
+
+/**
+ * Convert window string to milliseconds
+ */
+function windowToMs(window: '30s' | '1m' | '10m' | '1h'): number {
+  switch (window) {
+    case '30s':
+      return 30_000;
+    case '1m':
+      return 60_000;
+    case '10m':
+      return 600_000;
+    case '1h':
+      return 3_600_000;
+  }
+}
 
 /**
  * Get or create a rate limiter for a specific context
  */
 function getRateLimiter(
   context: string,
-  config: { requests: number; window: '1m' | '10m' | '1h' },
+  config: { requests: number; window: '30s' | '1m' | '10m' | '1h' },
 ): Ratelimit | null {
   const redisClient = getRedis();
   if (!redisClient) return null;
@@ -73,12 +90,7 @@ function getRateLimiter(
   const key = `${context}:${config.requests}:${config.window}`;
 
   if (!rateLimiters.has(key)) {
-    const windowMs =
-      config.window === '1m'
-        ? 60_000
-        : config.window === '10m'
-          ? 600_000
-          : 3_600_000;
+    const windowMs = windowToMs(config.window);
 
     rateLimiters.set(
       key,
@@ -104,15 +116,10 @@ const inMemoryStore = new Map<
 
 function checkInMemoryLimit(
   identifier: string,
-  config: { requests: number; window: '1m' | '10m' | '1h' },
+  config: { requests: number; window: '30s' | '1m' | '10m' | '1h' },
 ): { success: boolean; remaining: number; reset: number } {
   const now = Date.now();
-  const windowMs =
-    config.window === '1m'
-      ? 60_000
-      : config.window === '10m'
-        ? 600_000
-        : 3_600_000;
+  const windowMs = windowToMs(config.window);
 
   const current = inMemoryStore.get(identifier);
 
@@ -174,7 +181,7 @@ export async function checkApiRateLimit(
   route: string,
 ): Promise<RateLimitResult> {
   // Determine which config to use based on route
-  let config: { requests: number; window: '1m' | '10m' | '1h' } =
+  let config: { requests: number; window: '30s' | '1m' | '10m' | '1h' } =
     RATE_LIMIT_CONFIGS.api.default;
   let context = 'api:default';
 
@@ -224,36 +231,76 @@ export async function checkApiRateLimit(
 
 /**
  * Check OTP rate limit by phone number
+ *
+ * Enforces TWO limits:
+ * 1. Cooldown: 1 request per 30 seconds (prevents rapid-fire spam)
+ * 2. Overall: 3 requests per 10 minutes (prevents sustained abuse)
+ *
+ * Both must pass for the request to be allowed.
  */
 export async function checkOtpPhoneRateLimit(
   phone: string,
 ): Promise<RateLimitResult> {
-  const config = RATE_LIMIT_CONFIGS.otp.perPhone;
-  const context = 'otp:phone';
-  const identifier = `${context}:${phone}`;
+  const cooldownConfig = RATE_LIMIT_CONFIGS.otp.perPhoneCooldown;
+  const overallConfig = RATE_LIMIT_CONFIGS.otp.perPhone;
 
-  const limiter = getRateLimiter(context, config);
+  const cooldownContext = 'otp:phone:cooldown';
+  const overallContext = 'otp:phone';
 
-  if (!limiter) {
-    const result = checkInMemoryLimit(identifier, config);
-    return { ...result, limit: config.requests };
+  const cooldownIdentifier = `${cooldownContext}:${phone}`;
+  const overallIdentifier = `${overallContext}:${phone}`;
+
+  // Get both limiters
+  const cooldownLimiter = getRateLimiter(cooldownContext, cooldownConfig);
+  const overallLimiter = getRateLimiter(overallContext, overallConfig);
+
+  // If Redis is unavailable, use in-memory fallback for both checks
+  if (!cooldownLimiter || !overallLimiter) {
+    // Check cooldown first (30 seconds between requests)
+    const cooldownResult = checkInMemoryLimit(cooldownIdentifier, cooldownConfig);
+    if (!cooldownResult.success) {
+      return {
+        success: false,
+        remaining: 0,
+        reset: cooldownResult.reset,
+        limit: cooldownConfig.requests,
+      };
+    }
+
+    // Check overall limit (3 per 10 minutes)
+    const overallResult = checkInMemoryLimit(overallIdentifier, overallConfig);
+    return { ...overallResult, limit: overallConfig.requests };
   }
 
   try {
-    const result = await limiter.limit(identifier);
+    // Check cooldown first (30 seconds between requests)
+    // This prevents rapid-fire OTP spam even if they have remaining attempts
+    const cooldownResult = await cooldownLimiter.limit(cooldownIdentifier);
+    if (!cooldownResult.success) {
+      return {
+        success: false,
+        remaining: 0,
+        reset: cooldownResult.reset,
+        limit: cooldownConfig.requests,
+      };
+    }
+
+    // Check overall limit (3 per 10 minutes)
+    const overallResult = await overallLimiter.limit(overallIdentifier);
     return {
-      success: result.success,
-      remaining: result.remaining,
-      reset: result.reset,
-      limit: config.requests,
+      success: overallResult.success,
+      remaining: overallResult.remaining,
+      reset: overallResult.reset,
+      limit: overallConfig.requests,
     };
   } catch (error) {
     logger.error('OTP phone rate limit check failed', { error });
+    // Fail open - allow the request if Redis is down
     return {
       success: true,
-      remaining: config.requests - 1,
+      remaining: overallConfig.requests - 1,
       reset: Date.now() + 600_000,
-      limit: config.requests,
+      limit: overallConfig.requests,
     };
   }
 }
