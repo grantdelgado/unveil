@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validatePhoneNumber } from '@/lib/validations';
-import { supabase } from '@/lib/supabase/client';
+import { createApiSupabaseClient } from '@/lib/supabase/server';
 import { logger, logAuth, logAuthError } from '@/lib/logger';
+import { maskPhoneForLogging } from '@/lib/utils/phone';
 
 // Rate limiting configuration for OTP resends
 const RATE_LIMIT_CONFIG = {
@@ -242,8 +243,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Send OTP using the same Supabase method as initial send
-    logAuth('Resending OTP to phone', { phone: normalizedPhone, context });
+    logAuth('Resending OTP to phone', { phone: maskPhoneForLogging(normalizedPhone), context });
 
+    // Create server-side Supabase client for API route
+    const supabase = createApiSupabaseClient(request);
     const { error } = await supabase.auth.signInWithOtp({
       phone: normalizedPhone,
       options: {
@@ -267,7 +270,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Success - log the attempt
-    logAuth('OTP resent successfully', { phone: normalizedPhone });
+    logAuth('OTP resent successfully', { phone: maskPhoneForLogging(normalizedPhone) });
     await logOTPResendAttempt(normalizedPhone, clientIP, true);
 
     // Return generic success message to avoid phone enumeration

@@ -1,9 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendEventAnnouncement } from '@/lib/sms';
-import { supabase } from '@/lib/supabase';
+import { createApiSupabaseClient } from '@/lib/supabase/server';
+import { logger } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
+    // Create authenticated Supabase client from request cookies
+    const supabase = createApiSupabaseClient(request);
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: 'Authorization required' },
+        { status: 401 },
+      );
+    }
+
+    const user = session.user;
     const { eventId, message, targetGuestIds } = await request.json();
 
     // Validate required fields
@@ -22,41 +37,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get the authorization header
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader) {
+    // Verify user is the host of this event using RPC
+    const { data: isHost, error: hostError } = await supabase.rpc(
+      'is_event_host',
+      { p_event_id: eventId },
+    );
+
+    if (hostError) {
+      logger.apiError('Host check failed for send-announcement', hostError);
       return NextResponse.json(
-        { error: 'Authorization required' },
-        { status: 401 },
+        { error: 'Authorization check failed' },
+        { status: 500 },
       );
     }
 
-    // Verify the user is authenticated and is the host of this event
-    const token = authHeader.replace('Bearer ', '');
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser(token);
-
-    if (userError || !user) {
-      return NextResponse.json(
-        { error: 'Invalid authentication' },
-        { status: 401 },
-      );
-    }
-
-    // Verify user is the host of this event
-    const { data: event, error: eventError } = await supabase
-      .from('events')
-      .select('host_user_id')
-      .eq('id', eventId)
-      .eq('host_user_id', user.id)
-      .single();
-
-    if (eventError || !event) {
+    if (!isHost) {
       return NextResponse.json(
         { error: 'Event not found or unauthorized' },
-        { status: 404 },
+        { status: 403 },
       );
     }
 
