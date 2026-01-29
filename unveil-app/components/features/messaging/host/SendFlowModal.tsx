@@ -220,7 +220,11 @@ export function SendFlowModal({
     if (currentState !== 'review') return false;
     if (validRecipientCount === 0) return false;
     if (messageContent.trim().length === 0) return false;
-    if (!sendOptions.sendViaPush && !sendOptions.sendViaSms) return false;
+    // When push is hidden (disabled), only require SMS; when push is visible, require at least one
+    const hasValidDeliveryMethod = flags.features.pushNotificationsEnabled
+      ? (sendOptions.sendViaPush || sendOptions.sendViaSms)
+      : sendOptions.sendViaSms;
+    if (!hasValidDeliveryMethod) return false;
     if (isLargeGroup && !hasConfirmedLargeGroup) return false;
     
     // For scheduled messages, check if the time is still valid

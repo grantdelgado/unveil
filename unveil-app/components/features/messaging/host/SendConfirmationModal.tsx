@@ -60,7 +60,11 @@ export function SendConfirmationModal({
   const canSend = useMemo(() => {
     if (validRecipientCount === 0) return false;
     if (messageContent.trim().length === 0) return false;
-    if (!sendViaPush && !sendViaSms) return false;
+    // When push is hidden (disabled), only require SMS; when push is visible, require at least one
+    const hasValidDeliveryMethod = flags.features.pushNotificationsEnabled
+      ? (sendViaPush || sendViaSms)
+      : sendViaSms;
+    if (!hasValidDeliveryMethod) return false;
     if (isLargeGroup && !hasConfirmedLargeGroup) return false;
     return true;
   }, [
