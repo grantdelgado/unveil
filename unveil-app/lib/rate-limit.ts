@@ -20,11 +20,18 @@ function getRedis(): Redis | null {
 
   if (!url || !token) {
     // Log once per cold start, not on every request
-    if (process.env.NODE_ENV === 'development') {
-      console.warn(
-        '[Rate Limit] Upstash Redis not configured. Using in-memory fallback (not recommended for production).',
-      );
-    }
+    // SECURITY: In-memory rate limiting does not work across serverless instances,
+    // allowing attackers to bypass rate limits. Always configure Upstash Redis in production.
+    const isProduction = process.env.NODE_ENV === 'production';
+    const message = isProduction
+      ? '[Rate Limit] SECURITY WARNING: Upstash Redis not configured. In-memory fallback does NOT protect against distributed attacks across serverless instances. Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN environment variables.'
+      : '[Rate Limit] Upstash Redis not configured. Using in-memory fallback (not recommended for production).';
+    
+    logger.warn(message, {
+      env: process.env.NODE_ENV || 'unknown',
+      hasUrl: !!url,
+      hasToken: !!token,
+    });
     return null;
   }
 
