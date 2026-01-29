@@ -73,6 +73,8 @@
     "@supabase/supabase-js": "^2.49.4",
     "@tanstack/react-query": "^5.80.7",
     "@tanstack/react-query-devtools": "^5.80.7",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.36.1",
     "clsx": "^2.1.1",
     "commander": "^14.0.1",
     "date-fns": "^4.1.0",

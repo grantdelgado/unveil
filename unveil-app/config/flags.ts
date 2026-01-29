@@ -37,9 +37,23 @@ export const flags = {
     get smsBrandingDisabled(): boolean {
       return envBool('SMS_BRANDING_DISABLED', false);
     },
-
-
-
+  },
+  features: {
+    /**
+     * Push Notifications Feature Flag
+     * 
+     * When enabled (true), shows push notification options in the UI.
+     * Push notifications are not yet fully implemented (device token storage,
+     * APNS integration). Enable only after completing push implementation.
+     * 
+     * @default false (push hidden until implemented)
+     * @env NEXT_PUBLIC_PUSH_NOTIFICATIONS_ENABLED
+     * @owner Platform Team
+     * @risk LOW - UI-only change
+     */
+    get pushNotificationsEnabled(): boolean {
+      return envBool('NEXT_PUBLIC_PUSH_NOTIFICATIONS_ENABLED', false);
+    },
   },
 } as const;
 
@@ -48,6 +62,8 @@ export const flags = {
  */
 export type OpFlags = typeof flags.ops;
 export type OpFlagKey = keyof OpFlags;
+export type FeatureFlags = typeof flags.features;
+export type FeatureFlagKey = keyof FeatureFlags;
 
 /**
  * Development helper to log current flag states
@@ -58,5 +74,6 @@ export function logFlagStates(): void {
   
   console.group('🏁 Feature Flags');
   console.log('SMS Branding Disabled:', flags.ops.smsBrandingDisabled);
+  console.log('Push Notifications Enabled:', flags.features.pushNotificationsEnabled);
   console.groupEnd();
 }

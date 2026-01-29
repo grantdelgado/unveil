@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 
 import { logAuth, logAuthError } from '@/lib/logger';
 import { validatePhoneNumber } from '@/lib/validations';
+import { maskPhoneForLogging } from '@/lib/utils/phone';
 import { supabase } from '@/lib/supabase/client';
 import { usePostAuthRedirect } from '@/hooks/usePostAuthRedirect';
 import {
@@ -71,7 +72,7 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      logAuth('Sending OTP to phone', { phone: normalizedPhone });
+      logAuth('Sending OTP to phone', { phone: maskPhoneForLogging(normalizedPhone) });
 
       // Production SMS flow
       const { error } = await supabase.auth.signInWithOtp({
@@ -116,7 +117,7 @@ export default function LoginPage() {
       const validation = validatePhoneNumber(phone);
       const normalizedPhone = validation.normalized || phone;
 
-      logAuth('Verifying OTP for phone', { phone: normalizedPhone });
+      logAuth('Verifying OTP for phone', { phone: maskPhoneForLogging(normalizedPhone) });
 
       // Production OTP verification
       const { data, error } = await supabase.auth.verifyOtp({
@@ -196,7 +197,7 @@ export default function LoginPage() {
       const validation = validatePhoneNumber(phone);
       const normalizedPhone = validation.normalized || phone;
 
-      logAuth('Verifying OTP for phone', { phone: normalizedPhone });
+      logAuth('Verifying OTP for phone', { phone: maskPhoneForLogging(normalizedPhone) });
 
       // Production OTP verification
       const { data, error } = await supabase.auth.verifyOtp({

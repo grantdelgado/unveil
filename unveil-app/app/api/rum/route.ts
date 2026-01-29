@@ -37,11 +37,21 @@ function validateRumEvent(data: unknown): RumEventPayload | null {
   };
 }
 
+// Sampling rate for RUM events (1.0 = 100%, 0.1 = 10%)
+// In production, we sample to reduce database load while maintaining statistical significance
+const RUM_SAMPLE_RATE = process.env.NODE_ENV === 'production' ? 0.5 : 1.0;
+
 export async function POST(request: NextRequest) {
   try {
     // Skip auth check for RUM collection - anonymous performance data is acceptable
     // This enables performance monitoring during login/onboarding flows
     // We don't store PII and this data helps monitor login/signup performance
+
+    // Apply sampling to reduce database load
+    if (Math.random() > RUM_SAMPLE_RATE) {
+      // Silently drop this sample but return success to avoid client retries
+      return NextResponse.json({ success: true, sampled: false });
+    }
 
     const body = await request.json();
     const rumEvent = validateRumEvent(body);

@@ -41,8 +41,5 @@ export { uploadEventMedia } from '@/lib/services/media';
 // useGuestMessages removed - replaced by useGuestMessagesRPC with managed subscriptions
 export { useGuestTags } from '@/hooks/messaging/useGuestTags';
 
-// Realtime subscriptions
-export {
-  subscribeToEventMessages,
-  subscribeToEventMedia,
-} from '@/lib/realtime/subscriptions';
+// Legacy realtime subscriptions removed - use SubscriptionManager instead
+// See: lib/realtime/SubscriptionManager.ts
