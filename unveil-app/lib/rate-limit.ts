@@ -50,6 +50,7 @@ const RATE_LIMIT_CONFIGS = {
     auth: { requests: 10, window: '1m' as const }, // 10 auth requests per minute
     sms: { requests: 5, window: '1m' as const }, // 5 SMS requests per minute
     media: { requests: 20, window: '1m' as const }, // 20 media requests per minute
+    rum: { requests: 30, window: '1m' as const }, // 30 RUM events per minute (unauthenticated)
     default: { requests: 100, window: '1m' as const }, // 100 general API requests per minute
   },
   // OTP-specific rate limits (stricter)
@@ -186,6 +187,10 @@ export async function checkApiRateLimit(
   } else if (route.startsWith('/api/media')) {
     config = RATE_LIMIT_CONFIGS.api.media;
     context = 'api:media';
+  } else if (route.startsWith('/api/rum')) {
+    // RUM endpoint is unauthenticated, use stricter limits
+    config = RATE_LIMIT_CONFIGS.api.rum;
+    context = 'api:rum';
   }
 
   const identifier = `${context}:${clientId}`;
