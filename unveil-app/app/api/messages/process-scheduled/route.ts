@@ -967,13 +967,6 @@ export async function GET(request: NextRequest) {
         10,
       );
 
-      // Add small jitter to reduce overlapping cron invocations (±10s)
-      const jitter = Math.floor(Math.random() * 20000) - 10000; // -10s to +10s in ms
-      if (jitter > 0) {
-        logger.api(`Adding ${jitter}ms jitter to reduce overlap`, { jobId });
-        await new Promise((resolve) => setTimeout(resolve, jitter));
-      }
-
       // Process messages using shared logic (never dry run for cron)
       const result = await processDueScheduledMessages({
         dryRun: false,
